@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Role } from '../types';
-import { MOCK_USERS } from '../constants';
+import { APP_USERS } from '../constants';
 import { UserPlus, Trash2, Edit2, X, AlertCircle, Database, Video, Play, Loader2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -11,7 +11,7 @@ interface UserManagementViewProps {
 const UserManagementView: React.FC<UserManagementViewProps> = () => {
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('luxury_decking_users_v1');
-    return saved ? JSON.parse(saved) : MOCK_USERS;
+    return saved ? JSON.parse(saved) : APP_USERS;
   });
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);

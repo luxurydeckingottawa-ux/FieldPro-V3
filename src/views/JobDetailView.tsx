@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Job, User, Role, OfficeReviewStatus, ScheduleStatus, FieldScheduleForecast } from '../types';
-import { MOCK_USERS } from '../constants';
+import { APP_USERS } from '../constants';
 import ProjectLocationMap from '../components/ProjectLocationMap';
 import TimeClockControls from '../components/TimeClockControls';
 import { 
@@ -289,7 +289,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                 <div className="space-y-1">
                   <p className="text-base font-bold text-[var(--text-primary)]">{job.assignedCrewOrSubcontractor || 'Unassigned'}</p>
                   <p className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-widest">
-                    Lead: {MOCK_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'None'}
+                    Lead: {APP_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'None'}
                   </p>
                 </div>
               </div>

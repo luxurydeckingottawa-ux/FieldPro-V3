@@ -1,4 +1,4 @@
-import { PhotoUpload, InvoicingData, User, Role, Job, JobStatus, OfficeReviewStatus, FieldResource, ResourceCategory, ScheduleStatus, PipelineStage, OfficeChecklist, FieldStatus, CompletionPackageStatus, PhotoCompletionStatus, CompletionReadinessStatus, BuildDetails, ChatSession, PipelineAutomation, PunchType, TimeEntry, CustomerLifecycle, DepositStatus, SoldWorkflowStatus } from './types';
+import { PhotoUpload, InvoicingData, User, Role, Job, PipelineStage, OfficeChecklist, BuildDetails, PipelineAutomation } from './types';
 
 export const LOST_REASONS = [
   'Too expensive',
@@ -10,7 +10,7 @@ export const LOST_REASONS = [
   'Other'
 ];
 
-export const MOCK_USERS: User[] = [
+export const APP_USERS: User[] = [
   { id: 'u1', email: 'admin@luxurydecking.ca', password: 'admin', name: 'Admin User', role: Role.ADMIN },
   { id: 'u2', email: 'estimator@luxurydecking.ca', password: 'estimator', name: 'Field Estimator', role: Role.ESTIMATOR },
   { id: 'u3', email: 'field@luxurydecking.ca', password: 'field', name: 'Field Lead', role: Role.FIELD_EMPLOYEE },

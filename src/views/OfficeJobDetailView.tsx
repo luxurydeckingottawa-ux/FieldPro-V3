@@ -12,7 +12,7 @@ import {
   ScheduleStatus,
   CustomerLifecycle
 } from '../types';
-import { PIPELINE_STAGES, MOCK_USERS, PAGE_TITLES } from '../constants';
+import { PIPELINE_STAGES, APP_USERS, PAGE_TITLES } from '../constants';
 import ProjectLocationMap from '../components/ProjectLocationMap';
 import QuickMessageModal from '../components/QuickMessageModal';
 import { getJobIssues } from '../utils/issueLogic';
@@ -822,7 +822,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     <div className="space-y-1">
                       <p className="text-sm font-bold text-[var(--text-primary)]">{job.assignedCrewOrSubcontractor || 'Unassigned'}</p>
                       <p className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-widest">
-                        Lead: {MOCK_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'None'}
+                        Lead: {APP_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'None'}
                       </p>
                     </div>
                   </div>
@@ -1553,7 +1553,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       </div>
                       <p className="text-sm font-bold text-white">{job.assignedCrewOrSubcontractor || 'Unassigned'}</p>
                       <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-1">
-                        Lead: {MOCK_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'None'}
+                        Lead: {APP_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'None'}
                       </p>
                     </div>
                   </div>
@@ -1931,7 +1931,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                   <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Assigned Field Lead</p>
                   <p className="text-sm font-bold text-white">
-                    {MOCK_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'Unassigned'}
+                    {APP_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'Unassigned'}
                   </p>
                 </div>
 
@@ -2163,7 +2163,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 appearance-none transition-all"
                     >
                       <option value="" className="bg-black text-white">Unassigned</option>
-                      {MOCK_USERS.filter(u => u.role === Role.FIELD_EMPLOYEE || u.role === Role.SUBCONTRACTOR).map(u => (
+                      {APP_USERS.filter(u => u.role === Role.FIELD_EMPLOYEE || u.role === Role.SUBCONTRACTOR).map(u => (
                         <option key={u.id} value={u.id} className="bg-black text-white">{u.name} ({u.role})</option>
                       ))}
                     </select>

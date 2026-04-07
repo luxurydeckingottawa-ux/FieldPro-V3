@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Role } from '../types';
-import { MOCK_USERS } from '../constants';
+import { APP_USERS } from '../constants';
 import { Shield, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { isSupabaseConfigured } from '../lib/supabase';
@@ -34,7 +34,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
       }
 
       // Fallback to mock users when Supabase is not configured
-      const mockUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+      const mockUser = APP_USERS.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
       if (mockUser) {
         onLogin(mockUser);
       } else {

@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { FieldResource, ResourceCategory, User } from '../types';
-import { FieldResource } from '../types';
 import { 
   BookOpen, 
   Search, 

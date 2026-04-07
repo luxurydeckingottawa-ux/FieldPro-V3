@@ -612,7 +612,7 @@ export const dataService = {
       };
     }
 
-    // localStorage/mock fallback: handled by the caller using MOCK_USERS
+    // localStorage/mock fallback: handled by the caller using APP_USERS
     return null;
   },
 
