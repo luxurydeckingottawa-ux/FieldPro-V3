@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake } from './types';
-import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, MOCK_JOBS, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS } from './constants';
+import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES, OFFICE_CHECKLIST_CONFIG } from './constants';
 import LoginView from './views/LoginView';
 import JobsListView from './views/JobsListView';
 import JobDetailView from './views/JobDetailView';
@@ -10,11 +10,11 @@ import FieldResourcesView from './views/FieldResourcesView';
 import { generateCloseoutPDF, generateInvoicePDF } from './utils/pdfGenerator';
 import { safeSetItem } from './utils/storage';
 import SchedulingCalendarView from './views/SchedulingCalendarView';
-import OfficePipelineView from './views/OfficePipelineView';
+// OfficePipelineView replaced by UnifiedPipelineView
 import OfficeJobDetailView from './views/OfficeJobDetailView';
 import NewJobIntakeView from './views/NewJobIntakeView';
 import CustomerPortalView from './views/CustomerPortalView';
-import CustomersListView from './views/CustomersListView';
+// CustomersListView merged into UnifiedPipelineView
 import EstimatePortalView from './views/EstimatePortalView';
 import EstimatorDashboardView from './views/EstimatorDashboardView';
 import EstimatorWorkflowView from './views/EstimatorWorkflowView';
@@ -22,7 +22,7 @@ import { EstimatorCalendar } from './components/EstimatorCalendar';
 import ChatView from './components/ChatView';
 import UserManagementView from './views/UserManagementView';
 import { LogOut, User as UserIcon, LayoutDashboard, BookOpen, Calendar, Kanban, Sun, Moon, MessageSquare, Users, AlertCircle, ChevronLeft, Settings, Calculator } from 'lucide-react';
-import { MOCK_CHAT_SESSIONS, MOCK_ESTIMATOR_APPOINTMENTS, MOCK_INSTALL_SCHEDULE } from './constants';
+import UnifiedPipelineView from './views/UnifiedPipelineView';
 
 import { geminiService } from './services/geminiService';
 import EstimatorCalculatorView from './estimator/EstimatorCalculatorView';
@@ -70,7 +70,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 const STORAGE_KEY = 'luxury_decking_app_state_v4';
-const JOBS_STORAGE_KEY = 'luxury_decking_jobs_v4';
+const JOBS_STORAGE_KEY = 'luxury_decking_jobs_v5'; // v5: mock data removed, clean start
 const AUTH_KEY = 'luxury_decking_auth_v1';
 const THEME_KEY = 'luxury_decking_theme_v1';
 const OFFICE_EMAIL = 'luxurydeckingteam@gmail.com';
@@ -122,7 +122,7 @@ const App: React.FC = () => {
   });
 
   const [jobs, setJobs] = useState<Job[]>(() => {
-    let currentJobs: Job[] = [...MOCK_JOBS];
+    let currentJobs: Job[] = [];
     try {
       const saved = localStorage.getItem(JOBS_STORAGE_KEY);
       if (saved) {
@@ -130,14 +130,6 @@ const App: React.FC = () => {
       }
     } catch (e) {
       console.error("Failed to parse jobs state", e);
-    }
-    
-    // Migration: Ensure all MOCK_JOBS are present (by ID) to support new mock data additions
-    const existingIds = new Set(currentJobs.map(j => j.id));
-    const missingMockJobs = MOCK_JOBS.filter(j => !existingIds.has(j.id));
-    
-    if (missingMockJobs.length > 0) {
-      currentJobs = [...currentJobs, ...missingMockJobs];
     }
 
     return currentJobs.map(job => ({
@@ -153,7 +145,7 @@ const App: React.FC = () => {
     const portalToken = params.get('portal');
     if (portalToken) {
       // Use the logic above to get the full list of migrated jobs
-      let currentJobs: Job[] = [...MOCK_JOBS];
+      let currentJobs: Job[] = [];
       try {
         const saved = localStorage.getItem(JOBS_STORAGE_KEY);
         if (saved) {
@@ -161,11 +153,6 @@ const App: React.FC = () => {
         }
       } catch (e) {
         console.error("Failed to parse jobs state for portal", e);
-      }
-      const existingIds = new Set(currentJobs.map(j => j.id));
-      const missingMockJobs = MOCK_JOBS.filter(j => !existingIds.has(j.id));
-      if (missingMockJobs.length > 0) {
-        currentJobs = [...currentJobs, ...missingMockJobs];
       }
       
       const migratedJobs = currentJobs.map(job => ({
@@ -234,10 +221,10 @@ const App: React.FC = () => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>(() => {
     try {
       const saved = localStorage.getItem('luxury_decking_chat_v1');
-      return saved ? JSON.parse(saved) : MOCK_CHAT_SESSIONS;
+      return saved ? JSON.parse(saved) : [];
     } catch (e) {
       console.error("Failed to parse chat sessions", e);
-      return MOCK_CHAT_SESSIONS;
+      return [];
     }
   });
 
@@ -518,7 +505,25 @@ const App: React.FC = () => {
           }
           return cl;
         });
-        return { ...job, officeChecklists: updatedChecklists, updatedAt: new Date().toISOString() };
+
+        // Auto-advance: check if ALL items in the current stage are completed or N/A
+        const currentChecklist = updatedChecklists.find(cl => cl.stage === stage);
+        const allComplete = currentChecklist?.items.every(item => item.completed || item.isNA) || false;
+        
+        let updatedJob = { ...job, officeChecklists: updatedChecklists, updatedAt: new Date().toISOString() };
+
+        if (allComplete && job.pipelineStage === stage) {
+          // Find the next stage in the pipeline
+          const stageOrder = PIPELINE_STAGES.map(s => s.id);
+          const currentIndex = stageOrder.indexOf(stage as PipelineStage);
+          if (currentIndex >= 0 && currentIndex < stageOrder.length - 1) {
+            const nextStage = stageOrder[currentIndex + 1];
+            updatedJob = { ...updatedJob, pipelineStage: nextStage };
+            console.log(`Auto-advanced job ${job.jobNumber} from ${stage} to ${nextStage}`);
+          }
+        }
+
+        return updatedJob;
       }
       return job;
     }));
@@ -535,7 +540,21 @@ const App: React.FC = () => {
           }
           return cl;
         });
-        return { ...prev, officeChecklists: updatedChecklists, updatedAt: new Date().toISOString() };
+
+        let updatedJob = { ...prev, officeChecklists: updatedChecklists, updatedAt: new Date().toISOString() };
+
+        const currentChecklist = updatedChecklists.find(cl => cl.stage === stage);
+        const allComplete = currentChecklist?.items.every(item => item.completed || item.isNA) || false;
+
+        if (allComplete && prev.pipelineStage === stage) {
+          const stageOrder = PIPELINE_STAGES.map(s => s.id);
+          const currentIndex = stageOrder.indexOf(stage as PipelineStage);
+          if (currentIndex >= 0 && currentIndex < stageOrder.length - 1) {
+            updatedJob = { ...updatedJob, pipelineStage: stageOrder[currentIndex + 1] };
+          }
+        }
+
+        return updatedJob;
       }
       return prev;
     });
@@ -1275,20 +1294,11 @@ const App: React.FC = () => {
                 <button 
                   onClick={() => setView('office-pipeline')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
-                    view === 'office-pipeline' || view === 'office-job-detail' ? 'bg-[var(--bg-primary)]/80 dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-lg border border-[var(--border-color)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
+                    view === 'office-pipeline' || view === 'office-job-detail' || view === 'customers' ? 'bg-[var(--bg-primary)]/80 dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-lg border border-[var(--border-color)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
                   }`}
                 >
                   <Kanban className="w-3.5 h-3.5" />
                   <span className="hidden md:inline">Pipeline</span>
-                </button>
-                <button 
-                  onClick={() => setView('customers')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
-                    view === 'customers' ? 'bg-[var(--bg-primary)]/80 dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-lg border border-[var(--border-color)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
-                  }`}
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Customers</span>
                 </button>
                 <button 
                   onClick={() => setView('office-dashboard')}
@@ -1392,25 +1402,12 @@ const App: React.FC = () => {
             onViewResources={() => setView('resources')}
           />
         )}
-        {view === 'office-pipeline' && currentUser && (
-          <OfficePipelineView 
+        {(view === 'office-pipeline' || view === 'customers') && currentUser && (
+          <UnifiedPipelineView 
             jobs={jobs}
             onSelectJob={handleSelectJob}
             onNewJob={() => setView('office-new-job')}
-          />
-        )}
-        {view === 'customers' && currentUser && (
-          <CustomersListView 
-            jobs={jobs}
-            onOpenJob={(job) => {
-              setSelectedJob(job);
-              setView('office-job-detail');
-            }}
-            onPreviewPortal={(job) => {
-              if (!job) return;
-              setSelectedJob(job);
-              setView('customer-portal');
-            }}
+            onOpenEstimator={handleOpenNewEstimate}
           />
         )}
         {view === 'office-new-job' && currentUser && (
@@ -1505,8 +1502,8 @@ const App: React.FC = () => {
             </div>
             <div className="flex-1 overflow-hidden">
               <EstimatorCalendar 
-                appointments={MOCK_ESTIMATOR_APPOINTMENTS}
-                installSchedule={MOCK_INSTALL_SCHEDULE}
+                appointments={[]}
+                installSchedule={[]}
               />
             </div>
           </div>

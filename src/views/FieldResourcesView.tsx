@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { FieldResource, ResourceCategory, User } from '../types';
-import { MOCK_RESOURCES } from '../constants';
+import { FieldResource } from '../types';
 import { 
   BookOpen, 
   Search, 
@@ -23,7 +23,7 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
   const [selectedCategory, setSelectedCategory] = useState<ResourceCategory | 'all'>('all');
 
   const filteredResources = useMemo(() => {
-    return MOCK_RESOURCES.filter(resource => {
+    return ([] as FieldResource[]).filter(resource => {
       const matchesSearch = 
         resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         resource.description.toLowerCase().includes(searchTerm.toLowerCase());

@@ -1,8 +1,8 @@
 import { Job, PunchType, TimeEntry, LeaveSiteAction, GeofenceReminder } from '../types';
-import { GEOFENCE_RADIUS_METERS, MOCK_TIME_ENTRIES, ESTIMATED_HOURLY_RATE } from '../constants';
+import { GEOFENCE_RADIUS_METERS, ESTIMATED_HOURLY_RATE } from '../constants';
 
 class TimeClockService {
-  private entries: TimeEntry[] = [...MOCK_TIME_ENTRIES];
+  private entries: TimeEntry[] = [];
   private reminders: GeofenceReminder[] = [];
 
   // Haversine formula to calculate distance between two points in meters

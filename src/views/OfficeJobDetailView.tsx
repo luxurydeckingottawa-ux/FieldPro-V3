@@ -1076,7 +1076,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               )}
             </motion.section>
 
-            {/* Financial Performance Overview */}
+            {/* Financial Performance Overview - Hidden during estimate stages */}
+            {!isEstimateStage && (
             <motion.section 
               initial={{ y: 20, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
@@ -1162,6 +1163,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 </div>
               </div>
             </motion.section>
+            )}
 
             {/* Build Specifications / Digital Work Order */}
             {job.buildDetails && (
@@ -1666,7 +1668,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               <OfficeAIAssistant job={job} onUpdateJob={onUpdateJob} />
             )}
 
-            {/* Field Execution Visibility Hub */}
+            {/* Field Execution Visibility Hub - Hidden during estimate stages */}
+            {!isEstimateStage && (
             <motion.section 
               initial={{ y: 20, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
@@ -1756,6 +1759,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 )}
               </div>
             </motion.section>
+            )}
 
             {/* AI Office Insights - For Pipeline Stages */}
             {!isEstimateStage && (
@@ -1823,6 +1827,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </div>
                   </div>
                 </div>
+                {!isEstimateStage && (
                 <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Weather Outlook</p>
@@ -1847,6 +1852,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </div>
                   </div>
                 </div>
+                )}
               </div>
 
               <div className="space-y-4 relative z-10">
