@@ -1,0 +1,7 @@
+{
+  "name": "Luxury Decking Field Pro",
+  "description": "Digital SOP and QC compliance tool for Luxury Decking construction teams and subcontractors in Ottawa.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

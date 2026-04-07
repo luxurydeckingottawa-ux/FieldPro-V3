@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Luxury Decking Field Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <!-- Hidden form for Netlify detection -->
+    <form
+      name="complete-job"
+      method="POST"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      hidden
+    >
+      <input type="hidden" name="form-name" value="complete-job" />
+      <input type="text" name="job_name" />
+      <input type="text" name="job_address" />
+      <input type="text" name="crew_name" />
+      <input type="text" name="job_status" />
+      <input type="text" name="closeout_pdf_url" />
+      <input type="text" name="invoice_pdf_url" />
+      <input type="text" name="photo_links_summary" />
+      <input type="text" name="customer_signature_url" />
+      <textarea name="checklist_summary_json"></textarea>
+    </form>
+
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+</body>
+</html>

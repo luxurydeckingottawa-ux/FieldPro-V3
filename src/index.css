@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --border-color: rgba(15, 23, 42, 0.25);
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-border: rgba(15, 23, 42, 0.1);
+  --muted-text: #64748b;
+  
+  /* Design System Tokens */
+  --radius-card: 2rem;
+  --radius-badge: 0.5rem;
+  --radius-button: 1rem;
+  --shadow-card: 0 10px 30px -10px rgba(15, 23, 42, 0.1);
+  --shadow-accent: 0 10px 30px -10px rgba(16, 185, 129, 0.2);
+  --accent-color: #10b981; /* emerald-500 */
+  --accent-hover: #059669; /* emerald-600 */
+}
+
+.dark {
+  --bg-primary: #050505;
+  --bg-secondary: #0a0a0a;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --border-color: rgba(255, 255, 255, 0.05);
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-border: rgba(255, 255, 255, 0.05);
+  --muted-text: #71717a;
+  
+  /* Design System Tokens - Dark Mode */
+  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --shadow-accent: 0 10px 30px -10px rgba(16, 185, 129, 0.3);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Typography Utilities */
+.font-display {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-style: italic;
+}
+
+.font-label {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-secondary);
+}
+
+.card-base {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s ease;
+}
+
+.card-base:hover {
+  background-color: var(--bg-primary);
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: var(--shadow-accent);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@keyframes loading {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}

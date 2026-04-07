@@ -1,0 +1,453 @@
+import React, { useState, useMemo } from 'react';
+import { Job, ScheduleStatus } from '../types';
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  isSameDay, 
+  addMonths, 
+  subMonths, 
+  isWithinInterval,
+  parseISO,
+  startOfWeek,
+  endOfWeek
+} from 'date-fns';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Users, 
+  Clock, 
+  AlertCircle,
+  ChevronRight as ChevronRightIcon,
+  Hammer,
+  Truck,
+  MapPin,
+  Sun,
+  Cloud,
+  CloudRain,
+  CloudLightning,
+  Snowflake,
+  AlertTriangle,
+  Zap
+} from 'lucide-react';
+import { ForecastReviewStatus, WeatherDay } from '../types';
+
+interface SchedulingCalendarViewProps {
+  jobs: Job[];
+  onSelectJob: (job: Job) => void;
+  onUpdateSchedule: (jobId: string, updates: Partial<Job>) => void;
+}
+
+const CREW_COLORS: Record<string, string> = {
+  'Luxury Crew A': 'bg-emerald-500',
+  'Luxury Crew B': 'bg-sky-500',
+  'Luxury Crew C': 'bg-indigo-500',
+  'Sub: Elite Decking': 'bg-amber-500',
+  'Sub: Pro Framers': 'bg-orange-500',
+  'default': 'bg-gray-500'
+};
+
+const WeatherIcon = ({ condition, size = 12 }: { condition: WeatherDay['condition'], size?: number }) => {
+  switch (condition) {
+    case 'sunny': return <Sun size={size} className="text-amber-400" />;
+    case 'cloudy': return <Cloud size={size} className="text-gray-400" />;
+    case 'rainy': return <CloudRain size={size} className="text-blue-400" />;
+    case 'stormy': return <CloudLightning size={size} className="text-indigo-400" />;
+    case 'snowy': return <Snowflake size={size} className="text-sky-200" />;
+    default: return null;
+  }
+};
+
+const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, onSelectJob }) => {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedCrew, setSelectedCrew] = useState<string>('all');
+
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const calendarStart = startOfWeek(monthStart);
+  const calendarEnd = endOfWeek(monthEnd);
+
+  const calendarDays = eachDayOfInterval({
+    start: calendarStart,
+    end: calendarEnd,
+  });
+
+  const crews = useMemo(() => {
+    const uniqueCrews = new Set(jobs.map(j => j.assignedCrewOrSubcontractor).filter(Boolean));
+    return ['all', ...Array.from(uniqueCrews)];
+  }, [jobs]);
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      const matchesCrew = selectedCrew === 'all' || job.assignedCrewOrSubcontractor === selectedCrew;
+      const hasDates = job.plannedStartDate && job.plannedFinishDate;
+      if (!hasDates) return false;
+      
+      const jobStart = parseISO(job.plannedStartDate!);
+      const jobEnd = parseISO(job.plannedFinishDate!);
+      
+      // Check if job overlaps with current calendar view
+      const overlaps = isWithinInterval(jobStart, { start: calendarStart, end: calendarEnd }) ||
+                       isWithinInterval(jobEnd, { start: calendarStart, end: calendarEnd }) ||
+                       (jobStart < calendarStart && jobEnd > calendarEnd);
+      
+      return matchesCrew && overlaps;
+    });
+  }, [jobs, selectedCrew, calendarStart, calendarEnd]);
+
+  const getCrewColor = (crewName: string) => {
+    return CREW_COLORS[crewName] || CREW_COLORS['default'];
+  };
+
+  const getStatusIndicator = (status?: ScheduleStatus) => {
+    switch (status) {
+      case ScheduleStatus.ON_SCHEDULE: return 'bg-emerald-400';
+      case ScheduleStatus.AHEAD: return 'bg-sky-400';
+      case ScheduleStatus.BEHIND: return 'bg-orange-400';
+      case ScheduleStatus.DELAYED: return 'bg-rose-400';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getDayWeather = (day: Date) => {
+    // In a real app, we'd fetch this. For now, we'll generate it based on the date hash
+    const dayStr = format(day, 'yyyy-MM-dd');
+    const hash = dayStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const conditions: WeatherDay['condition'][] = ['sunny', 'cloudy', 'rainy', 'stormy', 'snowy'];
+    return {
+      condition: conditions[hash % conditions.length],
+      precipitationChance: hash % 100,
+      highTemp: 15 + (hash % 15),
+      lowTemp: 5 + (hash % 10)
+    };
+  };
+
+  const planningAlerts = useMemo(() => {
+    const alerts = [];
+    
+    // Review Needed
+    const reviewNeeded = jobs.filter(j => j.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED);
+    if (reviewNeeded.length > 0) {
+      alerts.push({
+        type: 'review',
+        title: 'Schedule Review Needed',
+        count: reviewNeeded.length,
+        icon: <Clock className="w-4 h-4 text-amber-500" />,
+        color: 'border-amber-500/20 bg-amber-500/5'
+      });
+    }
+
+    // Weather Risk (Precipitation > 60% on scheduled days)
+    const weatherRisk = jobs.filter(job => {
+      if (!job.plannedStartDate || !job.plannedFinishDate) return false;
+      const start = parseISO(job.plannedStartDate);
+      const end = parseISO(job.plannedFinishDate);
+      const interval = eachDayOfInterval({ start, end });
+      return interval.some(day => getDayWeather(day).precipitationChance > 60);
+    });
+    if (weatherRisk.length > 0) {
+      alerts.push({
+        type: 'weather',
+        title: 'Weather Risk Detected',
+        count: weatherRisk.length,
+        icon: <CloudRain className="w-4 h-4 text-blue-500" />,
+        color: 'border-blue-500/20 bg-blue-500/5'
+      });
+    }
+
+    // Behind Schedule
+    const behind = jobs.filter(j => j.officialScheduleStatus === ScheduleStatus.BEHIND || j.officialScheduleStatus === ScheduleStatus.DELAYED);
+    if (behind.length > 0) {
+      alerts.push({
+        type: 'delay',
+        title: 'Behind Schedule',
+        count: behind.length,
+        icon: <AlertTriangle className="w-4 h-4 text-rose-500" />,
+        color: 'border-rose-500/20 bg-rose-500/5'
+      });
+    }
+
+    return alerts;
+  }, [jobs]);
+
+  return (
+    <div className="flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen">
+      {/* Header */}
+      <div className="p-8 border-b border-[var(--border-color)] bg-[var(--text-primary)]/[0.01]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
+          <div>
+            <h1 className="text-3xl font-display leading-none">Crew Planner</h1>
+            <p className="font-label mt-2">Logistics & Resource Distribution</p>
+          </div>
+          
+          <div className="flex items-center gap-6">
+            <div className="flex bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-1.5">
+              <button 
+                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                className="p-2.5 hover:bg-[var(--bg-primary)]/10 rounded-xl transition-all"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="px-6 flex items-center justify-center min-w-[180px]">
+                <span className="text-sm font-display tracking-[0.2em]">
+                  {format(currentMonth, 'MMMM yyyy')}
+                </span>
+              </div>
+              <button 
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                className="p-2.5 hover:bg-[var(--bg-primary)]/10 rounded-xl transition-all"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="h-10 w-px bg-[var(--border-color)]" />
+
+            <div className="flex items-center gap-3">
+              <Users className="w-4 h-4 text-[var(--text-secondary)]" />
+              <select 
+                value={selectedCrew}
+                onChange={(e) => setSelectedCrew(e.target.value)}
+                className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl px-5 py-2.5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer"
+              >
+                {crews.map(crew => (
+                  <option key={crew} value={crew} className="bg-[var(--bg-primary)]">{crew === 'all' ? 'All Crews' : crew}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Planning Intelligence & Legend Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="w-4 h-4 text-emerald-500" />
+              <p className="font-label tracking-widest uppercase text-[10px] font-black">Planning Intelligence</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {planningAlerts.map((alert, i) => (
+                <div key={i} className={`p-4 rounded-2xl border ${alert.color} flex items-center justify-between group cursor-pointer transition-all hover:scale-[1.02]`}>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/5 rounded-xl">
+                      {alert.icon}
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest opacity-60">{alert.title}</p>
+                      <p className="text-lg font-black leading-none mt-1">{alert.count} Jobs</p>
+                    </div>
+                  </div>
+                  <ChevronRightIcon className="w-4 h-4 opacity-20 group-hover:opacity-100 transition-all" />
+                </div>
+              ))}
+              {planningAlerts.length === 0 && (
+                <div className="col-span-full p-4 rounded-2xl border border-dashed border-[var(--border-color)] flex items-center justify-center">
+                  <p className="text-[10px] font-black uppercase tracking-widest opacity-40">No critical planning alerts</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="space-y-6">
+            <div>
+              <p className="font-label opacity-60 mb-3 uppercase text-[9px] font-black tracking-widest">Crew Assignments</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(CREW_COLORS).map(([crew, color]) => (
+                  <div key={crew} className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl">
+                    <div className={`w-2 h-2 rounded-full ${color}`} />
+                    <span className="text-[10px] font-bold uppercase tracking-tight">{crew === 'default' ? 'Other' : crew}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="flex-1 overflow-auto p-8">
+        <div className="min-w-[1000px]">
+          {/* Days Header */}
+          <div className="grid grid-cols-7 mb-4">
+            {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
+              <div key={day} className="text-center py-2 font-label opacity-60 tracking-[0.3em]">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Grid */}
+          <div className="grid grid-cols-7 border-t border-l border-[var(--border-color)] rounded-3xl overflow-hidden shadow-2xl">
+            {calendarDays.map((day, i) => {
+              const isCurrentMonth = isSameDay(startOfMonth(day), monthStart);
+              const dayWeather = getDayWeather(day);
+              const dayJobs = filteredJobs.filter(job => {
+                const start = parseISO(job.plannedStartDate!);
+                const end = parseISO(job.plannedFinishDate!);
+                return isWithinInterval(day, { start, end });
+              });
+
+              return (
+                <div 
+                  key={i} 
+                  className={`min-h-[160px] p-3 border-r border-b border-[var(--border-color)] transition-all ${
+                    isCurrentMonth ? 'bg-transparent' : 'bg-[var(--text-primary)]/[0.01] opacity-20'
+                  } ${isSameDay(day, new Date()) ? 'bg-emerald-500/[0.02]' : ''}`}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex flex-col gap-1">
+                      <span className={`text-xs font-black ${isSameDay(day, new Date()) ? 'text-emerald-500' : 'text-[var(--text-secondary)]'}`}>
+                        {format(day, 'd')}
+                      </span>
+                      {isSameDay(day, new Date()) && (
+                        <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded">Today</span>
+                      )}
+                    </div>
+                    
+                    {isCurrentMonth && (
+                      <div className="flex flex-col items-end gap-1 opacity-60 group-hover:opacity-100 transition-all">
+                        <div className="flex items-center gap-1">
+                          <WeatherIcon condition={dayWeather.condition} />
+                          <span className="text-[9px] font-black">{dayWeather.highTemp}°</span>
+                        </div>
+                        <div className="text-[8px] font-bold text-blue-400">{dayWeather.precipitationChance}%</div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {dayJobs.map(job => {
+                      const isStart = isSameDay(day, parseISO(job.plannedStartDate!));
+                      const isSub = job.assignedCrewOrSubcontractor?.toLowerCase().includes('sub');
+                      
+                      return (
+                        <div 
+                          key={job.id}
+                          onClick={() => onSelectJob(job)}
+                          className={`group relative p-2 rounded-xl cursor-pointer transition-all hover:scale-[1.02] active:scale-95 ${getCrewColor(job.assignedCrewOrSubcontractor)} text-black shadow-xl border border-black/10`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-[10px] font-black uppercase leading-tight truncate flex-1 flex items-center gap-1.5">
+                              {isSub ? <Truck className="w-3 h-3 opacity-70" /> : <Hammer className="w-3 h-3 opacity-70" />}
+                              {job.clientName}
+                              {job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                              )}
+                            </div>
+                            <div className={`w-2 h-2 rounded-full border border-black/20 ${getStatusIndicator(job.officialScheduleStatus)}`} />
+                          </div>
+                          
+                          <div className="flex items-center justify-between mt-1.5">
+                            <div className="text-[8px] font-black opacity-60 truncate uppercase tracking-widest">
+                              {job.assignedCrewOrSubcontractor}
+                            </div>
+                            {isStart && (
+                              <div className="text-[8px] font-black bg-black/20 px-1.5 py-0.5 rounded uppercase">
+                                Start
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Tooltip-like info on hover */}
+                          <div className="absolute bottom-full left-0 mb-3 w-64 card-base p-5 opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-all translate-y-2 group-hover:translate-y-0">
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="font-label text-emerald-500">{job.jobNumber}</span>
+                              <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${getStatusIndicator(job.officialScheduleStatus)} text-black`}>
+                                {job.officialScheduleStatus?.replace('_', ' ')}
+                              </div>
+                            </div>
+                            <p className="text-sm font-display mb-4">{job.clientName}</p>
+                            
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-3 font-label">
+                                <Users className="w-3.5 h-3.5 text-emerald-500" />
+                                <span>{job.assignedCrewOrSubcontractor}</span>
+                              </div>
+                              <div className="flex items-center gap-3 font-label">
+                                <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                                <span>{job.plannedDurationDays} Days Planned</span>
+                              </div>
+                              <div className="flex items-center gap-3 font-label">
+                                <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+                                <span className="truncate">{job.projectAddress}</span>
+                              </div>
+                            </div>
+
+                            {job.fieldForecast && (
+                              <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2 text-amber-500">
+                                    <AlertCircle className="w-3 h-3" />
+                                    <span className="text-[9px] font-black uppercase tracking-widest">Field Forecast</span>
+                                  </div>
+                                  {job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED && (
+                                    <span className="text-[8px] font-black bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded uppercase tracking-widest">Review Needed</span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-[var(--text-secondary)] italic">"{job.fieldForecast.note || 'Status update submitted'}"</p>
+                                <div className="mt-2 flex items-center gap-2 text-[9px] font-bold text-[var(--text-primary)]">
+                                  <span>Est. Finish:</span>
+                                  <span className="text-amber-500">{job.fieldForecast.status.replace('_', ' ')}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Unscheduled / Pending Jobs Sidebar */}
+      <div className="p-8 border-t border-[var(--border-color)] bg-[var(--text-primary)]/[0.01]">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-label tracking-[0.3em]">Unscheduled or Pending Review</h3>
+          <span className="font-label opacity-60">
+            {jobs.filter(j => !j.plannedStartDate || j.fieldForecast).length} Jobs Need Attention
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {jobs.filter(j => !j.plannedStartDate || j.fieldForecast).slice(0, 3).map(job => (
+            <div 
+              key={job.id}
+              onClick={() => onSelectJob(job)}
+              className="card-base p-6 flex items-center justify-between group cursor-pointer"
+            >
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-label text-emerald-500">{job.jobNumber}</span>
+                  {!job.plannedStartDate && (
+                    <span className="px-2 py-0.5 bg-rose-500/10 text-rose-500 text-[8px] font-black uppercase tracking-widest rounded">Unscheduled</span>
+                  )}
+                </div>
+                <p className="text-sm font-display mb-2">{job.clientName}</p>
+                {job.fieldForecast && (
+                  <div className="flex items-center gap-1.5 text-amber-500">
+                    <AlertCircle className="w-3 h-3" />
+                    <span className="font-label text-amber-500">Field Update Pending</span>
+                  </div>
+                )}
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)]/5 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all">
+                <ChevronRightIcon className="w-5 h-5" />
+              </div>
+            </div>
+          ))}
+          {jobs.filter(j => !j.plannedStartDate || j.fieldForecast).length === 0 && (
+            <div className="col-span-full text-center py-8 border border-dashed border-[var(--border-color)] rounded-3xl">
+              <p className="font-label opacity-60">All schedules up to date</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SchedulingCalendarView;
