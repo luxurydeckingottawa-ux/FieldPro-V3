@@ -14,6 +14,8 @@ import {
 } from '../types';
 import { PIPELINE_STAGES, APP_USERS, PAGE_TITLES } from '../constants';
 import ProjectLocationMap from '../components/ProjectLocationMap';
+import JobSummaryCard from '../components/JobSummaryCard';
+import PortalSharingCard from '../components/PortalSharingCard';
 import QuickMessageModal from '../components/QuickMessageModal';
 import { getJobIssues } from '../utils/issueLogic';
 import { timeClockService } from '../services/TimeClockService';
@@ -27,8 +29,6 @@ import {
   FileText, 
   MessageSquare, 
   Mail,
-  Copy,
-  Check,
   Paperclip, 
   Play,
   CheckCircle2,
@@ -42,7 +42,6 @@ import {
   Download,
   ExternalLink,
   ClipboardCheck,
-  MapPin,
   Calendar,
   Clock,
   ChevronRight,
@@ -57,9 +56,6 @@ import {
   CalendarClock,
   X,
   Activity,
-  Sun,
-  Cloud,
-  CloudRain,
   BarChart3
 } from 'lucide-react';
 import { OfficeAIAssistant } from '../components/OfficeAIAssistant';
@@ -95,7 +91,6 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [editFormData, setEditFormData] = useState<any>(null);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageType, setMessageType] = useState<'sms' | 'email'>('sms');
-  const [copied, setCopied] = useState(false);
 
   const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === job.pipelineStage);
   const currentStageInfo = stageIndex !== -1 ? PIPELINE_STAGES[stageIndex] : null;
@@ -129,24 +124,6 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const issues = useMemo(() => getJobIssues(job), [job]);
 
   const labourSummary = useMemo(() => timeClockService.getLabourSummary(job.id), [job.id]);
-
-  const copyPortalLink = () => {
-    const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
-    navigator.clipboard.writeText(portalUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const sharePortalLink = (type: 'sms' | 'email') => {
-    const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
-    const message = `Hi ${job.clientName}, here is your secure project portal link for your Luxury Decking project: ${portalUrl}`;
-    
-    if (type === 'sms') {
-      window.location.href = `sms:${job.clientPhone || ''}?body=${encodeURIComponent(message)}`;
-    } else {
-      window.location.href = `mailto:${job.clientEmail || ''}?subject=${encodeURIComponent('Your Luxury Decking Project Portal')}&body=${encodeURIComponent(message)}`;
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -698,153 +675,13 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             )}
 
             {/* Job Summary Card */}
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2rem] p-8 shadow-2xl relative overflow-hidden group"
-            >
-              <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 blur-[100px] -mr-48 -mt-48 pointer-events-none" />
-              
-              <div className="flex items-center justify-between mb-6 relative z-10">
-                <div className="flex items-center gap-2 text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">
-                  <Info size={14} className="text-emerald-500" /> Job Summary
-                </div>
-              </div>
-
-              <div className="flex flex-col md:flex-row gap-8 relative z-10">
-                {/* Map Preview Square */}
-                <div className="w-full md:w-48 h-48 shrink-0">
-                  <ProjectLocationMap 
-                    address={job.projectAddress} 
-                    hideAddress={true} 
-                    className="h-full w-full shadow-xl" 
-                  />
-                </div>
-
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="space-y-8">
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">
-                          <MapPin size={14} className="text-emerald-500" /> Project Location
-                        </div>
-                        <p className="text-xl font-bold text-[var(--text-primary)] leading-tight">{job.projectAddress}</p>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">
-                          <Zap size={14} className="text-emerald-500" /> Job Total
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-2xl font-black text-white tracking-tight italic">
-                            ${(job.totalAmount || 0).toLocaleString()}
-                          </p>
-                          <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Contract Value</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">
-                        <Users size={14} className="text-emerald-500" /> Client Contact
-                      </div>
-                      <div className="space-y-3">
-                        <p className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-tight italic">{job.clientName}</p>
-                        
-                        {job.clientPhone && (
-                          <div className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-2xl group/item">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
-                                <Phone size={12} />
-                              </div>
-                              <p className="text-[11px] font-bold text-white">{job.clientPhone}</p>
-                            </div>
-                            <button 
-                              onClick={() => {
-                                setMessageType('sms');
-                                setIsMessageModalOpen(true);
-                              }}
-                              className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg hover:bg-emerald-500 transition-all hover:text-black"
-                              title="Send SMS"
-                            >
-                              <MessageSquare size={12} />
-                            </button>
-                          </div>
-                        )}
-
-                        {job.clientEmail && (
-                          <div className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-2xl group/item">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
-                                <Mail size={12} />
-                              </div>
-                              <p className="text-[11px] font-bold text-white truncate max-w-[120px]">{job.clientEmail}</p>
-                            </div>
-                            <button 
-                              onClick={() => {
-                                setMessageType('email');
-                                setIsMessageModalOpen(true);
-                              }}
-                              className="p-2 bg-blue-500/10 text-blue-500 rounded-lg hover:bg-blue-500 transition-all hover:text-white"
-                              title="Send Email"
-                            >
-                              <Mail size={12} />
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Communication Summary */}
-                        <div className="mt-6 pt-6 border-t border-white/5 space-y-4">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Recent Outreach</h4>
-                            <button 
-                              onClick={() => setIsMessageModalOpen(true)}
-                              className="text-[8px] font-black text-emerald-500 uppercase tracking-widest hover:text-emerald-400 transition-colors"
-                            >
-                              View All
-                            </button>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-start gap-3">
-                              <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-500 mt-0.5">
-                                <MessageSquare size={10} />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[10px] font-bold text-white truncate">Last Text: {job.updatedAt ? new Date(job.updatedAt).toLocaleDateString() : 'N/A'}</p>
-                                <p className="text-[9px] text-gray-500 mt-0.5 line-clamp-1">Start date confirmation sent to client.</p>
-                              </div>
-                            </div>
-                            
-                            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-start gap-3 opacity-60">
-                              <div className="p-1.5 bg-blue-500/10 rounded-lg text-blue-500 mt-0.5">
-                                <Mail size={10} />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[10px] font-bold text-white truncate">Last Email: 2 days ago</p>
-                                <p className="text-[9px] text-gray-500 mt-0.5 line-clamp-1">Project scope summary shared.</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">
-                      <Users size={14} className="text-emerald-500" /> Assignment
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-[var(--text-primary)]">{job.assignedCrewOrSubcontractor || 'Unassigned'}</p>
-                      <p className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-widest">
-                        Lead: {APP_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'None'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.section>
-
+            <JobSummaryCard 
+              job={job}
+              onOpenMessageModal={(type) => {
+                setMessageType(type);
+                setIsMessageModalOpen(true);
+              }}
+            />
 
             {/* Completion & Closeout Visibility Layer (Stage 3) */}
             {(job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
@@ -1782,138 +1619,12 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             )}
 
             {/* Customer Experience Portal Sharing */}
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[40px] -mr-16 -mt-16 pointer-events-none" />
-              
-              <div className="flex items-center justify-between mb-8 relative z-10">
-                <div>
-                  <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
-                    <Users size={14} className="fill-current" /> Customer Experience
-                  </h3>
-                  <h2 className="text-lg font-black text-white uppercase tracking-tight">
-                    {job.lifecycleStage === CustomerLifecycle.ESTIMATE_SENT ? 'Estimate Portal' : 'Project Portal'}
-                  </h2>
-                </div>
-                <button 
-                  onClick={() => onPreviewPortal(job)}
-                  className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-emerald-500 transition-all flex items-center gap-2"
-                >
-                  <ExternalLink size={12} /> Preview Mode
-                </button>
-              </div>
-
-              {/* Portal Status Summary for Admin */}
-              <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Customer View Status</p>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Live</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-gray-400">Current Phase:</span>
-                      <span className="text-[10px] font-bold text-white uppercase tracking-tight">
-                        {job.lifecycleStage === CustomerLifecycle.ESTIMATE_SENT ? 'Estimate Review' : 
-                         job.pipelineStage === PipelineStage.ADMIN_SETUP ? 'Pre-Production' : 
-                         job.pipelineStage === PipelineStage.PRE_PRODUCTION ? 'Material Delivery' :
-                         job.pipelineStage === PipelineStage.READY_TO_START ? 'Construction Start' : 'Build Progress'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-gray-400">Queue Position:</span>
-                      <span className="text-[10px] font-bold text-white">
-                        {(() => {
-                          const queueStages = [PipelineStage.ADMIN_SETUP, PipelineStage.PRE_PRODUCTION, PipelineStage.READY_TO_START];
-                          const queueJobs = allJobs
-                            .filter(j => queueStages.includes(j.pipelineStage))
-                            .sort((a, b) => new Date(a.scheduledDate || '').getTime() - new Date(b.scheduledDate || '').getTime());
-                          const pos = queueJobs.findIndex(j => j.id === job.id);
-                          return pos === -1 ? 'N/A' : `#${pos + 1} (${pos} ahead)`;
-                        })()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                {!isEstimateStage && (
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Weather Outlook</p>
-                    <Sun size={12} className="text-amber-500" />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-center">
-                      <Sun size={14} className="text-amber-500 mb-1" />
-                      <span className="text-[8px] text-gray-500">Mon</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <Sun size={14} className="text-amber-500 mb-1" />
-                      <span className="text-[8px] text-gray-500">Tue</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <Cloud size={14} className="text-gray-400 mb-1" />
-                      <span className="text-[8px] text-gray-500">Wed</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <CloudRain size={14} className="text-blue-400 mb-1" />
-                      <span className="text-[8px] text-gray-500">Thu</span>
-                    </div>
-                  </div>
-                </div>
-                )}
-              </div>
-
-              <div className="space-y-4 relative z-10">
-                <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
-                  <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-3">Share Secure Link</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button 
-                      onClick={() => sharePortalLink('sms')}
-                      className="flex items-center justify-center gap-2 p-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl text-emerald-500 transition-all group"
-                    >
-                      <MessageSquare size={16} className="group-hover:scale-110 transition-transform" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">SMS</span>
-                    </button>
-                    <button 
-                      onClick={() => sharePortalLink('email')}
-                      className="flex items-center justify-center gap-2 p-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl text-blue-400 transition-all group"
-                    >
-                      <Mail size={16} className="group-hover:scale-110 transition-transform" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Email</span>
-                    </button>
-                  </div>
-                  <button 
-                    onClick={copyPortalLink}
-                    className="w-full mt-3 flex items-center justify-center gap-2 p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all group"
-                  >
-                    {copied ? (
-                      <Check size={16} className="text-emerald-500" />
-                    ) : (
-                      <Copy size={16} className="group-hover:scale-110 transition-transform" />
-                    )}
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${copied ? 'text-emerald-500' : ''}`}>
-                      {copied ? 'Copied!' : 'Copy Link'}
-                    </span>
-                  </button>
-                </div>
-
-                <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-                  <div className="flex items-start gap-3">
-                    <Info size={14} className="text-emerald-500 mt-0.5 shrink-0" />
-                    <p className="text-[9px] text-gray-500 leading-relaxed italic">
-                      Customers can view their project timeline, scope, and payment status without logging in. This link is unique to this project.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.section>
+            <PortalSharingCard
+              job={job}
+              allJobs={allJobs}
+              isEstimateStage={isEstimateStage}
+              onPreviewPortal={onPreviewPortal}
+            />
 
             {/* Assignment & Handoff Summary */}
             <motion.section 

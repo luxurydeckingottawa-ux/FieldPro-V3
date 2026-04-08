@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Job, PortalEngagement, CustomerLifecycle, DepositStatus, SoldWorkflowStatus } from '../types';
 import { 
   Check, Info, Shield, 
@@ -58,7 +58,65 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
     }
   };
 
-  const estimateData = job.estimateData || {
+  // Generate real GBB options from job data when available
+  const estimateData = useMemo(() => {
+    if (job.estimateData) return job.estimateData;
+    
+    // If we have actual estimate amounts, generate options from real data
+    const totalAmount = job.totalAmount || job.estimateAmount || 0;
+    if (totalAmount > 0 && job.acceptedBuildSummary) {
+      // Generate relative pricing for 3 tiers based on the accepted amount
+      const goodPrice = Math.round(totalAmount * 0.65);
+      const betterPrice = totalAmount;
+      const bestPrice = Math.round(totalAmount * 1.35);
+
+      return {
+        options: [
+          {
+            id: 'opt-good',
+            name: 'Classic Wood',
+            title: 'Pressure Treated Deck',
+            description: 'A solid, budget-friendly deck built with quality pressure treated lumber. A timeless look with proven durability.',
+            price: goodPrice,
+            features: ['Pressure Treated Lumber', 'Standard Wood Railing', 'Deck Block Footings', '2-Year Workmanship Warranty'],
+            differences: ['Requires annual staining/sealing', 'Natural wood will weather over time', 'Most affordable option'],
+            isRecommended: false,
+            valueInsight: 'Best for budget-conscious homeowners who prefer the natural wood look.',
+            specs: { maintenance: 'High', longevity: '10-15 Years', warranty: '2 Years', heat: 'Low' }
+          },
+          {
+            id: 'opt-better',
+            name: 'Composite',
+            title: 'Fiberon GoodLife Composite Deck',
+            description: 'The best of both worlds. Low-maintenance composite decking with a natural wood look and superior longevity.',
+            price: betterPrice,
+            features: ['Fiberon GoodLife Composite', 'Fortress Aluminum Railing', 'Concrete Sonotube Footings', '30-Year Material Warranty'],
+            differences: ['Low maintenance (soap & water)', 'No splintering or rotting', 'Best value for long-term investment'],
+            isRecommended: true,
+            valueInsight: 'The smart choice - eliminates maintenance while providing a 30-year warranty.',
+            specs: { maintenance: 'Ultra-Low', longevity: '30+ Years', warranty: '30 Years', heat: 'Moderate' }
+          },
+          {
+            id: 'opt-best',
+            name: 'Premium PVC',
+            title: 'Clubhouse Woodbridge PVC Deck',
+            description: 'Our premium option. Ultra-durable PVC decking with helical pile foundation for maximum stability and a lifetime of beauty.',
+            price: bestPrice,
+            features: ['ClubHouse Woodbridge PVC', 'Fortress Aluminum Railing', 'Helical Pile Foundation', 'Limited Lifetime Warranty'],
+            differences: ['Virtually zero maintenance', 'Most durable foundation option', 'Superior heat and scratch resistance'],
+            isRecommended: false,
+            valueInsight: 'The ultimate in luxury outdoor living with the strongest foundation.',
+            specs: { maintenance: 'None', longevity: 'Lifetime', warranty: 'Lifetime', heat: 'Low' }
+          }
+        ],
+        addOns: [],
+        paymentStructure: { deposit: 30, milestone: 30, final: 40 },
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+    }
+
+    // Default placeholder options
+    return {
     options: [
       {
         id: 'opt-1',
@@ -115,6 +173,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
       { title: 'Build & Track', desc: 'Construction begins! Track daily progress and photos right here in your portal.' }
     ]
   };
+  }, [job]);
 
   useEffect(() => {
     // Initial tracking for portal open

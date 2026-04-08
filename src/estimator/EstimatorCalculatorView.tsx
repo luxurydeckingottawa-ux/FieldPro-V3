@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { generateGoodBetterBest, type EstimateOption, type GBBDimensions } from '../utils/goodBetterBest';
 
 // --- Shared Types & Interfaces ---
 
@@ -117,6 +118,7 @@ export interface CustomEstimatorProps {
   resetCalculator: () => void;
   onSave: () => void;
   onAccept: () => void;
+  onGenerateGBB?: () => void;
   pricingSummary: any;
   estimateNumber: number;
   activePackage: PackageSelection | null;
@@ -783,7 +785,7 @@ const MaterialCard = ({ material, size, showRailings, railingCost, isSelected, o
   );
 };
 
-const CustomEstimator: React.FC<CustomEstimatorProps> = ({ dimensions, setDimensions, selections, setSelections, lightingQuantities, setLightingQuantities, clientInfo, setClientInfo, activeCategory, setActiveCategory, resetCalculator, onSave, onAccept, pricingSummary, estimateNumber, activePackage, setActivePackage }) => {
+const CustomEstimator: React.FC<CustomEstimatorProps> = ({ dimensions, setDimensions, selections, setSelections, lightingQuantities, setLightingQuantities, clientInfo, setClientInfo, activeCategory, setActiveCategory, resetCalculator, onSave, onAccept, onGenerateGBB, pricingSummary, estimateNumber, activePackage, setActivePackage }) => {
 
   const updateDim = (key: keyof Dimensions, val: string) => {
     setDimensions(prev => ({ ...prev, [key]: parseInt(val) || 0 }));
@@ -1066,6 +1068,11 @@ const CustomEstimator: React.FC<CustomEstimatorProps> = ({ dimensions, setDimens
         <div className="control-section">
           <button className="action-btn" onClick={onSave}>⎙ Save Estimate, Send Quote</button>
           <button className="accept-btn" onClick={onAccept}>✓ Accept Quote</button>
+          {onGenerateGBB && (
+            <button className="action-btn" onClick={onGenerateGBB} style={{ background: 'linear-gradient(135deg, #2c3e50, #34495e)', border: '1px solid #4a6785' }}>
+              ★ Good / Better / Best
+            </button>
+          )}
           <button className="reset-btn" onClick={resetCalculator}>Reset Estimator</button>
         </div>
       </div>
@@ -1468,7 +1475,7 @@ export interface EstimatorCalculatorProps {
 }
 
 const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, onEstimateAccepted, onEstimateSaved, onExit }) => {
-  const [view, setView] = useState<'calculator' | 'packages' | 'materialMatrix'>('calculator');
+  const [view, setView] = useState<'calculator' | 'packages' | 'materialMatrix' | 'gbb'>('calculator');
   const [calcDimensions, setCalcDimensions] = useState<Dimensions>(() => ({
     ...INITIAL_DIMENSIONS,
     ...(initialDimensions || {})
@@ -1805,6 +1812,14 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
     }
   };
 
+  const handleGenerateGBB = () => {
+    if (calcDimensions.sqft < 1) {
+      alert('Please enter deck dimensions before generating options.');
+      return;
+    }
+    setView('gbb');
+  };
+
   const handleMatrixPrint = (materials: Material[], size: DeckSize, railings: boolean, mode: 'single' | 'compare') => {
     setMatrixPrintData({ materials, size, railings, mode });
     setPrintContext('matrix');
@@ -1885,6 +1900,7 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
           </button>
         )}
         <button className={`nav-btn ${view === 'calculator' ? 'active' : ''}`} onClick={() => setView('calculator')}>Estimator</button>
+        <button className={`nav-btn ${view === 'gbb' ? 'active' : ''}`} onClick={() => setView('gbb')}>Good / Better / Best</button>
         <button className={`nav-btn ${view === 'packages' ? 'active' : ''}`} onClick={() => setView('packages')}>Showroom Packages</button>
         <button className={`nav-btn ${view === 'materialMatrix' ? 'active' : ''}`} onClick={() => setView('materialMatrix')}>Material Matrix</button>
         
@@ -1899,8 +1915,105 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
 
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {view === 'materialMatrix' && <StandaloneMaterialMatrix onPrintRequest={handleMatrixPrint} />}
+        {view === 'gbb' && (
+          <div style={{ flex: 1, overflow: 'auto', padding: '2rem', background: '#f8f9fa' }}>
+            {(() => {
+              const gbbDims: GBBDimensions = {
+                sqft: calcDimensions.sqft || 0,
+                footingsCount: calcDimensions.footingsCount || 0,
+                steps: calcDimensions.steps || 0,
+                fasciaLF: calcDimensions.fasciaLF || 0,
+                railingLF: calcDimensions.railingLF || 0,
+                alumPosts: calcDimensions.alumPosts || 0,
+                alumSection6: calcDimensions.alumSection6 || 0,
+              };
+
+              if (gbbDims.sqft < 1) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '4rem 2rem', color: '#666' }}>
+                    <p style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem' }}>No Dimensions Entered</p>
+                    <p style={{ fontSize: '0.9rem' }}>Go to the Estimator tab and enter deck dimensions first, then come back here.</p>
+                    <button onClick={() => setView('calculator')} style={{ marginTop: '1.5rem', padding: '0.75rem 2rem', background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}>
+                      Go to Estimator
+                    </button>
+                  </div>
+                );
+              }
+
+              const options = generateGoodBetterBest(gbbDims);
+              return (
+                <div>
+                  <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                    <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1a1a2e', margin: 0 }}>Your Custom Deck Options</h2>
+                    <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                      {Math.round(gbbDims.sqft)} sq ft deck with {gbbDims.footingsCount} footings | {clientInfo.name || 'Client'} | {clientInfo.address || 'Address'}
+                    </p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+                    {options.map((opt) => (
+                      <div key={opt.id} style={{
+                        background: '#fff',
+                        borderRadius: '16px',
+                        border: opt.recommended ? '2px solid #1a1a2e' : '1px solid #e5e7eb',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        boxShadow: opt.recommended ? '0 8px 32px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.06)',
+                      }}>
+                        {opt.recommended && (
+                          <div style={{ background: '#1a1a2e', color: '#fff', textAlign: 'center', padding: '8px', fontSize: '11px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase' }}>
+                            Most Popular Choice
+                          </div>
+                        )}
+                        <div style={{ padding: '2rem' }}>
+                          <p style={{ fontSize: '11px', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>{opt.tierLabel}</p>
+                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1a1a2e', margin: '0 0 8px 0', lineHeight: 1.2 }}>{opt.title}</h3>
+                          <p style={{ fontSize: '0.85rem', color: '#666', lineHeight: 1.5, marginBottom: '1.5rem' }}>{opt.description}</p>
+                          
+                          <div style={{ marginBottom: '0.5rem' }}>
+                            <span style={{ fontSize: '2.2rem', fontWeight: 800, color: '#1a1a2e' }}>${opt.priceWithTax.toLocaleString()}</span>
+                            <span style={{ fontSize: '0.85rem', color: '#999', marginLeft: '6px' }}>inc. tax</span>
+                          </div>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '6px 12px', marginBottom: '1.5rem' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#059669' }}>ESTIMATED ${opt.monthlyFinancing}/MO</span>
+                          </div>
+
+                          <div style={{ marginBottom: '1.5rem' }}>
+                            <h4 style={{ fontSize: '12px', fontWeight: 800, color: '#1a1a2e', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Key Features</h4>
+                            {opt.features.map((f, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#f0fdf4', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <span style={{ color: '#059669', fontSize: '12px', fontWeight: 700 }}>✓</span>
+                                </div>
+                                <span style={{ fontSize: '0.85rem', color: '#374151' }}>{f}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '1rem' }}>
+                            <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Considerations</h4>
+                            {opt.considerations.map((c, i) => (
+                              <p key={i} style={{ fontSize: '0.8rem', color: '#9ca3af', marginBottom: '4px', lineHeight: 1.4 }}>• {c}</p>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+                    <button onClick={() => window.print()} style={{ padding: '0.75rem 2rem', background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', marginRight: '1rem' }}>
+                      Print Comparison
+                    </button>
+                    <button onClick={() => setView('calculator')} style={{ padding: '0.75rem 2rem', background: '#fff', color: '#1a1a2e', border: '1px solid #d1d5db', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}>
+                      Back to Estimator
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
         {view === 'calculator' && (
-          <CustomEstimator dimensions={calcDimensions} setDimensions={setCalcDimensions} selections={calcSelections} setSelections={setCalcSelections} lightingQuantities={lightingQuantities} setLightingQuantities={setLightingQuantities} clientInfo={clientInfo} setClientInfo={setClientInfo} activeCategory={calcActiveCategory} setActiveCategory={setCalcActiveCategory} resetCalculator={resetCalculator} onSave={handleSaveEstimate} onAccept={handleAcceptQuote} pricingSummary={pricingSummary} estimateNumber={estimateNumber} activePackage={activePackage} setActivePackage={setActivePackage} />
+          <CustomEstimator dimensions={calcDimensions} setDimensions={setCalcDimensions} selections={calcSelections} setSelections={setCalcSelections} lightingQuantities={lightingQuantities} setLightingQuantities={setLightingQuantities} clientInfo={clientInfo} setClientInfo={setClientInfo} activeCategory={calcActiveCategory} setActiveCategory={setCalcActiveCategory} resetCalculator={resetCalculator} onSave={handleSaveEstimate} onAccept={handleAcceptQuote} onGenerateGBB={handleGenerateGBB} pricingSummary={pricingSummary} estimateNumber={estimateNumber} activePackage={activePackage} setActivePackage={setActivePackage} />
         )}
         {view === 'packages' && (
           <PackageShowcase 
