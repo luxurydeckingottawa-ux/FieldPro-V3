@@ -246,13 +246,18 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
   </div>
 
   <div class="section">
-    <div class="section-title">Terms & Conditions</div>
+    <div class="section-title">Project Agreement</div>
     <div class="terms">
-      <p>By signing below, the client agrees to the project scope, pricing, and payment schedule as outlined in this agreement.</p>
-      <p>The project scope includes all work described in the attached estimate. Any changes to the scope after acceptance will require a written change order with adjusted pricing.</p>
-      <p>Payment is due according to the schedule above. All materials remain the property of Luxury Decking until final payment is received.</p>
-      <p>Luxury Decking provides a workmanship warranty on all installations. Material warranties are provided by the respective manufacturers.</p>
-      <p>This agreement is governed by the laws of the Province of Ontario.</p>
+      <p><strong>Scope of Work:</strong> The parties agree that the project entails the construction of a new deck at the property listed above. The full scope of work is defined exclusively by the accepted Luxury Decking estimate #${jobNumber}, including but not limited to project dimensions, materials, foundations, framing, decking, railings, stairs, and any selected upgrades.</p>
+      <p><strong>Extras and Change Orders:</strong> Any work not explicitly included in the accepted estimate shall be considered extras. All extras must be approved in writing by the Homeowner prior to commencement.</p>
+      <p><strong>Schedule and Site Access:</strong> The Contractor will provide an anticipated start window once materials are confirmed and the deposit has been received. The Homeowner agrees to provide clear access to the work area. Normal working hours are Monday to Saturday, 8:00 a.m. to 6:00 p.m.</p>
+      <p><strong>Site Conditions:</strong> Pricing is based on typical site conditions. If hidden conditions are discovered, the Contractor will notify the Homeowner and provide a change order for approval.</p>
+      <p><strong>Weather and Delays:</strong> Outdoor construction is weather-dependent. The Contractor is not liable for delays caused by events beyond its reasonable control.</p>
+      <p><strong>Payment Policy:</strong> Invoices are due within five (5) calendar days of receipt. Overdue balances are subject to a 10% late payment fee and interest at 4% per month on unpaid balances exceeding $1,000.</p>
+      <p><strong>Warranty:</strong> Luxury Decking provides a five (5) year workmanship warranty on labour. Manufacturer warranties apply separately.</p>
+      <p><strong>Material Ownership:</strong> All materials remain the property of the Contractor until payment is made in full.</p>
+      <p><strong>Governing Law:</strong> This Agreement shall be governed by the laws of the Province of Ontario.</p>
+      <p><strong>Entire Agreement:</strong> This Agreement, together with the accepted estimate, constitutes the entire agreement between the parties.</p>
     </div>
   </div>
 

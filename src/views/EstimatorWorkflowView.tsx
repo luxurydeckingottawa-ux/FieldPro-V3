@@ -37,13 +37,11 @@ interface EstimatorWorkflowViewProps {
 }
 
 const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBack, onSave, onPushToEstimating }) => {
-  console.log('EstimatorWorkflowView rendering for job:', job?.id);
   const [activeTab, setActiveTab] = useState<'info' | 'intake' | 'measures' | 'sketch' | 'photos' | 'notes' | 'ai' | 'summary'>('info');
   const [status, setStatus] = useState<'scheduled' | 'on_way' | 'in_progress' | 'completed'>('scheduled');
   const [isGeneratingHandoff, setIsGeneratingHandoff] = useState(false);
   
   const [intake, setIntake] = useState<EstimatorIntake>(() => {
-    console.log('Initializing intake for job:', job?.id);
     const defaultIntake: EstimatorIntake = {
       jobId: job?.id || '',
       checklist: {
@@ -110,10 +108,8 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
 
     try {
       const saved = localStorage.getItem(`estimator_intake_${job.id}`);
-      console.log('Loaded from localStorage for job:', job.id, saved ? 'Data found' : 'No data');
       if (saved) {
         const parsed = JSON.parse(saved);
-        console.log('Parsed intake data:', parsed);
         if (parsed && typeof parsed === 'object') {
           // Ensure all required properties exist by merging with defaultIntake
           return {
@@ -254,7 +250,6 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
 
   const isChecklistComplete = intake.checklist ? Object.values(intake.checklist).every(v => v) : false;
 
-  console.log('EstimatorWorkflowView current intake state:', intake);
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-secondary)]">

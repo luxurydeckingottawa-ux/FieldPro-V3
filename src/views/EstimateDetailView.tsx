@@ -17,10 +17,11 @@ interface EstimateDetailViewProps {
   onOpenEstimator: (job: Job) => void;
   onPreviewPortal: (job: Job) => void;
   onDeleteJob?: (jobId: string) => void;
+  onJobAccepted?: (jobId: string) => void;
 }
 
 const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
-  job, onBack, onUpdateJob, onUpdatePipelineStage, onOpenEstimator, onPreviewPortal, onDeleteJob
+  job, onBack, onUpdateJob, onUpdatePipelineStage, onOpenEstimator, onPreviewPortal, onDeleteJob, onJobAccepted
 }) => {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({
@@ -111,7 +112,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
     if (type === 'sms') {
       window.location.href = `sms:${job.clientPhone || ''}?body=${encodeURIComponent(message)}`;
     } else {
-      window.location.href = `mailto:${job.clientEmail || ''}?subject=${encodeURIComponent('Your Luxury Decking Estimate')}&body=${encodeURIComponent(message)}`;
+      window.open(`mailto:${job.clientEmail || ''}?subject=${encodeURIComponent('Your Luxury Decking Estimate')}&body=${encodeURIComponent(message)}`, '_blank');
     }
   };
 
@@ -599,6 +600,20 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     <p className="text-sm font-bold text-[var(--text-primary)] capitalize">{job.estimateStatus.replace('_', ' ')}</p>
                   </div>
                 )}
+                {job.nurtureStatus === 'active' && job.pipelineStage === PipelineStage.EST_SENT && (
+                  <div>
+                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Follow-Up Campaign</p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      <p className="text-xs font-bold text-amber-500">Active - 3/4/7 Day Sequence</p>
+                    </div>
+                    {job.estimateSentDate && (
+                      <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+                        Sent {Math.floor((Date.now() - new Date(job.estimateSentDate).getTime()) / (1000 * 60 * 60 * 24))} days ago
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -691,6 +706,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
             onUpdatePipelineStage(jobId, updates.pipelineStage);
           }
           setShowAcceptance(false);
+          if (onJobAccepted) onJobAccepted(jobId);
         }}
       />
     </div>

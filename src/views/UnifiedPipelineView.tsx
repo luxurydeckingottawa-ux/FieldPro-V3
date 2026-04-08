@@ -394,8 +394,15 @@ const KanbanCard: React.FC<{
           <h4 className="text-sm font-bold text-[var(--text-primary)] truncate group-hover:text-emerald-600 transition-colors">
             {job.clientName || 'Unnamed'}
           </h4>
+          {job.projectAddress && (
+            <p className="text-[10px] text-[var(--text-secondary)] truncate mt-0.5">{job.projectAddress}</p>
+          )}
         </div>
-        <GripVertical className="w-4 h-4 text-[var(--text-secondary)] opacity-0 group-hover:opacity-40 transition-opacity shrink-0 cursor-grab" />
+        <div className="flex items-center gap-1 shrink-0">
+          {job.engagementHeat === 'hot' && <span className="text-[8px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">HOT</span>}
+          {job.engagementHeat === 'warm' && <span className="text-[8px] font-bold text-amber-400 bg-amber-500/5 px-1.5 py-0.5 rounded border border-amber-500/10">WARM</span>}
+          <GripVertical className="w-4 h-4 text-[var(--text-secondary)] opacity-0 group-hover:opacity-40 transition-opacity cursor-grab" />
+        </div>
       </div>
 
       <div className="text-sm font-bold text-[var(--text-primary)] mb-2">

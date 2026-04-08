@@ -72,6 +72,7 @@ interface OfficeJobDetailViewProps {
   onOpenFieldWorkflow: (job: Job) => void;
   onSendMessage: (sessionId: string, text: string) => void;
   onPreviewPortal: (job: Job) => void;
+  onDeleteJob?: (jobId: string) => void;
 }
 
 const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({ 
@@ -84,7 +85,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   onUpdateSchedule,
   onOpenFieldWorkflow,
   onSendMessage,
-  onPreviewPortal
+  onPreviewPortal,
+  onDeleteJob
 }) => {
   const [showLiveStatusReport, setShowLiveStatusReport] = useState(false);
   const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -258,6 +260,19 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             <div className={`px-3 py-1.5 rounded-lg border font-black text-[9px] uppercase tracking-widest ${getStatusColor(job.completionReadinessStatus || '')}`}>
               {job.completionReadinessStatus?.replace('_', ' ')}
             </div>
+            {onDeleteJob && (
+              <button
+                onClick={() => {
+                  if (confirm(`Are you sure you want to delete ${job.clientName || 'this job'}? This cannot be undone.`)) {
+                    onDeleteJob(job.id);
+                  }
+                }}
+                className="p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                title="Delete Job"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>

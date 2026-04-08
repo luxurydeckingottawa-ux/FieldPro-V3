@@ -26,7 +26,6 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   onSendMessage, 
   onBack 
 }) => {
-  console.log('Rendering CustomerPortalView for job:', job.id);
   const [activeTab, setActiveTab] = useState<'status' | 'schedule' | 'scope' | 'payments' | 'documents' | 'archive'>('status');
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showAllPhotos, setShowAllPhotos] = useState(false);

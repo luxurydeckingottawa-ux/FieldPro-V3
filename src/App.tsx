@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake } from './types';
+import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence } from './types';
 import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES } from './constants';
 import LoginView from './views/LoginView';
 import JobsListView from './views/JobsListView';
@@ -461,7 +461,6 @@ const App: React.FC = () => {
   }, []);
 
   const handleSelectJob = useCallback((job: Job) => {
-    console.log('handleSelectJob called with job:', job?.id, job?.clientName);
     setSelectedJob(job);
     (window as any).selectedJobId = job?.id;
     if (!currentUser) {
@@ -486,7 +485,6 @@ const App: React.FC = () => {
         setView('office-job-detail');
       }
     } else if (currentUser.role === Role.ESTIMATOR) {
-      console.log('Navigating to estimator-workflow for job:', job.id);
       setView('estimator-workflow');
     } else {
       setView('detail');
@@ -613,7 +611,13 @@ const App: React.FC = () => {
           });
         }
 
-        return { ...job, portalEngagement: updated };
+        // Calculate engagement heat
+        const isRecentlyOpened = updated.lastOpenedAt && (Date.now() - new Date(updated.lastOpenedAt).getTime()) < 24 * 60 * 60 * 1000;
+        let heat: 'cold' | 'warm' | 'hot' = 'cold';
+        if (updated.totalOpens > 5 || updated.totalTimeSpentSeconds > 300 || isRecentlyOpened) heat = 'hot';
+        else if (updated.totalOpens > 2 || updated.totalTimeSpentSeconds > 60) heat = 'warm';
+
+        return { ...job, portalEngagement: updated, engagementHeat: heat };
       }
       return job;
     }));
@@ -917,7 +921,6 @@ const App: React.FC = () => {
   }, []);
 
   const handleUpdateEstimatorIntake = useCallback((intake: EstimatorIntake) => {
-    console.log('Saving estimator intake:', intake);
     
     // Save to Supabase (or localStorage fallback)
     dataService.saveEstimatorIntake(intake).catch(err => {
@@ -932,7 +935,6 @@ const App: React.FC = () => {
       job.id === intake.jobId ? { ...job, updatedAt: new Date().toISOString() } : job
     ));
     
-    console.log('Intake data saved successfully!');
   }, []);
 
   const handleUpdateFieldForecast = useCallback((jobId: string, forecast: any) => {
@@ -1103,14 +1105,19 @@ const App: React.FC = () => {
   const handlePushToEstimating = useCallback((intake: EstimatorIntake) => {
     const dims = measureSheetToCalculatorDimensions(intake.measureSheet);
     setCalculatorInitialDimensions(dims);
-    // Find the job to get client info
+    // Find the job to get client info and save intake data
     const job = jobs.find(j => j.id === intake.jobId);
     if (job) {
       setCalculatorInitialClientInfo(jobToCalculatorClientInfo(job));
       setCalculatorSourceJobId(job.id);
+      // Save the estimator intake data to the job record
+      handleUpdateJob(job.id, {
+        estimatorIntake: intake,
+        pipelineStage: PipelineStage.EST_IN_PROGRESS,
+      });
     }
     setView('estimator-calculator');
-  }, [jobs]);
+  }, [jobs, handleUpdateJob]);
 
   /** Open the calculator pre-filled from an existing job (e.g. from OfficeJobDetail) */
   const handleOpenEstimateForJob = useCallback(async (job: Job) => {
@@ -1270,6 +1277,12 @@ const App: React.FC = () => {
         pipelineStage: PipelineStage.EST_SENT,
         estimateStatus: 'sent' as any,
         estimateSentDate: now,
+        nurtureSequence: NurtureSequence.ESTIMATE_FOLLOW_UP,
+        nurtureStatus: 'active',
+        nurtureStep: 0,
+        followUpStatus: 'scheduled',
+        followUpReason: 'Estimate sent - 3/4/7 day follow-up sequence',
+        lastContactDate: now,
         updatedAt: now,
       });
     } else {
@@ -1310,6 +1323,12 @@ const App: React.FC = () => {
         estimateStatus: 'sent' as any,
         estimateSentDate: now,
         portalStatus: 'ready',
+        nurtureSequence: NurtureSequence.ESTIMATE_FOLLOW_UP,
+        nurtureStatus: 'active',
+        nurtureStep: 0,
+        followUpStatus: 'scheduled',
+        followUpReason: 'Estimate sent - 3/4/7 day follow-up sequence',
+        lastContactDate: now,
       };
       setJobs(prev => [newJob, ...prev]);
       targetJobId = newJobId;
@@ -1317,11 +1336,12 @@ const App: React.FC = () => {
 
     // Open email to send the portal link to the client
     const portalUrl = `${window.location.origin}?portal=${portalToken}`;
+    const clientEmail = jobs.find(j => j.id === targetJobId)?.clientEmail || '';
     const emailSubject = encodeURIComponent('Your Luxury Decking Estimate');
     const emailBody = encodeURIComponent(
       `Hi ${data.clientName},\n\nThank you for your interest in Luxury Decking. Your custom estimate is ready to view.\n\nClick the link below to see your personalized estimate:\n${portalUrl}\n\nIf you have any questions, feel free to reply to this email or call us at 613-707-3060.\n\nBest regards,\nThe Luxury Decking Team`
     );
-    window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+    window.open(`mailto:${clientEmail}?subject=${emailSubject}&body=${emailBody}`, '_blank');
 
     // Navigate to estimate detail
     const updatedJob = jobs.find(j => j.id === targetJobId);
@@ -1371,7 +1391,8 @@ const App: React.FC = () => {
                 handleUpdatePipelineStage(jobId, updates.pipelineStage);
               }
               setShowCalculatorAcceptance(false);
-              setView('estimate-detail');
+              // Job is now at JOB_SOLD, navigate to the job detail page
+              setView('office-job-detail');
             }}
           />
         )}
@@ -1542,6 +1563,7 @@ const App: React.FC = () => {
               setSelectedJob(job);
               setView('customer-portal');
             }}
+            onDeleteJob={handleDeleteJob}
           />
         )}
         {view === 'estimate-detail' && selectedJob && currentUser && (
@@ -1559,6 +1581,7 @@ const App: React.FC = () => {
               setView('customer-portal');
             }}
             onDeleteJob={handleDeleteJob}
+            onJobAccepted={() => setView('office-job-detail')}
           />
         )}
         {view === 'office-dashboard' && currentUser && (
