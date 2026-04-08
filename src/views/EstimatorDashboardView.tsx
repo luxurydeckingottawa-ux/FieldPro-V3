@@ -27,6 +27,15 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
   const estimatorJobs = jobs.filter(job => {
     const estimateStages = [
       PipelineStage.LEAD_IN,
+      PipelineStage.FIRST_CONTACT,
+      PipelineStage.SECOND_CONTACT,
+      PipelineStage.THIRD_CONTACT,
+      PipelineStage.EST_UNSCHEDULED,
+      PipelineStage.EST_SCHEDULED,
+      PipelineStage.EST_IN_PROGRESS,
+      PipelineStage.EST_COMPLETED,
+      PipelineStage.EST_SENT,
+      // Legacy
       PipelineStage.SITE_VISIT_SCHEDULED,
       PipelineStage.ESTIMATE_IN_PROGRESS,
       PipelineStage.ESTIMATE_SENT,

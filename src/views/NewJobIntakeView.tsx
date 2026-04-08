@@ -6,9 +6,10 @@ import { ArrowLeft, Save, Info, AlertCircle } from 'lucide-react';
 interface NewJobIntakeViewProps {
   onSave: (job: Job) => void;
   onCancel: () => void;
+  initialStage?: PipelineStage;
 }
 
-const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel }) => {
+const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, initialStage = PipelineStage.LEAD_IN }) => {
   const [formData, setFormData] = useState({
     jobNumber: `LD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
     clientName: '',
@@ -42,7 +43,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel })
       ...formData,
       currentStage: 0,
       status: JobStatus.SCHEDULED,
-      pipelineStage: PipelineStage.JOB_SOLD,
+      pipelineStage: initialStage,
       officeChecklists: createDefaultOfficeChecklists(),
       officeNotes: [],
       siteNotes: [],

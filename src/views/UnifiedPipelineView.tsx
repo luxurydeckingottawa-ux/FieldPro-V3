@@ -12,7 +12,7 @@ import {
 interface UnifiedPipelineViewProps {
   jobs: Job[];
   onSelectJob: (job: Job) => void;
-  onNewJob: () => void;
+  onNewJob: (initialStage: PipelineStage) => void;
   onOpenEstimator: () => void;
   onUpdatePipelineStage?: (jobId: string, newStage: PipelineStage) => void;
 }
@@ -20,20 +20,23 @@ interface UnifiedPipelineViewProps {
 // Pipeline board definitions
 const LEAD_COLUMNS = [
   { id: PipelineStage.LEAD_IN, label: 'New Lead' },
-  { id: PipelineStage.SITE_VISIT_SCHEDULED, label: 'Scheduled' },
-  { id: PipelineStage.ESTIMATE_IN_PROGRESS, label: 'In Progress' },
-  { id: PipelineStage.ESTIMATE_SENT, label: 'Sent' },
-  { id: PipelineStage.FOLLOW_UP, label: 'Follow Up' },
+  { id: PipelineStage.FIRST_CONTACT, label: 'First Contact' },
+  { id: PipelineStage.SECOND_CONTACT, label: 'Second Contact' },
+  { id: PipelineStage.THIRD_CONTACT, label: 'Third Contact' },
+  { id: PipelineStage.LEAD_ON_HOLD, label: 'On Hold' },
+  { id: PipelineStage.LEAD_WON, label: 'Won' },
+  { id: PipelineStage.LEAD_LOST, label: 'Lost' },
 ];
 
 const ESTIMATE_COLUMNS = [
-  { id: 'unscheduled' as PipelineStage, label: 'Unscheduled' },
-  { id: PipelineStage.SITE_VISIT_SCHEDULED, label: 'Scheduled' },
-  { id: PipelineStage.ESTIMATE_IN_PROGRESS, label: 'In Progress' },
-  { id: PipelineStage.ESTIMATE_SENT, label: 'Sent' },
-  { id: 'on_hold' as PipelineStage, label: 'On Hold' },
-  { id: 'approved' as PipelineStage, label: 'Approved' },
-  { id: 'rejected' as PipelineStage, label: 'Rejected' },
+  { id: PipelineStage.EST_UNSCHEDULED, label: 'Unscheduled' },
+  { id: PipelineStage.EST_SCHEDULED, label: 'Scheduled' },
+  { id: PipelineStage.EST_IN_PROGRESS, label: 'In Progress' },
+  { id: PipelineStage.EST_COMPLETED, label: 'Completed' },
+  { id: PipelineStage.EST_SENT, label: 'Sent' },
+  { id: PipelineStage.EST_ON_HOLD, label: 'On Hold' },
+  { id: PipelineStage.EST_APPROVED, label: 'Approved' },
+  { id: PipelineStage.EST_REJECTED, label: 'Rejected' },
 ];
 
 const JOB_COLUMNS = PIPELINE_STAGES;
@@ -62,18 +65,17 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
 
   // Filter jobs for the active board
   const boardJobs = useMemo(() => {
-    const leadStages = [
-      PipelineStage.LEAD_IN, PipelineStage.SITE_VISIT_SCHEDULED,
-      PipelineStage.ESTIMATE_IN_PROGRESS, PipelineStage.ESTIMATE_SENT,
-      PipelineStage.FOLLOW_UP
-    ];
-    const jobStages = PIPELINE_STAGES.map(s => s.id);
+    const leadStageIds = LEAD_COLUMNS.map(c => c.id);
+    const estimateStageIds = ESTIMATE_COLUMNS.map(c => c.id);
+    const jobStageIds = PIPELINE_STAGES.map(s => s.id);
     
     let filtered = jobs;
-    if (activeBoard === 'leads' || activeBoard === 'estimates') {
-      filtered = jobs.filter(j => leadStages.includes(j.pipelineStage));
+    if (activeBoard === 'leads') {
+      filtered = jobs.filter(j => leadStageIds.includes(j.pipelineStage));
+    } else if (activeBoard === 'estimates') {
+      filtered = jobs.filter(j => estimateStageIds.includes(j.pipelineStage));
     } else {
-      filtered = jobs.filter(j => jobStages.includes(j.pipelineStage));
+      filtered = jobs.filter(j => jobStageIds.includes(j.pipelineStage));
     }
 
     if (searchTerm) {
@@ -143,13 +145,13 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
       id: 'leads', 
       label: 'Leads', 
       icon: <TrendingUp className="w-4 h-4" />,
-      count: jobs.filter(j => j.pipelineStage === PipelineStage.LEAD_IN || j.pipelineStage === PipelineStage.SITE_VISIT_SCHEDULED).length
+      count: jobs.filter(j => LEAD_COLUMNS.some(c => c.id === j.pipelineStage)).length
     },
     { 
       id: 'estimates', 
       label: 'Estimates', 
       icon: <FileText className="w-4 h-4" />,
-      count: jobs.filter(j => j.pipelineStage === PipelineStage.ESTIMATE_IN_PROGRESS || j.pipelineStage === PipelineStage.ESTIMATE_SENT || j.pipelineStage === PipelineStage.FOLLOW_UP).length
+      count: jobs.filter(j => ESTIMATE_COLUMNS.some(c => c.id === j.pipelineStage)).length
     },
     { 
       id: 'jobs', 
@@ -194,7 +196,14 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
 
         <div className="p-3 border-t border-[var(--border-color)] space-y-2">
           <button 
-            onClick={onNewJob} 
+            onClick={() => {
+              const stageMap: Record<BoardType, PipelineStage> = {
+                leads: PipelineStage.LEAD_IN,
+                estimates: PipelineStage.EST_UNSCHEDULED,
+                jobs: PipelineStage.JOB_SOLD
+              };
+              onNewJob(stageMap[activeBoard]);
+            }} 
             className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-emerald-500 transition-all active:scale-[0.97]"
           >
             <Plus className="w-3.5 h-3.5" /> New
@@ -248,9 +257,9 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
 
         {/* Board View */}
         {viewMode === 'board' ? (
-          <div className="flex-1 overflow-x-auto overflow-y-hidden">
-            <div className="flex h-full p-4 gap-3" style={{ minWidth: `${columns.length * 260}px` }}>
-              {columns.map(col => {
+          <div className="flex-1 overflow-x-auto overflow-y-hidden bg-[var(--bg-secondary)]">
+            <div className="flex h-full p-4 gap-0" style={{ minWidth: `${columns.length * 240}px` }}>
+              {columns.map((col, colIndex) => {
                 const colJobs = getColumnJobs(col.id);
                 const colTotal = getColumnTotal(col.id);
                 const isDragOver = dragOverColumn === col.id;
@@ -258,23 +267,21 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
                 return (
                   <div
                     key={col.id}
-                    className={`flex flex-col w-[250px] shrink-0 rounded-xl transition-all ${
-                      isDragOver ? 'bg-emerald-500/10 ring-2 ring-emerald-500/30' : 'bg-transparent'
+                    className={`flex flex-col w-[235px] shrink-0 border-r border-[var(--border-color)] transition-all ${
+                      isDragOver ? 'bg-emerald-500/10' : colIndex % 2 === 0 ? 'bg-[var(--bg-primary)]/30' : 'bg-transparent'
                     }`}
                     onDragOver={(e) => handleDragOver(e, col.id)}
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, col.id)}
                   >
                     {/* Column Header */}
-                    <div className="px-3 py-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div className="px-3 py-3 border-b border-[var(--border-color)] bg-[var(--bg-primary)]/60">
+                      <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold text-[var(--text-primary)]">{col.label}</h3>
-                        <span className="text-xs font-bold text-[var(--text-secondary)] bg-[var(--bg-primary)] px-1.5 py-0.5 rounded">
+                        <span className="text-xs font-bold text-[var(--text-secondary)] bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded">
                           {colJobs.length}
                         </span>
                       </div>
-                    </div>
-                    <div className="px-3 pb-2">
                       <span className="text-[11px] text-[var(--text-secondary)]">{fmt(colTotal)} total</span>
                     </div>
 

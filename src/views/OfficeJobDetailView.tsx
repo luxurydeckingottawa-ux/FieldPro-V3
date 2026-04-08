@@ -102,6 +102,21 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
   const isEstimateStage = [
     PipelineStage.LEAD_IN,
+    PipelineStage.FIRST_CONTACT,
+    PipelineStage.SECOND_CONTACT,
+    PipelineStage.THIRD_CONTACT,
+    PipelineStage.LEAD_ON_HOLD,
+    PipelineStage.LEAD_WON,
+    PipelineStage.LEAD_LOST,
+    PipelineStage.EST_UNSCHEDULED,
+    PipelineStage.EST_SCHEDULED,
+    PipelineStage.EST_IN_PROGRESS,
+    PipelineStage.EST_COMPLETED,
+    PipelineStage.EST_SENT,
+    PipelineStage.EST_ON_HOLD,
+    PipelineStage.EST_APPROVED,
+    PipelineStage.EST_REJECTED,
+    // Legacy stages
     PipelineStage.SITE_VISIT_SCHEDULED,
     PipelineStage.ESTIMATE_IN_PROGRESS,
     PipelineStage.ESTIMATE_SENT,

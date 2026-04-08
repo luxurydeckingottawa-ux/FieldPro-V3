@@ -16,10 +16,12 @@ import CustomerPortalView from './views/CustomerPortalView';
 import EstimatePortalView from './views/EstimatePortalView';
 import EstimatorDashboardView from './views/EstimatorDashboardView';
 import EstimatorWorkflowView from './views/EstimatorWorkflowView';
+import EstimateDetailView from './views/EstimateDetailView';
+import NavBar from './components/NavBar';
 import { EstimatorCalendar } from './components/EstimatorCalendar';
 import ChatView from './components/ChatView';
 import UserManagementView from './views/UserManagementView';
-import { LogOut, User as UserIcon, LayoutDashboard, BookOpen, Calendar, Kanban, Sun, Moon, MessageSquare, Users, AlertCircle, ChevronLeft, Settings, Calculator } from 'lucide-react';
+import { Calendar, Users, AlertCircle, ChevronLeft, Calculator } from 'lucide-react';
 import UnifiedPipelineView from './views/UnifiedPipelineView';
 
 import { geminiService } from './services/geminiService';
@@ -106,7 +108,7 @@ const App: React.FC = () => {
       return null;
     }
   });
-  const [view, setView] = useState<'login' | 'jobs' | 'detail' | 'workflow' | 'office-dashboard' | 'resources' | 'scheduling' | 'office-pipeline' | 'office-job-detail' | 'office-new-job' | 'chat' | 'customer-portal' | 'customers' | 'estimate-portal' | 'estimator-dashboard' | 'estimator-workflow' | 'estimator-calendar' | 'estimator-calculator' | 'user-management'>(() => {
+  const [view, setView] = useState<'login' | 'jobs' | 'detail' | 'workflow' | 'office-dashboard' | 'resources' | 'scheduling' | 'office-pipeline' | 'office-job-detail' | 'office-new-job' | 'chat' | 'customer-portal' | 'customers' | 'estimate-portal' | 'estimate-detail' | 'estimator-dashboard' | 'estimator-workflow' | 'estimator-calendar' | 'estimator-calculator' | 'user-management'>(() => {
     const params = new URLSearchParams(window.location.search);
     const portalToken = params.get('portal');
     if (portalToken) {
@@ -165,6 +167,8 @@ const App: React.FC = () => {
     }
     return null;
   });
+
+  const [newJobInitialStage, setNewJobInitialStage] = useState<PipelineStage>(PipelineStage.LEAD_IN);
 
   useEffect(() => {
     const handleAiKeyError = (e: any) => {
@@ -458,7 +462,22 @@ const App: React.FC = () => {
       return;
     }
     if (currentUser.role === Role.ADMIN) {
-      setView('office-job-detail');
+      // Route to estimate detail for pre-sale stages, job detail for post-sale
+      const estimateStages = [
+        PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
+        PipelineStage.THIRD_CONTACT, PipelineStage.LEAD_ON_HOLD, PipelineStage.LEAD_WON, PipelineStage.LEAD_LOST,
+        PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED, PipelineStage.EST_IN_PROGRESS,
+        PipelineStage.EST_COMPLETED, PipelineStage.EST_SENT, PipelineStage.EST_ON_HOLD,
+        PipelineStage.EST_APPROVED, PipelineStage.EST_REJECTED,
+        // Legacy
+        PipelineStage.SITE_VISIT_SCHEDULED, PipelineStage.ESTIMATE_IN_PROGRESS,
+        PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP
+      ];
+      if (estimateStages.includes(job.pipelineStage)) {
+        setView('estimate-detail');
+      } else {
+        setView('office-job-detail');
+      }
     } else if (currentUser.role === Role.ESTIMATOR) {
       console.log('Navigating to estimator-workflow for job:', job.id);
       setView('estimator-workflow');
@@ -1234,127 +1253,15 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300">
-      <nav className="bg-[var(--bg-primary)]/80 border-b border-[var(--border-color)] sticky top-0 z-50 px-6 h-20 backdrop-blur-2xl shadow-lg dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-        <div className="max-w-7xl mx-auto h-full flex items-center justify-between">
-          <div className="flex items-center group cursor-pointer" onClick={() => setView(currentUser?.role === Role.ADMIN ? 'office-dashboard' : 'jobs')}>
-            <div className="h-10 w-10 bg-emerald-600 rounded-xl flex items-center justify-center mr-4 shadow-[0_0_20px_rgba(16,185,129,0.2)] group-hover:scale-110 transition-transform duration-500">
-              <span className="text-black font-black text-sm tracking-tighter">LD</span>
-            </div>
-            <div className="hidden sm:block">
-              <p className="font-label mb-1.5 opacity-70">Luxury Decking</p>
-              <p className="text-base font-display italic">Field Pro</p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2 md:space-x-4 h-full">
-            <button 
-              onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
-              className="p-2.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5 rounded-xl transition-all active:scale-90 border border-transparent hover:border-[var(--border-color)] h-10 w-10 flex items-center justify-center"
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
-            {currentUser && (
-              <button 
-                onClick={() => setView('resources')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
-                  view === 'resources' ? 'bg-[var(--text-primary)]/10 text-emerald-600 dark:text-emerald-400 border border-[var(--border-color)] shadow-xl' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">Resources</span>
-              </button>
-            )}
-            {currentUser?.role === Role.ESTIMATOR && (
-              <button 
-                onClick={() => setView('estimator-dashboard')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
-                  view === 'estimator-dashboard' || view === 'estimator-workflow' ? 'bg-[var(--text-primary)]/10 text-emerald-600 dark:text-emerald-400 border border-[var(--border-color)] shadow-xl' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
-                }`}
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">Dashboard</span>
-              </button>
-            )}
-            {currentUser?.role === Role.ADMIN && (
-              <button 
-                onClick={() => setView('user-management')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
-                  view === 'user-management' ? 'bg-[var(--text-primary)]/10 text-emerald-600 dark:text-emerald-400 border border-[var(--border-color)] shadow-xl' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
-                }`}
-              >
-                <Settings className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">Users</span>
-              </button>
-            )}
-            {(currentUser?.role === Role.ADMIN) && (
-              <div className="flex bg-[var(--text-primary)]/5 p-1 rounded-[1.25rem] border border-[var(--border-color)] shadow-inner h-12 items-center">
-                <button 
-                  onClick={() => setView('office-pipeline')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
-                    view === 'office-pipeline' || view === 'office-job-detail' || view === 'customers' ? 'bg-[var(--bg-primary)]/80 dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-lg border border-[var(--border-color)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
-                  }`}
-                >
-                  <Kanban className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Pipeline</span>
-                </button>
-                <button 
-                  onClick={() => setView('office-dashboard')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
-                    view === 'office-dashboard' ? 'bg-[var(--bg-primary)]/80 dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-lg border border-[var(--border-color)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
-                  }`}
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Dashboard</span>
-                </button>
-                <button 
-                  onClick={() => setView('scheduling')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
-                    view === 'scheduling' ? 'bg-[var(--bg-primary)]/80 dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-lg border border-[var(--border-color)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
-                  }`}
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Schedule</span>
-                </button>
-                <button 
-                  onClick={() => setView('chat')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
-                    view === 'chat' ? 'bg-[var(--bg-primary)]/80 dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-lg border border-[var(--border-color)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
-                  }`}
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Chat</span>
-                </button>
-                <button 
-                  onClick={handleOpenNewEstimate}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
-                    view === 'estimator-calculator' ? 'bg-[var(--bg-primary)]/80 dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-lg border border-[var(--border-color)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
-                  }`}
-                >
-                  <Calculator className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Estimator</span>
-                </button>
-              </div>
-            )}
-            <div className="flex items-center bg-[var(--text-primary)]/5 px-4 h-12 rounded-xl border border-[var(--border-color)] shadow-inner group hover:border-[var(--text-primary)]/20 transition-all">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center mr-3 border border-emerald-500/20 group-hover:scale-105 transition-transform">
-                <UserIcon className="h-4 w-4 text-emerald-500" />
-              </div>
-              <div className="text-left hidden xs:block">
-                <p className="font-label opacity-60 leading-none mb-1">{currentUser?.role}</p>
-                <p className="text-xs font-bold text-[var(--text-primary)] tracking-tight">{currentUser?.name}</p>
-              </div>
-            </div>
-            <button 
-              onClick={handleLogout}
-              className="p-2.5 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all active:scale-90 border border-transparent hover:border-rose-500/20 h-10 w-10 flex items-center justify-center"
-              title="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </nav>
+      <NavBar
+        currentUser={currentUser}
+        view={view}
+        theme={theme}
+        onNavigate={(v) => setView(v as any)}
+        onLogout={handleLogout}
+        onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+        onOpenEstimator={handleOpenNewEstimate}
+      />
 
       <main className="py-0 max-w-7xl mx-auto px-6 mt-6">
         {aiError && (
@@ -1404,7 +1311,7 @@ const App: React.FC = () => {
           <UnifiedPipelineView 
             jobs={jobs}
             onSelectJob={handleSelectJob}
-            onNewJob={() => setView('office-new-job')}
+            onNewJob={(stage) => { setNewJobInitialStage(stage); setView('office-new-job'); }}
             onOpenEstimator={handleOpenNewEstimate}
             onUpdatePipelineStage={handleUpdatePipelineStage}
           />
@@ -1413,6 +1320,7 @@ const App: React.FC = () => {
           <NewJobIntakeView 
             onSave={handleCreateJob}
             onCancel={() => setView('office-pipeline')}
+            initialStage={newJobInitialStage}
           />
         )}
         {view === 'office-job-detail' && selectedJob && currentUser && (
@@ -1436,12 +1344,28 @@ const App: React.FC = () => {
             }}
           />
         )}
+        {view === 'estimate-detail' && selectedJob && currentUser && (
+          <EstimateDetailView
+            job={selectedJob}
+            onBack={() => setView('office-pipeline')}
+            onUpdateJob={handleUpdateJob}
+            onUpdatePipelineStage={handleUpdatePipelineStage}
+            onOpenEstimator={(job) => {
+              setSelectedJob(job);
+              handleOpenNewEstimate();
+            }}
+            onPreviewPortal={(job) => {
+              setSelectedJob(job);
+              setView('customer-portal');
+            }}
+          />
+        )}
         {view === 'office-dashboard' && currentUser && (
           <OfficeDashboardView 
             jobs={jobs}
             onSelectJob={handleSelectJob} 
             onViewResources={() => setView('resources')}
-            onNewJob={() => setView('office-new-job')}
+            onNewJob={() => { setNewJobInitialStage(PipelineStage.LEAD_IN); setView('office-new-job'); }}
           />
         )}
         {view === 'detail' && selectedJob && currentUser && (
@@ -1486,7 +1410,7 @@ const App: React.FC = () => {
             jobs={jobs}
             onSelectJob={handleSelectJob}
             onOpenCalendar={() => setView('estimator-calendar')}
-            onNewEstimate={() => setView('office-new-job')}
+            onNewEstimate={() => { setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED); setView('office-new-job'); }}
           />
         )}
         {view === 'estimator-calendar' && currentUser && (

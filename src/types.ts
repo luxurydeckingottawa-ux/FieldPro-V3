@@ -81,11 +81,29 @@ export interface FieldScheduleForecast {
 }
 
 export enum PipelineStage {
+  // Lead stages
   LEAD_IN = 'LEAD_IN',
+  FIRST_CONTACT = 'FIRST_CONTACT',
+  SECOND_CONTACT = 'SECOND_CONTACT',
+  THIRD_CONTACT = 'THIRD_CONTACT',
+  LEAD_ON_HOLD = 'LEAD_ON_HOLD',
+  LEAD_WON = 'LEAD_WON',
+  LEAD_LOST = 'LEAD_LOST',
+  // Estimate stages
+  EST_UNSCHEDULED = 'EST_UNSCHEDULED',
+  EST_SCHEDULED = 'EST_SCHEDULED',
+  EST_IN_PROGRESS = 'EST_IN_PROGRESS',
+  EST_COMPLETED = 'EST_COMPLETED',
+  EST_SENT = 'EST_SENT',
+  EST_ON_HOLD = 'EST_ON_HOLD',
+  EST_APPROVED = 'EST_APPROVED',
+  EST_REJECTED = 'EST_REJECTED',
+  // Legacy pre-sale stages (keep for backward compatibility)
   SITE_VISIT_SCHEDULED = 'SITE_VISIT_SCHEDULED',
   ESTIMATE_IN_PROGRESS = 'ESTIMATE_IN_PROGRESS',
   ESTIMATE_SENT = 'ESTIMATE_SENT',
   FOLLOW_UP = 'FOLLOW_UP',
+  // Job stages (post-sale)
   JOB_SOLD = 'JOB_SOLD',
   ADMIN_SETUP = 'ADMIN_SETUP',
   PRE_PRODUCTION = 'PRE_PRODUCTION',
@@ -362,6 +380,8 @@ export interface Job {
   depositRequestedDate?: string;
   depositReceivedDate?: string;
   contractSignedDate?: string;
+  customerSignature?: string;
+  contractPdfUrl?: string;
   acceptedBuildSummary?: {
     optionName: string;
     basePrice: number;
