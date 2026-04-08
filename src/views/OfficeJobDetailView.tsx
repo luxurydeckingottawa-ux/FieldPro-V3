@@ -206,6 +206,15 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
                 {job.projectType}
               </p>
+              {job.projectAddress && (
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs text-gray-400">{job.projectAddress}</p>
+                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.projectAddress)}`} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold text-[var(--brand-gold)] bg-[var(--brand-gold)]/5 rounded border border-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/10 transition-colors">
+                    <MapPin className="w-3 h-3" /> Map
+                  </a>
+                </div>
+              )}
             </div>
           </div>
 
@@ -2269,7 +2278,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             onSendMessage(sessionId, content);
           } else {
             // Handle email intent
-            window.open(`mailto:${job.clientEmail}?subject=Luxury Decking: ${job.jobNumber}&body=${encodeURIComponent(content)}`, '_blank');
+            const mailLink = document.createElement('a'); mailLink.href = `mailto:${job.clientEmail}?subject=Luxury Decking: ${job.jobNumber}&body=${encodeURIComponent(content)}`; mailLink.click();
           }
         }}
       />

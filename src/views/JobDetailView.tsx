@@ -70,7 +70,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
       onSendMessage?.(sessionId, message);
     } else {
       // Handle email intent
-      window.open(`mailto:${job.clientEmail}?subject=Luxury Decking: ${job.jobNumber}&body=${encodeURIComponent(message)}`, '_blank');
+      const mailLink = document.createElement('a'); mailLink.href = `mailto:${job.clientEmail}?subject=Luxury Decking: ${job.jobNumber}&body=${encodeURIComponent(message)}`; mailLink.click();
     }
     setIsMessageModalOpen(false);
   };

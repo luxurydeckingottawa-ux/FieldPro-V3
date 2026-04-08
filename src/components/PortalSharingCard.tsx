@@ -26,9 +26,11 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
   const sharePortalLink = (type: 'sms' | 'email') => {
     const message = `Hi ${job.clientName}, here is your project portal link for your Luxury Decking project: ${portalUrl}`;
     if (type === 'sms') {
-      window.location.href = `sms:${job.clientPhone || ''}?body=${encodeURIComponent(message)}`, '_blank');
+      window.location.href = `sms:${job.clientPhone || ''}?body=${encodeURIComponent(message)}`;
     } else {
-      window.open(`mailto:${job.clientEmail || ''}?subject=${encodeURIComponent('Your Luxury Decking Project Portal')}&body=${encodeURIComponent(message)}`, '_blank');
+      const mailLink = document.createElement('a');
+      mailLink.href = `mailto:${job.clientEmail || ''}?subject=${encodeURIComponent('Your Luxury Decking Project Portal')}&body=${encodeURIComponent(message)}`;
+      mailLink.click();
     }
   };
 

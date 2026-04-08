@@ -5,6 +5,7 @@ import LoginView from './views/LoginView';
 import JobsListView from './views/JobsListView';
 import JobDetailView from './views/JobDetailView';
 import OfficeDashboardView from './views/OfficeDashboardView';
+import StatsView from './views/StatsView';
 import WorkflowContainer from './views/WorkflowContainer';
 import FieldResourcesView from './views/FieldResourcesView';
 import { generateCloseoutPDF, generateInvoicePDF } from './utils/pdfGenerator';
@@ -869,7 +870,7 @@ const App: React.FC = () => {
     let body = `Job Close-out Package: ${closeoutUrl}\n`;
     if (invoiceUrl) body += `Subcontractor Invoice: ${invoiceUrl}\n`;
     body += `\nFull documentation verified via Luxury Decking Field Pro.`;
-    window.open(`mailto:${OFFICE_EMAIL}?subject=${subject}&body=${encodeURIComponent(body)}`, '_blank');
+    const mailLink = document.createElement('a'); mailLink.href = `mailto:${OFFICE_EMAIL}?subject=${subject}&body=${encodeURIComponent(body)}`; mailLink.click();
   }, [workflowState.userRole, workflowState.jobInfo.jobName]);
 
   const handleUpdateOfficeReviewStatus = useCallback((jobId: string, status: OfficeReviewStatus) => {
@@ -930,10 +931,25 @@ const App: React.FC = () => {
     // Also keep localStorage as a local cache for offline support
     localStorage.setItem(`estimator_intake_${intake.jobId}`, JSON.stringify(intake));
     
-    // Update the job in state
+    // Update the job in state WITH the estimatorIntake data
+    const marketingSource = intake.checklist?.marketingSource || '';
+    const marketingDetail = intake.checklist?.marketingDetail || '';
+    const leadSourceStr = marketingDetail ? `${marketingSource} - ${marketingDetail}` : marketingSource;
+    
     setJobs(prev => prev.map(job => 
-      job.id === intake.jobId ? { ...job, updatedAt: new Date().toISOString() } : job
+      job.id === intake.jobId ? { 
+        ...job, 
+        estimatorIntake: intake,
+        leadSource: leadSourceStr || job.leadSource,
+        updatedAt: new Date().toISOString() 
+      } : job
     ));
+    setSelectedJob(prev => {
+      if (prev && prev.id === intake.jobId) {
+        return { ...prev, estimatorIntake: intake, leadSource: leadSourceStr || prev.leadSource, updatedAt: new Date().toISOString() };
+      }
+      return prev;
+    });
     
   }, []);
 
@@ -1345,7 +1361,10 @@ const App: React.FC = () => {
     const emailBody = encodeURIComponent(
       `Hi ${data.clientName},\n\nThank you for your interest in Luxury Decking. Your custom estimate is ready to view.\n\nClick the link below to see your personalized estimate:\n${portalUrl}\n\nIf you have any questions, feel free to reply to this email or call us at 613-707-3060.\n\nBest regards,\nThe Luxury Decking Team`
     );
-    window.open(`mailto:${clientEmail}?subject=${emailSubject}&body=${emailBody}`, '_blank');
+    // Use hidden anchor to open email without blank tab
+    const mailLink = document.createElement('a');
+    mailLink.href = `mailto:${clientEmail}?subject=${emailSubject}&body=${emailBody}`;
+    mailLink.click();
 
     // Navigate to estimate detail
     const updatedJob = jobs.find(j => j.id === targetJobId);
@@ -1486,6 +1505,18 @@ const App: React.FC = () => {
         onLogout={handleLogout}
         onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
         onOpenEstimator={handleOpenNewEstimate}
+        onNewLead={() => {
+          setNewJobInitialStage(PipelineStage.LEAD_IN);
+          setView('new-job');
+        }}
+        onNewEstimateAppointment={() => {
+          setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
+          setView('new-job');
+        }}
+        onNewJob={() => {
+          setNewJobInitialStage(PipelineStage.JOB_SOLD);
+          setView('new-job');
+        }}
       />
 
       <main className="py-0 max-w-7xl mx-auto px-6 mt-6">
@@ -1594,6 +1625,12 @@ const App: React.FC = () => {
             onSelectJob={handleSelectJob} 
             onViewResources={() => setView('resources')}
             onNewJob={() => { setNewJobInitialStage(PipelineStage.LEAD_IN); setView('office-new-job'); }}
+          />
+        )}
+        {view === 'stats' && currentUser && (
+          <StatsView
+            jobs={jobs}
+            onBack={() => setView('office-dashboard')}
           />
         )}
         {view === 'detail' && selectedJob && currentUser && (

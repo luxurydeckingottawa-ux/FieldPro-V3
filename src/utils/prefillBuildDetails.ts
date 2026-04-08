@@ -26,6 +26,18 @@ export function prefillBuildDetailsFromQuote(
 ): BuildDetails {
   const updated = { ...existing };
 
+  // Ensure all nested objects exist
+  if (!updated.footings) updated.footings = { type: '', attachedToHouse: false, floating: false, bracketType: '', notes: '' };
+  if (!updated.framing) updated.framing = { type: '', joistSize: '', joistSpacing: '', joistProtection: false, joistProtectionType: '', notes: '' };
+  if (!updated.decking) updated.decking = { type: '', brand: '', color: '', accentNote: '', notes: '' };
+  if (!updated.railing) updated.railing = { included: false, type: '', notes: '' };
+  if (!updated.skirting) updated.skirting = { included: false, type: '', trapDoor: false, notes: '' };
+  if (!updated.features) updated.features = { privacyWall: false, privacyWallType: '', customNotes: '' };
+  if (!updated.sitePrep) updated.sitePrep = { demolitionRequired: false, permitsRequired: false, locatesRequired: false, binRequired: false, siteProtection: false, inspectionRequired: false, notes: '' };
+  if (!updated.electrical) updated.electrical = { lightingIncluded: false, lightingType: '', roughInNotes: '', notes: '' };
+  if (!updated.landscaping) updated.landscaping = { prepType: '', notes: '' };
+  if (!updated.stairs) updated.stairs = { included: false, type: '', style: '', notes: '' };
+
   // Foundation
   if (selections.foundation) {
     const foundationId = selections.foundation;

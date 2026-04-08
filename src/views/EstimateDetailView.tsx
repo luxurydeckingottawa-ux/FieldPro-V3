@@ -112,7 +112,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
     if (type === 'sms') {
       window.location.href = `sms:${job.clientPhone || ''}?body=${encodeURIComponent(message)}`;
     } else {
-      window.open(`mailto:${job.clientEmail || ''}?subject=${encodeURIComponent('Your Luxury Decking Estimate')}&body=${encodeURIComponent(message)}`, '_blank');
+      const mailLink = document.createElement('a'); mailLink.href = `mailto:${job.clientEmail || ''}?subject=${encodeURIComponent('Your Luxury Decking Estimate')}&body=${encodeURIComponent(message)}`; mailLink.click();
     }
   };
 
@@ -322,7 +322,18 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center"><MapPin className="w-4 h-4 text-[var(--text-secondary)]" /></div>
-                      <div><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Address</p><p className="text-sm font-medium text-[var(--text-primary)]">{job.projectAddress || 'Not provided'}</p></div>
+                      <div className="flex-1">
+                        <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Address</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-[var(--text-primary)]">{job.projectAddress || 'Not provided'}</p>
+                          {job.projectAddress && (
+                            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.projectAddress)}`} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold text-[var(--brand-gold)] bg-[var(--brand-gold)]/5 rounded border border-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/10 transition-colors">
+                              <ExternalLink className="w-3 h-3" /> Map
+                            </a>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center"><Zap className="w-4 h-4 text-[var(--text-secondary)]" /></div>

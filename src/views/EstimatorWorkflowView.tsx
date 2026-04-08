@@ -27,7 +27,7 @@ import EstimatorMeasureSheet from '../components/EstimatorMeasureSheet';
 import EstimatorSketchPad from '../components/EstimatorSketchPad';
 import EstimatorAiAssist from '../components/EstimatorAiAssist';
 import { safeSetItem, safeRemoveItem } from '../utils/storage';
-import { estimatorAiService } from '../services/estimatorAiService';
+import { validateIntakeCompleteness, generateHandoffSummary as generateRuleHandoffSummary } from '../utils/intakeValidation';
 
 interface EstimatorWorkflowViewProps {
   job: Job;
@@ -160,13 +160,30 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
     }));
   };
 
-  const handleGenerateHandoff = async () => {
+  const handleGenerateHandoff = () => {
     setIsGeneratingHandoff(true);
     try {
-      const handoff = await estimatorAiService.generateHandoffSummary(intake);
-      handleUpdateAiInsights({ handoff });
+      const flags = validateIntakeCompleteness(intake);
+      const summary = generateRuleHandoffSummary(intake);
+      handleUpdateAiInsights({ 
+        handoff: { 
+          summary, 
+          flags: flags.map(f => f.message),
+          readyForOffice: flags.filter(f => f.severity === 'high').length === 0,
+          generatedAt: new Date().toISOString()
+        }
+      });
+      // Also update flags
+      setIntake(prev => ({
+        ...prev,
+        aiInsights: {
+          ...prev.aiInsights,
+          flags,
+          lastCheckedAt: new Date().toISOString()
+        }
+      }));
     } catch (error) {
-      console.error("Handoff generation failed:", error);
+      console.error("Validation failed:", error);
     } finally {
       setIsGeneratingHandoff(false);
     }
@@ -674,6 +691,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                       </div>
                       <button
                         onClick={() => {
+                          onSave(intake);
                           handleStatusChange('completed');
                         }}
                         className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98]"

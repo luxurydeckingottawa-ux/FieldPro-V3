@@ -141,6 +141,62 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
         </div>
       </div>
 
+      {/* Upcoming Appointments */}
+      {(() => {
+        const scheduledJobs = estimatorJobs
+          .filter(j => j.scheduledDate && new Date(j.scheduledDate) >= new Date())
+          .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime())
+          .slice(0, 5);
+        
+        return scheduledJobs.length > 0 ? (
+          <div className="px-4 pt-4">
+            <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
+              <div className="px-4 py-3 border-b border-[var(--border-color)] flex items-center justify-between">
+                <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5 text-[var(--brand-gold)]" /> Upcoming Appointments
+                </h2>
+                <span className="text-[10px] font-bold text-[var(--brand-gold)]">{scheduledJobs.length} scheduled</span>
+              </div>
+              <div className="divide-y divide-[var(--border-color)]">
+                {scheduledJobs.map(job => {
+                  const date = new Date(job.scheduledDate!);
+                  const isToday = date.toDateString() === new Date().toDateString();
+                  const isTomorrow = date.toDateString() === new Date(Date.now() + 86400000).toDateString();
+                  const dayLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : date.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+                  
+                  return (
+                    <button key={job.id} onClick={() => onSelectJob(job)}
+                      className="w-full flex items-center gap-4 px-4 py-3 hover:bg-[var(--brand-gold)]/5 transition-colors text-left">
+                      <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 ${isToday ? 'bg-[var(--brand-gold)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'}`}>
+                        <span className="text-[9px] font-bold uppercase">{date.toLocaleDateString('en-CA', { month: 'short' })}</span>
+                        <span className="text-lg font-black leading-none">{date.getDate()}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-[var(--text-primary)] truncate">{job.clientName || 'Unnamed'}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-[var(--text-secondary)] truncate">{job.projectAddress || 'No address'}</p>
+                          {job.projectAddress && (
+                            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.projectAddress)}`} 
+                              target="_blank" rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="text-[8px] font-bold text-[var(--brand-gold)] hover:underline shrink-0">
+                              Map
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className={`text-[10px] font-bold ${isToday ? 'text-[var(--brand-gold)]' : 'text-[var(--text-secondary)]'}`}>{dayLabel}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : null;
+      })()}
+
       {/* Jobs List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {filteredJobs.length > 0 ? (
@@ -171,9 +227,15 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
 
               <div className="space-y-2 mb-4">
                 {job.projectAddress && (
-                  <div className="flex items-start gap-2 text-[var(--text-secondary)] text-sm">
-                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span className="line-clamp-1">{job.projectAddress}</span>
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
+                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                    <span className="line-clamp-1 flex-1">{job.projectAddress}</span>
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.projectAddress)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      className="text-[9px] font-bold text-[var(--brand-gold)] bg-[var(--brand-gold)]/5 px-1.5 py-0.5 rounded hover:bg-[var(--brand-gold)]/10 shrink-0">
+                      Directions
+                    </a>
                   </div>
                 )}
                 {job.clientPhone && (
