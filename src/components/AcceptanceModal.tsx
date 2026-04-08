@@ -74,9 +74,11 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
       });
 
       // Pre-fill build details from quote selections
+      const selections = job.calculatorSelections || 
+        (job.acceptedBuildSummary ? { decking: job.acceptedBuildSummary.optionName } : {});
       const prefilledBuildDetails = prefillBuildDetailsFromQuote(
         job.buildDetails || {} as any,
-        job.acceptedBuildSummary ? { decking: job.acceptedBuildSummary.optionName } : {},
+        selections,
         job.acceptedBuildSummary?.scopeSummary
       );
 

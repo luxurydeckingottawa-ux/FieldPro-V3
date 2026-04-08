@@ -449,7 +449,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             <div className="h-6 w-px bg-slate-200" />
             <div className="flex items-center gap-2 text-slate-600">
               <Phone className="w-4 h-4" />
-              <span className="text-sm font-medium">613-555-0123</span>
+              <span className="text-sm font-medium">613-707-3060</span>
             </div>
             {onClose && (
               <>

@@ -385,7 +385,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
             </div>
 
             {/* Site Dimensions & Measurements */}
-            {(job.estimatorIntake?.measureSheet || job.acceptedBuildSummary) && (
+            {(job.estimatorIntake?.measureSheet || job.calculatorDimensions || job.acceptedBuildSummary) && (
               <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
                 <div className="px-5 py-3 border-b border-[var(--border-color)]">
                   <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
@@ -411,7 +411,27 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                         {ms.elevationNote && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg col-span-2"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Elevation Notes</p><p className="text-sm text-[var(--text-primary)]">{ms.elevationNote}</p></div>}
                       </div>
                     );
-                  })() : job.acceptedBuildSummary && (
+                  })() : job.calculatorDimensions ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {Object.entries(job.calculatorDimensions).filter(([_, v]) => v > 0).map(([key, val]) => {
+                        const labels: Record<string, string> = {
+                          sqft: 'Deck Area', footingsCount: 'Footings', steps: 'Stairs', fasciaLF: 'Fascia',
+                          railingLF: 'Railing', alumPosts: 'Alum. Posts', alumSection6: 'Alum. 6ft', alumSection8: 'Alum. 8ft',
+                          skirtingSqFt: 'Skirting', privacyLF: 'Privacy Wall', demoSqFt: 'Demo', borderLF: 'Picture Frame'
+                        };
+                        const units: Record<string, string> = {
+                          sqft: 'sqft', footingsCount: '', steps: 'LF', fasciaLF: 'LF',
+                          railingLF: 'LF', skirtingSqFt: 'sqft', privacyLF: 'LF', demoSqFt: 'sqft', borderLF: 'LF'
+                        };
+                        return (
+                          <div key={key} className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                            <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">{labels[key] || key}</p>
+                            <p className="text-lg font-bold text-[var(--text-primary)]">{val} {units[key] || ''}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : job.acceptedBuildSummary && (
                     <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
                       <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase mb-1">Build Summary</p>
                       <p className="text-sm text-[var(--text-primary)]">{job.acceptedBuildSummary.scopeSummary}</p>

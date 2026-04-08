@@ -394,6 +394,9 @@ export interface Job {
 
   // Estimator field intake data
   estimatorIntake?: EstimatorIntake;
+  // Calculator selections (materials, options chosen during estimating)
+  calculatorSelections?: Record<string, string>;
+  calculatorDimensions?: Record<string, number>;
 
   // Module: CRM / Nurture & Automation
   nurtureSequence?: NurtureSequence;

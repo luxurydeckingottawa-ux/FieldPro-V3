@@ -1177,6 +1177,8 @@ const App: React.FC = () => {
         totalAmount,
         estimateAmount,
         acceptedBuildSummary,
+        calculatorSelections: data.selections,
+        calculatorDimensions: data.dimensions,
         pipelineStage: PipelineStage.EST_COMPLETED,
         estimateStatus: 'completed' as const,
         estimateSentDate: now,
@@ -1184,7 +1186,7 @@ const App: React.FC = () => {
       });
       const updatedJob = jobs.find(j => j.id === calculatorSourceJobId);
       if (updatedJob) {
-        const jobForModal = { ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, pipelineStage: PipelineStage.EST_COMPLETED, clientName: data.clientName, projectAddress: data.clientAddress };
+        const jobForModal = { ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, calculatorSelections: data.selections, calculatorDimensions: data.dimensions, pipelineStage: PipelineStage.EST_COMPLETED, clientName: data.clientName, projectAddress: data.clientAddress };
         setCalculatorAcceptanceJob(jobForModal);
         setSelectedJob(jobForModal);
       }
@@ -1274,6 +1276,8 @@ const App: React.FC = () => {
         totalAmount,
         estimateAmount,
         acceptedBuildSummary,
+        calculatorSelections: data.selections,
+        calculatorDimensions: data.dimensions,
         pipelineStage: PipelineStage.EST_SENT,
         estimateStatus: 'sent' as any,
         estimateSentDate: now,
