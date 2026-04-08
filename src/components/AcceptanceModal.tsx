@@ -1,13 +1,34 @@
 import React, { useState, useCallback } from 'react';
-import { Job, PipelineStage, DepositStatus, SoldWorkflowStatus, CustomerLifecycle } from '../types';
+import { Job, PipelineStage, DepositStatus, SoldWorkflowStatus, CustomerLifecycle, BuildDetails } from '../types';
 import SignaturePad from './SignaturePad';
 import { generateContractPDF } from '../utils/contractPdf';
 import { generateDepositInvoice } from '../utils/depositInvoice';
 import { prefillBuildDetailsFromQuote } from '../utils/prefillBuildDetails';
+import { createDefaultBuildDetails } from '../constants';
 import { 
   X, CheckCircle2, FileText, DollarSign, 
   Calendar, Shield, AlertCircle, Download, Loader2
 } from 'lucide-react';
+
+// Safe fallback for build details when none exist
+const createSafeBuildDetails = (): BuildDetails => {
+  try {
+    return createDefaultBuildDetails();
+  } catch {
+    return {
+      sitePrep: { demolitionRequired: false, permitsRequired: false, locatesRequired: false, binRequired: false, siteProtection: false, inspectionRequired: false, notes: '' },
+      footings: { type: '', attachedToHouse: false, floating: false, bracketType: '', notes: '' },
+      framing: { type: 'Pressure Treated', joistSize: '2x8', joistSpacing: '16" OC', joistProtection: false, joistProtectionType: '', notes: '' },
+      landscaping: { prepType: '', notes: '' },
+      electrical: { lightingIncluded: false, lightingType: '', roughInNotes: '', notes: '' },
+      decking: { type: '', brand: '', color: '', accentNote: '', notes: '' },
+      railing: { included: false, type: '', notes: '' },
+      skirting: { included: false, type: '', trapDoor: false, notes: '' },
+      stairs: { included: false, type: '', style: '', notes: '' },
+      features: { privacyWall: false, privacyWallType: '', customNotes: '' },
+    };
+  }
+};
 
 interface AcceptanceModalProps {
   job: Job;
@@ -44,43 +65,83 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
     setError(null);
 
     try {
-      // Generate the contract PDF
-      const contractPdfUrl = await generateContractPDF({
-        jobNumber: job.jobNumber || '',
-        clientName: clientName,
-        clientEmail: job.clientEmail || '',
-        clientPhone: job.clientPhone || '',
-        projectAddress: job.projectAddress || '',
-        totalAmount: amount,
-        depositAmount: deposit,
-        scopeSummary: job.scopeSummary || job.acceptedBuildSummary?.scopeSummary || '',
-        signature: signature,
-        acceptedDate: new Date().toISOString(),
-      });
-
-      // Update the job with acceptance data
       const now = new Date().toISOString();
 
-      // Generate deposit invoice
-      const depositInvoiceUrl = generateDepositInvoice({
-        jobNumber: job.jobNumber || '',
-        clientName: clientName,
-        clientEmail: job.clientEmail || '',
-        clientPhone: job.clientPhone || '',
-        projectAddress: job.projectAddress || '',
-        totalAmount: amount,
-        depositPercent: 30,
-        invoiceDate: now,
-      });
+      // Generate the contract PDF
+      let contractPdfUrl = '';
+      try {
+        contractPdfUrl = await generateContractPDF({
+          jobNumber: job.jobNumber || '',
+          clientName: clientName,
+          clientEmail: job.clientEmail || '',
+          clientPhone: job.clientPhone || '',
+          projectAddress: job.projectAddress || '',
+          totalAmount: amount,
+          depositAmount: deposit,
+          scopeSummary: job.scopeSummary || job.acceptedBuildSummary?.scopeSummary || '',
+          signature: signature!,
+          acceptedDate: now,
+        });
+      } catch (pdfErr) {
+        console.error('Contract PDF generation failed:', pdfErr);
+        // Continue without contract PDF - don't block acceptance
+      }
 
-      // Pre-fill build details from quote selections
-      const selections = job.calculatorSelections || 
-        (job.acceptedBuildSummary ? { decking: job.acceptedBuildSummary.optionName } : {});
-      const prefilledBuildDetails = prefillBuildDetailsFromQuote(
-        job.buildDetails || {} as any,
-        selections,
-        job.acceptedBuildSummary?.scopeSummary
-      );
+      // Generate deposit invoice
+      let depositInvoiceUrl = '';
+      try {
+        depositInvoiceUrl = generateDepositInvoice({
+          jobNumber: job.jobNumber || '',
+          clientName: clientName,
+          clientEmail: job.clientEmail || '',
+          clientPhone: job.clientPhone || '',
+          projectAddress: job.projectAddress || '',
+          totalAmount: amount,
+          depositPercent: 30,
+          invoiceDate: now,
+        });
+      } catch (invErr) {
+        console.error('Deposit invoice generation failed:', invErr);
+        // Continue without invoice - don't block acceptance
+      }
+
+      // Pre-fill build details from quote selections (non-critical)
+      let prefilledBuildDetails = job.buildDetails;
+      try {
+        const selections = job.calculatorSelections || 
+          (job.acceptedBuildSummary ? { decking: job.acceptedBuildSummary.optionName } : {});
+        prefilledBuildDetails = prefillBuildDetailsFromQuote(
+          job.buildDetails || createSafeBuildDetails(),
+          selections,
+          job.acceptedBuildSummary?.scopeSummary
+        );
+      } catch (prefillErr) {
+        console.error('Build details prefill failed:', prefillErr);
+        // Use existing build details
+      }
+
+      // Build file attachments
+      const newFiles = [...(job.files || [])];
+      if (contractPdfUrl) {
+        newFiles.push({
+          id: `contract-${Date.now()}`,
+          name: `Contract-${job.jobNumber}.pdf`,
+          url: contractPdfUrl,
+          type: 'contract',
+          uploadedAt: now,
+          uploadedBy: 'system'
+        });
+      }
+      if (depositInvoiceUrl) {
+        newFiles.push({
+          id: `deposit-inv-${Date.now()}`,
+          name: `Deposit-Invoice-${job.jobNumber}.pdf`,
+          url: depositInvoiceUrl,
+          type: 'other',
+          uploadedAt: now,
+          uploadedBy: 'system'
+        });
+      }
 
       onAccept(job.id, {
         pipelineStage: PipelineStage.JOB_SOLD,
@@ -96,25 +157,7 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
         clientName: clientName,
         buildDetails: prefilledBuildDetails,
         updatedAt: now,
-        files: [
-          ...(job.files || []),
-          {
-            id: `contract-${Date.now()}`,
-            name: `Contract-${job.jobNumber}.pdf`,
-            url: contractPdfUrl,
-            type: 'contract',
-            uploadedAt: now,
-            uploadedBy: 'system'
-          },
-          {
-            id: `deposit-inv-${Date.now()}`,
-            name: `Deposit-Invoice-${job.jobNumber}.pdf`,
-            url: depositInvoiceUrl,
-            type: 'other',
-            uploadedAt: now,
-            uploadedBy: 'system'
-          }
-        ]
+        files: newFiles,
       });
 
       onClose();

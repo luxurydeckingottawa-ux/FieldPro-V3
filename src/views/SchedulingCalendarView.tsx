@@ -257,6 +257,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
 
       {/* Calendar Grid */}
       {calendarMode === 'crew' ? (
+      <>
       <div className="flex-1 overflow-auto p-8">
         <div className="min-w-[1000px]">
           {/* Days Header */}
@@ -384,7 +385,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
         </div>
       </div>
 
-      {/* Unscheduled / Pending Jobs Sidebar */}
+      {/* Unscheduled / Pending Jobs Sidebar - crew planner only */}
       <div className="p-8 border-t border-[var(--border-color)] bg-[var(--text-primary)]/[0.01]">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-label tracking-[0.3em]">Unscheduled or Pending Review</h3>
@@ -426,6 +427,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
           )}
         </div>
       </div>
+      </>
       ) : (
         /* Appointments Calendar */
         <div className="flex-1 overflow-auto p-8">
