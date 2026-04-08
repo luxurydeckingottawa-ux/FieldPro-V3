@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { Clock, MapPin, AlertCircle, CheckCircle2, LogOut, Navigation, Store, RotateCcw, CheckSquare, ArrowRight } from 'lucide-react';
 import { Job, PunchType, TimeEntry, LeaveSiteAction, Role, User } from '../types';
 import { timeClockService } from '../services/TimeClockService';
@@ -168,13 +168,13 @@ const TimeClockControls: React.FC<TimeClockControlsProps> = ({ user, job, allJob
       </div>
 
       {/* Job Selection Modal */}
-      <AnimatePresence>
+      
         {showJobSelection && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+            <div
+              
+              
+              
               className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2.5rem] p-8 w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl"
             >
               <div className="flex items-center justify-between mb-8">
@@ -238,18 +238,18 @@ const TimeClockControls: React.FC<TimeClockControlsProps> = ({ user, job, allJob
                   </div>
                 </button>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      
 
       {/* Geofence Reminder Prompt */}
-      <AnimatePresence>
+      
         {showLeavePrompt && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
+          <div
+            
+            
+            
             className="bg-indigo-600 rounded-3xl p-6 shadow-2xl shadow-indigo-600/30 border border-white/20"
           >
             <div className="flex items-start gap-4 mb-6">
@@ -299,9 +299,9 @@ const TimeClockControls: React.FC<TimeClockControlsProps> = ({ user, job, allJob
             >
               Dismiss
             </button>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      
     </div>
   );
 };

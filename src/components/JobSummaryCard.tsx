@@ -5,7 +5,7 @@ import ProjectLocationMap from './ProjectLocationMap';
 import { 
   Info, MapPin, Zap, Users, Phone, Mail, MessageSquare 
 } from 'lucide-react';
-import { motion } from 'motion/react';
+
 
 interface JobSummaryCardProps {
   job: Job;
@@ -14,10 +14,10 @@ interface JobSummaryCardProps {
 
 const JobSummaryCard: React.FC<JobSummaryCardProps> = ({ job, onOpenMessageModal }) => {
   return (
-    <motion.section 
-      initial={{ y: 20, opacity: 0 }}
-      whileInView={{ y: 0, opacity: 1 }}
-      viewport={{ once: true }}
+    <section 
+      
+      
+      
       className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2rem] p-8 shadow-2xl relative overflow-hidden group"
     >
       <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--brand-gold)]/5 blur-[100px] -mr-48 -mt-48 pointer-events-none" />
@@ -151,7 +151,7 @@ const JobSummaryCard: React.FC<JobSummaryCardProps> = ({ job, onOpenMessageModal
           </div>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };
 

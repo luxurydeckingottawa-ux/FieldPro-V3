@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion } from 'motion/react';
+
 import { Clock, MapPin, AlertCircle, CheckCircle2, Search, Calendar, User as UserIcon, Navigation, Store, RotateCcw, CheckSquare, LogOut } from 'lucide-react';
 import { PunchType, LeaveSiteAction } from '../types';
 import { timeClockService } from '../services/TimeClockService';
@@ -141,10 +141,10 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
       {filter === 'summary' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {jobSummaries.map(job => (
-            <motion.div
+            <div
               key={job.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              
+              
               className="card-base p-6 space-y-4"
             >
               <div className="flex items-center justify-between">
@@ -184,7 +184,7 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
                   />
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
           {jobSummaries.length === 0 && (
             <div className="col-span-full py-20 text-center card-base border-dashed">
@@ -199,10 +199,10 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
         <div className="lg:col-span-2 space-y-4">
           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2">Recent Punches</h3>
           {filteredEntries.map((entry) => (
-            <motion.div
+            <div
               key={entry.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
+              
+              
               className="card-base p-5 flex items-center justify-between group hover:border-white/20 transition-all"
             >
               <div className="flex items-center gap-5">
@@ -234,7 +234,7 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
                   <MapPin size={14} />
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
           {filteredEntries.length === 0 && (
             <div className="py-20 text-center card-base border-dashed">
@@ -249,10 +249,10 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2">Geofence Reminders</h3>
           <div className="space-y-3">
             {reminders.map((reminder) => (
-              <motion.div
+              <div
                 key={reminder.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                
+                
                 className="card-base p-4 border-indigo-500/10 bg-indigo-500/5"
               >
                 <div className="flex items-center justify-between mb-3">
@@ -279,7 +279,7 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
                     <Navigation size={10} /> Exit Event
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
             {reminders.length === 0 && (
               <div className="py-12 text-center card-base border-dashed border-indigo-500/10 bg-indigo-500/5">

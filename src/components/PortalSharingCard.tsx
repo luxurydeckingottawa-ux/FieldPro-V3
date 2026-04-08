@@ -3,7 +3,7 @@ import { Job, PipelineStage, CustomerLifecycle } from '../types';
 import { 
   Users, ExternalLink, MessageSquare, Mail, Copy, Check, Info, Sun, Cloud, CloudRain
 } from 'lucide-react';
-import { motion } from 'motion/react';
+
 
 interface PortalSharingCardProps {
   job: Job;
@@ -35,10 +35,10 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
   };
 
   return (
-    <motion.section 
-      initial={{ y: 20, opacity: 0 }}
-      whileInView={{ y: 0, opacity: 1 }}
-      viewport={{ once: true }}
+    <section 
+      
+      
+      
       className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--brand-gold)]/5 blur-[40px] -mr-16 -mt-16 pointer-events-none" />
@@ -149,7 +149,7 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
           </div>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };
 

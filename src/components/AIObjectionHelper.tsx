@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { MessageSquare, Sparkles, Send, Loader2, Info, ArrowRight } from 'lucide-react';
 import { Job } from '../types';
 import { geminiService } from '../services/geminiService';
@@ -93,13 +93,13 @@ export const AIObjectionHelper: React.FC<AIObjectionHelperProps> = ({ job }) => 
                 </button>
               </form>
 
-              <AnimatePresence mode="wait">
+              
                 {answer ? (
-                  <motion.div
+                  <div
                     key="answer"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
+                    
+                    
+                    
                     className="p-8 bg-indigo-50 rounded-3xl border border-indigo-100 flex-grow"
                   >
                     <div className="flex items-center gap-2 text-indigo-600 mb-3">
@@ -115,12 +115,12 @@ export const AIObjectionHelper: React.FC<AIObjectionHelperProps> = ({ job }) => 
                     >
                       Clear Answer
                     </button>
-                  </motion.div>
+                  </div>
                 ) : (
-                  <motion.div
+                  <div
                     key="placeholder"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    
+                    
                     className="flex flex-col items-center justify-center p-10 border-2 border-dashed border-slate-100 rounded-3xl flex-grow text-center"
                   >
                     <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-4">
@@ -129,9 +129,9 @@ export const AIObjectionHelper: React.FC<AIObjectionHelperProps> = ({ job }) => 
                     <p className="text-sm text-slate-400 font-medium italic">
                       Select a common question or type your own above.
                     </p>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
+              
             </div>
           </div>
         </div>

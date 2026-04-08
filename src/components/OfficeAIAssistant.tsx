@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { Sparkles, MessageSquare, Send, ArrowRight, TrendingUp, AlertCircle, CheckCircle2, Copy, RefreshCw } from 'lucide-react';
 import { Job } from '../types';
 import { geminiService } from '../services/geminiService';
@@ -107,13 +107,13 @@ export const OfficeAIAssistant: React.FC<OfficeAIAssistantProps> = ({ job, onUpd
       </div>
 
       <div className="p-6 min-h-[240px]">
-        <AnimatePresence mode="wait">
+        
           {activeTab === 'summary' && (
-            <motion.div 
+            <div 
               key="summary"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
+              
+              
+              
               className="space-y-6"
             >
               <div>
@@ -147,15 +147,15 @@ export const OfficeAIAssistant: React.FC<OfficeAIAssistantProps> = ({ job, onUpd
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'followup' && (
-            <motion.div 
+            <div 
               key="followup"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
+              
+              
+              
               className="space-y-4"
             >
               <div className="flex items-center justify-between">
@@ -198,15 +198,15 @@ export const OfficeAIAssistant: React.FC<OfficeAIAssistantProps> = ({ job, onUpd
               <p className="text-[10px] text-slate-400 italic text-center px-4">
                 "AI drafts help you start faster. Always review and personalize before sending."
               </p>
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'next-action' && (
-            <motion.div 
+            <div 
               key="next-action"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
+              
+              
+              
               className="space-y-6"
             >
               <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
@@ -233,9 +233,9 @@ export const OfficeAIAssistant: React.FC<OfficeAIAssistantProps> = ({ job, onUpd
                   <button onClick={generateInsights} className="text-xs font-bold text-indigo-600 uppercase tracking-widest hover:underline">Get AI Recommendation</button>
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        
       </div>
     </div>
   );

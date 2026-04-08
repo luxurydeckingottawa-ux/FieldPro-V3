@@ -10,7 +10,7 @@ import {
   XCircle, BrainCircuit, Copy, Check, RefreshCw,
   Lightbulb, Wand2, MessageCircle, Info, Kanban, LayoutGrid
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { crmAiService } from '../services/crmAiService';
 
 interface CustomersListViewProps {
@@ -110,13 +110,13 @@ const CustomersListView: React.FC<CustomersListViewProps> = ({ jobs, onOpenJob, 
   };
 
   const AiDraftModal = () => (
-    <AnimatePresence>
+    
       {aiDraft && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          <div 
+            
+            
+            
             className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
           >
             <div className="p-6 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--brand-gold)]/5">
@@ -188,10 +188,10 @@ const CustomersListView: React.FC<CustomersListViewProps> = ({ jobs, onOpenJob, 
                 Copy & Close
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
-    </AnimatePresence>
+    
   );
 
   const AiCopilotCard = ({ customer }: { customer: any }) => {
@@ -450,13 +450,13 @@ const CustomersListView: React.FC<CustomersListViewProps> = ({ jobs, onOpenJob, 
   const renderCustomerCard = (customer: any, isPipelineView: boolean = false) => {
     const isExpanded = expandedCustomer === customer.name;
     return (
-      <motion.div
+      <div
         key={customer.name}
-        layout
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.2 }}
+        
+        
+        
+        
+        
         onClick={() => setExpandedCustomer(isExpanded ? null : customer.name)}
         className={`bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-[var(--brand-gold)]/30 transition-all group flex flex-col relative cursor-pointer ${
           isExpanded 
@@ -537,12 +537,12 @@ const CustomersListView: React.FC<CustomersListViewProps> = ({ jobs, onOpenJob, 
           )}
 
           {/* Expanded Content */}
-          <AnimatePresence>
+          
             {isExpanded && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
+              <div
+                
+                
+                
                 className="space-y-4 pt-2 overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -708,11 +708,11 @@ const CustomersListView: React.FC<CustomersListViewProps> = ({ jobs, onOpenJob, 
                     Lost
                   </button>
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          
         </div>
-      </motion.div>
+      </div>
     );
   };
 
@@ -822,11 +822,11 @@ const CustomersListView: React.FC<CustomersListViewProps> = ({ jobs, onOpenJob, 
           { label: 'Won / Sold', value: stats.wonSold, icon: TrendingUp, color: 'text-purple-500', bg: 'bg-purple-500/5' },
           { label: 'Review / Referral', value: stats.reviewReferral, icon: Star, color: 'text-indigo-500', bg: 'bg-indigo-500/5' },
         ].map((stat, idx) => (
-          <motion.div
+          <div
             key={stat.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
+            
+            
+            
             className="bg-[var(--bg-primary)] border border-[var(--border-color)] p-4 rounded-2xl shadow-sm hover:shadow-md transition-all"
           >
             <div className={`w-8 h-8 ${stat.bg} ${stat.color} rounded-lg flex items-center justify-center mb-3`}>
@@ -834,7 +834,7 @@ const CustomersListView: React.FC<CustomersListViewProps> = ({ jobs, onOpenJob, 
             </div>
             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)]">{stat.label}</p>
             <p className="text-2xl font-display italic text-[var(--text-primary)] mt-1">{stat.value}</p>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -962,9 +962,9 @@ const CustomersListView: React.FC<CustomersListViewProps> = ({ jobs, onOpenJob, 
         <PipelineBoard />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          <AnimatePresence mode="popLayout">
+          
             {filteredCustomers.map((customer) => renderCustomerCard(customer))}
-          </AnimatePresence>
+          
         </div>
       )}
 

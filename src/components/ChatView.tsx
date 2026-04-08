@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion } from 'motion/react';
+
 import { 
   Search, 
   MessageSquare, 
@@ -22,7 +22,7 @@ import {
 import { ChatSession, User as AppUser, Job, Role } from '../types';
 import { format } from 'date-fns';
 import { aiCommunicationService } from '../services/aiCommunicationService';
-import { AnimatePresence } from 'motion/react';
+
 
 interface ChatViewProps {
   sessions: ChatSession[];
@@ -225,12 +225,12 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
             </div>
 
             {/* AI Summary Panel (Conditional) */}
-            <AnimatePresence>
+            
               {summary && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                <div
+                  
+                  
+                  
                   className="mx-8 mt-4 bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/10 rounded-2xl overflow-hidden"
                 >
                   <div className="p-4 flex items-start gap-3">
@@ -249,18 +249,18 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
+            
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar flex flex-col-reverse">
               <div className="space-y-6">
                 {selectedSession.messages.map((msg) => (
-                  <motion.div
+                  <div
                     key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    
+                    
                     className={`flex ${msg.isFromClient ? 'justify-start' : 'justify-end'}`}
                   >
                       <div className={`max-w-[70%] flex flex-col ${msg.isFromClient ? 'items-start' : 'items-end'}`}>
@@ -282,7 +282,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                           )}
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
               </div>
             </div>
@@ -312,12 +312,12 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                 </div>
 
                 {/* AI Suggested Reply (Conditional) */}
-                <AnimatePresence>
+                
                   {suggestedReply && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
+                    <div
+                      
+                      
+                      
                       className="p-4 bg-white/5 border border-white/10 rounded-2xl relative group"
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -339,9 +339,9 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                       >
                         Use This Reply
                       </button>
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
+                
 
                 <div className="flex items-center gap-4">
                   <div className="flex-1 relative">

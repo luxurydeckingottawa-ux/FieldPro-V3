@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+
 import { Job, User, Role, OfficeReviewStatus, ScheduleStatus, FieldScheduleForecast } from '../types';
 import { APP_USERS } from '../constants';
 import ProjectLocationMap from '../components/ProjectLocationMap';
@@ -76,17 +76,17 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    <div 
+      
+      
       className="bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen overflow-y-auto pb-32"
     >
       <div className="max-w-4xl mx-auto p-6 sm:p-10 space-y-10">
         
         {/* Top Navigation / Back */}
-        <motion.div 
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
+        <div 
+          
+          
           className="flex items-center justify-between"
         >
           <button 
@@ -98,13 +98,13 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
             </div>
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Back to Jobs</span>
           </button>
-        </motion.div>
+        </div>
 
         {/* Header Card */}
-        <motion.header 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
+        <header 
+          
+          
+          
           className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[3rem] p-10 shadow-2xl relative overflow-hidden group"
         >
           <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--brand-gold)]/5 blur-[100px] -mr-48 -mt-48 pointer-events-none" />
@@ -189,9 +189,9 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                 </button>
                 <div className="flex items-center justify-center md:justify-end gap-3">
                   <div className="h-1.5 w-32 bg-[var(--bg-primary)]/20 rounded-full overflow-hidden border border-[var(--card-border)]">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(job.currentStage / 5) * 100}%` }}
+                    <div 
+                      
+                      style={{ width: `${(job.currentStage / 5) * 100}%` }}
                       className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                     />
                   </div>
@@ -202,25 +202,25 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
               </div>
             </div>
           </div>
-        </motion.header>
+        </header>
 
         {/* Employee Time Clock */}
         {(user.role === Role.FIELD_EMPLOYEE || user.role === Role.SUBCONTRACTOR) && (
-          <motion.section
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.15 }}
+          <section
+            
+            
+            
           >
             <TimeClockControls user={user} job={job} allJobs={allJobs} />
-          </motion.section>
+          </section>
         )}
           
           {/* Office Control Panel (Admin/Manager only) */}
           {isAdminOrManager && (
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
+            <section 
+              
+              
+              
               className="bg-white/[0.03] rounded-[2rem] shadow-2xl border border-white/5 overflow-hidden p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 backdrop-blur-md"
             >
               <div className="flex items-center gap-5">
@@ -256,14 +256,14 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                   ))}
                 </div>
               </div>
-            </motion.section>
+            </section>
           )}
 
-          <motion.section 
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
+          <section 
+            
+            
+            
+            
             className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--brand-gold)]/5 blur-[100px] -mr-48 -mt-48 pointer-events-none" />
@@ -294,14 +294,14 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                 </div>
               </div>
             </div>
-          </motion.section>
+          </section>
 
           <div className="space-y-10">
           {/* Scope Summary */}
-          <motion.section 
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
+          <section 
+            
+            
+            
             className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 shadow-2xl border border-[var(--card-border)]"
           >
             <h3 className="text-xs font-black text-[var(--muted-text)] uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -310,16 +310,16 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
             <p className="text-[var(--text-primary)] leading-relaxed font-medium">
               {job.scopeSummary}
             </p>
-          </motion.section>
+          </section>
 
           {/* Handoff Package - Grouped for Scannability */}
           <div className="grid grid-cols-1 gap-10">
             {/* Build Specifications */}
             {job.buildDetails && (
-              <motion.section 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
+              <section 
+                
+                
+                
                 className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-[var(--card-border)] backdrop-blur-md relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
@@ -423,16 +423,16 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                     <p className="text-base text-[var(--text-primary)] leading-relaxed font-medium italic">"{job.buildDetails.features.customNotes}"</p>
                   </div>
                 )}
-              </motion.section>
+              </section>
             )}
 
             {/* Site Notes & Files Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
               {/* Site Notes */}
-              <motion.section 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
+              <section 
+                
+                
+                
                 className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 shadow-2xl border border-[var(--card-border)] backdrop-blur-md"
               >
                 <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
@@ -460,13 +460,13 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                     </div>
                   )}
                 </div>
-              </motion.section>
+              </section>
 
               {/* Job Files */}
-              <motion.section 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
+              <section 
+                
+                
+                
                 className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 shadow-2xl border border-[var(--card-border)] backdrop-blur-md"
               >
                 <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
@@ -499,15 +499,15 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                     </div>
                   )}
                 </div>
-              </motion.section>
+              </section>
             </div>
           </div>
 
           {/* Scheduling & Timeline Section */}
-          <motion.section 
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
+          <section 
+            
+            
+            
             className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-[var(--card-border)] backdrop-blur-md relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
@@ -719,12 +719,12 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                 )}
               </div>
             </div>
-          </motion.section>
+          </section>
           {/* Execution Status */}
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
+            <section 
+              
+              
+              
               className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 shadow-2xl border border-[var(--card-border)] backdrop-blur-md"
             >
               <h3 className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
@@ -765,7 +765,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                   </div>
                 )}
               </div>
-            </motion.section>
+            </section>
           </div>
         </div>
 
@@ -781,7 +781,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
           messageType={messageType}
           disableEmail={!isAdminOrManager}
         />
-    </motion.div>
+    </div>
   );
 };
 

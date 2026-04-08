@@ -7,7 +7,7 @@ import {
   ShieldCheck, Calendar, Wallet, Edit2, X,
   Clock, FileText, Receipt, Camera
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { AISalesAssistant } from '../components/AISalesAssistant';
 import { AIObjectionHelper } from '../components/AIObjectionHelper';
 
@@ -365,9 +365,9 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   if (showConfirmation) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+        <div 
+          
+          
           className="max-w-xl w-full bg-white rounded-[3rem] p-12 text-center shadow-2xl border border-slate-100"
         >
           <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-8">
@@ -406,7 +406,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
           >
             Go to Project Portal
           </button>
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -479,9 +479,9 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Welcome Section */}
         <div className="mb-12">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div 
+            
+            
             className="max-w-3xl"
           >
             <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
@@ -491,15 +491,15 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               Thank you for the opportunity to quote your outdoor project at <span className="font-semibold text-slate-900">{job.projectAddress}</span>. 
               We've prepared three tailored options to help you find the perfect balance of aesthetics, maintenance, and value.
             </p>
-          </motion.div>
+          </div>
         </div>
 
         {activeTab === 'proposal' && (
           <div className="space-y-16">
             {isAccepted && (
-              <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
+              <div 
+                
+                
                 className="bg-green-50 border border-green-100 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6"
               >
                 <div className="flex items-center gap-4">
@@ -522,14 +522,14 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* Project Accepted Banner */}
             {isAccepted && (
-              <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
+              <div 
+                
+                
                 className="mb-12 bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/10 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6"
               >
                 <div className="flex items-center gap-6">
@@ -550,7 +550,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     <Sparkles className="w-6 h-6 text-[var(--brand-gold)]" />
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* Option Comparison */}
@@ -569,11 +569,11 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   {estimateData.options.map((option, idx) => (
-                    <motion.div
+                    <div
                       key={option.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
+                      
+                      
+                      
                       onClick={() => handleOptionClick(option.id)}
                       className={`relative cursor-pointer rounded-2xl border-2 transition-all duration-300 overflow-hidden flex flex-col ${
                         selectedOptionId === option.id 
@@ -668,7 +668,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                           {selectedOptionId === option.id ? 'Option Selected' : 'Select This Option'}
                         </button>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </section>
@@ -831,10 +831,10 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
 
             {/* Financing Badge */}
             {!isAccepted && (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
+              <div 
+                
+                
+                
                 className="bg-blue-50 border border-blue-100 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center justify-between gap-8 shadow-sm relative overflow-hidden group"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 blur-3xl -mr-32 -mt-32 transition-transform group-hover:scale-110" />
@@ -866,7 +866,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   Apply for Financing 
                   <ArrowRight size={18} className="transition-transform group-hover/btn:translate-x-1" />
                 </a>
-              </motion.div>
+              </div>
             )}
 
             {/* Comparison Table Section */}
@@ -1133,12 +1133,12 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   const StepIcon = iconMap[iconName] || CheckCircle2;
                   
                   return (
-                    <motion.div 
+                    <div 
                       key={i} 
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.1 }}
+                      
+                      
+                      
+                      
                       className="relative z-10 flex flex-col items-center text-center group"
                     >
                       <div className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center font-black text-xl text-slate-900 mb-6 group-hover:border-slate-900 group-hover:scale-110 transition-all duration-300 shadow-sm bg-white relative">
@@ -1151,7 +1151,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                         <h4 className="font-bold text-slate-900 mb-2">{title}</h4>
                         <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
@@ -1258,12 +1258,12 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
       </main>
 
       {/* Sticky Footer for Acceptance */}
-      <AnimatePresence>
+      
         {selectedOptionId && !isAccepted && (
-          <motion.footer 
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            exit={{ y: 100 }}
+          <footer 
+            
+            
+            
             className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 py-4 px-4 sm:px-6 lg:px-8"
           >
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1312,25 +1312,25 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 </div>
               </div>
             </div>
-          </motion.footer>
+          </footer>
         )}
-      </AnimatePresence>
+      
 
       {/* Confirmation Modal */}
-      <AnimatePresence>
+      
         {showConfirmation && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <div
+              
+              
+              
               onClick={() => setShowConfirmation(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            <div
+              
+              
+              
               className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden"
             >
               <div className="absolute top-6 right-6">
@@ -1383,10 +1383,10 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   Go to My Project Portal
                 </button>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      
 
       {/* Floating Support Button */}
       <button className="fixed bottom-24 right-8 w-14 h-14 bg-white border border-slate-200 rounded-full shadow-xl flex items-center justify-center text-slate-900 hover:scale-110 transition-transform z-40">

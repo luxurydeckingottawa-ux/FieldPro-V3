@@ -1,7 +1,7 @@
 import React from 'react';
 import { Job } from '../types';
 import { Receipt, Clock, Wallet, CreditCard, FileText, ArrowRight } from 'lucide-react';
-import { motion } from 'motion/react';
+
 
 interface PortalPaymentsTabProps {
   job: Job;
@@ -9,9 +9,9 @@ interface PortalPaymentsTabProps {
 
 const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
   return (
-            <motion.div
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
+            <div
+              
+              
               className="space-y-6"
             >
               <div className="flex items-center justify-between px-2">
@@ -193,7 +193,7 @@ const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
   );
 };

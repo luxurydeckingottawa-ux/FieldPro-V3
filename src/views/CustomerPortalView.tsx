@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { AIObjectionHelper } from '../components/AIObjectionHelper';
 import PortalPaymentsTab from '../components/PortalPaymentsTab';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { format } from 'date-fns';
 
 interface CustomerPortalViewProps {
@@ -483,9 +483,9 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-8">
         {/* Project Summary Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+        <div 
+          
+          
           className="bg-white rounded-3xl p-8 shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-[#F0F0F0] relative overflow-hidden"
         >
           <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-3xl -mr-32 -mt-32 pointer-events-none" />
@@ -540,10 +540,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 </div>
 
                 {/* Google Review Card - Refined */}
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
+                <div 
+                  
+                  
+                  
                   className="bg-white rounded-3xl p-8 border border-[var(--brand-gold)]/10 shadow-xl relative overflow-hidden group text-center space-y-6"
                 >
                   <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#4285F4] via-[#EA4335] via-[#FBBC05] to-[#34A853]" />
@@ -580,7 +580,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   <div className="pt-2">
                     <p className="text-[11px] font-black uppercase tracking-widest text-[#BBB]">It only takes 30 seconds to support our team</p>
                   </div>
-                </motion.div>
+                </div>
               </div>
             ) : (
               <div className="bg-[#1A1A1A] text-white rounded-2xl p-5 flex items-start gap-4 shadow-xl">
@@ -601,10 +601,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 <span>{getProgressPercentage(job.pipelineStage)}%</span>
               </div>
               <div className="h-3 bg-[#F0F0F0] rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${getProgressPercentage(job.pipelineStage)}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
+                <div 
+                  
+                  style={{ width: `${getProgressPercentage(job.pipelineStage)}%` }}
+                  
                   className="h-full bg-[var(--brand-gold)] rounded-full"
                 />
               </div>
@@ -645,13 +645,13 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Project Team Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+        <div 
+          
+          
+          
           className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6"
         >
           <div className="flex items-center gap-4">
@@ -684,7 +684,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Navigation Tabs */}
         <div className="flex p-1 bg-[#F0F0F0] rounded-2xl overflow-x-auto no-scrollbar">
@@ -706,9 +706,9 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
         {/* Tab Content */}
         <div className="min-h-[400px]">
           {activeTab === 'status' && (
-            <motion.div 
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
+            <div 
+              
+              
               className="space-y-6"
             >
               {/* Progress Overview */}
@@ -720,10 +720,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 
                 <div className="space-y-2">
                   <div className="h-4 bg-[#F0F0F0] rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${getConstructionProgressPercentage()}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
+                    <div 
+                      
+                      style={{ width: `${getConstructionProgressPercentage()}%` }}
+                      
                       className="h-full bg-[var(--brand-gold)] rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                     />
                   </div>
@@ -747,10 +747,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               </div>
 
               {/* What Changed Since Last Update */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
+              <div 
+                
+                
+                
                 className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm space-y-3 relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-3">
@@ -765,13 +765,13 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 <p className="text-sm text-[#333] font-medium leading-relaxed">
                   {recentChange.text}
                 </p>
-              </motion.div>
+              </div>
 
               {/* Customer Action Required */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+              <div 
+                
+                
+                
                 className={`rounded-3xl p-6 border shadow-sm flex items-center justify-between gap-4 ${
                   customerAction.status === 'pending' 
                     ? 'bg-amber-50 border-amber-100' 
@@ -804,7 +804,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 {customerAction.status === 'pending' && (
                   <ChevronRight className="w-5 h-5 text-amber-400" />
                 )}
-              </motion.div>
+              </div>
 
               {/* AI Support Section */}
               <section className="mt-8">
@@ -855,10 +855,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               </div>
 
               {/* Latest Field Update */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+              <div 
+                
+                
+                
                 className="bg-[#1A1A1A] text-white rounded-3xl p-6 shadow-xl space-y-3"
               >
                 <div className="flex items-center gap-3 text-[var(--brand-gold)] mb-1">
@@ -868,7 +868,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 <p className="text-sm text-gray-300 font-medium leading-relaxed">
                   {latestFieldUpdate}
                 </p>
-              </motion.div>
+              </div>
 
               {/* Schedule / Timing Explanation */}
               <div className="px-2">
@@ -928,10 +928,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                             </div>
                             {m.status === 'In Progress' && (
                               <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
-                                <motion.div 
-                                  initial={{ width: "30%" }}
-                                  animate={{ width: "60%" }}
-                                  transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+                                <div 
+                                  
+                                  
+                                  
                                   className="h-full bg-[var(--brand-gold)] rounded-full"
                                 />
                               </div>
@@ -1158,13 +1158,13 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   </div>
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'schedule' && (
-            <motion.div 
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
+            <div 
+              
+              
               className="space-y-6"
             >
               <div className="flex items-center justify-between px-2">
@@ -1294,9 +1294,9 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                           </div>
 
                           {jobInfo && (
-                            <motion.div 
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
+                            <div 
+                              
+                              
                               className={`absolute inset-x-1 bottom-1 py-1 px-1.5 rounded-md text-[8px] font-black uppercase tracking-tighter truncate ${
                                 jobInfo.type === 'current' 
                                   ? 'bg-[var(--brand-gold)] text-black shadow-sm' 
@@ -1304,7 +1304,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                               }`}
                             >
                               {jobInfo.label}
-                            </motion.div>
+                            </div>
                           )}
                         </div>
                       );
@@ -1347,13 +1347,13 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'scope' && (
-            <motion.div 
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
+            <div 
+              
+              
               className="space-y-6"
             >
               <div className="flex items-center justify-between px-2">
@@ -1458,13 +1458,13 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'documents' && (
-            <motion.div 
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
+            <div 
+              
+              
               className="space-y-8"
             >
               <div className="flex items-center justify-between px-2">
@@ -1596,9 +1596,9 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               </div>
 
               {/* Support Notice */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+              <div 
+                
+                
                 className="bg-[var(--brand-gold)]/5 rounded-3xl p-6 border border-[var(--brand-gold)]/10 flex flex-col md:flex-row items-center justify-between gap-6"
               >
                 <div className="flex items-center gap-4">
@@ -1618,8 +1618,8 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 >
                   Request Document
                 </button>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           )}
 
           {activeTab === 'payments' && (
@@ -1627,9 +1627,9 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
           )}
 
           {activeTab === 'archive' && (
-            <motion.div 
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
+            <div 
+              
+              
               className="space-y-8"
             >
               <div className="flex items-center justify-between px-2">
@@ -1721,7 +1721,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   Contact Support
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
         </div>
       </main>
@@ -1744,9 +1744,9 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
           >
             <ChevronRight className="w-8 h-8 rotate-90" />
           </button>
-          <motion.img 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
+          <img 
+            
+            
             src={selectedPhoto} 
             alt="Project Progress" 
             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
@@ -1795,20 +1795,20 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
         </div>
       )}
       {/* Chat Modal */}
-      <AnimatePresence>
+      
         {showChat && (
           <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <div
+              
+              
+              
               onClick={() => setShowChat(false)}
               className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
+            <div
+              
+              
+              
               className="relative w-full max-w-lg bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col h-[85vh] sm:h-[600px]"
             >
               {/* Chat Header */}
@@ -1897,10 +1897,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   </button>
                 </form>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      
     </div>
   );
 };

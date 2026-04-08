@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { Sparkles, Check, ChevronRight, X, Loader2, MessageSquare } from 'lucide-react';
 import { Job } from '../types';
 import { geminiService } from '../services/geminiService';
@@ -52,20 +52,20 @@ export const AISalesAssistant: React.FC<AISalesAssistantProps> = ({ job }) => {
         Help Me Choose
       </button>
 
-      <AnimatePresence>
+      
         {isOpen && (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <div 
+              
+              
+              
               onClick={() => setIsOpen(false)}
               className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100]"
             />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            <div 
+              
+              
+              
               className="fixed inset-x-4 top-[10%] md:inset-x-auto md:left-1/2 md:-ml-[300px] md:w-[600px] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden border border-slate-100"
             >
               <div className="p-8 md:p-10">
@@ -161,10 +161,10 @@ export const AISalesAssistant: React.FC<AISalesAssistantProps> = ({ job }) => {
                   "I'm here to guide you, but the final choice is always yours."
                 </p>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
-      </AnimatePresence>
+      
     </div>
   );
 };

@@ -132,9 +132,6 @@ const App: React.FC = () => {
     return 'jobs';
   });
 
-  // Router hook - provides navigateTo() which updates both URL and view state
-  const { navigateTo } = useAppRouter(setView, selectedJob?.id);
-
   const [jobs, setJobs] = useState<Job[]>(() => {
     let currentJobs: Job[] = [];
     try {
@@ -181,6 +178,9 @@ const App: React.FC = () => {
     }
     return null;
   });
+
+  // Router hook - provides navigateTo() which updates both URL and view state
+  const { navigateTo } = useAppRouter(setView, selectedJob?.id);
 
   const [newJobInitialStage, setNewJobInitialStage] = useState<PipelineStage>(PipelineStage.LEAD_IN);
 

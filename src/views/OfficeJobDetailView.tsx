@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { motion } from 'motion/react';
+
 import { 
   Job, 
   PipelineStage, 
@@ -175,9 +175,9 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   }, [job.portalEngagement]);
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    <div 
+      
+      
       className="flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen"
     >
       {/* Header / Navigation */}
@@ -295,9 +295,9 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             
             {/* Generated Packages Review (Always visible if submitted) - MOVED TO TOP FOR PROMINENCE */}
             {(job.verifiedBuildPassportUrl || job.subcontractorInvoiceUrl) && (
-              <motion.section 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
+              <section 
+                
+                
                 className="bg-[var(--brand-gold)]/10 border-2 border-[var(--brand-gold)]/30 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-3xl -mr-32 -mt-32 pointer-events-none" />
@@ -361,15 +361,15 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </a>
                   )}
                 </div>
-              </motion.section>
+              </section>
             )}
             
             {/* Needs Attention Summary */}
             {issues.length > 0 && (
-              <motion.section 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
+              <section 
+                
+                
+                
                 className="bg-rose-500/5 border border-rose-500/20 rounded-[2rem] p-6 shadow-xl relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 blur-3xl -mr-16 -mt-16 pointer-events-none" />
@@ -403,15 +403,15 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </div>
                   ))}
                 </div>
-              </motion.section>
+              </section>
             )}
 
             {/* Proposal Engagement Tracking */}
             {job.portalEngagement && (
-              <motion.section 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
+              <section 
+                
+                
+                
                 className={`border rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group ${
                   engagementHeat === 'hot' ? 'bg-orange-500/5 border-orange-500/20' :
                   engagementHeat === 'warm' ? 'bg-amber-500/5 border-amber-500/20' :
@@ -521,7 +521,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </div>
                   </div>
                 </div>
-              </motion.section>
+              </section>
             )}
 
             {/* Sales & Estimating Profile (Prominent in Estimating Phase) */}
@@ -530,10 +530,10 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               job.lifecycleStage === CustomerLifecycle.FOLLOW_UP_NEEDED ||
               job.lifecycleStage === CustomerLifecycle.NEW_LEAD ||
               job.lifecycleStage === CustomerLifecycle.CONTACTED) && (
-              <motion.section 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
+              <section 
+                
+                
+                
                 className="bg-blue-500/5 border border-blue-500/20 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group"
               >
                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 blur-[100px] -mr-48 -mt-48 pointer-events-none" />
@@ -695,7 +695,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </div>
                   </div>
                 )}
-              </motion.section>
+              </section>
             )}
 
             {/* Job Summary Card */}
@@ -709,10 +709,10 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
             {/* Completion & Closeout Visibility Layer (Stage 3) */}
             {(job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
-              <motion.section 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
+              <section 
+                
+                
+                
                 className="bg-[var(--card-bg)] rounded-[2rem] p-8 shadow-2xl border border-[var(--brand-gold)]/20 ring-1 ring-[var(--brand-gold)]/10"
               >
                 <div className="flex items-center justify-between mb-8">
@@ -837,14 +837,14 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </div>
                   </div>
                 )}
-              </motion.section>
+              </section>
             )}
 
             {/* Stage Checklist */}
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
+            <section 
+              
+              
+              
               className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md"
             >
               <div className="flex items-center justify-between mb-8">
@@ -950,14 +950,14 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </p>
                 </div>
               )}
-            </motion.section>
+            </section>
 
             {/* Financial Performance Overview - Hidden during estimate stages */}
             {!isEstimateStage && (
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
+            <section 
+              
+              
+              
               className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
@@ -1038,15 +1038,15 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </p>
                 </div>
               </div>
-            </motion.section>
+            </section>
             )}
 
             {/* Build Specifications / Digital Work Order */}
             {job.buildDetails && (
-              <motion.section 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
+              <section 
+                
+                
+                
                 className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
@@ -1245,14 +1245,14 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </div>
                   </div>
                 )}
-              </motion.section>
+              </section>
             )}
 
             {/* Scope Summary */}
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
+            <section 
+              
+              
+              
               className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md"
             >
               <div className="flex items-center justify-between mb-6">
@@ -1272,13 +1272,13 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               <div className="bg-white/5 border border-white/10 rounded-[1.5rem] p-6 text-gray-300 leading-relaxed font-medium min-h-[120px]">
                 {job.scopeSummary || <span className="text-gray-600 italic">No scope summary provided.</span>}
               </div>
-            </motion.section>
+            </section>
 
             {/* Office Notes */}
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
+            <section 
+              
+              
+              
               className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md"
             >
               <div className="flex items-center justify-between mb-8">
@@ -1311,13 +1311,13 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </div>
                 )}
               </div>
-            </motion.section>
+            </section>
 
             {/* Site Notes (from Field) */}
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
+            <section 
+              
+              
+              
               className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md"
             >
               <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
@@ -1345,16 +1345,16 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </div>
                 )}
               </div>
-            </motion.section>
+            </section>
 
             {/* Scheduling & Timeline Section (Visible for Ready to Start, In Field, Completion) */}
             {(job.pipelineStage === PipelineStage.READY_TO_START || 
               job.pipelineStage === PipelineStage.IN_FIELD || 
               job.pipelineStage === PipelineStage.COMPLETION) && (
-              <motion.section 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
+              <section 
+                
+                
+                
                 className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] overflow-hidden shadow-2xl backdrop-blur-md"
               >
                 <div className="p-8 border-b border-white/10 flex items-center justify-between">
@@ -1532,7 +1532,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     )}
                   </div>
                 </div>
-              </motion.section>
+              </section>
             )}
           </div>
 
@@ -1546,10 +1546,10 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
             {/* Field Execution Visibility Hub - Hidden during estimate stages */}
             {!isEstimateStage && (
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
+            <section 
+              
+              
+              
               className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
             >
               <div className="flex items-center justify-between mb-8">
@@ -1634,7 +1634,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </div>
                 )}
               </div>
-            </motion.section>
+            </section>
             )}
 
             {/* AI Office Insights - For Pipeline Stages */}
@@ -1651,10 +1651,10 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             />
 
             {/* Assignment & Handoff Summary */}
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
+            <section 
+              
+              
+              
               className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl"
             >
               <div className="flex items-center justify-between mb-8">
@@ -1702,13 +1702,13 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </div>
                 </div>
               </div>
-            </motion.section>
+            </section>
 
             {/* Job Files & Documents Package */}
-            <motion.section 
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
+            <section 
+              
+              
+              
               className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 blur-[60px] -mr-24 -mt-24 pointer-events-none" />
@@ -1785,7 +1785,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </div>
                 )}
               </div>
-            </motion.section>
+            </section>
           </div>
         </div>
       </div>
@@ -2485,7 +2485,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 };
 

@@ -21,7 +21,7 @@ import {
   ArrowRight,
   RefreshCw
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import EstimatorSiteIntake from '../components/EstimatorSiteIntake';
 import EstimatorMeasureSheet from '../components/EstimatorMeasureSheet';
 import EstimatorSketchPad from '../components/EstimatorSketchPad';
@@ -384,13 +384,13 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        <AnimatePresence mode="wait">
+        
           {activeTab === 'info' && (
-            <motion.div
+            <div
               key="info"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              
+              
+              
               className="space-y-6"
             >
               <div className="bg-[var(--bg-primary)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm">
@@ -432,58 +432,58 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                   {job.scopeSummary}
                 </p>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'intake' && (
-            <motion.div
+            <div
               key="intake"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              
+              
+              
             >
               <EstimatorSiteIntake 
                 data={intake.checklist}
                 onUpdate={handleUpdateChecklist}
                 onAddPhoto={handleAddPhoto}
               />
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'measures' && (
-            <motion.div
+            <div
               key="measures"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              
+              
+              
             >
               <EstimatorMeasureSheet 
                 data={intake.measureSheet}
                 onChange={handleUpdateMeasures}
               />
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'sketch' && (
-            <motion.div
+            <div
               key="sketch"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              
+              
+              
             >
               <EstimatorSketchPad 
                 data={intake.sketch}
                 onChange={handleUpdateSketch}
               />
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'photos' && (
-            <motion.div
+            <div
               key="photos"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              
+              
+              
               className="space-y-4"
             >
               <div className="grid grid-cols-2 gap-4">
@@ -503,15 +503,15 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                   <span className="text-xs font-bold uppercase tracking-widest">Add Photo</span>
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'notes' && (
-            <motion.div
+            <div
               key="notes"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              
+              
+              
             >
               <textarea
                 value={intake.notes}
@@ -519,29 +519,29 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                 placeholder="Enter additional site notes, client preferences, or special instructions..."
                 className="w-full h-64 p-4 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)] transition-all text-[var(--text-primary)]"
               />
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'ai' && (
-            <motion.div
+            <div
               key="ai"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              
+              
+              
             >
               <EstimatorAiAssist 
                 intake={intake}
                 onUpdateAiInsights={handleUpdateAiInsights}
               />
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'summary' && (
-            <motion.div
+            <div
               key="summary"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              
+              
+              
               className="space-y-6"
             >
               <div className="bg-[var(--brand-gold)]/10 p-6 rounded-2xl border border-[var(--brand-gold)]/20 text-center">
@@ -730,9 +730,9 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        
       </div>
 
       {/* Footer Status */}

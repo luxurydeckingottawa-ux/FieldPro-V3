@@ -19,7 +19,6 @@
     "jspdf-autotable": "^3.8.2",
     "konva": "^10.2.3",
     "lucide-react": "^0.460.0",
-    "motion": "^12.38.0",
     "postcss": "^8.4.49",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

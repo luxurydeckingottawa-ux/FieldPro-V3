@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { Sparkles, History, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { Job } from '../types';
 import { geminiService } from '../services/geminiService';
@@ -40,10 +40,10 @@ export const AIOfficeInsights: React.FC<AIOfficeInsightsProps> = ({ job, onUpdat
   }, [summary, isLoading, generateHistorySummary]);
 
   return (
-    <motion.section 
-      initial={{ y: 20, opacity: 0 }}
-      whileInView={{ y: 0, opacity: 1 }}
-      viewport={{ once: true }}
+    <section 
+      
+      
+      
       className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl -mr-16 -mt-16 pointer-events-none" />
@@ -76,12 +76,12 @@ export const AIOfficeInsights: React.FC<AIOfficeInsightsProps> = ({ job, onUpdat
         </div>
       </div>
 
-      <AnimatePresence>
+      
         {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+          <div
+            
+            
+            
             className="overflow-hidden relative z-10"
           >
             {summary ? (
@@ -110,9 +110,9 @@ export const AIOfficeInsights: React.FC<AIOfficeInsightsProps> = ({ job, onUpdat
                 </button>
               </div>
             )}
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
-    </motion.section>
+      
+    </section>
   );
 };

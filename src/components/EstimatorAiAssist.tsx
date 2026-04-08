@@ -12,7 +12,7 @@ import {
   PenTool,
   Loader2
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { estimatorAiService } from '../services/estimatorAiService';
 
 interface EstimatorAiAssistProps {
@@ -141,15 +141,15 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
           )}
         </div>
 
-        <AnimatePresence mode="popLayout">
+        
           {flags.length > 0 ? (
             <div className="space-y-3">
               {flags.map((flag, index) => (
-                <motion.div
+                <div
                   key={`${flag.id}-${index}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  
+                  
+                  
                   className={`p-4 rounded-2xl border flex gap-3 ${getSeverityColor(flag.severity)}`}
                 >
                   <div className="mt-0.5">
@@ -171,7 +171,7 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
                     </div>
                     <p className="text-sm font-medium leading-tight">{flag.message}</p>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           ) : !isAnalyzing && intake.aiInsights?.lastCheckedAt ? (
@@ -190,13 +190,13 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
               <p className="text-sm text-[var(--text-secondary)]">Run AI Audit to check for missing info or mismatches.</p>
             </div>
           )}
-        </AnimatePresence>
+        
 
         {/* AI Summary Card */}
         {summary && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div
+            
+            
             className="bg-white p-6 rounded-3xl border border-[var(--border-color)] shadow-sm space-y-4"
           >
             <div className="flex items-center gap-2 text-[var(--brand-gold)]">
@@ -216,7 +216,7 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
                 Clear Summary
               </button>
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
     </div>

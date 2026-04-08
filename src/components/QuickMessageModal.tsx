@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { 
   X, 
   Send, 
@@ -110,20 +110,20 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
+    
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <div 
+          
+          
+          
           onClick={onClose}
           className="absolute inset-0 bg-black/80 backdrop-blur-md"
         />
         
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        <div 
+          
+          
+          
           className="relative w-full max-w-lg bg-[var(--bg-primary)] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
         >
           {/* Header */}
@@ -163,12 +163,12 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                 Rewrite with AI
               </button>
               
-              <AnimatePresence>
+              
                 {showAiOptions && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
+                  <div
+                    
+                    
+                    
                     className="absolute left-0 bottom-full mb-2 w-48 bg-[var(--bg-primary)] border border-white/10 rounded-2xl shadow-2xl p-2 z-50"
                   >
                     <div className="grid grid-cols-1 gap-1">
@@ -190,9 +190,9 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                         </button>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
+              
             </div>
           </div>
 
@@ -257,9 +257,9 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
               </div>
 
               {showTemplates && (
-                <motion.div 
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
+                <div 
+                  
+                  
                   className="grid grid-cols-1 gap-2 overflow-hidden"
                 >
                   {filteredTemplates.map(t => (
@@ -272,7 +272,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                       <p className="text-[9px] text-gray-500 mt-1 line-clamp-1">{t.content}</p>
                     </button>
                   ))}
-                </motion.div>
+                </div>
               )}
 
               <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
@@ -322,12 +322,12 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
               } disabled:opacity-50`}
             >
               {isSending ? (
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                <div 
+                  
+                  
                 >
                   <Zap size={18} />
-                </motion.div>
+                </div>
               ) : isSent ? (
                 <>
                   <CheckCircle2 size={18} /> Message Sent
@@ -339,9 +339,9 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
               )}
             </button>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </AnimatePresence>
+    
   );
 };
 
