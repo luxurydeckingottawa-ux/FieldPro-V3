@@ -364,7 +364,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                 </div>
               </div>
               <p className="text-center text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mt-4">
-                SMS messages are sent from your Luxury Decking business number
+                SMS messages are sent from (343) 314-4019
               </p>
             </div>
           </>

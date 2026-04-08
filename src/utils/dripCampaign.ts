@@ -9,7 +9,7 @@
  * 2. ESTIMATE_FOLLOW_UP: 5 touches from estimate sent to signed contract
  */
 
-import { Job, PipelineStage, PortalEngagement } from '../types';
+import { Job, PortalEngagement } from '../types';
 import { EngagementTier, calculateEngagementTier } from './engagementScoring';
 
 // ============================================================

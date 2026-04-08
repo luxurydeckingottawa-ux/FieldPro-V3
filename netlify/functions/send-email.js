@@ -19,6 +19,7 @@ exports.handler = async function(event) {
   const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
   const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'admin@luxurydecking.ca';
   const FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Angela - Luxury Decking';
+  const REPLY_TO_EMAIL = process.env.SENDGRID_REPLY_TO || 'admin@luxurydecking.ca';
 
   if (!SENDGRID_API_KEY) {
     console.error('SENDGRID_API_KEY not configured');
@@ -47,7 +48,7 @@ exports.handler = async function(event) {
   const sgPayload = {
     personalizations: [{ to: [{ email: to }] }],
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    reply_to: { email: replyTo || FROM_EMAIL, name: FROM_NAME },
+    reply_to: { email: replyTo || REPLY_TO_EMAIL, name: FROM_NAME },
     subject: subject,
     content: [
       { type: 'text/plain', value: textBody || htmlBody.replace(/<[^>]*>/g, '') },

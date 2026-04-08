@@ -1,7 +1,7 @@
 /**
- * Email Service
+ * Message Service
  * 
- * Sends emails through the Netlify serverless function.
+ * Sends emails and SMS through Netlify serverless functions.
  * Used by the drip campaign engine to send automated follow-ups.
  */
 
@@ -13,7 +13,12 @@ interface SendEmailParams {
   replyTo?: string;
 }
 
-interface SendEmailResult {
+interface SendSmsParams {
+  to: string;
+  message: string;
+}
+
+interface SendResult {
   success: boolean;
   error?: string;
 }
@@ -21,7 +26,7 @@ interface SendEmailResult {
 /**
  * Send an email via the Netlify function.
  */
-export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
+export async function sendEmail(params: SendEmailParams): Promise<SendResult> {
   try {
     const response = await fetch('/.netlify/functions/send-email', {
       method: 'POST',
@@ -46,6 +51,64 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     console.error('Email service error:', error);
     return { success: false, error: 'Network error sending email' };
   }
+}
+
+/**
+ * Send an SMS via the Netlify function (Twilio).
+ */
+export async function sendSms(params: SendSmsParams): Promise<SendResult> {
+  try {
+    const response = await fetch('/.netlify/functions/send-sms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: params.to,
+        message: params.message,
+      }),
+    });
+
+    const data = await response.json();
+    
+    if (response.ok && data.success) {
+      return { success: true };
+    } else {
+      return { success: false, error: data.error || 'Failed to send SMS' };
+    }
+  } catch (error) {
+    console.error('SMS service error:', error);
+    return { success: false, error: 'Network error sending SMS' };
+  }
+}
+
+/**
+ * Send a drip campaign touch (may include both email and SMS).
+ */
+export async function sendCampaignTouch(params: {
+  channel: 'sms' | 'email' | 'sms+email';
+  email?: string;
+  phone?: string;
+  subject?: string;
+  emailBody: string;
+  smsBody: string;
+}): Promise<{ emailResult?: SendResult; smsResult?: SendResult }> {
+  const results: { emailResult?: SendResult; smsResult?: SendResult } = {};
+
+  if ((params.channel === 'email' || params.channel === 'sms+email') && params.email) {
+    results.emailResult = await sendEmail({
+      to: params.email,
+      subject: params.subject || 'Luxury Decking',
+      body: params.emailBody,
+    });
+  }
+
+  if ((params.channel === 'sms' || params.channel === 'sms+email') && params.phone) {
+    results.smsResult = await sendSms({
+      to: params.phone,
+      message: params.smsBody,
+    });
+  }
+
+  return results;
 }
 
 /**

@@ -311,6 +311,19 @@ const App: React.FC = () => {
           isFromClient,
           status: 'sent'
         };
+
+        // Send real SMS via Twilio if message is from office and client has a phone number
+        if (!isFromClient && session.clientPhone) {
+          fetch('/.netlify/functions/send-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: session.clientPhone, message: text }),
+          }).then(res => res.json()).then(data => {
+            if (data.success) console.log('SMS sent to', session.clientPhone);
+            else console.error('SMS failed:', data.error);
+          }).catch(err => console.error('SMS error:', err));
+        }
+
         return {
           ...session,
           messages: [...session.messages, newMessage],
@@ -335,11 +348,21 @@ const App: React.FC = () => {
             .replace('{clientName}', jobToUpdate.clientName)
             .replace('{jobNumber}', jobToUpdate.jobNumber);
           
-          // Simulate sending automated message
+          // Send automated SMS via Twilio
           const sessionId = `session-${jobToUpdate.id}`;
           setTimeout(() => {
             handleSendMessage(sessionId, messageText);
-            console.log(`Automated SMS sent for job ${jobToUpdate.jobNumber}: ${messageText}`);
+            // Also send real SMS if client has phone
+            if (jobToUpdate.clientPhone) {
+              fetch('/.netlify/functions/send-sms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ to: jobToUpdate.clientPhone, message: messageText }),
+              }).then(res => res.json()).then(data => {
+                if (data.success) console.log(`Auto SMS sent for ${jobToUpdate.jobNumber}`);
+                else console.error('Auto SMS failed:', data.error);
+              }).catch(err => console.error('Auto SMS error:', err));
+            }
           }, 1000);
         }
       }
