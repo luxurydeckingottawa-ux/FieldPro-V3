@@ -24,9 +24,11 @@ import {
   Truck,
   MapPin,
   AlertTriangle,
-  Zap
+  Zap,
+  CalendarDays,
+  ClipboardList
 } from 'lucide-react';
-import { ForecastReviewStatus } from '../types';
+import { ForecastReviewStatus, PipelineStage } from '../types';
 
 interface SchedulingCalendarViewProps {
   jobs: Job[];
@@ -46,11 +48,27 @@ const CREW_COLORS: Record<string, string> = {
 const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, onSelectJob }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedCrew, setSelectedCrew] = useState<string>('all');
+  const [calendarMode, setCalendarMode] = useState<'crew' | 'appointments'>('crew');
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
   const calendarStart = startOfWeek(monthStart);
   const calendarEnd = endOfWeek(monthEnd);
+
+  // Appointment jobs (estimate stages with scheduled dates)
+  const appointmentJobs = useMemo(() => {
+    const estimateStages = [
+      PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
+      PipelineStage.THIRD_CONTACT, PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED,
+      PipelineStage.EST_IN_PROGRESS, PipelineStage.EST_COMPLETED, PipelineStage.EST_SENT
+    ];
+    return jobs.filter(j => {
+      if (!estimateStages.includes(j.pipelineStage)) return false;
+      if (!j.scheduledDate) return false;
+      const d = new Date(j.scheduledDate);
+      return d >= calendarStart && d <= calendarEnd;
+    });
+  }, [jobs, calendarStart, calendarEnd]);
 
   const calendarDays = eachDayOfInterval({
     start: calendarStart,
@@ -130,8 +148,27 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
       <div className="p-8 border-b border-[var(--border-color)] bg-[var(--text-primary)]/[0.01]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
           <div>
-            <h1 className="text-3xl font-display leading-none">Crew Planner</h1>
-            <p className="font-label mt-2">Logistics & Resource Distribution</p>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="flex bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-1">
+                <button
+                  onClick={() => setCalendarMode('crew')}
+                  className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                    calendarMode === 'crew' ? 'bg-[var(--brand-gold)] text-white shadow-md' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <Hammer className="w-3.5 h-3.5 inline mr-1.5" /> Crew Planner
+                </button>
+                <button
+                  onClick={() => setCalendarMode('appointments')}
+                  className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                    calendarMode === 'appointments' ? 'bg-[var(--brand-gold)] text-white shadow-md' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <CalendarDays className="w-3.5 h-3.5 inline mr-1.5" /> Appointments
+                </button>
+              </div>
+            </div>
+            <p className="font-label mt-2">{calendarMode === 'crew' ? 'Logistics & Resource Distribution' : 'Estimate Appointments & Site Visits'}</p>
           </div>
           
           <div className="flex items-center gap-6">
@@ -219,6 +256,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
       </div>
 
       {/* Calendar Grid */}
+      {calendarMode === 'crew' ? (
       <div className="flex-1 overflow-auto p-8">
         <div className="min-w-[1000px]">
           {/* Days Header */}
@@ -388,6 +426,81 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
           )}
         </div>
       </div>
+      ) : (
+        /* Appointments Calendar */
+        <div className="flex-1 overflow-auto p-8">
+          <div className="min-w-[800px]">
+            <div className="grid grid-cols-7 mb-4">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-center py-2 font-label opacity-60 tracking-[0.3em]">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 border-t border-l border-[var(--border-color)] rounded-2xl overflow-hidden shadow-lg">
+              {calendarDays.map((day, i) => {
+                const isCurrentMonth = isSameDay(startOfMonth(day), monthStart);
+                const dayAppointments = appointmentJobs.filter(j => {
+                  if (!j.scheduledDate) return false;
+                  return isSameDay(new Date(j.scheduledDate), day);
+                });
+                const isToday = isSameDay(day, new Date());
+                return (
+                  <div key={i} className={`border-r border-b border-[var(--border-color)] min-h-[110px] p-2 transition-colors ${
+                    !isCurrentMonth ? 'bg-[var(--bg-secondary)]/30 opacity-40' : isToday ? 'bg-[var(--brand-gold)]/5' : 'bg-[var(--bg-primary)]'
+                  }`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-xs font-bold ${isToday ? 'text-[var(--brand-gold)]' : 'text-[var(--text-secondary)]'}`}>{format(day, 'd')}</span>
+                      {isToday && <span className="text-[7px] font-bold text-[var(--brand-gold)] uppercase">Today</span>}
+                    </div>
+                    <div className="space-y-1">
+                      {dayAppointments.map(appt => (
+                        <button key={appt.id} onClick={() => onSelectJob(appt)}
+                          className="w-full text-left p-1.5 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg hover:bg-[var(--brand-gold)]/20 transition-colors group">
+                          <p className="text-[10px] font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--brand-gold)]">{appt.clientName}</p>
+                          <p className="text-[9px] text-[var(--text-secondary)] truncate">{appt.projectAddress}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Upcoming list */}
+            <div className="mt-8">
+              <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-[var(--brand-gold)]" /> Upcoming Appointments
+              </h3>
+              <div className="space-y-2">
+                {appointmentJobs
+                  .filter(j => j.scheduledDate && new Date(j.scheduledDate) >= new Date())
+                  .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime())
+                  .map(appt => (
+                    <button key={appt.id} onClick={() => onSelectJob(appt)}
+                      className="w-full flex items-center gap-4 p-4 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl hover:border-[var(--brand-gold)]/30 transition-all text-left">
+                      <div className="w-12 h-12 rounded-xl bg-[var(--brand-gold)]/10 flex flex-col items-center justify-center shrink-0">
+                        <span className="text-[8px] font-bold text-[var(--brand-gold)] uppercase">{format(new Date(appt.scheduledDate!), 'MMM')}</span>
+                        <span className="text-lg font-black text-[var(--text-primary)] leading-none">{format(new Date(appt.scheduledDate!), 'd')}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-[var(--text-primary)]">{appt.clientName || 'Unnamed'}</p>
+                        <p className="text-xs text-[var(--text-secondary)] truncate">{appt.projectAddress || 'No address'}</p>
+                      </div>
+                      <span className="text-[10px] font-bold text-[var(--text-secondary)] shrink-0">{format(new Date(appt.scheduledDate!), 'EEE, MMM d')}</span>
+                    </button>
+                  ))
+                }
+                {appointmentJobs.filter(j => j.scheduledDate && new Date(j.scheduledDate) >= new Date()).length === 0 && (
+                  <div className="text-center py-8 border border-dashed border-[var(--border-color)] rounded-xl">
+                    <CalendarDays className="w-8 h-8 text-[var(--text-secondary)] opacity-20 mx-auto mb-2" />
+                    <p className="text-xs text-[var(--text-secondary)]">No upcoming estimate appointments</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence } from './types';
+import { useAppRouter, pathToView } from './hooks/useAppRouter';
 import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES } from './constants';
 import LoginView from './views/LoginView';
 import JobsListView from './views/JobsListView';
@@ -110,11 +111,19 @@ const App: React.FC = () => {
       return null;
     }
   });
-  const [view, setView] = useState<'login' | 'jobs' | 'detail' | 'workflow' | 'office-dashboard' | 'resources' | 'scheduling' | 'office-pipeline' | 'office-job-detail' | 'office-new-job' | 'chat' | 'customer-portal' | 'customers' | 'estimate-portal' | 'estimate-detail' | 'estimator-dashboard' | 'estimator-workflow' | 'estimator-calendar' | 'estimator-calculator' | 'user-management'>(() => {
+  
+  const [view, setView] = useState<string>(() => {
+    // Check for portal token in query params (legacy support)
     const params = new URLSearchParams(window.location.search);
     const portalToken = params.get('portal');
     if (portalToken) {
       return 'customer-portal'; 
+    }
+
+    // Check URL path for initial view
+    const { view: urlView } = pathToView(window.location.pathname);
+    if (urlView !== 'office-dashboard' || window.location.pathname !== '/') {
+      return urlView;
     }
 
     if (!currentUser) return 'login';
@@ -122,6 +131,9 @@ const App: React.FC = () => {
     if (currentUser.role === Role.ESTIMATOR) return 'estimator-dashboard';
     return 'jobs';
   });
+
+  // Router hook - provides navigateTo() which updates both URL and view state
+  const { navigateTo } = useAppRouter(setView, selectedJob?.id);
 
   const [jobs, setJobs] = useState<Job[]>(() => {
     let currentJobs: Job[] = [];
@@ -348,7 +360,7 @@ const App: React.FC = () => {
   const handleDeleteJob = useCallback((jobId: string) => {
     setJobs(prev => prev.filter(j => j.id !== jobId));
     setSelectedJob(prev => prev?.id === jobId ? null : prev);
-    setView('office-pipeline');
+    navigateTo('office-pipeline');
   }, []);
 
   // Sync workflow progress back to the jobs list
@@ -446,18 +458,18 @@ const App: React.FC = () => {
   const handleLogin = useCallback((user: User) => {
     setCurrentUser(user);
     if (user.role === Role.ADMIN) {
-      setView('office-dashboard');
+      navigateTo('office-dashboard');
     } else if (user.role === Role.ESTIMATOR) {
-      setView('estimator-dashboard');
+      navigateTo('estimator-dashboard');
     } else {
-      setView('jobs');
+      navigateTo('jobs');
     }
   }, []);
 
   const handleLogout = useCallback(() => {
     dataService.signOut();
     setCurrentUser(null);
-    setView('login');
+    navigateTo('login');
     setSelectedJob(null);
   }, []);
 
@@ -481,14 +493,14 @@ const App: React.FC = () => {
         PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP
       ];
       if (estimateStages.includes(job.pipelineStage)) {
-        setView('estimate-detail');
+        navigateTo('estimate-detail', selectedJob?.id);
       } else {
-        setView('office-job-detail');
+        navigateTo('office-job-detail', selectedJob?.id);
       }
     } else if (currentUser.role === Role.ESTIMATOR) {
-      setView('estimator-workflow');
+      navigateTo('estimator-workflow', selectedJob?.id);
     } else {
-      setView('detail');
+      navigateTo('detail', selectedJob?.id);
     }
   }, [currentUser]);
 
@@ -630,9 +642,9 @@ const App: React.FC = () => {
     if (currentUser?.role === Role.ESTIMATOR) {
       // Stay in estimator flow - open the new job in estimator workflow
       setSelectedJob(newJob);
-      setView('estimator-workflow');
+      navigateTo('estimator-workflow', selectedJob?.id);
     } else {
-      setView('office-pipeline');
+      navigateTo('office-pipeline');
     }
   }, [currentUser]);
 
@@ -672,7 +684,7 @@ const App: React.FC = () => {
           : j
       ));
     }
-    setView('workflow');
+    navigateTo('workflow', selectedJob?.id);
   }, [currentUser?.name, currentUser?.role, workflowState.jobId]);
 
   const uploadFileToCloudinary = async (file: string, filename: string): Promise<string> => {
@@ -1093,12 +1105,12 @@ const App: React.FC = () => {
         PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP
       ];
       if (estimateStages.includes(selectedJob.pipelineStage)) {
-        setView('estimate-detail');
+        navigateTo('estimate-detail', selectedJob?.id);
       } else {
-        setView('office-job-detail');
+        navigateTo('office-job-detail', selectedJob?.id);
       }
     } else {
-      setView('office-dashboard');
+      navigateTo('office-dashboard');
     }
   }, [selectedJob]);
 
@@ -1114,7 +1126,7 @@ const App: React.FC = () => {
     setCalculatorInitialDimensions(undefined);
     setCalculatorInitialClientInfo(undefined);
     setCalculatorSourceJobId(null);
-    setView('estimator-calculator');
+    navigateTo('estimator-calculator');
   }, []);
 
   /** Open the calculator pre-filled from a field estimator's intake data */
@@ -1132,7 +1144,7 @@ const App: React.FC = () => {
         pipelineStage: PipelineStage.EST_IN_PROGRESS,
       });
     }
-    setView('estimator-calculator');
+    navigateTo('estimator-calculator');
   }, [jobs, handleUpdateJob]);
 
   /** Open the calculator pre-filled from an existing job (e.g. from OfficeJobDetail) */
@@ -1154,7 +1166,7 @@ const App: React.FC = () => {
     setCalculatorInitialClientInfo(jobToCalculatorClientInfo(job));
     setCalculatorSourceJobId(job.id);
     setSelectedJob(job);
-    setView('estimator-calculator');
+    navigateTo('estimator-calculator');
   }, []);
 
   /** Called when the customer/office accepts a quote in the calculator */
@@ -1371,7 +1383,7 @@ const App: React.FC = () => {
     if (updatedJob) {
       setSelectedJob({ ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, pipelineStage: PipelineStage.EST_SENT });
     }
-    setView('estimate-detail');
+    navigateTo('estimate-detail', selectedJob?.id);
   }, [calculatorSourceJobId, handleUpdateJob, jobs]);
 
   if (view === 'login') {
@@ -1388,7 +1400,7 @@ const App: React.FC = () => {
         uploadProgress={uploadProgress}
         error={submissionError}
         onFullSubmission={handleFullSubmission}
-        onExit={() => setView('detail')}
+        onExit={() => navigateTo('detail', selectedJob?.id)}
       />
     );
   }
@@ -1401,7 +1413,7 @@ const App: React.FC = () => {
           initialClientInfo={calculatorInitialClientInfo}
           onEstimateAccepted={handleEstimateAccepted}
           onEstimateSaved={handleEstimateSaved}
-          onExit={() => setView(currentUser?.role === Role.ADMIN ? 'office-pipeline' : 'estimator-dashboard')}
+          onExit={() => navigateTo(currentUser?.role === Role.ADMIN ? 'office-pipeline' : 'estimator-dashboard')}
         />
         {showCalculatorAcceptance && calculatorAcceptanceJob && (
           <AcceptanceModal
@@ -1415,7 +1427,7 @@ const App: React.FC = () => {
               }
               setShowCalculatorAcceptance(false);
               // Job is now at JOB_SOLD, navigate to the job detail page
-              setView('office-job-detail');
+              navigateTo('office-job-detail', selectedJob?.id);
             }}
           />
         )}
@@ -1470,7 +1482,7 @@ const App: React.FC = () => {
               <div className="flex flex-col gap-3 pt-6">
                 {currentUser && (currentUser.role === Role.ADMIN) ? (
                   <button 
-                    onClick={() => setView('office-dashboard')}
+                    onClick={() => navigateTo('office-dashboard')}
                     className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20"
                   >
                     Return to Dashboard
@@ -1501,21 +1513,21 @@ const App: React.FC = () => {
         currentUser={currentUser}
         view={view}
         theme={theme}
-        onNavigate={(v) => setView(v as any)}
+        onNavigate={(v) => navigateTo(v)}
         onLogout={handleLogout}
         onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
         onOpenEstimator={handleOpenNewEstimate}
         onNewLead={() => {
           setNewJobInitialStage(PipelineStage.LEAD_IN);
-          setView('new-job');
+          navigateTo('new-job');
         }}
         onNewEstimateAppointment={() => {
           setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
-          setView('new-job');
+          navigateTo('new-job');
         }}
         onNewJob={() => {
           setNewJobInitialStage(PipelineStage.JOB_SOLD);
-          setView('new-job');
+          navigateTo('new-job');
         }}
       />
 
@@ -1546,7 +1558,7 @@ const App: React.FC = () => {
               <p className="text-xs opacity-90">Local storage is reaching its limit. Some data may not be saved. We've automatically pruned old data, but you may want to clear your browser cache or old jobs.</p>
             </div>
             <button 
-              onClick={() => setView('user-management')}
+              onClick={() => navigateTo('user-management')}
               className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg hover:bg-amber-700 transition-colors"
             >
               Manage Storage
@@ -1560,14 +1572,14 @@ const App: React.FC = () => {
             user={currentUser} 
             jobs={jobs}
             onSelectJob={handleSelectJob} 
-            onViewResources={() => setView('resources')}
+            onViewResources={() => navigateTo('resources')}
           />
         )}
         {(view === 'office-pipeline' || view === 'customers') && currentUser && (
           <UnifiedPipelineView 
             jobs={jobs}
             onSelectJob={handleSelectJob}
-            onNewJob={(stage) => { setNewJobInitialStage(stage); setView('office-new-job'); }}
+            onNewJob={(stage) => { setNewJobInitialStage(stage); navigateTo('office-new-job'); }}
             onOpenEstimator={handleOpenNewEstimate}
             onUpdatePipelineStage={handleUpdatePipelineStage}
           />
@@ -1575,7 +1587,7 @@ const App: React.FC = () => {
         {view === 'office-new-job' && currentUser && (
           <NewJobIntakeView 
             onSave={handleCreateJob}
-            onCancel={() => setView(currentUser?.role === Role.ESTIMATOR ? 'estimator-dashboard' : 'office-pipeline')}
+            onCancel={() => navigateTo(currentUser?.role === Role.ESTIMATOR ? 'estimator-dashboard' : 'office-pipeline')}
             initialStage={newJobInitialStage}
           />
         )}
@@ -1583,7 +1595,7 @@ const App: React.FC = () => {
           <OfficeJobDetailView 
             job={selectedJob}
             allJobs={jobs}
-            onBack={() => setView('office-pipeline')}
+            onBack={() => navigateTo('office-pipeline')}
             onUpdatePipelineStage={handleUpdatePipelineStage}
             onUpdateOfficeChecklist={handleUpdateOfficeChecklist}
             onUpdateJob={handleUpdateJob}
@@ -1596,7 +1608,7 @@ const App: React.FC = () => {
             onPreviewPortal={(job) => {
               if (!job) return;
               setSelectedJob(job);
-              setView('customer-portal');
+              navigateTo('customer-portal', selectedJob?.customerPortalToken || selectedJob?.id);
             }}
             onDeleteJob={handleDeleteJob}
           />
@@ -1604,7 +1616,7 @@ const App: React.FC = () => {
         {view === 'estimate-detail' && selectedJob && currentUser && (
           <EstimateDetailView
             job={selectedJob}
-            onBack={() => setView('office-pipeline')}
+            onBack={() => navigateTo('office-pipeline')}
             onUpdateJob={handleUpdateJob}
             onUpdatePipelineStage={handleUpdatePipelineStage}
             onOpenEstimator={(job) => {
@@ -1613,24 +1625,24 @@ const App: React.FC = () => {
             }}
             onPreviewPortal={(job) => {
               setSelectedJob(job);
-              setView('customer-portal');
+              navigateTo('customer-portal', selectedJob?.customerPortalToken || selectedJob?.id);
             }}
             onDeleteJob={handleDeleteJob}
-            onJobAccepted={() => setView('office-job-detail')}
+            onJobAccepted={() => navigateTo('office-job-detail', selectedJob?.id)}
           />
         )}
         {view === 'office-dashboard' && currentUser && (
           <OfficeDashboardView 
             jobs={jobs}
             onSelectJob={handleSelectJob} 
-            onViewResources={() => setView('resources')}
-            onNewJob={() => { setNewJobInitialStage(PipelineStage.LEAD_IN); setView('office-new-job'); }}
+            onViewResources={() => navigateTo('resources')}
+            onNewJob={() => { setNewJobInitialStage(PipelineStage.LEAD_IN); navigateTo('office-new-job'); }}
           />
         )}
         {view === 'stats' && currentUser && (
           <StatsView
             jobs={jobs}
-            onBack={() => setView('office-dashboard')}
+            onBack={() => navigateTo('office-dashboard')}
           />
         )}
         {view === 'detail' && selectedJob && currentUser && (
@@ -1638,7 +1650,7 @@ const App: React.FC = () => {
             job={selectedJob} 
             user={currentUser}
             allJobs={jobs}
-            onBack={() => setView(currentUser.role === Role.ADMIN ? 'office-dashboard' : 'jobs')}
+            onBack={() => navigateTo(currentUser.role === Role.ADMIN ? 'office-dashboard' : 'jobs')}
             onOpenWorkflow={handleOpenWorkflow}
             onUpdateOfficeReviewStatus={handleUpdateOfficeReviewStatus}
             onUpdateSchedule={handleUpdateSchedule}
@@ -1647,12 +1659,12 @@ const App: React.FC = () => {
           />
         )}
         {view === 'user-management' && currentUser?.role === Role.ADMIN && (
-          <UserManagementView onBack={() => setView('office-dashboard')} />
+          <UserManagementView onBack={() => navigateTo('office-dashboard')} />
         )}
         {view === 'resources' && currentUser && (
           <FieldResourcesView 
             user={currentUser} 
-            onBack={() => setView(currentUser.role === Role.ADMIN ? 'office-dashboard' : 'jobs')}
+            onBack={() => navigateTo(currentUser.role === Role.ADMIN ? 'office-dashboard' : 'jobs')}
           />
         )}
         {view === 'scheduling' && currentUser && (
@@ -1674,15 +1686,15 @@ const App: React.FC = () => {
           <EstimatorDashboardView 
             jobs={jobs}
             onSelectJob={handleSelectJob}
-            onOpenCalendar={() => setView('estimator-calendar')}
-            onNewEstimate={() => { setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED); setView('office-new-job'); }}
+            onOpenCalendar={() => navigateTo('estimator-calendar')}
+            onNewEstimate={() => { setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED); navigateTo('office-new-job'); }}
           />
         )}
         {view === 'estimator-calendar' && currentUser && (
           <div className="flex flex-col h-full overflow-hidden">
             <div className="bg-[var(--bg-primary)] p-2 border-b border-[var(--border-color)]">
               <button 
-                onClick={() => setView('estimator-dashboard')}
+                onClick={() => navigateTo('estimator-dashboard')}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/5 rounded-xl transition-all"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -1701,7 +1713,7 @@ const App: React.FC = () => {
           <EstimatorWorkflowView 
             key={selectedJob.id}
             job={selectedJob}
-            onBack={() => setView('estimator-dashboard')}
+            onBack={() => navigateTo('estimator-dashboard')}
             onSave={handleUpdateEstimatorIntake}
             onPushToEstimating={handlePushToEstimating}
           />
