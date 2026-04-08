@@ -392,6 +392,9 @@ export interface Job {
     acceptedDate: string;
   };
 
+  // Estimator field intake data
+  estimatorIntake?: EstimatorIntake;
+
   // Module: CRM / Nurture & Automation
   nurtureSequence?: NurtureSequence;
   nurtureStep?: number;

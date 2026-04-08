@@ -1774,41 +1774,29 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
     let name = clientInfo.name;
     let address = clientInfo.address;
 
-    if (!name.trim() || !address.trim()) {
-      alert("Please ensure Client Name and Address are entered before finalizing the agreement.");
-      if (!name.trim()) {
-        const inputName = prompt("Enter Client Name for Agreement:");
-        if (inputName === null) return;
-        name = inputName;
-      }
-      if (!address.trim()) {
-        const inputAddr = prompt("Enter Project Address for Agreement:");
-        if (inputAddr === null) return;
-        address = inputAddr;
-      }
-      setClientInfo({ name, address });
+    if (!name.trim()) {
+      const inputName = prompt("Enter Client Name for Agreement:");
+      if (inputName === null) return;
+      name = inputName;
     }
+    if (!address.trim()) {
+      const inputAddr = prompt("Enter Project Address for Agreement:");
+      if (inputAddr === null) return;
+      address = inputAddr;
+    }
+    setClientInfo({ name, address });
 
-    if (confirm('Convert this estimate into a Work Order & Agreement?')) {
-      setDocMode('agreement');
-      setPrintContext('agreement');
-      document.title = "Luxury Decking – Deck Installation Agreement";
-      setTimeout(() => {
-        window.print();
-      }, 150);
-
-      // Fire callback to Field Pro to create/update the job record
-      if (onEstimateAccepted) {
-        onEstimateAccepted({
-          clientName: name,
-          clientAddress: address,
-          estimateNumber,
-          selections: calcSelections,
-          dimensions: calcDimensions,
-          pricingSummary,
-          activePackage
-        });
-      }
+    // Fire callback to open AcceptanceModal in Field Pro
+    if (onEstimateAccepted) {
+      onEstimateAccepted({
+        clientName: name,
+        clientAddress: address,
+        estimateNumber,
+        selections: calcSelections,
+        dimensions: calcDimensions,
+        pricingSummary,
+        activePackage
+      });
     }
   };
 

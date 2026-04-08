@@ -16,10 +16,11 @@ interface EstimateDetailViewProps {
   onUpdatePipelineStage: (jobId: string, newStage: PipelineStage) => void;
   onOpenEstimator: (job: Job) => void;
   onPreviewPortal: (job: Job) => void;
+  onDeleteJob?: (jobId: string) => void;
 }
 
 const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
-  job, onBack, onUpdateJob, onUpdatePipelineStage, onOpenEstimator, onPreviewPortal
+  job, onBack, onUpdateJob, onUpdatePipelineStage, onOpenEstimator, onPreviewPortal, onDeleteJob
 }) => {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({
@@ -216,20 +217,42 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
 
                 {/* Option engagement breakdown */}
                 {job.estimateData?.options && job.estimateData.options.length > 0 && (
-                  <div className="mt-4 p-4 bg-[var(--bg-primary)]/50 rounded-lg border border-[var(--border-color)]">
-                    <h4 className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <BarChart3 className="w-3 h-3" /> Option Engagement
-                    </h4>
-                    <div className="space-y-2">
-                      {job.estimateData.options.map((opt: any) => (
-                        <div key={opt.id} className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-[var(--text-secondary)]">{opt.name}</span>
-                          <div className="flex-1 mx-3 h-1.5 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, (job.portalEngagement?.optionClicks?.[opt.id] || 0) * 20)}%` }} />
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-[var(--bg-primary)]/50 rounded-lg border border-[var(--border-color)]">
+                      <h4 className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <BarChart3 className="w-3 h-3 text-blue-500" /> Option Engagement
+                      </h4>
+                      <div className="space-y-2">
+                        {job.estimateData.options.map((opt: any) => (
+                          <div key={opt.id} className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-[var(--text-secondary)]">{opt.name}</span>
+                            <div className="flex-1 mx-3 h-1.5 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, (job.portalEngagement?.optionClicks?.[opt.id] || 0) * 20)}%` }} />
+                            </div>
+                            <span className="text-xs font-bold text-[var(--text-primary)]">{job.portalEngagement?.optionClicks?.[opt.id] || 0}</span>
                           </div>
-                          <span className="text-xs font-bold text-[var(--text-primary)]">{job.portalEngagement?.optionClicks?.[opt.id] || 0}</span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-[var(--bg-primary)]/50 rounded-lg border border-[var(--border-color)]">
+                      <h4 className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Zap className="w-3 h-3 text-amber-500" /> Upgrade Interest
+                      </h4>
+                      <div className="space-y-2">
+                        {job.estimateData?.addOns && job.estimateData.addOns.length > 0 ? (
+                          job.estimateData.addOns.slice(0, 4).map((addon: any) => (
+                            <div key={addon.id} className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-[var(--text-secondary)]">{addon.name}</span>
+                              <div className="flex-1 mx-3 h-1.5 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                                <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min(100, (job.portalEngagement?.addOnInteractions?.[addon.id] || 0) * 25)}%` }} />
+                              </div>
+                              <span className="text-xs font-bold text-[var(--text-primary)]">{job.portalEngagement?.addOnInteractions?.[addon.id] || 0}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs text-[var(--text-secondary)]">No add-on interactions yet</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -359,6 +382,43 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Site Dimensions & Measurements */}
+            {(job.estimatorIntake?.measureSheet || job.acceptedBuildSummary) && (
+              <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[var(--border-color)]">
+                  <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                    <Zap className="w-3.5 h-3.5" /> Site Dimensions & Measurements
+                  </h2>
+                </div>
+                <div className="p-5">
+                  {job.estimatorIntake?.measureSheet ? (() => {
+                    const ms = job.estimatorIntake!.measureSheet;
+                    return (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {ms.deckSqft > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Deck Area</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.deckSqft} sqft</p></div>}
+                        {ms.footingCount > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Footings</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.footingCount} ({ms.footingType})</p></div>}
+                        {ms.ledgerLength > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Ledger</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.ledgerLength} LF</p></div>}
+                        {ms.fasciaLf > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Fascia</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.fasciaLf} LF</p></div>}
+                        {ms.stairLf > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Stairs</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.stairLf} LF</p></div>}
+                        {ms.woodRailingLf > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Wood Railing</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.woodRailingLf} LF</p></div>}
+                        {ms.aluminumPostCount > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Alum. Posts</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.aluminumPostCount}</p></div>}
+                        {ms.aluminum6ftSections > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Alum. 6ft Sections</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.aluminum6ftSections}</p></div>}
+                        {ms.skirtingSqft > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Skirting</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.skirtingSqft} sqft</p></div>}
+                        {ms.privacyWallLf > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Privacy Wall</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.privacyWallLf} LF</p></div>}
+                        {ms.demoSqft > 0 && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Demo</p><p className="text-lg font-bold text-[var(--text-primary)]">{ms.demoSqft} sqft</p></div>}
+                        {ms.elevationNote && <div className="p-3 bg-[var(--bg-secondary)] rounded-lg col-span-2"><p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Elevation Notes</p><p className="text-sm text-[var(--text-primary)]">{ms.elevationNote}</p></div>}
+                      </div>
+                    );
+                  })() : job.acceptedBuildSummary && (
+                    <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                      <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase mb-1">Build Summary</p>
+                      <p className="text-sm text-[var(--text-primary)]">{job.acceptedBuildSummary.scopeSummary}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Estimate Data / Proposal Options */}
             {job.estimateData && (
@@ -492,6 +552,22 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     <Phone className="w-4 h-4" /> Call Client
                   </a>
                 )}
+                {job.pipelineStage === PipelineStage.EST_SENT && (
+                  <button onClick={() => sharePortalLink('email')}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm font-bold text-[var(--text-primary)] hover:border-amber-500/30 transition-all">
+                    <Send className="w-4 h-4" /> Re-send Estimate
+                  </button>
+                )}
+                {onDeleteJob && (
+                  <button onClick={() => {
+                    if (confirm(`Are you sure you want to delete ${job.clientName || 'this job'}? This cannot be undone.`)) {
+                      onDeleteJob(job.id);
+                    }
+                  }}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-sm font-bold text-rose-500 hover:bg-rose-500/20 transition-all">
+                    <X className="w-4 h-4" /> Cancel / Delete Job
+                  </button>
+                )}
               </div>
             </div>
 
@@ -558,6 +634,45 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                   </div>
                 ) : (
                   <p className="text-xs text-[var(--text-secondary)] text-center py-4">No notes yet</p>
+                )}
+              </div>
+            </div>
+
+            {/* AI Conversation Summary */}
+            <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[var(--border-color)]">
+                <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                  <Zap className="w-3.5 h-3.5 text-amber-500" /> AI Summary
+                </h2>
+              </div>
+              <div className="p-4">
+                {job.aiInsights?.activitySummary || job.aiInsights?.projectHistorySummary ? (
+                  <div className="space-y-3">
+                    {job.aiInsights.activitySummary && (
+                      <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg">
+                        <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest mb-1">Activity Summary</p>
+                        <p className="text-xs text-[var(--text-primary)] leading-relaxed">{job.aiInsights.activitySummary}</p>
+                      </div>
+                    )}
+                    {job.aiInsights.nextActionRecommendation && (
+                      <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
+                        <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest mb-1">Recommended Next Step</p>
+                        <p className="text-xs font-bold text-[var(--text-primary)]">{job.aiInsights.nextActionRecommendation.action}</p>
+                        <p className="text-[10px] text-[var(--text-secondary)] mt-1">{job.aiInsights.nextActionRecommendation.reasoning}</p>
+                      </div>
+                    )}
+                    {job.aiInsights.projectHistorySummary && (
+                      <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                        <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Conversation History</p>
+                        <p className="text-xs text-[var(--text-primary)] leading-relaxed">{job.aiInsights.projectHistorySummary}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Zap className="w-6 h-6 text-[var(--text-secondary)] opacity-20 mx-auto mb-2" />
+                    <p className="text-xs text-[var(--text-secondary)]">AI summary will appear once there are client interactions to analyse</p>
+                  </div>
                 )}
               </div>
             </div>

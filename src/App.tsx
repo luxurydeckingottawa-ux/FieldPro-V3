@@ -18,6 +18,7 @@ import EstimatorDashboardView from './views/EstimatorDashboardView';
 import EstimatorWorkflowView from './views/EstimatorWorkflowView';
 import EstimateDetailView from './views/EstimateDetailView';
 import NavBar from './components/NavBar';
+import AcceptanceModal from './components/AcceptanceModal';
 import { EstimatorCalendar } from './components/EstimatorCalendar';
 import ChatView from './components/ChatView';
 import UserManagementView from './views/UserManagementView';
@@ -343,6 +344,12 @@ const App: React.FC = () => {
     });
   }, [handleSendMessage]);
 
+  const handleDeleteJob = useCallback((jobId: string) => {
+    setJobs(prev => prev.filter(j => j.id !== jobId));
+    setSelectedJob(prev => prev?.id === jobId ? null : prev);
+    setView('office-pipeline');
+  }, []);
+
   // Sync workflow progress back to the jobs list
   useEffect(() => {
     if (workflowState.jobId) {
@@ -496,71 +503,41 @@ const App: React.FC = () => {
   }, [jobs, selectedJob, handleUpdateJob]);
 
   const handleUpdateOfficeChecklist = useCallback((jobId: string, stage: PipelineStage, itemId: string, completed: boolean, isNA: boolean = false) => {
-    setJobs(prevJobs => prevJobs.map(job => {
-      if (job.id === jobId) {
-        const checklists = job.officeChecklists || [];
-        const updatedChecklists = checklists.map(cl => {
-          if (cl.stage === stage) {
-            return {
-              ...cl,
-              items: (cl.items || []).map(item => item.id === itemId ? { ...item, completed, isNA } : item)
-            };
-          }
-          return cl;
-        });
-
-        // Auto-advance: check if ALL items in the current stage are completed or N/A
-        const currentChecklist = updatedChecklists.find(cl => cl.stage === stage);
-        const allComplete = currentChecklist?.items.every(item => item.completed || item.isNA) || false;
-        
-        let updatedJob = { ...job, officeChecklists: updatedChecklists, updatedAt: new Date().toISOString() };
-
-        if (allComplete && job.pipelineStage === stage) {
-          // Find the next stage in the pipeline
-          const stageOrder = PIPELINE_STAGES.map(s => s.id);
-          const currentIndex = stageOrder.indexOf(stage as PipelineStage);
-          if (currentIndex >= 0 && currentIndex < stageOrder.length - 1) {
-            const nextStage = stageOrder[currentIndex + 1];
-            updatedJob = { ...updatedJob, pipelineStage: nextStage };
-            console.log(`Auto-advanced job ${job.jobNumber} from ${stage} to ${nextStage}`);
-          }
+    const updateChecklistJob = (job: Job): Job => {
+      if (job.id !== jobId) return job;
+      
+      const checklists = job.officeChecklists || [];
+      const updatedChecklists = checklists.map(cl => {
+        if (cl.stage === stage) {
+          return {
+            ...cl,
+            items: (cl.items || []).map(item => item.id === itemId ? { ...item, completed, isNA } : item)
+          };
         }
+        return cl;
+      });
 
-        return updatedJob;
-      }
-      return job;
-    }));
+      // Auto-advance: check if ALL items in the current stage are completed or N/A
+      const currentChecklist = updatedChecklists.find(cl => cl.stage === stage);
+      const allComplete = currentChecklist?.items.every(item => item.completed || item.isNA) || false;
+      
+      let updatedJob = { ...job, officeChecklists: updatedChecklists, updatedAt: new Date().toISOString() };
 
-    setSelectedJob(prev => {
-      if (prev && prev.id === jobId) {
-        const checklists = prev.officeChecklists || [];
-        const updatedChecklists = checklists.map(cl => {
-          if (cl.stage === stage) {
-            return {
-              ...cl,
-              items: (cl.items || []).map(item => item.id === itemId ? { ...item, completed, isNA } : item)
-            };
-          }
-          return cl;
-        });
-
-        let updatedJob = { ...prev, officeChecklists: updatedChecklists, updatedAt: new Date().toISOString() };
-
-        const currentChecklist = updatedChecklists.find(cl => cl.stage === stage);
-        const allComplete = currentChecklist?.items.every(item => item.completed || item.isNA) || false;
-
-        if (allComplete && prev.pipelineStage === stage) {
-          const stageOrder = PIPELINE_STAGES.map(s => s.id);
-          const currentIndex = stageOrder.indexOf(stage as PipelineStage);
-          if (currentIndex >= 0 && currentIndex < stageOrder.length - 1) {
-            updatedJob = { ...updatedJob, pipelineStage: stageOrder[currentIndex + 1] };
-          }
+      if (allComplete && job.pipelineStage === stage) {
+        const stageOrder = PIPELINE_STAGES.map(s => s.id);
+        const currentIndex = stageOrder.indexOf(stage as PipelineStage);
+        if (currentIndex >= 0 && currentIndex < stageOrder.length - 1) {
+          const nextStage = stageOrder[currentIndex + 1];
+          updatedJob = { ...updatedJob, pipelineStage: nextStage };
+          console.log(`Auto-advanced job ${job.jobNumber} from ${stage} to ${nextStage}`);
         }
-
-        return updatedJob;
       }
-      return prev;
-    });
+
+      return updatedJob;
+    };
+
+    setJobs(prevJobs => prevJobs.map(updateChecklistJob));
+    setSelectedJob(prev => prev ? updateChecklistJob(prev) : null);
   }, []);
 
   const handleAcceptEstimateOption = useCallback((jobId: string, optionId: string, selectedAddOns: string[]) => {
@@ -1007,6 +984,7 @@ const App: React.FC = () => {
 
     const now = new Date().toISOString();
     const { generateContractPDF } = await import('./utils/contractPdf');
+    const { generateDepositInvoice } = await import('./utils/depositInvoice');
     const amount = job.totalAmount || job.estimateAmount || 0;
 
     try {
@@ -1023,12 +1001,26 @@ const App: React.FC = () => {
         acceptedDate: now,
       });
 
+      // Generate deposit invoice
+      const depositInvoiceUrl = generateDepositInvoice({
+        jobNumber: job.jobNumber || '',
+        clientName: job.clientName || '',
+        clientEmail: job.clientEmail || '',
+        clientPhone: job.clientPhone || '',
+        projectAddress: job.projectAddress || '',
+        totalAmount: amount,
+        depositPercent: 30,
+        invoiceDate: now,
+      });
+
       handleUpdateJob(jobId, {
         pipelineStage: PipelineStage.JOB_SOLD,
         lifecycleStage: CustomerLifecycle.WON_SOLD,
         status: JobStatus.SCHEDULED,
-        depositStatus: DepositStatus.NOT_SENT,
-        soldWorkflowStatus: SoldWorkflowStatus.ACCEPTED,
+        depositStatus: DepositStatus.REQUESTED,
+        depositRequestedDate: now,
+        depositAmount: Math.round(amount * 0.3),
+        soldWorkflowStatus: SoldWorkflowStatus.AWAITING_DEPOSIT,
         customerSignature: signature,
         contractPdfUrl: contractPdfUrl,
         contractSignedDate: now,
@@ -1042,13 +1034,20 @@ const App: React.FC = () => {
             url: contractPdfUrl,
             type: 'contract' as const,
             uploadedAt: now,
-            uploadedBy: 'customer-portal'
+            uploadedBy: 'system'
+          },
+          {
+            id: `deposit-inv-${Date.now()}`,
+            name: `Deposit-Invoice-${job.jobNumber}.pdf`,
+            url: depositInvoiceUrl,
+            type: 'other' as const,
+            uploadedAt: now,
+            uploadedBy: 'system'
           }
         ]
       });
     } catch (err) {
       console.error('Contract generation failed:', err);
-      // Still move to JOB_SOLD even if PDF fails
       handleUpdateJob(jobId, {
         pipelineStage: PipelineStage.JOB_SOLD,
         lifecycleStage: CustomerLifecycle.WON_SOLD,
@@ -1089,6 +1088,8 @@ const App: React.FC = () => {
   const [calculatorInitialDimensions, setCalculatorInitialDimensions] = useState<any>(undefined);
   const [calculatorInitialClientInfo, setCalculatorInitialClientInfo] = useState<{ name: string; address: string } | undefined>(undefined);
   const [calculatorSourceJobId, setCalculatorSourceJobId] = useState<string | null>(null);
+  const [showCalculatorAcceptance, setShowCalculatorAcceptance] = useState(false);
+  const [calculatorAcceptanceJob, setCalculatorAcceptanceJob] = useState<Job | null>(null);
 
   /** Open the calculator fresh (New Estimate from office) */
   const handleOpenNewEstimate = useCallback(() => {
@@ -1163,7 +1164,6 @@ const App: React.FC = () => {
     };
 
     if (calculatorSourceJobId) {
-      // Update existing job - save estimate data but keep at EST_COMPLETED (not JOB_SOLD yet)
       handleUpdateJob(calculatorSourceJobId, {
         clientName: data.clientName,
         projectAddress: data.clientAddress,
@@ -1175,14 +1175,14 @@ const App: React.FC = () => {
         estimateSentDate: now,
         updatedAt: now,
       });
-      // Open the estimate detail page so user can Accept & Sign
       const updatedJob = jobs.find(j => j.id === calculatorSourceJobId);
       if (updatedJob) {
-        setSelectedJob({ ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, pipelineStage: PipelineStage.EST_COMPLETED });
+        const jobForModal = { ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, pipelineStage: PipelineStage.EST_COMPLETED, clientName: data.clientName, projectAddress: data.clientAddress };
+        setCalculatorAcceptanceJob(jobForModal);
+        setSelectedJob(jobForModal);
       }
-      setView('estimate-detail');
+      setShowCalculatorAcceptance(true);
     } else {
-      // Create new job from a fresh estimate
       const newJobId = `j-est-${Date.now()}`;
       const newJob: Job = {
         id: newJobId,
@@ -1221,7 +1221,8 @@ const App: React.FC = () => {
       };
       setJobs(prev => [newJob, ...prev]);
       setSelectedJob(newJob);
-      setView('estimate-detail');
+      setCalculatorAcceptanceJob(newJob);
+      setShowCalculatorAcceptance(true);
     }
   }, [calculatorSourceJobId, handleUpdateJob, jobs]);
 
@@ -1351,13 +1352,30 @@ const App: React.FC = () => {
 
   if (view === 'estimator-calculator') {
     return (
-      <EstimatorCalculatorView
-        initialDimensions={calculatorInitialDimensions}
-        initialClientInfo={calculatorInitialClientInfo}
-        onEstimateAccepted={handleEstimateAccepted}
-        onEstimateSaved={handleEstimateSaved}
-        onExit={() => setView(currentUser?.role === Role.ADMIN ? 'office-pipeline' : 'estimator-dashboard')}
-      />
+      <>
+        <EstimatorCalculatorView
+          initialDimensions={calculatorInitialDimensions}
+          initialClientInfo={calculatorInitialClientInfo}
+          onEstimateAccepted={handleEstimateAccepted}
+          onEstimateSaved={handleEstimateSaved}
+          onExit={() => setView(currentUser?.role === Role.ADMIN ? 'office-pipeline' : 'estimator-dashboard')}
+        />
+        {showCalculatorAcceptance && calculatorAcceptanceJob && (
+          <AcceptanceModal
+            job={calculatorAcceptanceJob}
+            isOpen={showCalculatorAcceptance}
+            onClose={() => setShowCalculatorAcceptance(false)}
+            onAccept={(jobId, updates) => {
+              handleUpdateJob(jobId, updates);
+              if (updates.pipelineStage) {
+                handleUpdatePipelineStage(jobId, updates.pipelineStage);
+              }
+              setShowCalculatorAcceptance(false);
+              setView('estimate-detail');
+            }}
+          />
+        )}
+      </>
     );
   }
 
@@ -1372,10 +1390,13 @@ const App: React.FC = () => {
              selectedJob.pipelineStage === PipelineStage.EST_IN_PROGRESS ||
              selectedJob.pipelineStage === PipelineStage.EST_UNSCHEDULED ||
              selectedJob.pipelineStage === PipelineStage.EST_SCHEDULED ||
-             // Legacy lifecycle stages
-             selectedJob.lifecycleStage === CustomerLifecycle.ESTIMATE_SENT || 
-             selectedJob.lifecycleStage === CustomerLifecycle.FOLLOW_UP_NEEDED ||
-             (selectedJob.lifecycleStage === CustomerLifecycle.WON_SOLD && selectedJob.pipelineStage === PipelineStage.JOB_SOLD) ||
+             selectedJob.pipelineStage === PipelineStage.EST_REJECTED ||
+             // Legacy lifecycle stages (only if NOT at a job stage)
+             ((selectedJob.lifecycleStage === CustomerLifecycle.ESTIMATE_SENT || 
+               selectedJob.lifecycleStage === CustomerLifecycle.FOLLOW_UP_NEEDED) &&
+              ![PipelineStage.JOB_SOLD, PipelineStage.ADMIN_SETUP, PipelineStage.PRE_PRODUCTION, 
+                PipelineStage.READY_TO_START, PipelineStage.IN_FIELD, PipelineStage.COMPLETION, 
+                PipelineStage.PAID_CLOSED].includes(selectedJob.pipelineStage)) ||
              !selectedJob.pipelineStage) ? (
               <EstimatePortalView 
                 job={selectedJob} 
@@ -1537,6 +1558,7 @@ const App: React.FC = () => {
               setSelectedJob(job);
               setView('customer-portal');
             }}
+            onDeleteJob={handleDeleteJob}
           />
         )}
         {view === 'office-dashboard' && currentUser && (

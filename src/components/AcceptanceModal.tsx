@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Job, PipelineStage, DepositStatus, SoldWorkflowStatus, CustomerLifecycle } from '../types';
 import SignaturePad from './SignaturePad';
 import { generateContractPDF } from '../utils/contractPdf';
+import { generateDepositInvoice } from '../utils/depositInvoice';
 import { 
   X, CheckCircle2, FileText, DollarSign, 
   Calendar, Shield, AlertCircle, Download, Loader2
@@ -58,11 +59,26 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
 
       // Update the job with acceptance data
       const now = new Date().toISOString();
+
+      // Generate deposit invoice
+      const depositInvoiceUrl = generateDepositInvoice({
+        jobNumber: job.jobNumber || '',
+        clientName: clientName,
+        clientEmail: job.clientEmail || '',
+        clientPhone: job.clientPhone || '',
+        projectAddress: job.projectAddress || '',
+        totalAmount: amount,
+        depositPercent: 30,
+        invoiceDate: now,
+      });
+
       onAccept(job.id, {
         pipelineStage: PipelineStage.JOB_SOLD,
         lifecycleStage: CustomerLifecycle.WON_SOLD,
-        depositStatus: DepositStatus.NOT_SENT,
-        soldWorkflowStatus: SoldWorkflowStatus.ACCEPTED,
+        depositStatus: DepositStatus.REQUESTED,
+        depositRequestedDate: now,
+        depositAmount: deposit,
+        soldWorkflowStatus: SoldWorkflowStatus.AWAITING_DEPOSIT,
         estimateStatus: 'accepted' as any,
         acceptedDate: now,
         customerSignature: signature,
@@ -76,6 +92,14 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
             name: `Contract-${job.jobNumber}.pdf`,
             url: contractPdfUrl,
             type: 'contract',
+            uploadedAt: now,
+            uploadedBy: 'system'
+          },
+          {
+            id: `deposit-inv-${Date.now()}`,
+            name: `Deposit-Invoice-${job.jobNumber}.pdf`,
+            url: depositInvoiceUrl,
+            type: 'other',
             uploadedAt: now,
             uploadedBy: 'system'
           }
