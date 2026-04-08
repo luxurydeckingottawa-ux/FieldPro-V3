@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Job, CustomerLifecycle, PipelineStage } from '../types';
+import { Job, PipelineStage } from '../types';
 import { 
   Calendar, 
   MapPin, 
@@ -9,27 +9,31 @@ import {
   ClipboardList,
   Camera,
   PenTool,
-  Navigation
+  Plus,
+  Phone
 } from 'lucide-react';
-import { motion } from 'motion/react';
 
 interface EstimatorDashboardViewProps {
   jobs: Job[];
   onSelectJob: (job: Job) => void;
   onOpenCalendar: () => void;
+  onNewEstimate: () => void;
 }
 
-const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, onSelectJob, onOpenCalendar }) => {
+const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, onSelectJob, onOpenCalendar, onNewEstimate }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState<'all' | 'today' | 'upcoming'>('today');
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('active');
   
-  // Filter jobs that are in the estimation stage or need site visits
-  const estimatorJobs = jobs.filter(job => 
-    job.lifecycleStage === CustomerLifecycle.ESTIMATE_IN_PROGRESS ||
-    job.lifecycleStage === CustomerLifecycle.NEW_LEAD ||
-    job.pipelineStage === PipelineStage.SITE_VISIT_SCHEDULED ||
-    job.pipelineStage === PipelineStage.ESTIMATE_IN_PROGRESS
-  );
+  const estimatorJobs = jobs.filter(job => {
+    const estimateStages = [
+      PipelineStage.LEAD_IN,
+      PipelineStage.SITE_VISIT_SCHEDULED,
+      PipelineStage.ESTIMATE_IN_PROGRESS,
+      PipelineStage.ESTIMATE_SENT,
+      PipelineStage.FOLLOW_UP
+    ];
+    return estimateStages.includes(job.pipelineStage);
+  });
 
   const filteredJobs = estimatorJobs.filter(job => {
     const clientName = job.clientName || '';
@@ -40,15 +44,36 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
                          projectAddress.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          jobNumber.toLowerCase().includes(searchQuery.toLowerCase());
     
-    if (filter === 'today') {
-      // For mock purposes, let's assume jobs with specific IDs are for today
-      return matchesSearch && ['j10', 'j8'].includes(job.id);
+    if (filter === 'active') {
+      return matchesSearch && job.pipelineStage !== PipelineStage.FOLLOW_UP;
     }
-    if (filter === 'upcoming') {
-      return matchesSearch && !['j10', 'j8'].includes(job.id);
+    if (filter === 'completed') {
+      return matchesSearch && job.pipelineStage === PipelineStage.FOLLOW_UP;
     }
     return matchesSearch;
   });
+
+  const getStageLabel = (stage: PipelineStage) => {
+    switch (stage) {
+      case PipelineStage.LEAD_IN: return 'New Lead';
+      case PipelineStage.SITE_VISIT_SCHEDULED: return 'Site Visit';
+      case PipelineStage.ESTIMATE_IN_PROGRESS: return 'Estimating';
+      case PipelineStage.ESTIMATE_SENT: return 'Sent';
+      case PipelineStage.FOLLOW_UP: return 'Follow Up';
+      default: return stage;
+    }
+  };
+
+  const getStageColor = (stage: PipelineStage) => {
+    switch (stage) {
+      case PipelineStage.LEAD_IN: return 'bg-blue-500/10 text-blue-500';
+      case PipelineStage.SITE_VISIT_SCHEDULED: return 'bg-purple-500/10 text-purple-500';
+      case PipelineStage.ESTIMATE_IN_PROGRESS: return 'bg-amber-500/10 text-amber-500';
+      case PipelineStage.ESTIMATE_SENT: return 'bg-emerald-500/10 text-emerald-500';
+      case PipelineStage.FOLLOW_UP: return 'bg-rose-500/10 text-rose-500';
+      default: return 'bg-gray-500/10 text-gray-500';
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-secondary)]">
@@ -57,19 +82,23 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)]">Estimator Portal</h1>
-            <p className="text-[var(--text-secondary)] text-sm">Site Intake & Measurements</p>
+            <p className="text-[var(--text-secondary)] text-sm">{estimatorJobs.length} active estimate{estimatorJobs.length !== 1 ? 's' : ''}</p>
           </div>
           <div className="flex gap-2">
+            <button 
+              onClick={onNewEstimate}
+              className="h-12 px-5 bg-emerald-600 text-white rounded-xl flex items-center gap-2 hover:bg-emerald-500 transition-all active:scale-[0.97] font-bold text-sm shadow-lg shadow-emerald-600/20"
+            >
+              <Plus className="w-5 h-5" />
+              New Estimate
+            </button>
             <button 
               onClick={onOpenCalendar}
               className="w-12 h-12 bg-emerald-600/10 rounded-xl flex items-center justify-center hover:bg-emerald-600/20 transition-all"
               title="View Schedule"
             >
-              <Calendar className="text-emerald-600 w-6 h-6" />
+              <Calendar className="text-emerald-600 w-5 h-5" />
             </button>
-            <div className="w-12 h-12 bg-emerald-600/10 rounded-xl flex items-center justify-center">
-              <ClipboardList className="text-emerald-600 w-6 h-6" />
-            </div>
           </div>
         </div>
 
@@ -78,7 +107,7 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)]" />
             <input
               type="text"
-              placeholder="Search appointments..."
+              placeholder="Search estimates..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all text-[var(--text-primary)]"
@@ -86,7 +115,7 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
           </div>
 
           <div className="flex gap-2 p-1 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-            {(['today', 'upcoming', 'all'] as const).map((f) => (
+            {(['active', 'completed', 'all'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -103,14 +132,12 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
         </div>
       </div>
 
-      {/* Appointments List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Jobs List */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {filteredJobs.length > 0 ? (
           filteredJobs.map((job) => (
-            <motion.button
+            <button
               key={job.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
               onClick={() => onSelectJob(job)}
               className="w-full text-left bg-[var(--bg-primary)] p-5 rounded-2xl border border-[var(--border-color)] shadow-sm hover:border-emerald-600/50 transition-all group active:scale-[0.98]"
             >
@@ -120,33 +147,38 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
                     <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-600/10 text-emerald-600 rounded-full uppercase tracking-wider">
                       {job.jobNumber}
                     </span>
-                    {filter === 'today' && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded-full uppercase tracking-wider">
-                        Today
-                      </span>
-                    )}
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${getStageColor(job.pipelineStage)}`}>
+                      {getStageLabel(job.pipelineStage)}
+                    </span>
                   </div>
                   <h3 className="text-lg font-bold text-[var(--text-primary)] group-hover:text-emerald-600 transition-colors">
-                    {job.clientName}
+                    {job.clientName || 'Unnamed'}
                   </h3>
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-1 text-emerald-600 font-bold">
-                    <Clock className="w-4 h-4" />
-                    <span>10:30 AM</span>
-                  </div>
-                </div>
+                {job.estimateAmount && job.estimateAmount > 0 && (
+                  <span className="text-sm font-bold text-emerald-600">${job.estimateAmount.toLocaleString()}</span>
+                )}
               </div>
 
               <div className="space-y-2 mb-4">
-                <div className="flex items-start gap-2 text-[var(--text-secondary)] text-sm">
-                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span className="line-clamp-1">{job.projectAddress}</span>
-                </div>
-                <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
-                  <Navigation className="w-4 h-4" />
-                  <span>15 mins away</span>
-                </div>
+                {job.projectAddress && (
+                  <div className="flex items-start gap-2 text-[var(--text-secondary)] text-sm">
+                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span className="line-clamp-1">{job.projectAddress}</span>
+                  </div>
+                )}
+                {job.clientPhone && (
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
+                    <Phone className="w-4 h-4" />
+                    <span>{job.clientPhone}</span>
+                  </div>
+                )}
+                {job.scheduledDate && (
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
+                    <Clock className="w-4 h-4" />
+                    <span>{job.scheduledDate}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between pt-4 border-t border-[var(--border-color)]">
@@ -162,20 +194,27 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
                   </div>
                 </div>
                 <div className="flex items-center text-emerald-600 font-bold text-sm">
-                  Start Intake <ChevronRight className="w-4 h-4" />
+                  Open <ChevronRight className="w-4 h-4" />
                 </div>
               </div>
-            </motion.button>
+            </button>
           ))
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-4">
-              <Calendar className="text-[var(--text-secondary)] w-8 h-8 opacity-20" />
+            <div className="w-20 h-20 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 border border-emerald-500/20">
+              <ClipboardList className="text-emerald-500 w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-[var(--text-primary)]">No appointments found</h3>
-            <p className="text-[var(--text-secondary)] text-sm max-w-[200px]">
-              Try adjusting your filters or search query.
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">No estimates yet</h3>
+            <p className="text-[var(--text-secondary)] text-sm max-w-[250px] mb-6">
+              Start a new estimate to capture client information and site measurements.
             </p>
+            <button 
+              onClick={onNewEstimate}
+              className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-500 transition-all active:scale-[0.97] shadow-lg shadow-emerald-600/20"
+            >
+              <Plus className="w-5 h-5" />
+              New Estimate
+            </button>
           </div>
         )}
       </div>

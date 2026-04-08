@@ -1406,6 +1406,7 @@ const App: React.FC = () => {
             onSelectJob={handleSelectJob}
             onNewJob={() => setView('office-new-job')}
             onOpenEstimator={handleOpenNewEstimate}
+            onUpdatePipelineStage={handleUpdatePipelineStage}
           />
         )}
         {view === 'office-new-job' && currentUser && (
@@ -1485,6 +1486,7 @@ const App: React.FC = () => {
             jobs={jobs}
             onSelectJob={handleSelectJob}
             onOpenCalendar={() => setView('estimator-calendar')}
+            onNewEstimate={() => setView('office-new-job')}
           />
         )}
         {view === 'estimator-calendar' && currentUser && (
