@@ -450,13 +450,22 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                 {amount > 0 && !job.customerSignature && (
                   <button onClick={() => setShowAcceptance(true)}
                     className="w-full flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-500 transition-all">
-                    <PenTool className="w-4 h-4" /> Accept & Sign
+                    <PenTool className="w-4 h-4" /> Accept & Sign (On-Site)
                   </button>
                 )}
                 {job.customerSignature && (
                   <div className="w-full flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-sm font-bold text-emerald-500">
                     <CheckCircle2 className="w-4 h-4" /> Signed & Accepted
                   </div>
+                )}
+                {amount > 0 && !job.customerSignature && job.clientEmail && (
+                  <button onClick={() => {
+                    sharePortalLink('email');
+                    onUpdatePipelineStage(job.id, PipelineStage.EST_SENT);
+                  }}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-500 transition-all">
+                    <Send className="w-4 h-4" /> Send Estimate to Client
+                  </button>
                 )}
                 <button onClick={() => onPreviewPortal(job)}
                   className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm font-bold text-[var(--text-primary)] hover:border-emerald-500/30 transition-all">

@@ -57,7 +57,7 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
   const columns = useMemo(() => {
     switch (activeBoard) {
       case 'leads': return LEAD_COLUMNS;
-      case 'estimates': return LEAD_COLUMNS; // Same stages, different view context
+      case 'estimates': return ESTIMATE_COLUMNS;
       case 'jobs': return JOB_COLUMNS;
       default: return LEAD_COLUMNS;
     }

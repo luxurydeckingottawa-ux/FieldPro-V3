@@ -661,8 +661,15 @@ const App: React.FC = () => {
 
   const handleCreateJob = useCallback((newJob: Job) => {
     setJobs(prev => [newJob, ...prev]);
-    setView('office-pipeline');
-  }, []);
+    // Route based on user role
+    if (currentUser?.role === Role.ESTIMATOR) {
+      // Stay in estimator flow - open the new job in estimator workflow
+      setSelectedJob(newJob);
+      setView('estimator-workflow');
+    } else {
+      setView('office-pipeline');
+    }
+  }, [currentUser]);
 
   const handleOpenWorkflow = useCallback((job: Job) => {
     // Initialize workflow state with job info if not already set or if it's a different job
@@ -1012,7 +1019,21 @@ const App: React.FC = () => {
 
   const handleClosePortal = useCallback(() => {
     if (selectedJob) {
-      setView('office-job-detail');
+      // Return to the correct detail view based on stage
+      const estimateStages = [
+        PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
+        PipelineStage.THIRD_CONTACT, PipelineStage.LEAD_ON_HOLD, PipelineStage.LEAD_WON, PipelineStage.LEAD_LOST,
+        PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED, PipelineStage.EST_IN_PROGRESS,
+        PipelineStage.EST_COMPLETED, PipelineStage.EST_SENT, PipelineStage.EST_ON_HOLD,
+        PipelineStage.EST_APPROVED, PipelineStage.EST_REJECTED,
+        PipelineStage.SITE_VISIT_SCHEDULED, PipelineStage.ESTIMATE_IN_PROGRESS,
+        PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP
+      ];
+      if (estimateStages.includes(selectedJob.pipelineStage)) {
+        setView('estimate-detail');
+      } else {
+        setView('office-job-detail');
+      }
     } else {
       setView('office-dashboard');
     }
@@ -1096,22 +1117,24 @@ const App: React.FC = () => {
     };
 
     if (calculatorSourceJobId) {
-      // Update existing job
+      // Update existing job - save estimate data but keep at EST_COMPLETED (not JOB_SOLD yet)
       handleUpdateJob(calculatorSourceJobId, {
         clientName: data.clientName,
         projectAddress: data.clientAddress,
         totalAmount,
         estimateAmount,
         acceptedBuildSummary,
-        acceptedDate: now,
-        pipelineStage: PipelineStage.JOB_SOLD,
-        lifecycleStage: CustomerLifecycle.WON_SOLD,
-        status: JobStatus.SCHEDULED,
-        depositStatus: DepositStatus.NOT_SENT,
-        soldWorkflowStatus: SoldWorkflowStatus.ACCEPTED,
-        estimateStatus: 'accepted' as const,
+        pipelineStage: PipelineStage.EST_COMPLETED,
+        estimateStatus: 'completed' as const,
         estimateSentDate: now,
+        updatedAt: now,
       });
+      // Open the estimate detail page so user can Accept & Sign
+      const updatedJob = jobs.find(j => j.id === calculatorSourceJobId);
+      if (updatedJob) {
+        setSelectedJob({ ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, pipelineStage: PipelineStage.EST_COMPLETED });
+      }
+      setView('estimate-detail');
     } else {
       // Create new job from a fresh estimate
       const newJobId = `j-est-${Date.now()}`;
@@ -1131,7 +1154,7 @@ const App: React.FC = () => {
         scheduledDate: '',
         currentStage: 0,
         status: JobStatus.SCHEDULED,
-        pipelineStage: PipelineStage.JOB_SOLD,
+        pipelineStage: PipelineStage.EST_COMPLETED,
         officeChecklists: createDefaultOfficeChecklists(),
         buildDetails: createDefaultBuildDetails(),
         scopeSummary: acceptedBuildSummary.scopeSummary,
@@ -1146,20 +1169,15 @@ const App: React.FC = () => {
         totalAmount,
         estimateAmount,
         acceptedBuildSummary,
-        acceptedDate: now,
-        lifecycleStage: CustomerLifecycle.WON_SOLD,
-        depositStatus: DepositStatus.NOT_SENT,
-        soldWorkflowStatus: SoldWorkflowStatus.ACCEPTED,
-        estimateStatus: 'accepted' as const,
+        estimateStatus: 'completed' as const,
         estimateSentDate: now,
         portalStatus: 'ready',
       };
-      handleCreateJob(newJob);
+      setJobs(prev => [newJob, ...prev]);
+      setSelectedJob(newJob);
+      setView('estimate-detail');
     }
-
-    // Navigate to the pipeline to see the new/updated job in Job Sold
-    setView('office-pipeline');
-  }, [calculatorSourceJobId, handleUpdateJob, handleCreateJob]);
+  }, [calculatorSourceJobId, handleUpdateJob, jobs]);
 
   if (view === 'login') {
     return <LoginView onLogin={handleLogin} />;
@@ -1203,7 +1221,7 @@ const App: React.FC = () => {
                 job={selectedJob} 
                 onAcceptOption={onAcceptOption}
                 onTrackEngagement={onTrackEngagement}
-                onClose={(currentUser?.role === Role.ADMIN || currentUser?.role === Role.MANAGER) ? handleClosePortal : undefined}
+                onClose={(currentUser?.role === Role.ADMIN || false) ? handleClosePortal : undefined}
               />
             ) : (
               <CustomerPortalView 
@@ -1211,7 +1229,7 @@ const App: React.FC = () => {
                 allJobs={jobs}
                 chatSessions={chatSessions}
                 onSendMessage={(sessionId, text) => handleSendMessage(sessionId, text, true)}
-                onBack={(currentUser?.role === Role.ADMIN || currentUser?.role === Role.MANAGER) ? handleClosePortal : undefined}
+                onBack={(currentUser?.role === Role.ADMIN || false) ? handleClosePortal : undefined}
               />
             )
           ) : (
@@ -1319,7 +1337,7 @@ const App: React.FC = () => {
         {view === 'office-new-job' && currentUser && (
           <NewJobIntakeView 
             onSave={handleCreateJob}
-            onCancel={() => setView('office-pipeline')}
+            onCancel={() => setView(currentUser?.role === Role.ESTIMATOR ? 'estimator-dashboard' : 'office-pipeline')}
             initialStage={newJobInitialStage}
           />
         )}
