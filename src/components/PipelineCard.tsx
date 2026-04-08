@@ -37,7 +37,7 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
       className={`card-base p-4 cursor-pointer group relative overflow-hidden ${
         hasError ? 'border-rose-500/30 bg-rose-500/[0.02]' : 
         hasWarning ? 'border-amber-500/30 bg-amber-500/[0.02]' :
-        'hover:border-emerald-500/30 hover:bg-[var(--bg-primary)]'
+        'hover:border-[var(--brand-gold)]/30 hover:bg-[var(--bg-primary)]'
       }`}
     >
       {hasError && (
@@ -52,11 +52,11 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
       
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
+          <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/10 px-2 py-0.5 rounded-lg border border-[var(--brand-gold)]/20">
             {job.jobNumber}
           </span>
           {job.finalSubmissionStatus === 'submitted' && (
-            <span className="text-[8px] font-black text-white uppercase tracking-widest bg-emerald-600 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+            <span className="text-[8px] font-black text-white uppercase tracking-widest bg-[var(--brand-gold)] px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
               <CheckCircle2 size={10} /> Submitted
             </span>
           )}
@@ -76,7 +76,7 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
             </span>
           )}
           {job.portalStatus === 'viewed' && (
-            <span className="text-[8px] font-black text-white uppercase tracking-widest bg-emerald-600 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+            <span className="text-[8px] font-black text-white uppercase tracking-widest bg-[var(--brand-gold)] px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
               <Globe size={10} /> Portal Viewed
             </span>
           )}
@@ -97,21 +97,21 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
         </div>
       </div>
 
-      <h4 className="text-sm font-display text-[var(--text-primary)] mb-3 truncate group-hover:text-emerald-400 transition-colors">
+      <h4 className="text-sm font-display text-[var(--text-primary)] mb-3 truncate group-hover:text-[var(--brand-gold-light)] transition-colors">
         {job.clientName}
       </h4>
 
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-          <MapPin size={10} className="text-emerald-500 opacity-60" />
+          <MapPin size={10} className="text-[var(--brand-gold)] opacity-60" />
           <span className="text-[10px] font-medium truncate tracking-wide">{job.projectAddress}</span>
         </div>
         <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-          <UserIcon size={10} className="text-emerald-500 opacity-60" />
+          <UserIcon size={10} className="text-[var(--brand-gold)] opacity-60" />
           <span className="text-[10px] font-medium truncate tracking-wide">{job.assignedCrewOrSubcontractor || 'Unassigned'}</span>
         </div>
         <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-          <Calendar size={10} className="text-emerald-500 opacity-60" />
+          <Calendar size={10} className="text-[var(--brand-gold)] opacity-60" />
           <span className="text-[10px] font-medium tracking-wide">
             {job.plannedStartDate ? new Date(job.plannedStartDate).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : 'TBD'}
           </span>
@@ -124,14 +124,14 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
             {job.projectType}
           </span>
           {job.estimateAmount > 0 && (
-            <span className="text-[11px] font-black text-emerald-500 mt-0.5">
+            <span className="text-[11px] font-black text-[var(--brand-gold)] mt-0.5">
               ${job.estimateAmount.toLocaleString()}
             </span>
           )}
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)]/50" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)]" />
         </div>
       </div>
     </div>

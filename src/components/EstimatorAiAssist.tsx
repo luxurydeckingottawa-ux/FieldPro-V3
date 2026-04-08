@@ -92,7 +92,7 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
         <button
           onClick={handleRunAnalysis}
           disabled={isAnalyzing}
-          className="flex items-center justify-center gap-2 p-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all disabled:opacity-50"
+          className="flex items-center justify-center gap-2 p-4 bg-[var(--brand-gold)] text-white rounded-2xl font-bold shadow-lg shadow-[var(--brand-gold)]/20 hover:bg-[var(--brand-gold-dark)] transition-all disabled:opacity-50"
         >
           {isAnalyzing ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -105,7 +105,7 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
         <button
           onClick={handleSummarizeNotes}
           disabled={isSummarizing || !intake.notes.trim()}
-          className="flex items-center justify-center gap-2 p-4 bg-white border-2 border-emerald-600 text-emerald-600 rounded-2xl font-bold hover:bg-emerald-50 transition-all disabled:opacity-50"
+          className="flex items-center justify-center gap-2 p-4 bg-white border-2 border-[var(--brand-gold)] text-[var(--brand-gold)] rounded-2xl font-bold hover:bg-[var(--brand-gold)]/5 transition-all disabled:opacity-50"
         >
           {isSummarizing ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -131,7 +131,7 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
       <div className="space-y-4">
         <div className="flex items-center justify-between px-2">
           <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)] flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-emerald-600" />
+            <Sparkles className="w-4 h-4 text-[var(--brand-gold)]" />
             AI Estimator Assist
           </h3>
           {intake.aiInsights?.lastCheckedAt && (
@@ -175,13 +175,13 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
               ))}
             </div>
           ) : !isAnalyzing && intake.aiInsights?.lastCheckedAt ? (
-            <div className="p-8 bg-emerald-50 rounded-3xl border border-emerald-100 flex flex-col items-center text-center gap-3">
+            <div className="p-8 bg-[var(--brand-gold)]/5 rounded-3xl border border-[var(--brand-gold)]/10 flex flex-col items-center text-center gap-3">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
-                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                <CheckCircle2 className="w-6 h-6 text-[var(--brand-gold)]" />
               </div>
               <div>
-                <p className="font-bold text-emerald-900">Intake Looks Solid</p>
-                <p className="text-sm text-emerald-700 opacity-80">AI didn't find any obvious missing items or mismatches.</p>
+                <p className="font-bold text-[#4A3E10]">Intake Looks Solid</p>
+                <p className="text-sm text-[#8B7520] opacity-80">AI didn't find any obvious missing items or mismatches.</p>
               </div>
             </div>
           ) : (
@@ -199,7 +199,7 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
             animate={{ opacity: 1, y: 0 }}
             className="bg-white p-6 rounded-3xl border border-[var(--border-color)] shadow-sm space-y-4"
           >
-            <div className="flex items-center gap-2 text-emerald-600">
+            <div className="flex items-center gap-2 text-[var(--brand-gold)]">
               <FileText className="w-5 h-5" />
               <h4 className="font-bold">AI Site Summary</h4>
             </div>

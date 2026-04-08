@@ -516,7 +516,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     Status: {getSoldWorkflowStatusLabel(job.soldWorkflowStatus)}
                   </div>
                   {job.depositStatus === DepositStatus.RECEIVED && (
-                    <div className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <div className="px-4 py-2 bg-[var(--brand-gold)] text-white rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                       <ShieldCheck className="w-3.5 h-3.5" />
                       Deposit Secured
                     </div>
@@ -530,15 +530,15 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-12 bg-emerald-50 border border-emerald-100 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6"
+                className="mb-12 bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/10 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6"
               >
                 <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                  <div className="w-16 h-16 bg-[var(--brand-gold)] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[var(--brand-gold)]/20">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
                   <div>
                     <h3 className="text-2xl font-black text-slate-900">Project Accepted!</h3>
-                    <p className="text-emerald-700 font-medium">Your estimate was accepted on {job.acceptedDate ? new Date(job.acceptedDate).toLocaleDateString() : 'N/A'}</p>
+                    <p className="text-[#8B7520] font-medium">Your estimate was accepted on {job.acceptedDate ? new Date(job.acceptedDate).toLocaleDateString() : 'N/A'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -546,8 +546,8 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Project Status</p>
                     <p className="text-sm font-bold text-slate-900">Pre-Production / Queue</p>
                   </div>
-                  <div className="w-12 h-12 bg-white rounded-xl border border-emerald-100 flex items-center justify-center">
-                    <Sparkles className="w-6 h-6 text-emerald-500" />
+                  <div className="w-12 h-12 bg-white rounded-xl border border-[var(--brand-gold)]/10 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-[var(--brand-gold)]" />
                   </div>
                 </div>
               </motion.div>
@@ -626,7 +626,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                           <ul className="space-y-3">
                             {option.features.map((feature, i) => (
                               <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                                <CheckCircle2 className="w-4 h-4 text-[var(--brand-gold)] mt-0.5 flex-shrink-0" />
                                 <span>{feature}</span>
                               </li>
                             ))}
@@ -1343,8 +1343,8 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               </div>
 
               <div className="p-10 sm:p-16 text-center">
-                <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-8">
-                  <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                <div className="w-20 h-20 bg-[var(--brand-gold)]/10 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                  <CheckCircle2 className="w-10 h-10 text-[var(--brand-gold)]" />
                 </div>
                 
                 <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4">You're Officially in the Queue!</h2>

@@ -103,7 +103,7 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear, initialVal
       <div className="flex items-center justify-between mb-2 px-2">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center border border-[var(--border-color)]">
-            <PenTool className="w-4 h-4 text-emerald-500" />
+            <PenTool className="w-4 h-4 text-[var(--brand-gold)]" />
           </div>
           <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Sign Below</span>
         </div>
@@ -116,7 +116,7 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear, initialVal
         </button>
       </div>
 
-      <div className="relative aspect-[3/1] bg-[var(--bg-secondary)] border-2 border-dashed border-[var(--border-color)] rounded-[2rem] overflow-hidden cursor-crosshair group hover:border-emerald-500/30 transition-all">
+      <div className="relative aspect-[3/1] bg-[var(--bg-secondary)] border-2 border-dashed border-[var(--border-color)] rounded-[2rem] overflow-hidden cursor-crosshair group hover:border-[var(--brand-gold)]/30 transition-all">
         <canvas
           ref={canvasRef}
           width={600}

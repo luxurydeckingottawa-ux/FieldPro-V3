@@ -70,7 +70,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
                 value={info.jobName}
                 onChange={(e) => onUpdate({ jobName: e.target.value })}
                 placeholder="e.g. Smith Deck Build"
-                className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none font-bold text-sm placeholder:text-[var(--text-secondary)]/30 transition-all"
+                className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)]/50 focus:border-[var(--brand-gold)]/50 outline-none font-bold text-sm placeholder:text-[var(--text-secondary)]/30 transition-all"
               />
             </div>
             <div>
@@ -80,7 +80,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
                 value={info.jobAddress}
                 onChange={(e) => onUpdate({ jobAddress: e.target.value })}
                 placeholder="123 Ottawa St."
-                className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none font-bold text-sm placeholder:text-[var(--text-secondary)]/30 transition-all"
+                className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)]/50 focus:border-[var(--brand-gold)]/50 outline-none font-bold text-sm placeholder:text-[var(--text-secondary)]/30 transition-all"
               />
             </div>
             <div>
@@ -90,7 +90,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
                 value={info.customerName}
                 onChange={(e) => onUpdate({ customerName: e.target.value })}
                 placeholder="John Smith"
-                className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none font-bold text-sm placeholder:text-[var(--text-secondary)]/30 transition-all"
+                className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)]/50 focus:border-[var(--brand-gold)]/50 outline-none font-bold text-sm placeholder:text-[var(--text-secondary)]/30 transition-all"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -101,7 +101,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
                   value={info.crewLeadName}
                   onChange={(e) => onUpdate({ crewLeadName: e.target.value })}
                   placeholder="Lead Name"
-                  className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none font-bold text-sm placeholder:text-[var(--text-secondary)]/30 transition-all"
+                  className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)]/50 focus:border-[var(--brand-gold)]/50 outline-none font-bold text-sm placeholder:text-[var(--text-secondary)]/30 transition-all"
                 />
               </div>
               <div>
@@ -110,7 +110,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
                   type="date" 
                   value={info.date}
                   onChange={(e) => onUpdate({ date: e.target.value })}
-                  className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none font-bold text-sm transition-all"
+                  className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)]/50 focus:border-[var(--brand-gold)]/50 outline-none font-bold text-sm transition-all"
                 />
               </div>
             </div>
@@ -119,7 +119,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
               <select 
                 value={info.jobType}
                 onChange={(e) => onUpdate({ jobType: e.target.value })}
-                className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none appearance-none font-bold text-sm transition-all"
+                className="w-full p-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)]/50 focus:border-[var(--brand-gold)]/50 outline-none appearance-none font-bold text-sm transition-all"
               >
                 <option value="" className="bg-[var(--bg-primary)]">Select Type...</option>
                 <option value="Deck" className="bg-[var(--bg-primary)]">Deck Only</option>
@@ -150,7 +150,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
                     onClick={() => handleForecastChange({ status })}
                     className={`py-4 rounded-xl font-label border transition-all flex flex-col items-center gap-2 ${
                       forecast?.status === status 
-                        ? 'bg-emerald-500 text-black border-emerald-500 shadow-2xl scale-[1.02]' 
+                        ? 'bg-[var(--brand-gold)] text-black border-[var(--brand-gold)] shadow-2xl scale-[1.02]' 
                         : 'bg-[var(--bg-primary)]/50 text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--text-secondary)]/30'
                     }`}
                   >
@@ -172,7 +172,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
                     value={forecast?.estimatedDaysRemaining || ''}
                     onChange={(e) => handleForecastChange({ estimatedDaysRemaining: parseInt(e.target.value) || 0 })}
                     placeholder="0"
-                    className="w-full p-5 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none font-bold text-sm transition-all"
+                    className="w-full p-5 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)]/50 focus:border-[var(--brand-gold)]/50 outline-none font-bold text-sm transition-all"
                   />
                   <Calendar className="absolute right-5 top-5 h-5 w-5 text-[var(--text-secondary)] opacity-40" />
                 </div>
@@ -182,7 +182,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
                 <select 
                   value={forecast?.delayReason || ''}
                   onChange={(e) => handleForecastChange({ delayReason: e.target.value })}
-                  className="w-full p-5 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none appearance-none font-bold text-sm transition-all"
+                  className="w-full p-5 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)]/50 focus:border-[var(--brand-gold)]/50 outline-none appearance-none font-bold text-sm transition-all"
                 >
                   <option value="" className="bg-[var(--bg-primary)]">No Delay</option>
                   <option value="Weather" className="bg-[var(--bg-primary)]">Weather / Rain</option>
@@ -201,7 +201,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
                 onChange={(e) => handleForecastChange({ note: e.target.value })}
                 placeholder="Brief update on today's progress..."
                 rows={2}
-                className="w-full p-5 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none font-medium text-sm placeholder:text-[var(--text-secondary)]/30 transition-all resize-none"
+                className="w-full p-5 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)]/50 focus:border-[var(--brand-gold)]/50 outline-none font-medium text-sm placeholder:text-[var(--text-secondary)]/30 transition-all resize-none"
               />
             </div>
           </div>
@@ -215,7 +215,7 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
             disabled={!isComplete}
             className={`w-full py-5 rounded-[2rem] font-label text-xs transition-all active:scale-[0.98] shadow-2xl ${
               isComplete 
-                ? 'bg-emerald-600 text-black hover:bg-emerald-500' 
+                ? 'bg-[var(--brand-gold)] text-black hover:bg-[var(--brand-gold)]' 
                 : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] opacity-50 cursor-not-allowed border border-[var(--border-color)]'
             }`}
           >

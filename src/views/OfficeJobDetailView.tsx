@@ -136,7 +136,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
       case 'ready':
       case 'received_ready':
       case 'review_complete':
-        return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+        return 'text-[var(--brand-gold)] bg-[var(--brand-gold)]/5 border-[var(--brand-gold)]/10';
       case 'pending':
       case 'not_submitted':
       case 'not_confirmed':
@@ -151,7 +151,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
   const getScheduleStatusColor = (status?: ScheduleStatus) => {
     switch (status) {
-      case ScheduleStatus.ON_SCHEDULE: return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
+      case ScheduleStatus.ON_SCHEDULE: return 'text-[var(--brand-gold)] bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/20';
       case ScheduleStatus.AHEAD: return 'text-sky-500 bg-sky-500/10 border-sky-500/20';
       case ScheduleStatus.BEHIND: return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
       case ScheduleStatus.DELAYED: return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
@@ -193,12 +193,12 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             <div className="h-8 w-px bg-white/10 mx-2 hidden md:block" />
             <div>
               <div className="flex items-center gap-3 mb-0.5">
-                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/10 px-2 py-0.5 rounded border border-[var(--brand-gold)]/20">
                   {job.jobNumber}
                 </span>
                 <h1 className="text-lg font-black text-white tracking-tight uppercase italic">{job.clientName}</h1>
                 {job.finalSubmissionStatus === 'submitted' && (
-                  <span className="text-[9px] font-black text-white uppercase tracking-widest bg-emerald-600 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1 shadow-lg shadow-emerald-500/20">
+                  <span className="text-[9px] font-black text-white uppercase tracking-widest bg-[var(--brand-gold)] px-2 py-0.5 rounded border border-[var(--brand-gold)]/20 flex items-center gap-1 shadow-lg shadow-[var(--brand-gold)]/20">
                     <CheckCircle2 size={10} /> Submitted from Field
                   </span>
                 )}
@@ -223,7 +223,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       isCurrent 
                         ? 'bg-white text-black shadow-lg' 
                         : isPast 
-                          ? 'text-emerald-500 hover:text-emerald-400' 
+                          ? 'text-[var(--brand-gold)] hover:text-[var(--brand-gold-light)]' 
                           : 'text-gray-600 hover:text-gray-400'
                     }`}
                   >
@@ -249,7 +249,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 </button>
                 <button 
                   onClick={() => onOpenFieldWorkflow(job)}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20"
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)] text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--brand-gold)] transition-all shadow-lg shadow-[var(--brand-gold)]/20"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
                   Field View
@@ -289,18 +289,18 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               <motion.section 
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="bg-emerald-500/10 border-2 border-emerald-500/30 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
+                className="bg-[var(--brand-gold)]/10 border-2 border-[var(--brand-gold)]/30 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-3xl -mr-32 -mt-32 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-3xl -mr-32 -mt-32 pointer-events-none" />
                 <div className="flex items-center justify-between mb-8 relative z-10">
                   <div>
-                    <h3 className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                    <h3 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1 flex items-center gap-2">
                       <ShieldCheck size={14} /> Final Closeout & Warranty
                     </h3>
                     <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">Luxury Decking Verified Build Passport</h2>
-                    <p className="text-[10px] text-emerald-500/60 font-black uppercase tracking-widest mt-1">Official Project Documentation Package</p>
+                    <p className="text-[10px] text-[var(--brand-gold)]/60 font-black uppercase tracking-widest mt-1">Official Project Documentation Package</p>
                   </div>
-                  <div className="px-4 py-2 rounded-xl bg-emerald-500 text-black font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+                  <div className="px-4 py-2 rounded-xl bg-[var(--brand-gold)] text-black font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-[var(--brand-gold)]/20">
                     <CheckCircle2 size={14} /> Package Submitted
                   </div>
                 </div>
@@ -311,20 +311,20 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       href={job.verifiedBuildPassportUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-6 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 transition-all group shadow-lg"
+                      className="flex items-center justify-between p-6 rounded-2xl bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/30 hover:bg-[var(--brand-gold)]/30 transition-all group shadow-lg"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-xl bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/30">
+                        <div className="w-14 h-14 rounded-xl bg-[var(--brand-gold)] flex items-center justify-center text-black shadow-lg shadow-[var(--brand-gold)]/30">
                           <ClipboardCheck size={28} />
                         </div>
                         <div>
                           <p className="text-base font-black text-white uppercase tracking-tight italic">Luxury Decking Verified Build Passport</p>
-                          <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Includes 5-Year Warranty</p>
+                          <p className="text-[10px] font-bold text-[var(--brand-gold-light)] uppercase tracking-widest">Includes 5-Year Warranty</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Download size={20} className="text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <ExternalLink size={20} className="text-emerald-400" />
+                        <Download size={20} className="text-[var(--brand-gold-light)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ExternalLink size={20} className="text-[var(--brand-gold-light)]" />
                       </div>
                     </a>
                   )}
@@ -542,7 +542,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   <div className="flex items-center gap-3">
                     <div className={`px-4 py-2 rounded-xl border font-black text-[10px] uppercase tracking-widest ${
                       job.estimateStatus === 'sent' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
-                      job.estimateStatus === 'accepted' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                      job.estimateStatus === 'accepted' ? 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] border-[var(--brand-gold)]/20' :
                       'bg-blue-500/10 text-blue-500 border-blue-500/20'
                     }`}>
                       {job.estimateStatus?.replace('_', ' ') || 'Lead'}
@@ -665,13 +665,13 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       {job.estimateData.options.map((option) => (
                         <div key={option.id} className={`p-4 rounded-2xl border transition-all ${
                           job.acceptedOptionId === option.id 
-                            ? 'bg-emerald-500/10 border-emerald-500/30' 
+                            ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/30' 
                             : 'bg-white/5 border-white/5 hover:border-white/10'
                         }`}>
                           <div className="flex items-center justify-between mb-2">
                             <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">{option.name}</p>
                             {job.acceptedOptionId === option.id && (
-                              <span className="px-2 py-0.5 bg-emerald-500 text-black text-[8px] font-black uppercase rounded">Accepted</span>
+                              <span className="px-2 py-0.5 bg-[var(--brand-gold)] text-black text-[8px] font-black uppercase rounded">Accepted</span>
                             )}
                           </div>
                           <p className="text-sm font-bold text-white mb-1">{option.title}</p>
@@ -704,11 +704,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 initial={{ y: 20, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}
-                className="bg-[var(--card-bg)] rounded-[2rem] p-8 shadow-2xl border border-emerald-500/20 ring-1 ring-emerald-500/10"
+                className="bg-[var(--card-bg)] rounded-[2rem] p-8 shadow-2xl border border-[var(--brand-gold)]/20 ring-1 ring-[var(--brand-gold)]/10"
               >
                 <div className="flex items-center justify-between mb-8">
                   <div>
-                    <h3 className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                    <h3 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1 flex items-center gap-2">
                       <ClipboardCheck size={14} /> Completion & Closeout Layer
                     </h3>
                     <h2 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-tight">Field-to-Office Visibility</h2>
@@ -841,14 +841,14 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
-                    <CheckSquare size={14} className="text-emerald-500" /> Stage Checklist
+                    <CheckSquare size={14} className="text-[var(--brand-gold)]" /> Stage Checklist
                   </h3>
                   <h2 className="text-lg font-black text-white uppercase tracking-tight italic">{currentStageInfo?.label} Readiness</h2>
                 </div>
                 <div className="text-right">
                   <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Progress</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-black text-emerald-500">
+                    <span className="text-lg font-black text-[var(--brand-gold)]">
                       {(currentChecklist?.items || []).filter(i => i.completed).length}
                     </span>
                     <span className="text-xs font-black text-gray-600">/</span>
@@ -872,20 +872,20 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                           onUpdateOfficeChecklist(job.id, job.pipelineStage, item.id, !item.completed, false);
                         }
                       }}
-                      className={`flex-1 flex items-center gap-4 p-5 rounded-2xl border transition-all text-left group relative overflow-hidden cursor-pointer outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                      className={`flex-1 flex items-center gap-4 p-5 rounded-2xl border transition-all text-left group relative overflow-hidden cursor-pointer outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/50 ${
                         item.completed && !item.isNA
-                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                          ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/20 text-[var(--brand-gold-light)]' 
                           : item.isNA
                             ? 'bg-amber-500/5 border-amber-500/20 text-amber-500/70 opacity-80'
                             : 'bg-white/5 border-white/5 text-gray-400 hover:border-white/20 hover:bg-white/[0.08]'
                       }`}
                     >
                       {item.completed && !item.isNA && (
-                        <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                        <div className="absolute top-0 left-0 w-1 h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                       )}
                       <div className={`shrink-0 w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
                         item.completed && !item.isNA
-                          ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
+                          ? 'bg-[var(--brand-gold)] text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
                           : item.isNA
                             ? 'bg-amber-500/20 border border-amber-500/30'
                             : 'bg-white/5 border border-white/10 group-hover:border-white/30'
@@ -907,7 +907,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                             setMessageType(item.label.toLowerCase().includes('email') ? 'email' : 'sms');
                             setIsMessageModalOpen(true);
                           }}
-                          className="ml-auto p-2 bg-emerald-500/10 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-black transition-all"
+                          className="ml-auto p-2 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-lg hover:bg-[var(--brand-gold)] hover:text-black transition-all"
                           title="Send Message"
                         >
                           <MessageSquare size={12} />
@@ -949,12 +949,12 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               initial={{ y: 20, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
-              className="bg-emerald-500/5 border border-emerald-500/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
+              className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
               <div className="flex items-center justify-between mb-8 relative z-10">
                 <div>
-                  <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                  <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
                     <Activity size={14} /> Financial Performance
                   </h3>
                   <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Job Financial Overview</h2>
@@ -962,7 +962,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col items-end">
                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Gross Profit (Est.)</p>
-                    <p className={`text-2xl font-black italic tracking-tight ${((job.totalAmount || 0) - (job.materialCost || 0) - (job.labourCost || labourSummary.estimatedCost || 0)) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    <p className={`text-2xl font-black italic tracking-tight ${((job.totalAmount || 0) - (job.materialCost || 0) - (job.labourCost || labourSummary.estimatedCost || 0)) >= 0 ? 'text-[var(--brand-gold)]' : 'text-rose-500'}`}>
                       ${((job.totalAmount || 0) - (job.materialCost || 0) - (job.labourCost || labourSummary.estimatedCost || 0)).toLocaleString()}
                     </p>
                   </div>
@@ -986,7 +986,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       });
                       setEditingSection('jobInfo');
                     }}
-                    className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-black transition-all"
+                    className="p-3 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-xl hover:bg-[var(--brand-gold)] hover:text-black transition-all"
                   >
                     <Settings size={16} />
                   </button>
@@ -998,15 +998,15 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Total Revenue</p>
                   <p className="text-xl font-black text-white tracking-tight">${(job.totalAmount || 0).toLocaleString()}</p>
                   <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 w-full"></div>
+                    <div className="h-full bg-[var(--brand-gold)] w-full"></div>
                   </div>
                 </div>
 
                 <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Paid Amount</p>
-                  <p className="text-xl font-black text-emerald-400 tracking-tight">${(job.paidAmount || 0).toLocaleString()}</p>
+                  <p className="text-xl font-black text-[var(--brand-gold-light)] tracking-tight">${(job.paidAmount || 0).toLocaleString()}</p>
                   <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-400" style={{ width: `${Math.min(100, ((job.paidAmount || 0) / (job.totalAmount || 1)) * 100)}%` }}></div>
+                    <div className="h-full bg-[var(--brand-gold)]" style={{ width: `${Math.min(100, ((job.paidAmount || 0) / (job.totalAmount || 1)) * 100)}%` }}></div>
                   </div>
                 </div>
 
@@ -1040,11 +1040,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 viewport={{ once: true }}
                 className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
                 
                 <div className="flex items-center justify-between mb-10 relative z-10">
                   <div>
-                    <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                    <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
                       <Ruler size={14} /> Build Specifications
                     </h3>
                     <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Digital Work Order Summary</h2>
@@ -1059,8 +1059,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     >
                       <Edit2 size={12} /> Edit Build Details
                     </button>
-                    <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Handoff Ready</span>
+                    <div className="px-4 py-2 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-xl">
+                      <span className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest">Handoff Ready</span>
                     </div>
                   </div>
                 </div>
@@ -1070,7 +1070,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 border-b border-white/10 pb-3">
                       <div className="p-2 bg-white/5 rounded-lg">
-                        <Construction className="w-4 h-4 text-emerald-500" />
+                        <Construction className="w-4 h-4 text-[var(--brand-gold)]" />
                       </div>
                       <h4 className="text-xs font-black text-white uppercase tracking-widest">Site & Foundation</h4>
                     </div>
@@ -1097,7 +1097,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                         <span className="px-2.5 py-1 bg-purple-500/10 text-purple-400 text-[8px] font-black uppercase tracking-widest rounded border border-purple-500/20">Permits Required</span>
                       )}
                       {job.buildDetails.sitePrep.locatesRequired && (
-                        <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase tracking-widest rounded border border-emerald-500/20">Locates Required</span>
+                        <span className="px-2.5 py-1 bg-[var(--brand-gold)]/10 text-[var(--brand-gold-light)] text-[8px] font-black uppercase tracking-widest rounded border border-[var(--brand-gold)]/20">Locates Required</span>
                       )}
                     </div>
 
@@ -1113,7 +1113,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 border-b border-white/10 pb-3">
                       <div className="p-2 bg-white/5 rounded-lg">
-                        <Hammer className="w-4 h-4 text-emerald-500" />
+                        <Hammer className="w-4 h-4 text-[var(--brand-gold)]" />
                       </div>
                       <h4 className="text-xs font-black text-white uppercase tracking-widest">Framing Details</h4>
                     </div>
@@ -1148,7 +1148,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 border-b border-white/10 pb-3">
                       <div className="p-2 bg-white/5 rounded-lg">
-                        <Layers className="w-4 h-4 text-emerald-500" />
+                        <Layers className="w-4 h-4 text-[var(--brand-gold)]" />
                       </div>
                       <h4 className="text-xs font-black text-white uppercase tracking-widest">Surface & Finish</h4>
                     </div>
@@ -1157,7 +1157,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       <div className="space-y-1">
                         <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Decking Product</p>
                         <p className="text-sm font-bold text-white">{job.buildDetails.decking.brand} {job.buildDetails.decking.type}</p>
-                        <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">{job.buildDetails.decking.color}</p>
+                        <p className="text-[10px] font-bold text-[var(--brand-gold)] uppercase tracking-widest">{job.buildDetails.decking.color}</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Railing System</p>
@@ -1175,8 +1175,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </div>
 
                     {job.buildDetails.decking.accentNote && (
-                      <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10">
-                        <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Inlay / Accent Details</p>
+                      <div className="p-3 bg-[var(--brand-gold)]/5 rounded-xl border border-[var(--brand-gold)]/10">
+                        <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1">Inlay / Accent Details</p>
                         <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{job.buildDetails.decking.accentNote}</p>
                       </div>
                     )}
@@ -1186,7 +1186,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 border-b border-white/10 pb-3">
                       <div className="p-2 bg-white/5 rounded-lg">
-                        <Zap className="w-4 h-4 text-emerald-500" />
+                        <Zap className="w-4 h-4 text-[var(--brand-gold)]" />
                       </div>
                       <h4 className="text-xs font-black text-white uppercase tracking-widest">Features & Electrical</h4>
                     </div>
@@ -1225,7 +1225,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   <div className="mt-10 pt-8 border-t border-white/10 relative z-10">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="p-2 bg-white/5 rounded-lg">
-                        <Info className="w-4 h-4 text-emerald-500" />
+                        <Info className="w-4 h-4 text-[var(--brand-gold)]" />
                       </div>
                       <h4 className="text-xs font-black text-white uppercase tracking-widest">Critical Site & Access Notes</h4>
                     </div>
@@ -1248,7 +1248,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                  <FileText size={14} className="text-emerald-500" /> Scope Summary
+                  <FileText size={14} className="text-[var(--brand-gold)]" /> Scope Summary
                 </h3>
                 <button 
                   onClick={() => {
@@ -1274,9 +1274,9 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             >
               <div className="flex items-center justify-between mb-8">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                  <MessageSquare size={14} className="text-emerald-500" /> Office Notes
+                  <MessageSquare size={14} className="text-[var(--brand-gold)]" /> Office Notes
                 </h3>
-                <button className="px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all active:scale-95 border border-emerald-500/20">
+                <button className="px-4 py-2 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--brand-gold)]/20 transition-all active:scale-95 border border-[var(--brand-gold)]/20">
                   Add Note
                 </button>
               </div>
@@ -1286,7 +1286,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     <div key={note.id} className="bg-white/5 rounded-[1.5rem] p-6 border border-white/10 hover:border-white/20 transition-all group">
                       <div className="flex justify-between items-center mb-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-[10px] font-black text-emerald-500">
+                          <div className="w-6 h-6 rounded-full bg-[var(--brand-gold)]/20 flex items-center justify-center text-[10px] font-black text-[var(--brand-gold)]">
                             {note.author.charAt(0)}
                           </div>
                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{note.author}</span>
@@ -1312,20 +1312,20 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md"
             >
               <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-                <History size={14} className="text-emerald-500" /> Site Notes (Field Logs)
+                <History size={14} className="text-[var(--brand-gold)]" /> Site Notes (Field Logs)
               </h3>
               <div className="space-y-4">
                 {job.siteNotes && job.siteNotes.length > 0 ? (
                   job.siteNotes.map(note => (
-                    <div key={note.id} className="bg-emerald-500/5 rounded-[1.5rem] p-6 border border-emerald-500/10 hover:border-emerald-500/20 transition-all">
+                    <div key={note.id} className="bg-[var(--brand-gold)]/5 rounded-[1.5rem] p-6 border border-[var(--brand-gold)]/10 hover:border-[var(--brand-gold)]/20 transition-all">
                       <div className="flex justify-between items-center mb-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-[10px] font-black text-emerald-500">
+                          <div className="w-6 h-6 rounded-full bg-[var(--brand-gold)]/20 flex items-center justify-center text-[10px] font-black text-[var(--brand-gold)]">
                             {note.author.charAt(0)}
                           </div>
-                          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{note.author}</span>
+                          <span className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest">{note.author}</span>
                         </div>
-                        <span className="text-[9px] font-black text-emerald-500/40 uppercase tracking-widest">{new Date(note.timestamp).toLocaleDateString()}</span>
+                        <span className="text-[9px] font-black text-[var(--brand-gold)]/40 uppercase tracking-widest">{new Date(note.timestamp).toLocaleDateString()}</span>
                       </div>
                       <p className="text-sm text-gray-300 font-medium leading-relaxed italic">"{note.text}"</p>
                     </div>
@@ -1350,8 +1350,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               >
                 <div className="p-8 border-b border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-                      <Calendar className="w-5 h-5 text-emerald-500" />
+                    <div className="p-2.5 bg-[var(--brand-gold)]/10 rounded-xl border border-[var(--brand-gold)]/20">
+                      <Calendar className="w-5 h-5 text-[var(--brand-gold)]" />
                     </div>
                     <div>
                       <h3 className="text-xs font-black text-white uppercase tracking-[0.3em]">Scheduling & Timeline</h3>
@@ -1388,7 +1388,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   {/* Official Office Schedule Summary */}
                   <div className="space-y-8">
                     <div className="flex items-center gap-2">
-                      <CalendarCheck className="w-4 h-4 text-emerald-500" />
+                      <CalendarCheck className="w-4 h-4 text-[var(--brand-gold)]" />
                       <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Official Office Schedule</h4>
                     </div>
 
@@ -1545,14 +1545,14 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             >
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
+                  <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
                     <Play size={14} className="fill-current" /> Field Execution Hub
                   </h3>
                   <h2 className="text-lg font-black text-white uppercase tracking-tight">Real-Time Status</h2>
                 </div>
                 {job.pipelineStage === PipelineStage.IN_FIELD && (
-                  <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase tracking-widest rounded-full border border-emerald-500/20">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[8px] font-black uppercase tracking-widest rounded-full border border-[var(--brand-gold)]/20">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] animate-pulse" />
                     Live
                   </div>
                 )}
@@ -1560,19 +1560,19 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
               <div className="space-y-4">
                 {/* Stage Progress */}
-                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 group hover:border-emerald-500/30 transition-all">
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 group hover:border-[var(--brand-gold)]/30 transition-all">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex flex-col">
                       <span className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Field Stage</span>
                       <span className="text-sm font-bold text-white">Stage {job.currentStage} of 5</span>
                     </div>
-                    <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                      <span className="text-xs font-black text-emerald-500">{Math.round((job.currentStage / 5) * 100)}%</span>
+                    <div className="h-12 w-12 rounded-2xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center">
+                      <span className="text-xs font-black text-[var(--brand-gold)]">{Math.round((job.currentStage / 5) * 100)}%</span>
                     </div>
                   </div>
                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-emerald-500 transition-all duration-500" 
+                      className="h-full bg-[var(--brand-gold)] transition-all duration-500" 
                       style={{ width: `${(job.currentStage / 5) * 100}%` }}
                     />
                   </div>
@@ -1584,7 +1584,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em]">Timeline Forecast</span>
                       <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded border ${
-                        job.fieldForecast.status === 'on_schedule' ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'
+                        job.fieldForecast.status === 'on_schedule' ? 'text-[var(--brand-gold)] bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'
                       }`}>
                         {job.fieldForecast.status.replace('_', ' ')}
                       </span>
@@ -1650,7 +1650,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             >
               <div className="flex items-center justify-between mb-8">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                  <Users size={14} className="text-emerald-500" /> Assignment & Handoff
+                  <Users size={14} className="text-[var(--brand-gold)]" /> Assignment & Handoff
                 </h3>
                 <button 
                   onClick={() => {
@@ -1707,7 +1707,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               <div className="flex items-center justify-between mb-8 relative z-10">
                 <div>
                   <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-1 flex items-center gap-2">
-                    <Paperclip size={14} className="text-emerald-500" /> Job Files & Documents
+                    <Paperclip size={14} className="text-[var(--brand-gold)]" /> Job Files & Documents
                   </h3>
                   <h2 className="text-lg font-black text-white uppercase tracking-tight italic">Construction Package</h2>
                 </div>
@@ -1728,7 +1728,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   <>
                     {/* Grouped by Type */}
                     {[
-                      { type: 'drawing', label: 'Technical Drawings & Plans', icon: Ruler, color: 'text-emerald-500' },
+                      { type: 'drawing', label: 'Technical Drawings & Plans', icon: Ruler, color: 'text-[var(--brand-gold)]' },
                       { type: 'permit', label: 'Permits & Legal', icon: ShieldCheck, color: 'text-blue-400' },
                       { type: 'closeout', label: 'Closeout & Warranty Packages', icon: ClipboardCheck, color: 'text-amber-400' },
                       { type: 'photo', label: 'Site & Progress Photos', icon: Camera, color: 'text-purple-400' },
@@ -1749,11 +1749,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                                 key={file.id}
                                 className="flex items-center p-4 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/[0.08] hover:border-white/20 transition-all group cursor-pointer"
                               >
-                                <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mr-4 group-hover:border-emerald-500/30 transition-all">
+                                <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mr-4 group-hover:border-[var(--brand-gold)]/30 transition-all">
                                   <group.icon className={`h-4 w-4 ${group.color}`} />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-xs font-bold text-white truncate group-hover:text-emerald-400 transition-colors">{file.name}</p>
+                                  <p className="text-xs font-bold text-white truncate group-hover:text-[var(--brand-gold-light)] transition-colors">{file.name}</p>
                                   <p className="text-[8px] text-gray-600 uppercase font-black tracking-[0.2em] mt-0.5">
                                     {new Date(file.uploadedAt).toLocaleDateString()}
                                   </p>
@@ -1789,8 +1789,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             {/* Modal Header */}
             <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                  <Edit2 className="h-6 w-6 text-emerald-500" />
+                <div className="h-12 w-12 rounded-2xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center">
+                  <Edit2 className="h-6 w-6 text-[var(--brand-gold)]" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">
@@ -1821,7 +1821,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="text"
                       value={editFormData.clientName}
                       onChange={(e) => setEditFormData({ ...editFormData, clientName: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1830,7 +1830,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="text"
                       value={editFormData.clientPhone || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, clientPhone: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all"
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
@@ -1839,7 +1839,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="text"
                       value={editFormData.projectAddress}
                       onChange={(e) => setEditFormData({ ...editFormData, projectAddress: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all"
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
@@ -1848,7 +1848,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="text"
                       value={editFormData.projectType}
                       onChange={(e) => setEditFormData({ ...editFormData, projectType: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1857,7 +1857,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="number"
                       value={editFormData.totalAmount || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, totalAmount: parseFloat(e.target.value) || 0 })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all"
                       placeholder="0.00"
                     />
                   </div>
@@ -1867,7 +1867,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="number"
                       value={editFormData.paidAmount || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, paidAmount: parseFloat(e.target.value) || 0 })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all"
                       placeholder="0.00"
                     />
                   </div>
@@ -1877,7 +1877,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="number"
                       value={editFormData.materialCost || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, materialCost: parseFloat(e.target.value) || 0 })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all"
                       placeholder="0.00"
                     />
                   </div>
@@ -1887,7 +1887,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="number"
                       value={editFormData.labourCost || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, labourCost: parseFloat(e.target.value) || 0 })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all"
                       placeholder="0.00"
                     />
                   </div>
@@ -1901,7 +1901,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     <select 
                       value={editFormData.assignedUsers?.[0] || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, assignedUsers: [e.target.value] })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 appearance-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 appearance-none transition-all"
                     >
                       <option value="" className="bg-black text-white">Unassigned</option>
                       {APP_USERS.filter(u => u.role === Role.FIELD_EMPLOYEE || u.role === Role.SUBCONTRACTOR).map(u => (
@@ -1915,7 +1915,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="text"
                       value={editFormData.assignedCrewOrSubcontractor || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, assignedCrewOrSubcontractor: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1924,7 +1924,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="date"
                       value={editFormData.plannedStartDate || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, plannedStartDate: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all [color-scheme:dark]"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all [color-scheme:dark]"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1933,7 +1933,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="number"
                       value={editFormData.plannedDurationDays || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, plannedDurationDays: parseInt(e.target.value) || 0 })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1942,7 +1942,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       type="date"
                       value={editFormData.plannedFinishDate || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, plannedFinishDate: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all [color-scheme:dark]"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all [color-scheme:dark]"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1950,7 +1950,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     <select 
                       value={editFormData.officialScheduleStatus || ScheduleStatus.ON_SCHEDULE}
                       onChange={(e) => setEditFormData({ ...editFormData, officialScheduleStatus: e.target.value as ScheduleStatus })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 appearance-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)]/50 appearance-none transition-all"
                     >
                       {Object.values(ScheduleStatus).map(status => (
                         <option key={status} value={status} className="bg-black text-white">{status.replace('_', ' ')}</option>
@@ -1964,7 +1964,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 <div className="space-y-12">
                   {/* Site & Foundation */}
                   <div className="space-y-6">
-                    <h4 className="text-xs font-black text-emerald-500 uppercase tracking-widest border-b border-white/10 pb-2">Site & Foundation</h4>
+                    <h4 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest border-b border-white/10 pb-2">Site & Foundation</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Footing Type</label>
@@ -1990,7 +1990,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                             type="checkbox"
                             checked={editFormData.footings.attachedToHouse}
                             onChange={(e) => setEditFormData({ ...editFormData, footings: { ...editFormData.footings, attachedToHouse: e.target.checked } })}
-                            className="w-5 h-5 rounded border-white/10 bg-white/5 text-emerald-500 focus:ring-emerald-500/20"
+                            className="w-5 h-5 rounded border-white/10 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/20"
                           />
                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-white transition-colors">Attached to House</span>
                         </label>
@@ -1999,7 +1999,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                             type="checkbox"
                             checked={editFormData.footings.floating}
                             onChange={(e) => setEditFormData({ ...editFormData, footings: { ...editFormData.footings, floating: e.target.checked } })}
-                            className="w-5 h-5 rounded border-white/10 bg-white/5 text-emerald-500 focus:ring-emerald-500/20"
+                            className="w-5 h-5 rounded border-white/10 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/20"
                           />
                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-white transition-colors">Floating Structure</span>
                         </label>
@@ -2009,7 +2009,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
                   {/* Framing */}
                   <div className="space-y-6">
-                    <h4 className="text-xs font-black text-emerald-500 uppercase tracking-widest border-b border-white/10 pb-2">Framing Details</h4>
+                    <h4 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest border-b border-white/10 pb-2">Framing Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Lumber Type</label>
@@ -2045,7 +2045,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
                   {/* Surface & Finish */}
                   <div className="space-y-6">
-                    <h4 className="text-xs font-black text-emerald-500 uppercase tracking-widest border-b border-white/10 pb-2">Surface & Finish</h4>
+                    <h4 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest border-b border-white/10 pb-2">Surface & Finish</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
                         <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Decking Brand</label>
@@ -2079,7 +2079,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
                   {/* Railing & Skirting */}
                   <div className="space-y-6">
-                    <h4 className="text-xs font-black text-emerald-500 uppercase tracking-widest border-b border-white/10 pb-2">Railing & Skirting</h4>
+                    <h4 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest border-b border-white/10 pb-2">Railing & Skirting</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Railing Type</label>
@@ -2106,7 +2106,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
                   {/* Electrical & Features */}
                   <div className="space-y-6">
-                    <h4 className="text-xs font-black text-emerald-500 uppercase tracking-widest border-b border-white/10 pb-2">Electrical & Features</h4>
+                    <h4 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest border-b border-white/10 pb-2">Electrical & Features</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Lighting Details</label>
@@ -2140,7 +2140,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     value={editFormData.scopeSummary}
                     onChange={(e) => setEditFormData({ ...editFormData, scopeSummary: e.target.value })}
                     rows={10}
-                    className="w-full bg-white/5 border border-white/10 rounded-[2rem] p-8 text-sm font-medium text-white focus:outline-none focus:border-emerald-500/50 transition-all resize-none"
+                    className="w-full bg-white/5 border border-white/10 rounded-[2rem] p-8 text-sm font-medium text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all resize-none"
                     placeholder="Enter detailed job scope summary..."
                   />
                 </div>
@@ -2168,11 +2168,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       className="absolute inset-0 opacity-0 cursor-pointer z-10"
                     />
                     <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                      <Plus className="w-8 h-8 text-emerald-500" />
+                      <Plus className="w-8 h-8 text-[var(--brand-gold)]" />
                     </div>
                     <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2 italic">Upload New Documents</h3>
                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-6">Drag and drop or click to select files</p>
-                    <div className="px-8 py-4 bg-emerald-600 text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl group-hover:bg-emerald-500 transition-all">
+                    <div className="px-8 py-4 bg-[var(--brand-gold)] text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl group-hover:bg-[var(--brand-gold)] transition-all">
                       Select Files
                     </div>
                   </div>
@@ -2184,7 +2184,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                         <div key={file.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl group hover:bg-white/[0.08] transition-all">
                           <div className="flex items-center gap-4">
                             <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                              <FileText className="h-4 w-4 text-emerald-500" />
+                              <FileText className="h-4 w-4 text-[var(--brand-gold)]" />
                             </div>
                             <div>
                               <p className="text-xs font-bold text-white">{file.name}</p>
@@ -2196,7 +2196,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                               href={file.url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="p-2 text-gray-600 hover:text-emerald-500 transition-colors"
+                              className="p-2 text-gray-600 hover:text-[var(--brand-gold)] transition-colors"
                             >
                               <ExternalLink size={16} />
                             </a>
@@ -2242,7 +2242,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   }
                   setEditingSection(null);
                 }}
-                className="px-8 py-4 bg-emerald-600 text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-500 transition-all flex items-center gap-3 shadow-xl shadow-emerald-600/20"
+                className="px-8 py-4 bg-[var(--brand-gold)] text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-[var(--brand-gold)] transition-all flex items-center gap-3 shadow-xl shadow-[var(--brand-gold)]/20"
               >
                 <Save size={14} />
                 Save Changes
@@ -2269,7 +2269,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             onSendMessage(sessionId, content);
           } else {
             // Handle email intent
-            window.location.href = `mailto:${job.clientEmail}?subject=Luxury Decking: ${job.jobNumber}&body=${encodeURIComponent(content)}`;
+            window.open(`mailto:${job.clientEmail}?subject=Luxury Decking: ${job.jobNumber}&body=${encodeURIComponent(content)}`, '_blank');
           }
         }}
       />
@@ -2283,8 +2283,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             {/* Modal Header */}
             <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-emerald-500" />
+                <div className="h-12 w-12 rounded-2xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center">
+                  <Activity className="h-6 w-6 text-[var(--brand-gold)]" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Live Field Status Report</h2>
@@ -2318,8 +2318,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     <div className="bg-white/[0.03] border border-white/5 rounded-3xl p-6">
                       <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Current Stage</p>
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                          <span className="text-lg font-black text-emerald-500">{job.currentStage + 1}</span>
+                        <div className="h-10 w-10 rounded-xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center">
+                          <span className="text-lg font-black text-[var(--brand-gold)]">{job.currentStage + 1}</span>
                         </div>
                         <span className="text-lg font-black text-white uppercase tracking-tight italic">{PAGE_TITLES[job.currentStage]}</span>
                       </div>
@@ -2365,7 +2365,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                           <div key={stageNum} className="bg-white/[0.02] border border-white/5 rounded-[2rem] overflow-hidden">
                             <div className="p-6 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
                               <div className="flex items-center gap-4">
-                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-black ${progress === 100 ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white'}`}>
+                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-black ${progress === 100 ? 'bg-[var(--brand-gold)] text-black' : 'bg-white/10 text-white'}`}>
                                   {stageNum}
                                 </div>
                                 <h4 className="text-sm font-black text-white uppercase tracking-widest italic">{PAGE_TITLES[stageNum]}</h4>
@@ -2374,7 +2374,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                                 <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{completedItems} / {totalItems} Complete</span>
                                 <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden">
                                   <div 
-                                    className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                                    className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-[var(--brand-gold)]' : 'bg-amber-500'}`}
                                     style={{ width: `${progress}%` }}
                                   />
                                 </div>
@@ -2385,7 +2385,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                               {/* Checklist */}
                               <div>
                                 <div className="flex items-center gap-2 mb-6">
-                                  <CheckSquare className="w-4 h-4 text-emerald-500" />
+                                  <CheckSquare className="w-4 h-4 text-[var(--brand-gold)]" />
                                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Checklist Status</p>
                                 </div>
                                 <div className="space-y-3">
@@ -2395,7 +2395,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                                         item.isNA 
                                           ? 'bg-amber-500/20 border-amber-500/40' 
                                           : item.completed 
-                                            ? 'bg-emerald-500 border-emerald-500' 
+                                            ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)]' 
                                             : 'bg-white/5 border-white/10'
                                       }`}>
                                         {item.isNA ? (
@@ -2463,12 +2463,12 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             {/* Modal Footer */}
             <div className="p-8 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="h-2 w-2 rounded-full bg-[var(--brand-gold)] animate-pulse" />
                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest italic">Live Connection Active</p>
               </div>
               <button 
                 onClick={() => setShowLiveStatusReport(false)}
-                className="px-8 py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-500 transition-all active:scale-[0.98]"
+                className="px-8 py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-[var(--brand-gold)] transition-all active:scale-[0.98]"
               >
                 Close Report
               </button>

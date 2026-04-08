@@ -40,7 +40,7 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
     switch (type) {
       case 'pdf': return <FileText className="w-5 h-5 text-rose-500" />;
       case 'video': return <Video className="w-5 h-5 text-blue-500" />;
-      case 'image': return <BookOpen className="w-5 h-5 text-emerald-500" />;
+      case 'image': return <BookOpen className="w-5 h-5 text-[var(--brand-gold)]" />;
       default: return <ExternalLink className="w-5 h-5 text-gray-500" />;
     }
   };
@@ -51,7 +51,7 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
         onClick={onBack}
         className="mb-8 flex items-center gap-2 font-label transition-all group"
       >
-        <div className="h-8 w-8 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center group-hover:border-emerald-500/50 group-hover:bg-emerald-500/10 transition-all">
+        <div className="h-8 w-8 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center group-hover:border-[var(--brand-gold)]/50 group-hover:bg-[var(--brand-gold)]/10 transition-all">
           <ArrowLeft size={14} />
         </div>
         Back to Dashboard
@@ -59,7 +59,7 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
 
       <header className="mb-10">
         <div className="flex items-center gap-4 mb-2">
-          <div className="h-12 w-12 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-600/20">
+          <div className="h-12 w-12 bg-[var(--brand-gold)] rounded-2xl flex items-center justify-center shadow-lg shadow-[var(--brand-gold)]/20">
             <BookOpen className="text-black w-6 h-6" />
           </div>
           <div>
@@ -72,11 +72,11 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
       {/* Search and Filter */}
       <div className="space-y-6 mb-10">
         <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)] group-focus-within:text-emerald-500 transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)] group-focus-within:text-[var(--brand-gold)] transition-colors" />
           <input 
             type="text"
             placeholder="Search resources, SOPs, handbooks..."
-            className="w-full pl-12 pr-4 py-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-[2rem] shadow-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all font-bold text-sm placeholder:text-[var(--text-secondary)]/50"
+            className="w-full pl-12 pr-4 py-5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-[2rem] shadow-2xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/20 focus:border-[var(--brand-gold)]/50 transition-all font-bold text-sm placeholder:text-[var(--text-secondary)]/50"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -87,7 +87,7 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
             onClick={() => setSelectedCategory('all')}
             className={`px-6 py-2.5 rounded-2xl font-label transition-all whitespace-nowrap border ${
               selectedCategory === 'all' 
-                ? 'bg-emerald-600 text-black border-emerald-600 shadow-lg shadow-emerald-600/20' 
+                ? 'bg-[var(--brand-gold)] text-black border-[var(--brand-gold)] shadow-lg shadow-[var(--brand-gold)]/20' 
                 : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-secondary)]/80 hover:text-[var(--text-primary)]'
             }`}
           >
@@ -99,7 +99,7 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
               onClick={() => setSelectedCategory(cat)}
               className={`px-6 py-2.5 rounded-2xl font-label transition-all whitespace-nowrap border ${
                 selectedCategory === cat 
-                  ? 'bg-emerald-600 text-black border-emerald-600 shadow-lg shadow-emerald-600/20' 
+                  ? 'bg-[var(--brand-gold)] text-black border-[var(--brand-gold)] shadow-lg shadow-[var(--brand-gold)]/20' 
                   : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-secondary)]/80 hover:text-[var(--text-primary)]'
               }`}
             >
@@ -124,7 +124,7 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
                   </div>
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
+                      <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/10 px-2 py-0.5 rounded-lg border border-[var(--brand-gold)]/20">
                         {resource.category}
                       </span>
                       <span className="font-label opacity-60 flex items-center gap-1">
@@ -136,7 +136,7 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <button className="p-3.5 bg-[var(--text-primary)] text-[var(--bg-primary)] rounded-2xl hover:bg-emerald-500 transition-all active:scale-95 shadow-xl">
+                  <button className="p-3.5 bg-[var(--text-primary)] text-[var(--bg-primary)] rounded-2xl hover:bg-[var(--brand-gold)] transition-all active:scale-95 shadow-xl">
                     <Download size={20} />
                   </button>
                   <button className="p-3.5 bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-color)] rounded-2xl hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]/80 transition-all active:scale-95">
@@ -158,12 +158,12 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
       </div>
 
       {/* Field Support Note */}
-      <div className="mt-16 p-8 bg-emerald-500/5 rounded-[2.5rem] border border-emerald-500/10 flex items-start gap-6">
+      <div className="mt-16 p-8 bg-[var(--brand-gold)]/5 rounded-[2.5rem] border border-[var(--brand-gold)]/10 flex items-start gap-6">
         <div className="h-12 w-12 bg-[var(--bg-primary)]/5 border border-[var(--border-color)] rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
-          <Info className="text-emerald-500 w-6 h-6" />
+          <Info className="text-[var(--brand-gold)] w-6 h-6" />
         </div>
         <div>
-          <h4 className="font-label text-emerald-500 mb-2">Field Support</h4>
+          <h4 className="font-label text-[var(--brand-gold)] mb-2">Field Support</h4>
           <p className="text-xs text-[var(--text-secondary)]/80 font-medium leading-relaxed">
             These resources are for internal reference only. If you find a discrepancy between these standards and your specific job plans, contact your Project Manager immediately.
           </p>

@@ -100,7 +100,7 @@ const TimeClockControls: React.FC<TimeClockControlsProps> = ({ user, job, allJob
       <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className={`p-3 rounded-2xl ${activeEntry ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/40'}`}>
+            <div className={`p-3 rounded-2xl ${activeEntry ? 'bg-[var(--brand-gold)]/20 text-[var(--brand-gold-light)]' : 'bg-white/10 text-white/40'}`}>
               <Clock size={20} />
             </div>
             <div>
@@ -116,7 +116,7 @@ const TimeClockControls: React.FC<TimeClockControlsProps> = ({ user, job, allJob
           {activeEntry && (
             <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
               distanceFromSite !== null && distanceFromSite <= GEOFENCE_RADIUS_METERS 
-                ? 'bg-emerald-500/20 text-emerald-400' 
+                ? 'bg-[var(--brand-gold)]/20 text-[var(--brand-gold-light)]' 
                 : 'bg-amber-500/20 text-amber-400'
             }`}>
               <MapPin size={10} />
@@ -129,7 +129,7 @@ const TimeClockControls: React.FC<TimeClockControlsProps> = ({ user, job, allJob
           <button
             onClick={() => setShowJobSelection(true)}
             disabled={isPunching}
-            className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-black font-black uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20"
+            className="w-full py-4 bg-[var(--brand-gold)] hover:bg-[var(--brand-gold)] disabled:opacity-50 text-black font-black uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl shadow-[var(--brand-gold)]/20"
           >
             {isPunching ? (
               <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
@@ -188,20 +188,20 @@ const TimeClockControls: React.FC<TimeClockControlsProps> = ({ user, job, allJob
               </div>
 
               <div className="space-y-3">
-                <div className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-4">Active Jobs</div>
+                <div className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-4">Active Jobs</div>
                 {allJobs.length > 0 ? (
                   allJobs.map(j => (
                     <button
                       key={j.id}
                       onClick={() => handlePunch(PunchType.CHECK_IN, j)}
-                      className="w-full p-4 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 rounded-2xl text-left transition-all group"
+                      className="w-full p-4 bg-white/5 hover:bg-[var(--brand-gold)]/10 border border-white/10 hover:border-[var(--brand-gold)]/30 rounded-2xl text-left transition-all group"
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="block text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">{j.jobNumber}</span>
+                          <span className="block text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1">{j.jobNumber}</span>
                           <span className="block text-sm font-bold text-white uppercase tracking-wider">{j.clientName}</span>
                         </div>
-                        <ArrowRight size={16} className="text-white/20 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                        <ArrowRight size={16} className="text-white/20 group-hover:text-[var(--brand-gold)] group-hover:translate-x-1 transition-all" />
                       </div>
                     </button>
                   ))

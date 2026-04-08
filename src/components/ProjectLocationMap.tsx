@@ -31,8 +31,8 @@ const ProjectLocationMap: React.FC<ProjectLocationMapProps> = ({ address, classN
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center backdrop-blur-md">
-              <Camera className="w-5 h-5 text-emerald-400" />
+            <div className="w-10 h-10 rounded-2xl bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/30 flex items-center justify-center backdrop-blur-md">
+              <Camera className="w-5 h-5 text-[var(--brand-gold-light)]" />
             </div>
             <div className="space-y-1">
               <p className="text-[9px] font-black text-white uppercase tracking-widest">House Preview</p>
@@ -77,7 +77,7 @@ const ProjectLocationMap: React.FC<ProjectLocationMapProps> = ({ address, classN
           href={googleMapsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute bottom-6 right-6 p-4 bg-white text-black rounded-2xl shadow-2xl transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 hover:bg-emerald-500 hover:scale-110 active:scale-95"
+          className="absolute bottom-6 right-6 p-4 bg-white text-black rounded-2xl shadow-2xl transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 hover:bg-[var(--brand-gold)] hover:scale-110 active:scale-95"
           title="Open in Google Maps"
         >
           <ExternalLink size={20} />
@@ -88,8 +88,8 @@ const ProjectLocationMap: React.FC<ProjectLocationMapProps> = ({ address, classN
       {!hideAddress && (
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-              <MapPin className="w-4 h-4 text-emerald-500" />
+            <div className="p-2.5 rounded-xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20">
+              <MapPin className="w-4 h-4 text-[var(--brand-gold)]" />
             </div>
             <div>
               <p className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-widest mb-0.5">Project Location</p>

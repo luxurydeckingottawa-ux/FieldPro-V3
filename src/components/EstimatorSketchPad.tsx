@@ -127,25 +127,25 @@ const EstimatorSketchPad: React.FC<EstimatorSketchPadProps> = ({ data, onChange 
         <div className="flex gap-1">
           <button
             onClick={() => setTool('pen')}
-            className={`p-2 rounded-lg transition-all ${tool === 'pen' ? 'bg-emerald-600 text-white shadow-md' : 'text-[var(--text-secondary)] hover:bg-[var(--text-primary)]/5'}`}
+            className={`p-2 rounded-lg transition-all ${tool === 'pen' ? 'bg-[var(--brand-gold)] text-white shadow-md' : 'text-[var(--text-secondary)] hover:bg-[var(--text-primary)]/5'}`}
           >
             <Pencil className="w-5 h-5" />
           </button>
           <button
             onClick={() => setTool('eraser')}
-            className={`p-2 rounded-lg transition-all ${tool === 'eraser' ? 'bg-emerald-600 text-white shadow-md' : 'text-[var(--text-secondary)] hover:bg-[var(--text-primary)]/5'}`}
+            className={`p-2 rounded-lg transition-all ${tool === 'eraser' ? 'bg-[var(--brand-gold)] text-white shadow-md' : 'text-[var(--text-secondary)] hover:bg-[var(--text-primary)]/5'}`}
           >
             <Eraser className="w-5 h-5" />
           </button>
           <button
             onClick={() => setTool('text')}
-            className={`p-2 rounded-lg transition-all ${tool === 'text' ? 'bg-emerald-600 text-white shadow-md' : 'text-[var(--text-secondary)] hover:bg-[var(--text-primary)]/5'}`}
+            className={`p-2 rounded-lg transition-all ${tool === 'text' ? 'bg-[var(--brand-gold)] text-white shadow-md' : 'text-[var(--text-secondary)] hover:bg-[var(--text-primary)]/5'}`}
           >
             <Type className="w-5 h-5" />
           </button>
           <button
             onClick={() => setTool('marker')}
-            className={`p-2 rounded-lg transition-all ${tool === 'marker' ? 'bg-emerald-600 text-white shadow-md' : 'text-[var(--text-secondary)] hover:bg-[var(--text-primary)]/5'}`}
+            className={`p-2 rounded-lg transition-all ${tool === 'marker' ? 'bg-[var(--brand-gold)] text-white shadow-md' : 'text-[var(--text-secondary)] hover:bg-[var(--text-primary)]/5'}`}
           >
             <MapPin className="w-5 h-5" />
           </button>
@@ -176,7 +176,7 @@ const EstimatorSketchPad: React.FC<EstimatorSketchPadProps> = ({ data, onChange 
       >
         {showInput && (
           <div 
-            className="absolute z-10 bg-white p-2 rounded-lg shadow-xl border border-emerald-600 flex gap-2"
+            className="absolute z-10 bg-white p-2 rounded-lg shadow-xl border border-[var(--brand-gold)] flex gap-2"
             style={{ left: inputPos.x, top: inputPos.y }}
           >
             <input
@@ -190,7 +190,7 @@ const EstimatorSketchPad: React.FC<EstimatorSketchPadProps> = ({ data, onChange 
             />
             <button 
               onClick={handleAddLabel}
-              className="px-2 py-1 bg-emerald-600 text-white rounded text-xs font-bold"
+              className="px-2 py-1 bg-[var(--brand-gold)] text-white rounded text-xs font-bold"
             >
               Add
             </button>

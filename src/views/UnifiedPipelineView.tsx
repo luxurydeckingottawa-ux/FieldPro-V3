@@ -178,15 +178,15 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
                 onClick={() => setActiveBoard(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all ${
                   isActive 
-                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-l-2 border-emerald-500' 
+                    ? 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] dark:text-[var(--brand-gold-light)] border-l-2 border-[var(--brand-gold)]' 
                     : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] border-l-2 border-transparent'
                 }`}
               >
-                <span className={isActive ? 'text-emerald-500' : 'opacity-50'}>{item.icon}</span>
+                <span className={isActive ? 'text-[var(--brand-gold)]' : 'opacity-50'}>{item.icon}</span>
                 <span className="text-sm font-semibold flex-1">{item.label}</span>
                 {item.count > 0 && (
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded min-w-[20px] text-center ${
-                    isActive ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
+                    isActive ? 'bg-[var(--brand-gold)]/20 text-[var(--brand-gold)] dark:text-[var(--brand-gold-light)]' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
                   }`}>{item.count}</span>
                 )}
               </button>
@@ -204,7 +204,7 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
               };
               onNewJob(stageMap[activeBoard]);
             }} 
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-emerald-500 transition-all active:scale-[0.97]"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-[var(--brand-gold)] text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[var(--brand-gold)] transition-all active:scale-[0.97]"
           >
             <Plus className="w-3.5 h-3.5" /> New
           </button>
@@ -229,7 +229,7 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
               <input
                 type="text"
                 placeholder={`Search by ${activeBoard === 'jobs' ? 'Job' : activeBoard === 'leads' ? 'Lead' : 'Estimate'} #`}
-                className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-emerald-500/50 w-64 transition-all text-[var(--text-primary)]"
+                className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-[var(--brand-gold)]/50 w-64 transition-all text-[var(--text-primary)]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -268,7 +268,7 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
                   <div
                     key={col.id}
                     className={`flex flex-col w-[235px] shrink-0 border-r border-[var(--border-color)] transition-all ${
-                      isDragOver ? 'bg-emerald-500/10' : colIndex % 2 === 0 ? 'bg-[var(--bg-primary)]/30' : 'bg-transparent'
+                      isDragOver ? 'bg-[var(--brand-gold)]/10' : colIndex % 2 === 0 ? 'bg-[var(--bg-primary)]/30' : 'bg-transparent'
                     }`}
                     onDragOver={(e) => handleDragOver(e, col.id)}
                     onDragLeave={handleDragLeave}
@@ -330,16 +330,16 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
                       <tr
                         key={job.id}
                         onClick={() => onSelectJob(job)}
-                        className="border-b border-[var(--border-color)] hover:bg-emerald-500/5 cursor-pointer transition-all"
+                        className="border-b border-[var(--border-color)] hover:bg-[var(--brand-gold)]/5 cursor-pointer transition-all"
                       >
-                        <td className="px-4 py-3 text-xs font-bold text-emerald-600">{job.jobNumber}</td>
+                        <td className="px-4 py-3 text-xs font-bold text-[var(--brand-gold)]">{job.jobNumber}</td>
                         <td className="px-4 py-3">
                           <div className="text-sm font-bold text-[var(--text-primary)]">{job.clientName || 'Unnamed'}</div>
                           {job.projectAddress && <div className="text-xs text-[var(--text-secondary)] truncate max-w-[200px]">{job.projectAddress}</div>}
                         </td>
                         <td className="px-4 py-3 text-sm font-bold text-[var(--text-primary)]">{amount > 0 ? `$${amount.toLocaleString()}` : '$0.00'}</td>
                         <td className="px-4 py-3">
-                          <span className="text-[10px] font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-600 uppercase tracking-wider">{stageLabel}</span>
+                          <span className="text-[10px] font-bold px-2 py-1 rounded bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] uppercase tracking-wider">{stageLabel}</span>
                         </td>
                         <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{job.assignedCrewOrSubcontractor || 'Unassigned'}</td>
                         <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
@@ -382,7 +382,7 @@ const KanbanCard: React.FC<{
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={onClick}
-      className={`bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] p-3.5 cursor-pointer hover:border-emerald-500/40 hover:shadow-md transition-all group ${
+      className={`bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] p-3.5 cursor-pointer hover:border-[var(--brand-gold)]/40 hover:shadow-md transition-all group ${
         hasWarnings ? 'border-l-2 border-l-amber-500' : ''
       }`}
     >
@@ -391,7 +391,7 @@ const KanbanCard: React.FC<{
           <div className="text-[10px] font-bold text-[var(--text-secondary)] mb-0.5">
             {job.jobNumber}
           </div>
-          <h4 className="text-sm font-bold text-[var(--text-primary)] truncate group-hover:text-emerald-600 transition-colors">
+          <h4 className="text-sm font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--brand-gold)] transition-colors">
             {job.clientName || 'Unnamed'}
           </h4>
           {job.projectAddress && (
@@ -411,8 +411,8 @@ const KanbanCard: React.FC<{
 
       {job.assignedCrewOrSubcontractor && (
         <div className="flex items-center gap-1.5 mb-2">
-          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-            <User className="w-3 h-3 text-emerald-500" />
+          <div className="w-5 h-5 rounded-full bg-[var(--brand-gold)]/20 flex items-center justify-center">
+            <User className="w-3 h-3 text-[var(--brand-gold)]" />
           </div>
           <span className="text-xs text-[var(--text-secondary)]">{job.assignedCrewOrSubcontractor}</span>
         </div>

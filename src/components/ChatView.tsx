@@ -96,8 +96,8 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
         <div className="p-6 border-b border-[var(--border-color)]">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-emerald-500" />
+              <div className="w-10 h-10 bg-[var(--brand-gold)]/10 rounded-xl flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-[var(--brand-gold)]" />
               </div>
               <div>
                 <h1 className="text-xl font-black text-white uppercase tracking-tight italic">Chat Portal</h1>
@@ -107,13 +107,13 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
             <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
               <button 
                 onClick={() => setFilter('all')}
-                className={`px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${filter === 'all' ? 'bg-emerald-500 text-black' : 'text-gray-500 hover:text-white'}`}
+                className={`px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${filter === 'all' ? 'bg-[var(--brand-gold)] text-black' : 'text-gray-500 hover:text-white'}`}
               >
                 All
               </button>
               <button 
                 onClick={() => setFilter('unread')}
-                className={`px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${filter === 'unread' ? 'bg-emerald-500 text-black' : 'text-gray-500 hover:text-white'}`}
+                className={`px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${filter === 'unread' ? 'bg-[var(--brand-gold)] text-black' : 'text-gray-500 hover:text-white'}`}
               >
                 Unread
               </button>
@@ -125,7 +125,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
             <input 
               type="text"
               placeholder="Search conversations..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-emerald-500/50 transition-all text-white"
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all text-white"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -138,7 +138,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
               key={session.id}
               onClick={() => setSelectedSessionId(session.id)}
               className={`w-full p-4 flex gap-4 transition-all border-b border-white/[0.02] hover:bg-white/[0.02] relative ${
-                selectedSessionId === session.id ? 'bg-white/[0.05] border-l-4 border-l-emerald-500' : ''
+                selectedSessionId === session.id ? 'bg-white/[0.05] border-l-4 border-l-[var(--brand-gold)]' : ''
               }`}
             >
               <div className="relative shrink-0">
@@ -146,7 +146,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                   {session.clientName.charAt(0)}
                 </div>
                 {session.unreadCount > 0 && (
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-[var(--bg-primary)] flex items-center justify-center text-[10px] font-black text-black">
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--brand-gold)] rounded-full border-2 border-[var(--bg-primary)] flex items-center justify-center text-[10px] font-black text-black">
                     {session.unreadCount}
                   </div>
                 )}
@@ -181,7 +181,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
             {/* Chat Header */}
             <div className="p-6 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-primary)]/80 backdrop-blur-xl sticky top-0 z-20">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center text-emerald-500 font-black text-xl border border-emerald-500/20 shadow-lg">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--brand-gold)]/20 to-[var(--brand-gold)]/5 flex items-center justify-center text-[var(--brand-gold)] font-black text-xl border border-[var(--brand-gold)]/20 shadow-lg">
                   {selectedSession.clientName.charAt(0)}
                 </div>
                 <div>
@@ -193,7 +193,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                       </span>
                     )}
                     {isOfficeUser && selectedSession.clientPhone && <span className="w-1 h-1 rounded-full bg-gray-700" />}
-                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
+                    <span className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest flex items-center gap-1">
                       <Activity size={10} /> Active SMS Session
                     </span>
                   </div>
@@ -213,7 +213,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                 <button 
                   onClick={handleSummarize}
                   disabled={isAiLoading}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[9px] font-black text-emerald-500 uppercase tracking-widest hover:bg-emerald-500/20 transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest hover:bg-[var(--brand-gold)]/20 transition-all disabled:opacity-50"
                 >
                   {isAiLoading ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
                   AI Summary
@@ -231,15 +231,15 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="mx-8 mt-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl overflow-hidden"
+                  className="mx-8 mt-4 bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/10 rounded-2xl overflow-hidden"
                 >
                   <div className="p-4 flex items-start gap-3">
-                    <div className="p-2 bg-emerald-500/10 rounded-lg shrink-0">
-                      <FileText size={14} className="text-emerald-500" />
+                    <div className="p-2 bg-[var(--brand-gold)]/10 rounded-lg shrink-0">
+                      <FileText size={14} className="text-[var(--brand-gold)]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">AI Conversation Summary</h4>
+                        <h4 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em]">AI Conversation Summary</h4>
                         <button onClick={() => setSummary(null)} className="text-gray-500 hover:text-white transition-all">
                           <X size={14} />
                         </button>
@@ -267,7 +267,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                         <div className={`px-5 py-3 rounded-[1.5rem] text-sm font-medium shadow-lg ${
                           msg.isFromClient 
                             ? 'bg-white/5 border border-white/10 text-white rounded-bl-none' 
-                            : 'bg-emerald-600 text-black font-bold rounded-br-none'
+                            : 'bg-[var(--brand-gold)] text-black font-bold rounded-br-none'
                         }`}>
                           {msg.text}
                         </div>
@@ -276,7 +276,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                             {format(new Date(msg.timestamp), 'h:mm a')}
                           </span>
                           {!msg.isFromClient && (
-                            <span className="text-emerald-500">
+                            <span className="text-[var(--brand-gold)]">
                               {msg.status === 'read' ? <CheckCheck size={12} /> : <Check size={12} />}
                             </span>
                           )}
@@ -295,7 +295,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                   <button
                     onClick={handleSuggestReply}
                     disabled={isAiLoading}
-                    className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[9px] font-black text-emerald-500 uppercase tracking-widest hover:bg-emerald-500/20 transition-all shrink-0 flex items-center gap-2"
+                    className="px-3 py-1.5 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-full text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest hover:bg-[var(--brand-gold)]/20 transition-all shrink-0 flex items-center gap-2"
                   >
                     {isAiLoading ? <RefreshCw size={10} className="animate-spin" /> : <Sparkles size={10} />}
                     Suggest Reply
@@ -304,7 +304,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                     <button
                       key={t}
                       onClick={() => setNewMessage(prev => prev + (prev ? ' ' : '') + t + ': ')}
-                      className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black text-gray-400 uppercase tracking-widest hover:bg-emerald-500/10 hover:text-emerald-500 hover:border-emerald-500/30 transition-all shrink-0"
+                      className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black text-gray-400 uppercase tracking-widest hover:bg-[var(--brand-gold)]/10 hover:text-[var(--brand-gold)] hover:border-[var(--brand-gold)]/30 transition-all shrink-0"
                     >
                       {t}
                     </button>
@@ -322,8 +322,8 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <Sparkles size={12} className="text-emerald-500" />
-                          <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">AI Suggested Reply</span>
+                          <Sparkles size={12} className="text-[var(--brand-gold)]" />
+                          <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest">AI Suggested Reply</span>
                         </div>
                         <button onClick={() => setSuggestedReply(null)} className="text-gray-500 hover:text-white transition-all">
                           <X size={14} />
@@ -335,7 +335,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                           setNewMessage(suggestedReply);
                           setSuggestedReply(null);
                         }}
-                        className="px-3 py-1.5 bg-emerald-500 text-black rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-all"
+                        className="px-3 py-1.5 bg-[var(--brand-gold)] text-black rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-[var(--brand-gold)] transition-all"
                       >
                         Use This Reply
                       </button>
@@ -348,7 +348,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                     <input 
                       type="text"
                       placeholder={`Message ${selectedSession.clientName}...`}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm focus:outline-none focus:border-emerald-500/50 transition-all text-white pr-12 shadow-inner"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all text-white pr-12 shadow-inner"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -356,7 +356,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                     <button 
                       onClick={handleSend}
                       disabled={!newMessage.trim()}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-emerald-600 text-black rounded-xl hover:bg-emerald-500 transition-all disabled:opacity-50 disabled:hover:bg-emerald-600 shadow-lg"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-[var(--brand-gold)] text-black rounded-xl hover:bg-[var(--brand-gold)] transition-all disabled:opacity-50 disabled:hover:bg-[var(--brand-gold)] shadow-lg"
                     >
                       <Send size={18} />
                     </button>
@@ -389,8 +389,8 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
               <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Job Context</h3>
               <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center">
-                    <Activity className="w-5 h-5 text-emerald-500" />
+                  <div className="w-10 h-10 bg-[var(--brand-gold)]/10 rounded-xl flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-[var(--brand-gold)]" />
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Current Stage</p>
@@ -437,7 +437,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
               <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Recent Activity</h3>
               <div className="space-y-4">
                 <div className="flex gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] mt-1.5 shrink-0" />
                   <div>
                     <p className="text-xs font-bold text-white leading-snug">Message sent to client</p>
                     <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-0.5">Today at 10:30 AM</p>

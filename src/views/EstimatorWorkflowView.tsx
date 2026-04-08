@@ -273,7 +273,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
             </button>
             <button 
               onClick={() => onSave(intake)}
-              className="p-2 text-emerald-600 hover:text-emerald-500"
+              className="p-2 text-[var(--brand-gold)] hover:text-[var(--brand-gold)]"
               title="Save to Server"
             >
               <Save className="w-6 h-6" />
@@ -295,7 +295,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
           {status === 'on_way' && (
             <button 
               onClick={() => handleStatusChange('in_progress')}
-              className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-[0.98]"
+              className="flex-1 bg-[var(--brand-gold)] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-[var(--brand-gold)]/20 active:scale-[0.98]"
             >
               <Play className="w-5 h-5" />
               Start Estimate
@@ -311,7 +311,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
             </button>
           )}
           {status === 'completed' && (
-            <div className="flex-1 bg-emerald-600/10 text-emerald-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 border border-emerald-600/20">
+            <div className="flex-1 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] py-3 rounded-xl font-bold flex items-center justify-center gap-2 border border-[var(--brand-gold)]/20">
               <Check className="w-5 h-5" />
               Estimate Completed
             </div>
@@ -354,7 +354,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-4 text-xs font-bold uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${
                 activeTab === tab.id 
-                  ? 'border-emerald-600 text-emerald-600' 
+                  ? 'border-[var(--brand-gold)] text-[var(--brand-gold)]' 
                   : 'border-transparent text-[var(--text-secondary)]'
               }`}
             >
@@ -381,7 +381,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-[var(--bg-secondary)] rounded-xl flex items-center justify-center">
-                      <Phone className="w-5 h-5 text-emerald-600" />
+                      <Phone className="w-5 h-5 text-[var(--brand-gold)]" />
                     </div>
                     <div>
                       <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest">Phone</p>
@@ -390,7 +390,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-[var(--bg-secondary)] rounded-xl flex items-center justify-center">
-                      <Mail className="w-5 h-5 text-emerald-600" />
+                      <Mail className="w-5 h-5 text-[var(--brand-gold)]" />
                     </div>
                     <div>
                       <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest">Email</p>
@@ -399,7 +399,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-[var(--bg-secondary)] rounded-xl flex items-center justify-center">
-                      <MapPin className="w-5 h-5 text-emerald-600" />
+                      <MapPin className="w-5 h-5 text-[var(--brand-gold)]" />
                     </div>
                     <div>
                       <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest">Address</p>
@@ -480,7 +480,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                 ))}
                 <button 
                   onClick={handleAddPhoto}
-                  className="aspect-square rounded-xl border-2 border-dashed border-[var(--border-color)] flex flex-col items-center justify-center gap-2 text-[var(--text-secondary)] hover:border-emerald-600 hover:text-emerald-600 transition-all"
+                  className="aspect-square rounded-xl border-2 border-dashed border-[var(--border-color)] flex flex-col items-center justify-center gap-2 text-[var(--text-secondary)] hover:border-[var(--brand-gold)] hover:text-[var(--brand-gold)] transition-all"
                 >
                   <Camera className="w-8 h-8" />
                   <span className="text-xs font-bold uppercase tracking-widest">Add Photo</span>
@@ -500,7 +500,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                 value={intake.notes}
                 onChange={(e) => setIntake(prev => ({ ...prev, notes: e.target.value }))}
                 placeholder="Enter additional site notes, client preferences, or special instructions..."
-                className="w-full h-64 p-4 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all text-[var(--text-primary)]"
+                className="w-full h-64 p-4 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)] transition-all text-[var(--text-primary)]"
               />
             </motion.div>
           )}
@@ -527,8 +527,8 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
               exit={{ opacity: 0, x: 20 }}
               className="space-y-6"
             >
-              <div className="bg-emerald-600/10 p-6 rounded-2xl border border-emerald-600/20 text-center">
-                <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <div className="bg-[var(--brand-gold)]/10 p-6 rounded-2xl border border-[var(--brand-gold)]/20 text-center">
+                <div className="w-16 h-16 bg-[var(--brand-gold)] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <CheckCircle2 className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Intake Complete</h3>
@@ -550,7 +550,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                     ].map((item, i) => (
                       <div key={i} className="flex items-center justify-between py-2 border-b border-[var(--border-color)] last:border-0">
                         <span className="text-sm font-medium text-[var(--text-primary)]">{item.label}</span>
-                        <span className="text-xs font-bold text-emerald-600 bg-emerald-600/10 px-2 py-1 rounded-lg">{item.status}</span>
+                        <span className="text-xs font-bold text-[var(--brand-gold)] bg-[var(--brand-gold)]/10 px-2 py-1 rounded-lg">{item.status}</span>
                       </div>
                     ))}
                   </div>
@@ -580,16 +580,16 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
               </div>
 
               {/* AI Handoff Summary */}
-              <div className="bg-white p-6 rounded-3xl border border-[var(--border-color)] shadow-lg shadow-emerald-600/5 space-y-6">
+              <div className="bg-white p-6 rounded-3xl border border-[var(--border-color)] shadow-lg shadow-[var(--brand-gold)]/5 space-y-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-emerald-600">
+                  <div className="flex items-center gap-2 text-[var(--brand-gold)]">
                     <Sparkles className="w-6 h-6" />
                     <h3 className="text-lg font-bold">AI Estimate Handoff</h3>
                   </div>
                   <button
                     onClick={handleGenerateHandoff}
                     disabled={isGeneratingHandoff}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)] text-white rounded-xl text-sm font-bold hover:bg-[var(--brand-gold-dark)] transition-all disabled:opacity-50"
                   >
                     {isGeneratingHandoff ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -608,7 +608,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                         <ul className="space-y-1">
                           {intake.aiInsights.handoff.keyMeasurements.map((m, i) => (
                             <li key={`measure-${i}`} className="text-sm flex items-center gap-2">
-                              <div className="w-1 h-1 bg-emerald-600 rounded-full" />
+                              <div className="w-1 h-1 bg-[var(--brand-gold)] rounded-full" />
                               {m}
                             </li>
                           ))}
@@ -619,7 +619,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                         <ul className="space-y-1">
                           {intake.aiInsights.handoff.siteConditions.map((c, i) => (
                             <li key={`condition-${i}`} className="text-sm flex items-center gap-2">
-                              <div className="w-1 h-1 bg-emerald-600 rounded-full" />
+                              <div className="w-1 h-1 bg-[var(--brand-gold)] rounded-full" />
                               {c}
                             </li>
                           ))}
@@ -636,7 +636,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                           </span>
                         ))}
                         {intake.aiInsights.handoff.upgrades.map((u, i) => (
-                          <span key={`upgrade-${i}`} className="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase rounded border border-emerald-100">
+                          <span key={`upgrade-${i}`} className="px-2 py-1 bg-[var(--brand-gold)]/5 text-[#8B7520] text-[10px] font-bold uppercase rounded border border-[var(--brand-gold)]/10">
                             {u}
                           </span>
                         ))}
@@ -664,11 +664,11 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                       <div className="flex items-center gap-2">
                         <div className="w-12 h-2 bg-gray-100 rounded-full overflow-hidden text-[0px]">
                           <div 
-                            className="h-full bg-emerald-600 transition-all duration-1000" 
+                            className="h-full bg-[var(--brand-gold)] transition-all duration-1000" 
                             style={{ width: `${intake.aiInsights.handoff.overallCompletion}%` }}
                           />
                         </div>
-                        <span className="text-[10px] font-bold text-emerald-600 uppercase">
+                        <span className="text-[10px] font-bold text-[var(--brand-gold)] uppercase">
                           {intake.aiInsights.handoff.overallCompletion}% Complete
                         </span>
                       </div>
@@ -687,7 +687,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                             onSave(intake);
                             onPushToEstimating(intake);
                           }}
-                          className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-500 transition-all shadow-lg active:scale-[0.98]"
+                          className="flex items-center gap-2 px-6 py-3 bg-[var(--brand-gold)] text-white rounded-xl font-bold hover:bg-[var(--brand-gold)] transition-all shadow-lg active:scale-[0.98]"
                         >
                           Open in Estimator
                           <ArrowRight className="w-5 h-5" />
@@ -705,7 +705,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                     <button
                       onClick={handleGenerateHandoff}
                       disabled={isGeneratingHandoff}
-                      className="px-6 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all disabled:opacity-50"
+                      className="px-6 py-2 bg-[var(--brand-gold)] text-white rounded-xl text-sm font-bold hover:bg-[var(--brand-gold-dark)] transition-all disabled:opacity-50"
                     >
                       {isGeneratingHandoff ? 'Analyzing Site Data...' : 'Generate Handoff Summary'}
                     </button>
@@ -720,7 +720,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
       {/* Footer Status */}
       <div className="bg-[var(--bg-primary)] p-4 border-t border-[var(--border-color)] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${isChecklistComplete ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+          <div className={`w-3 h-3 rounded-full ${isChecklistComplete ? 'bg-[var(--brand-gold)]' : 'bg-amber-500'}`} />
           <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">
             {isChecklistComplete ? 'Checklist Complete' : 'Checklist Incomplete'}
           </span>

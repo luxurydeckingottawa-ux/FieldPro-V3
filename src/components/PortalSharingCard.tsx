@@ -26,9 +26,9 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
   const sharePortalLink = (type: 'sms' | 'email') => {
     const message = `Hi ${job.clientName}, here is your project portal link for your Luxury Decking project: ${portalUrl}`;
     if (type === 'sms') {
-      window.location.href = `sms:${job.clientPhone || ''}?body=${encodeURIComponent(message)}`;
+      window.location.href = `sms:${job.clientPhone || ''}?body=${encodeURIComponent(message)}`, '_blank');
     } else {
-      window.location.href = `mailto:${job.clientEmail || ''}?subject=${encodeURIComponent('Your Luxury Decking Project Portal')}&body=${encodeURIComponent(message)}`;
+      window.open(`mailto:${job.clientEmail || ''}?subject=${encodeURIComponent('Your Luxury Decking Project Portal')}&body=${encodeURIComponent(message)}`, '_blank');
     }
   };
 
@@ -39,11 +39,11 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
       viewport={{ once: true }}
       className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[40px] -mr-16 -mt-16 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--brand-gold)]/5 blur-[40px] -mr-16 -mt-16 pointer-events-none" />
       
       <div className="flex items-center justify-between mb-8 relative z-10">
         <div>
-          <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
+          <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
             <Users size={14} className="fill-current" /> Customer Experience
           </h3>
           <h2 className="text-lg font-black text-white uppercase tracking-tight">
@@ -52,7 +52,7 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
         </div>
         <button 
           onClick={() => onPreviewPortal(job)}
-          className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-emerald-500 transition-all flex items-center gap-2"
+          className="px-3 py-1.5 bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)] transition-all flex items-center gap-2"
         >
           <ExternalLink size={12} /> Preview Mode
         </button>
@@ -63,8 +63,8 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
           <div className="flex items-center justify-between">
             <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Customer View Status</p>
             <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Live</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] animate-pulse" />
+              <span className="text-[8px] font-bold text-[var(--brand-gold)] uppercase tracking-widest">Live</span>
             </div>
           </div>
           <div className="space-y-2">
@@ -114,7 +114,7 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
           <div className="grid grid-cols-2 gap-3">
             <button 
               onClick={() => sharePortalLink('sms')}
-              className="flex items-center justify-center gap-2 p-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl text-emerald-500 transition-all group"
+              className="flex items-center justify-center gap-2 p-3 bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/20 rounded-xl text-[var(--brand-gold)] transition-all group"
             >
               <MessageSquare size={16} className="group-hover:scale-110 transition-transform" />
               <span className="text-[10px] font-black uppercase tracking-widest">SMS</span>
@@ -131,16 +131,16 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
             onClick={copyPortalLink}
             className="w-full mt-3 flex items-center justify-center gap-2 p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all group"
           >
-            {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} className="group-hover:scale-110 transition-transform" />}
-            <span className={`text-[10px] font-black uppercase tracking-widest ${copied ? 'text-emerald-500' : ''}`}>
+            {copied ? <Check size={16} className="text-[var(--brand-gold)]" /> : <Copy size={16} className="group-hover:scale-110 transition-transform" />}
+            <span className={`text-[10px] font-black uppercase tracking-widest ${copied ? 'text-[var(--brand-gold)]' : ''}`}>
               {copied ? 'Copied!' : 'Copy Link'}
             </span>
           </button>
         </div>
 
-        <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+        <div className="p-4 rounded-xl bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/10">
           <div className="flex items-start gap-3">
-            <Info size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+            <Info size={14} className="text-[var(--brand-gold)] mt-0.5 shrink-0" />
             <p className="text-[9px] text-gray-500 leading-relaxed italic">
               Customers can view their project timeline, scope, and payment status without logging in. This link is unique to this project.
             </p>

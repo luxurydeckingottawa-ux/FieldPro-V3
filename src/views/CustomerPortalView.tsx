@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Job, JobStatus, PipelineStage, ChatSession } from '../types';
 import { 
-  Clock, MapPin, CheckCircle2, Phone, MessageSquare, CreditCard, 
+  Clock, MapPin, CheckCircle2, Phone, MessageSquare, 
   ChevronRight, Sun, Cloud, CloudRain, CalendarDays, Truck, 
   Wallet, AlertCircle, Zap, ShieldCheck, FileText, Receipt, 
   Camera, History, Image, X, Send, Sparkles, Star, HelpCircle,
   Archive, Shield, Award, FileCheck
 } from 'lucide-react';
 import { AIObjectionHelper } from '../components/AIObjectionHelper';
+import PortalPaymentsTab from '../components/PortalPaymentsTab';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 
@@ -457,7 +458,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 <ChevronRight className="w-5 h-5 rotate-180" />
               </button>
             )}
-            <div className="h-10 w-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="h-10 w-10 bg-[var(--brand-gold)] rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-white font-black text-sm tracking-tighter">LD</span>
             </div>
             <div>
@@ -471,7 +472,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </button>
             <button 
               onClick={() => setShowChat(true)}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-full font-bold text-sm shadow-md hover:bg-emerald-700 transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-[var(--brand-gold)] text-white rounded-full font-bold text-sm shadow-md hover:bg-[var(--brand-gold-dark)] transition-colors flex items-center gap-2"
             >
               <MessageSquare className="w-4 h-4" />
               <span>Message</span>
@@ -487,7 +488,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-3xl p-8 shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-[#F0F0F0] relative overflow-hidden"
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl -mr-32 -mt-32 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-3xl -mr-32 -mt-32 pointer-events-none" />
           
           <div className="space-y-6 relative z-10">
             <div className="flex justify-between items-start">
@@ -499,12 +500,12 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <div className="bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border border-emerald-100">
+                <div className="bg-[var(--brand-gold)]/5 text-[#8B7520] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border border-[var(--brand-gold)]/10">
                   {getCustomerFriendlyStatus(job.status, job.pipelineStage)}
                 </div>
                 {job.officialScheduleStatus && (
                   <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                    job.officialScheduleStatus === 'ON_SCHEDULE' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                    job.officialScheduleStatus === 'ON_SCHEDULE' ? 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] border-[var(--brand-gold)]/20' :
                     job.officialScheduleStatus === 'AHEAD' ? 'bg-sky-500/10 text-sky-600 border-sky-500/20' :
                     'bg-amber-500/10 text-amber-600 border-amber-500/20'
                   }`}>
@@ -517,16 +518,16 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             {/* Next Milestone Panel */}
             {job.pipelineStage === PipelineStage.PAID_CLOSED ? (
               <div className="space-y-6">
-                <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white rounded-3xl p-8 flex items-center justify-between shadow-2xl relative overflow-hidden group">
+                <div className="bg-gradient-to-br from-[#C4A432] to-[#6B5A18] text-white rounded-3xl p-8 flex items-center justify-between shadow-2xl relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl -mr-32 -mt-32" />
                   <div className="flex items-center gap-6 relative z-10">
                     <div className="h-20 w-20 rounded-3xl bg-white flex items-center justify-center shrink-0 shadow-2xl transform group-hover:scale-105 transition-transform">
-                      <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+                      <CheckCircle2 className="w-12 h-12 text-[var(--brand-gold)]" />
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.3em] text-emerald-200 mb-2">Project Officially Complete</p>
+                      <p className="text-xs font-black uppercase tracking-[0.3em] text-[#E8D88A] mb-2">Project Officially Complete</p>
                       <h4 className="text-4xl font-black tracking-tight">Job Complete</h4>
-                      <p className="text-sm text-emerald-50 leading-relaxed opacity-90 mt-2 max-w-sm">
+                      <p className="text-sm text-[var(--brand-gold)]/5 leading-relaxed opacity-90 mt-2 max-w-sm">
                         Congratulations! Your dream outdoor space is now ready for years of enjoyment. Thank you for trusting Luxury Decking.
                       </p>
                     </div>
@@ -543,7 +544,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-white rounded-3xl p-8 border border-emerald-100 shadow-xl relative overflow-hidden group text-center space-y-6"
+                  className="bg-white rounded-3xl p-8 border border-[var(--brand-gold)]/10 shadow-xl relative overflow-hidden group text-center space-y-6"
                 >
                   <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#4285F4] via-[#EA4335] via-[#FBBC05] to-[#34A853]" />
                   
@@ -563,7 +564,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                     href="https://g.page/r/your-google-review-link/review" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-4 px-10 py-5 bg-[#1A1A1A] text-white rounded-2xl font-bold text-sm shadow-2xl hover:bg-emerald-600 transition-all active:scale-95 group/btn"
+                    className="inline-flex items-center gap-4 px-10 py-5 bg-[#1A1A1A] text-white rounded-2xl font-bold text-sm shadow-2xl hover:bg-[var(--brand-gold)] transition-all active:scale-95 group/btn"
                   >
                     <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center p-1.5">
                       <svg viewBox="0 0 24 24" className="w-full h-full">
@@ -583,11 +584,11 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               </div>
             ) : (
               <div className="bg-[#1A1A1A] text-white rounded-2xl p-5 flex items-start gap-4 shadow-xl">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
+                <div className="h-10 w-10 rounded-xl bg-[var(--brand-gold)] flex items-center justify-center shrink-0 shadow-lg shadow-[var(--brand-gold)]/20">
                   <Zap className="w-5 h-5 text-black" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 mb-1">What Happens Next</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--brand-gold)] mb-1">What Happens Next</p>
                   <h4 className="text-base font-bold mb-1">{nextMilestone.title}</h4>
                   <p className="text-xs text-gray-400 leading-relaxed">{nextMilestone.desc}</p>
                 </div>
@@ -604,7 +605,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   initial={{ width: 0 }}
                   animate={{ width: `${getProgressPercentage(job.pipelineStage)}%` }}
                   transition={{ duration: 1, ease: "easeOut" }}
-                  className="h-full bg-emerald-600 rounded-full"
+                  className="h-full bg-[var(--brand-gold)] rounded-full"
                 />
               </div>
             </div>
@@ -654,8 +655,8 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
           className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
-              <ShieldCheck className="w-6 h-6 text-emerald-600" />
+            <div className="w-12 h-12 bg-[var(--brand-gold)]/5 rounded-2xl flex items-center justify-center">
+              <ShieldCheck className="w-6 h-6 text-[var(--brand-gold)]" />
             </div>
             <div>
               <h4 className="text-sm font-bold text-[#1A1A1A]">Your Project Team</h4>
@@ -674,7 +675,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700 border border-white shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-[var(--brand-gold)]/10 flex items-center justify-center text-[10px] font-bold text-[#8B7520] border border-white shadow-sm">
                 {job.assignedCrewOrSubcontractor?.split(' ').map(n => n[0]).join('') || 'CL'}
               </div>
               <div>
@@ -693,7 +694,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               onClick={() => setActiveTab(tab)}
               className={`flex-1 min-w-[80px] py-3 text-sm font-bold rounded-xl transition-all ${
                 activeTab === tab 
-                  ? 'bg-white text-emerald-600 shadow-sm' 
+                  ? 'bg-white text-[var(--brand-gold)] shadow-sm' 
                   : 'text-[#666] hover:text-[#333]'
               }`}
             >
@@ -714,7 +715,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               <div className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold">Deck Construction Progress</h3>
-                  <span className="text-2xl font-black text-emerald-600">{getConstructionProgressPercentage()}%</span>
+                  <span className="text-2xl font-black text-[var(--brand-gold)]">{getConstructionProgressPercentage()}%</span>
                 </div>
                 
                 <div className="space-y-2">
@@ -723,7 +724,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       initial={{ width: 0 }}
                       animate={{ width: `${getConstructionProgressPercentage()}%` }}
                       transition={{ duration: 1, ease: "easeOut" }}
-                      className="h-full bg-emerald-600 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                      className="h-full bg-[var(--brand-gold)] rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                     />
                   </div>
                   <div className="flex justify-between text-[10px] font-black text-[#BBB] uppercase tracking-widest">
@@ -736,7 +737,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-[#F0F0F0]">
                   <div className="space-y-1">
                     <p className="text-[10px] font-black text-[#999] uppercase tracking-widest">Current Stage</p>
-                    <p className="text-sm font-bold text-emerald-700">{getConstructionCurrentStage()}</p>
+                    <p className="text-sm font-bold text-[#8B7520]">{getConstructionCurrentStage()}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] font-black text-[#999] uppercase tracking-widest">Next Step</p>
@@ -753,11 +754,11 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm space-y-3 relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-3">
-                  <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg uppercase tracking-widest">
+                  <span className="text-[10px] font-black text-[var(--brand-gold)] bg-[var(--brand-gold)]/5 px-2 py-1 rounded-lg uppercase tracking-widest">
                     {recentChange.date}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-emerald-600 mb-1">
+                <div className="flex items-center gap-3 text-[var(--brand-gold)] mb-1">
                   <History className="w-5 h-5" />
                   <h3 className="text-sm font-black uppercase tracking-widest">What Changed Since Last Update</h3>
                 </div>
@@ -776,7 +777,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                     ? 'bg-amber-50 border-amber-100' 
                     : customerAction.status === 'info'
                     ? 'bg-blue-50 border-blue-100'
-                    : 'bg-emerald-50 border-emerald-100'
+                    : 'bg-[var(--brand-gold)]/5 border-[var(--brand-gold)]/10'
                 }`}
               >
                 <div className="flex items-center gap-4">
@@ -785,7 +786,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       ? 'bg-white text-amber-600' 
                       : customerAction.status === 'info'
                       ? 'bg-white text-blue-600'
-                      : 'bg-white text-emerald-600'
+                      : 'bg-white text-[var(--brand-gold)]'
                   }`}>
                     {customerAction.icon}
                   </div>
@@ -795,7 +796,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                         ? 'text-amber-600' 
                         : customerAction.status === 'info'
                         ? 'text-blue-600'
-                        : 'text-emerald-600'
+                        : 'text-[var(--brand-gold)]'
                     }`}>Customer Action Required</p>
                     <h4 className="text-base font-bold text-[#1A1A1A]">{customerAction.action}</h4>
                   </div>
@@ -828,22 +829,22 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       const isCurrent = job.pipelineStage === item.stage;
 
                       return (
-                        <div key={item.stage} className={`p-4 flex items-center gap-4 transition-colors ${isCurrent ? 'bg-emerald-50/30' : ''}`}>
+                        <div key={item.stage} className={`p-4 flex items-center gap-4 transition-colors ${isCurrent ? 'bg-[var(--brand-gold)]/5/30' : ''}`}>
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 ${
-                            isCompleted ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-[#E5E5E5] text-[#CCC]'
+                            isCompleted ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-white' : 'border-[#E5E5E5] text-[#CCC]'
                           }`}>
                             {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-xs font-bold">{idx + 1}</span>}
                           </div>
                           <div className="flex-1">
-                            <h4 className={`text-sm font-bold ${isCurrent ? 'text-emerald-700' : isCompleted ? 'text-[#333]' : 'text-[#999]'}`}>
+                            <h4 className={`text-sm font-bold ${isCurrent ? 'text-[#8B7520]' : isCompleted ? 'text-[#333]' : 'text-[#999]'}`}>
                               {item.label}
                             </h4>
-                            {isCurrent && <p className="text-xs text-emerald-600/70 mt-0.5">{item.desc}</p>}
+                            {isCurrent && <p className="text-xs text-[var(--brand-gold)]/70 mt-0.5">{item.desc}</p>}
                           </div>
                           {isCurrent && (
                             <div className="flex h-2 w-2 relative">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--brand-gold)] opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--brand-gold)]"></span>
                             </div>
                           )}
                         </div>
@@ -860,7 +861,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 transition={{ delay: 0.3 }}
                 className="bg-[#1A1A1A] text-white rounded-3xl p-6 shadow-xl space-y-3"
               >
-                <div className="flex items-center gap-3 text-emerald-500 mb-1">
+                <div className="flex items-center gap-3 text-[var(--brand-gold)] mb-1">
                   <Zap className="w-5 h-5" />
                   <h3 className="text-sm font-black uppercase tracking-widest">Latest Field Update</h3>
                 </div>
@@ -889,10 +890,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                     <h3 className="text-lg font-bold">Build Tracker</h3>
                     <div className="flex items-center gap-2">
                       <div className="flex h-2 w-2 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--brand-gold)] opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--brand-gold)]"></span>
                       </div>
-                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Live Updates</span>
+                      <span className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest">Live Updates</span>
                     </div>
                   </div>
                   <div className="bg-white rounded-3xl border border-[#F0F0F0] overflow-hidden shadow-sm">
@@ -900,7 +901,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       {buildMilestones.map((m) => (
                         <div key={m.id} className="flex items-start gap-4">
                           <div className={`mt-1 w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                            m.status === 'Complete' ? 'bg-emerald-100 text-emerald-600' : 
+                            m.status === 'Complete' ? 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)]' : 
                             m.status === 'In Progress' ? 'bg-amber-100 text-amber-600' : 
                             'bg-slate-50 text-slate-300 border border-slate-200'
                           }`}>
@@ -912,13 +913,13 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                             <div className="flex items-center justify-between">
                               <h4 className={`text-sm font-bold ${
                                 m.status === 'Complete' ? 'text-[#333]' : 
-                                m.status === 'In Progress' ? 'text-emerald-700' : 
+                                m.status === 'In Progress' ? 'text-[#8B7520]' : 
                                 'text-[#999]'
                               }`}>
                                 {m.label}
                               </h4>
                               <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                                m.status === 'Complete' ? 'bg-emerald-50 text-emerald-600' : 
+                                m.status === 'Complete' ? 'bg-[var(--brand-gold)]/5 text-[var(--brand-gold)]' : 
                                 m.status === 'In Progress' ? 'bg-amber-50 text-amber-600' : 
                                 'bg-slate-50 text-slate-400'
                               }`}>
@@ -931,7 +932,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                                   initial={{ width: "30%" }}
                                   animate={{ width: "60%" }}
                                   transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-                                  className="h-full bg-emerald-500 rounded-full"
+                                  className="h-full bg-[var(--brand-gold)] rounded-full"
                                 />
                               </div>
                             )}
@@ -959,12 +960,12 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                         </div>
                         <div>
                           <p className="text-sm font-bold text-[#1A1A1A]">Jordan Smith</p>
-                          <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Project Manager</p>
+                          <p className="text-[10px] text-[var(--brand-gold)] font-bold uppercase tracking-wider">Project Manager</p>
                         </div>
                       </div>
                       <button 
                         onClick={() => setShowChat(true)}
-                        className="p-2 text-[#999] hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                        className="p-2 text-[#999] hover:text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/5 rounded-xl transition-all"
                       >
                         <MessageSquare className="w-4 h-4" />
                       </button>
@@ -993,7 +994,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                         {photoStory.map((milestone) => (
                           <div key={milestone.id} className="space-y-3">
                             <div className="flex items-center gap-2">
-                              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              <div className="h-1.5 w-1.5 rounded-full bg-[var(--brand-gold)]" />
                               <h4 className="text-xs font-black uppercase tracking-widest text-[#333]">{milestone.label}</h4>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
@@ -1028,7 +1029,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                     {job.files?.filter(f => f.type === 'photo').length > 0 && (
                       <button 
                         onClick={() => setShowAllPhotos(true)}
-                        className="w-full mt-2 py-2 text-[10px] font-black uppercase tracking-widest text-[#999] hover:text-emerald-600 transition-colors border-t border-[#F0F0F0] pt-4"
+                        className="w-full mt-2 py-2 text-[10px] font-black uppercase tracking-widest text-[#999] hover:text-[var(--brand-gold)] transition-colors border-t border-[#F0F0F0] pt-4"
                       >
                         View Full Project Gallery ({job.files.filter(f => f.type === 'photo').length})
                       </button>
@@ -1045,25 +1046,25 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {proactiveFaqs.map((faq, i) => (
-                    <div key={i} className="bg-white rounded-2xl p-5 border border-[#F0F0F0] shadow-sm space-y-2 hover:border-emerald-100 transition-colors group">
-                      <h4 className="text-sm font-bold text-[#1A1A1A] group-hover:text-emerald-700 transition-colors">{faq.question}</h4>
+                    <div key={i} className="bg-white rounded-2xl p-5 border border-[#F0F0F0] shadow-sm space-y-2 hover:border-[var(--brand-gold)]/10 transition-colors group">
+                      <h4 className="text-sm font-bold text-[#1A1A1A] group-hover:text-[#8B7520] transition-colors">{faq.question}</h4>
                       <p className="text-xs text-[#666] leading-relaxed">{faq.answer}</p>
                     </div>
                   ))}
                 </div>
-                <div className="bg-emerald-50 rounded-2xl p-4 flex items-center justify-between gap-4">
+                <div className="bg-[var(--brand-gold)]/5 rounded-2xl p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-emerald-600 shadow-sm">
+                    <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-[var(--brand-gold)] shadow-sm">
                       <MessageSquare className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-emerald-900">Still have questions?</p>
-                      <p className="text-[10px] text-emerald-700">Our team is here to help you every step of the way.</p>
+                      <p className="text-xs font-bold text-[#4A3E10]">Still have questions?</p>
+                      <p className="text-[10px] text-[#8B7520]">Our team is here to help you every step of the way.</p>
                     </div>
                   </div>
                   <button 
                     onClick={() => setShowChat(true)}
-                    className="px-4 py-2 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-sm hover:bg-emerald-700 transition-colors"
+                    className="px-4 py-2 bg-[var(--brand-gold)] text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-sm hover:bg-[var(--brand-gold-dark)] transition-colors"
                   >
                     Message Us
                   </button>
@@ -1082,12 +1083,12 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                     {/* Warranty Card */}
                     <div className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm space-y-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                        <div className="h-12 w-12 rounded-2xl bg-[var(--brand-gold)]/5 flex items-center justify-center text-[var(--brand-gold)]">
                           <ShieldCheck className="w-6 h-6" />
                         </div>
                         <div>
                           <h4 className="text-sm font-bold text-[#1A1A1A]">5-Year Workmanship Warranty</h4>
-                          <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Active & Verified</p>
+                          <p className="text-[10px] text-[var(--brand-gold)] font-bold uppercase tracking-wider">Active & Verified</p>
                         </div>
                       </div>
                       <p className="text-xs text-[#666] leading-relaxed">
@@ -1096,7 +1097,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       <div className="space-y-2">
                         {['Structural integrity', 'Decking installation', 'Railing stability'].map((item, i) => (
                           <div key={i} className="flex items-center gap-2 text-[10px] text-[#666]">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                            <CheckCircle2 className="w-3 h-3 text-[var(--brand-gold)]" />
                             <span>{item}</span>
                           </div>
                         ))}
@@ -1117,10 +1118,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       <div className="space-y-3">
                         <button className="w-full flex items-center justify-between p-3 rounded-xl border border-[#F0F0F0] hover:bg-slate-50 transition-colors group">
                           <div className="flex items-center gap-3">
-                            <FileCheck className="w-4 h-4 text-emerald-600" />
+                            <FileCheck className="w-4 h-4 text-[var(--brand-gold)]" />
                             <span className="text-xs font-bold">Verified Build Passport</span>
                           </div>
-                          <ChevronRight className="w-4 h-4 text-[#CCC] group-hover:text-emerald-600 transition-colors" />
+                          <ChevronRight className="w-4 h-4 text-[#CCC] group-hover:text-[var(--brand-gold)] transition-colors" />
                         </button>
                         <button className="w-full flex items-center justify-between p-3 rounded-xl border border-[#F0F0F0] hover:bg-slate-50 transition-colors group">
                           <div className="flex items-center gap-3">
@@ -1186,7 +1187,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                         <p className="text-[10px] text-[#999] font-bold uppercase tracking-wider">Local Build Conditions</p>
                       </div>
                     </div>
-                    <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                    <div className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/5 px-3 py-1 rounded-full border border-[var(--brand-gold)]/10">
                       Optimal
                     </div>
                   </div>
@@ -1246,7 +1247,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   </div>
                   <div className="flex gap-4">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand-gold)]" />
                       <span className="text-[10px] font-bold text-[#999] uppercase tracking-wider">Your Build</span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -1280,7 +1281,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                         >
                           <div className="flex justify-between items-start mb-1">
                             <span className={`text-[10px] font-bold ${
-                              day.isToday ? 'bg-emerald-600 text-white w-5 h-5 rounded-full flex items-center justify-center' : 
+                              day.isToday ? 'bg-[var(--brand-gold)] text-white w-5 h-5 rounded-full flex items-center justify-center' : 
                               day.isCurrentMonth ? 'text-[#333]' : 'text-[#CCC]'
                             }`}>
                               {day.date.getDate()}
@@ -1298,7 +1299,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                               animate={{ opacity: 1, scale: 1 }}
                               className={`absolute inset-x-1 bottom-1 py-1 px-1.5 rounded-md text-[8px] font-black uppercase tracking-tighter truncate ${
                                 jobInfo.type === 'current' 
-                                  ? 'bg-emerald-500 text-black shadow-sm' 
+                                  ? 'bg-[var(--brand-gold)] text-black shadow-sm' 
                                   : 'bg-slate-100 text-slate-400 border border-slate-200'
                               }`}
                             >
@@ -1335,12 +1336,12 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                     </div>
                   </div>
                   
-                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                  <div className="p-4 bg-[var(--brand-gold)]/5 rounded-2xl border border-[var(--brand-gold)]/10">
                     <div className="flex items-center gap-3 mb-2">
-                      <AlertCircle className="w-4 h-4 text-emerald-600" />
-                      <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Queue Transparency</p>
+                      <AlertCircle className="w-4 h-4 text-[var(--brand-gold)]" />
+                      <p className="text-xs font-bold text-[#8B7520] uppercase tracking-wider">Queue Transparency</p>
                     </div>
-                    <p className="text-xs text-emerald-600/80 leading-relaxed">
+                    <p className="text-xs text-[var(--brand-gold)]/80 leading-relaxed">
                       To protect client privacy, we show other projects as anonymous blocks. Your position is updated in real-time as jobs complete.
                     </p>
                   </div>
@@ -1357,7 +1358,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             >
               <div className="flex items-center justify-between px-2">
                 <h3 className="text-xl font-bold tracking-tight">Project Scope & Selections</h3>
-                <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                <div className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/5 px-3 py-1 rounded-full border border-[var(--brand-gold)]/10">
                   <ShieldCheck size={12} className="inline mr-1" /> Verified Specs
                 </div>
               </div>
@@ -1374,17 +1375,17 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="flex items-start gap-4">
                             <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                              <Zap className="w-5 h-5 text-emerald-600" />
+                              <Zap className="w-5 h-5 text-[var(--brand-gold)]" />
                             </div>
                             <div>
                               <p className="text-[10px] text-[#999] uppercase font-black tracking-wider mb-1">Decking</p>
                               <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails.decking?.brand} {job.buildDetails.decking?.type}</p>
-                              <p className="text-xs text-[#666] mt-0.5">Color: <span className="text-emerald-600 font-bold">{job.buildDetails.decking?.color}</span></p>
+                              <p className="text-xs text-[#666] mt-0.5">Color: <span className="text-[var(--brand-gold)] font-bold">{job.buildDetails.decking?.color}</span></p>
                             </div>
                           </div>
                           <div className="flex items-start gap-4">
                             <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                              <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                              <ShieldCheck className="w-5 h-5 text-[var(--brand-gold)]" />
                             </div>
                             <div>
                               <p className="text-[10px] text-[#999] uppercase font-black tracking-wider mb-1">Framing</p>
@@ -1394,7 +1395,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                           </div>
                           <div className="flex items-start gap-4">
                             <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                              <CheckCircle2 className="w-5 h-5 text-[var(--brand-gold)]" />
                             </div>
                             <div>
                               <p className="text-[10px] text-[#999] uppercase font-black tracking-wider mb-1">Railing</p>
@@ -1405,7 +1406,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                           </div>
                           <div className="flex items-start gap-4">
                             <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                              <History className="w-5 h-5 text-emerald-600" />
+                              <History className="w-5 h-5 text-[var(--brand-gold)]" />
                             </div>
                             <div>
                               <p className="text-[10px] text-[#999] uppercase font-black tracking-wider mb-1">Stairs & Skirting</p>
@@ -1468,7 +1469,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             >
               <div className="flex items-center justify-between px-2">
                 <h3 className="text-xl font-bold tracking-tight">Project Documents</h3>
-                <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                <div className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/5 px-3 py-1 rounded-full border border-[var(--brand-gold)]/10">
                   <FileText size={12} className="inline mr-1" /> Customer Access
                 </div>
               </div>
@@ -1484,11 +1485,11 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       href={file.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-white p-5 rounded-3xl border border-[#F0F0F0] shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-colors"
+                      className="bg-white p-5 rounded-3xl border border-[#F0F0F0] shadow-sm flex items-center justify-between group hover:border-[var(--brand-gold)]/20 transition-colors"
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0">
-                          <FileText className="w-6 h-6 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                          <FileText className="w-6 h-6 text-slate-400 group-hover:text-[var(--brand-gold)] transition-colors" />
                         </div>
                         <div>
                           <h5 className="text-sm font-bold text-[#1A1A1A]">{file.name}</h5>
@@ -1497,7 +1498,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                           </p>
                         </div>
                       </div>
-                      <div className="p-2 text-[#999] group-hover:text-emerald-600 transition-colors">
+                      <div className="p-2 text-[#999] group-hover:text-[var(--brand-gold)] transition-colors">
                         <ChevronRight className="w-5 h-5" />
                       </div>
                     </a>
@@ -1508,8 +1509,8 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                     <>
                       <div className="bg-white p-5 rounded-3xl border border-[#F0F0F0] shadow-sm flex items-center justify-between group opacity-60">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center shrink-0">
-                            <FileText className="w-6 h-6 text-emerald-600" />
+                          <div className="w-12 h-12 rounded-2xl bg-[var(--brand-gold)]/5 flex items-center justify-center shrink-0">
+                            <FileText className="w-6 h-6 text-[var(--brand-gold)]" />
                           </div>
                           <div>
                             <h5 className="text-sm font-bold text-[#1A1A1A]">Project Contract</h5>
@@ -1550,15 +1551,15 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                           className="p-5 flex items-center justify-between group hover:bg-slate-50 transition-colors"
                         >
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-600 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-600/20">
+                            <div className="w-12 h-12 rounded-2xl bg-[var(--brand-gold)] flex items-center justify-center shrink-0 shadow-lg shadow-[var(--brand-gold)]/20">
                               <ShieldCheck className="w-6 h-6 text-white" />
                             </div>
                             <div>
                               <h5 className="text-sm font-bold text-[#1A1A1A]">Verified Build Passport</h5>
-                              <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Final Quality Certification</p>
+                              <p className="text-[10px] text-[var(--brand-gold)] font-bold uppercase tracking-wider">Final Quality Certification</p>
                             </div>
                           </div>
-                          <div className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors">
+                          <div className="px-4 py-2 bg-[var(--brand-gold)]/5 text-[#8B7520] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--brand-gold)]/10 transition-colors">
                             Download
                           </div>
                         </a>
@@ -1598,22 +1599,22 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-emerald-50 rounded-3xl p-6 border border-emerald-100 flex flex-col md:flex-row items-center justify-between gap-6"
+                className="bg-[var(--brand-gold)]/5 rounded-3xl p-6 border border-[var(--brand-gold)]/10 flex flex-col md:flex-row items-center justify-between gap-6"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
-                    <HelpCircle className="w-6 h-6 text-emerald-600" />
+                    <HelpCircle className="w-6 h-6 text-[var(--brand-gold)]" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-emerald-800 mb-1">Need a specific document?</h4>
-                    <p className="text-xs text-emerald-700/70 leading-relaxed">
+                    <h4 className="text-sm font-bold text-[#6B5A18] mb-1">Need a specific document?</h4>
+                    <p className="text-xs text-[#8B7520]/70 leading-relaxed">
                       If you require a specific permit copy or drawing that isn't listed here, please message us and we'll upload it to your portal immediately.
                     </p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setShowChat(true)}
-                  className="px-6 py-3 bg-emerald-600 text-white rounded-2xl font-bold text-xs shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all active:scale-95 whitespace-nowrap"
+                  className="px-6 py-3 bg-[var(--brand-gold)] text-white rounded-2xl font-bold text-xs shadow-lg shadow-[var(--brand-gold)]/20 hover:bg-[var(--brand-gold-dark)] transition-all active:scale-95 whitespace-nowrap"
                 >
                   Request Document
                 </button>
@@ -1622,191 +1623,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
           )}
 
           {activeTab === 'payments' && (
-            <motion.div 
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-6"
-            >
-              <div className="flex items-center justify-between px-2">
-                <h3 className="text-xl font-bold tracking-tight">Investment Summary</h3>
-                <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                  <Receipt size={12} className="inline mr-1" /> Secure Billing
-                </div>
-              </div>
-
-              <div className="bg-white rounded-3xl overflow-hidden border border-[#F0F0F0] shadow-sm">
-                {/* Header: Total Contract Value */}
-                <div className="p-8 bg-[#1A1A1A] text-white relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl -mr-32 -mt-32" />
-                  <div className="relative z-10">
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-2">Total Contract Value</p>
-                    <h4 className="text-4xl font-bold tracking-tight">${(job.totalAmount || 0).toLocaleString()}</h4>
-                  </div>
-                </div>
-
-                <div className="p-8 space-y-10">
-                  {/* Payment Schedule: White Background Style */}
-                  <div className="space-y-8">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                        <Clock className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-[#1A1A1A]">Payment Schedule</h4>
-                        <p className="text-[10px] text-[#999] uppercase font-bold tracking-wider">Milestone Progress</p>
-                      </div>
-                    </div>
-
-                    <div className="relative space-y-10 pl-2">
-                      {/* Vertical Progress Line */}
-                      <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-[#F0F0F0]" />
-                      
-                      {[
-                        { label: '30% Deposit', percentage: 0.3, desc: 'Project initialization' },
-                        { label: '30% Delivery', percentage: 0.3, desc: 'Material delivery' },
-                        { label: '40% Final Payment', percentage: 0.4, desc: 'Project completion' }
-                      ].map((milestone, idx, arr) => {
-                        const total = job.totalAmount || 0;
-                        const paid = job.paidAmount || 0;
-                        const cumulativePercentage = arr.slice(0, idx + 1).reduce((sum, m) => sum + m.percentage, 0);
-                        const amount = total * milestone.percentage;
-                        const isPaid = paid >= (total * cumulativePercentage) - 10;
-                        const isNext = !isPaid && (idx === 0 || (paid >= (total * arr.slice(0, idx).reduce((sum, m) => sum + m.percentage, 0)) - 10));
-
-                        return (
-                          <div key={idx} className="relative flex items-start gap-6 group">
-                            <div className={`relative z-10 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
-                              isPaid 
-                                ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/20' 
-                                : isNext 
-                                  ? 'bg-white border-blue-500 shadow-lg shadow-blue-500/10' 
-                                  : 'bg-white border-[#EEE]'
-                            }`}>
-                              {isPaid ? (
-                                <CheckCircle2 className="w-3 h-3 text-white" />
-                              ) : isNext ? (
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
-                              ) : null}
-                            </div>
-                            
-                            <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h5 className={`text-sm font-bold ${isPaid ? 'text-[#1A1A1A]' : isNext ? 'text-blue-600' : 'text-[#999]'}`}>
-                                    {milestone.label}
-                                  </h5>
-                                  {isNext && (
-                                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black uppercase tracking-widest rounded-full border border-blue-100">
-                                      Current
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[10px] text-[#999] font-medium mt-0.5">{milestone.desc}</p>
-                              </div>
-                              
-                              <div className="text-left sm:text-right">
-                                <p className={`text-sm font-black ${isPaid ? 'text-emerald-600' : 'text-[#1A1A1A]'}`}>
-                                  ${amount.toLocaleString()}
-                                </p>
-                                <p className="text-[9px] font-black uppercase tracking-widest text-[#BBB] mt-0.5">
-                                  {isPaid ? 'Completed' : 'Upcoming'}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-[#F0F0F0]" />
-
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold">Payments Received</p>
-                          <p className="text-[10px] text-[#999] uppercase font-bold tracking-wider">Thank you for your business</p>
-                        </div>
-                      </div>
-                      <p className="text-lg font-bold text-emerald-600">-${(job.paidAmount || 0).toLocaleString()}</p>
-                    </div>
-                    <div className="h-px bg-[#F0F0F0]" />
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                          <CreditCard className="w-5 h-5 text-amber-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold">Remaining Balance</p>
-                          <p className="text-[10px] text-[#999] uppercase font-bold tracking-wider">Due upon completion</p>
-                        </div>
-                      </div>
-                      <p className="text-2xl font-bold text-[#1A1A1A]">${((job.totalAmount || 0) - (job.paidAmount || 0)).toLocaleString()}</p>
-                    </div>
-
-                    {/* Financing Option */}
-                    <div className="mt-8 p-6 bg-blue-50/50 border border-blue-100 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                          <Wallet className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight italic">Flexible Financing</h4>
-                          <p className="text-[11px] text-blue-700 font-medium">Estimated ~${Math.round((job.totalAmount || 0) * 0.012).toLocaleString()}/mo</p>
-                        </div>
-                      </div>
-                      <a 
-                        href="https://apply.ifinancecanada.com/22121" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2"
-                      >
-                        Apply Now <ArrowRight size={14} />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-6 bg-[#F9F9F9] border-t border-[#F0F0F0]">
-                  {(() => {
-                    const milestones = [
-                      { label: '30% Deposit', percentage: 0.3 },
-                      { label: '30% Delivery', percentage: 0.3 },
-                      { label: '40% Final Payment', percentage: 0.4 }
-                    ];
-                    const total = job.totalAmount || 0;
-                    const paid = job.paidAmount || 0;
-                    const next = milestones.find((m, idx) => {
-                      const cumulative = milestones.slice(0, idx + 1).reduce((sum, item) => sum + item.percentage, 0);
-                      return paid < (total * cumulative) - 10;
-                    });
-
-                    return (
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <button className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
-                          <CreditCard size={18} />
-                          <span>{next ? `Pay ${next.label}` : 'Make a Payment'}</span>
-                        </button>
-                        <button 
-                          onClick={() => setShowChat(true)}
-                          className="flex-1 py-4 bg-white text-[#1A1A1A] border border-[#F0F0F0] rounded-2xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-                        >
-                          <FileText size={18} className="text-slate-400" />
-                          <span>Request Invoice</span>
-                        </button>
-                      </div>
-                    );
-                  })()}
-                  <p className="text-center text-[10px] text-[#999] mt-4 font-medium uppercase tracking-wider">
-                    Secure checkout powered by Stripe
-                  </p>
-                </div>
-              </div>
-            </motion.div>
+            <PortalPaymentsTab job={job} />
           )}
 
           {activeTab === 'archive' && (
@@ -1817,14 +1634,14 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             >
               <div className="flex items-center justify-between px-2">
                 <h3 className="text-xl font-bold tracking-tight">Project Archive</h3>
-                <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                <div className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/5 px-3 py-1 rounded-full border border-[var(--brand-gold)]/10">
                   Permanent Reference
                 </div>
               </div>
 
               <div className="bg-white rounded-3xl border border-[#F0F0F0] overflow-hidden shadow-sm">
                 <div className="p-8 bg-[#1A1A1A] text-white relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-2xl -mr-16 -mt-16" />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--brand-gold)]/10 blur-2xl -mr-16 -mt-16" />
                   <p className="text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-2 relative z-10">Final Project Summary</p>
                   <h4 className="text-3xl font-bold tracking-tight relative z-10">{job.clientName}'s Dream Deck</h4>
                 </div>
@@ -1851,12 +1668,12 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
                     <div className="space-y-4">
                       <h5 className="text-[10px] font-black uppercase tracking-widest text-[#999]">Warranty Coverage</h5>
-                      <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-100 space-y-4">
+                      <div className="bg-[var(--brand-gold)]/5 rounded-2xl p-5 border border-[var(--brand-gold)]/10 space-y-4">
                         <div className="flex items-center gap-3">
-                          <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                          <span className="text-sm font-bold text-emerald-900">5-Year Workmanship</span>
+                          <ShieldCheck className="w-5 h-5 text-[var(--brand-gold)]" />
+                          <span className="text-sm font-bold text-[#4A3E10]">5-Year Workmanship</span>
                         </div>
-                        <p className="text-xs text-emerald-700 leading-relaxed">
+                        <p className="text-xs text-[#8B7520] leading-relaxed">
                           Your project is covered for structural integrity and installation quality until {
                             job.plannedFinishDate ? format(new Date(new Date(job.plannedFinishDate).setFullYear(new Date(job.plannedFinishDate).getFullYear() + 5)), 'MMMM yyyy') : '5 years after completion'
                           }.
@@ -1889,7 +1706,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
               <div className="bg-slate-100 rounded-3xl p-8 text-center space-y-4">
                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto shadow-sm">
-                  <MessageSquare className="w-6 h-6 text-emerald-600" />
+                  <MessageSquare className="w-6 h-6 text-[var(--brand-gold)]" />
                 </div>
                 <div className="max-w-xs mx-auto">
                   <h4 className="text-sm font-bold text-[#1A1A1A]">Need assistance with your deck?</h4>
@@ -1899,7 +1716,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 </div>
                 <button 
                   onClick={() => setShowChat(true)}
-                  className="px-6 py-2 bg-white text-[#1A1A1A] text-[10px] font-black uppercase tracking-widest rounded-xl shadow-sm hover:bg-emerald-600 hover:text-white transition-all"
+                  className="px-6 py-2 bg-white text-[#1A1A1A] text-[10px] font-black uppercase tracking-widest rounded-xl shadow-sm hover:bg-[var(--brand-gold)] hover:text-white transition-all"
                 >
                   Contact Support
                 </button>
@@ -1944,7 +1761,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
         <div className="fixed inset-0 z-[100] bg-white flex flex-col">
           <header className="px-6 py-4 border-b border-[#F0F0F0] flex items-center justify-between bg-white sticky top-0">
             <div className="flex items-center gap-3">
-              <Camera className="w-5 h-5 text-emerald-600" />
+              <Camera className="w-5 h-5 text-[var(--brand-gold)]" />
               <h3 className="text-lg font-bold">Project Gallery</h3>
             </div>
             <button 
@@ -1997,12 +1814,12 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               {/* Chat Header */}
               <div className="px-6 py-5 border-bottom border-[#F0F0F0] flex items-center justify-between bg-white sticky top-0 z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-emerald-600" />
+                  <div className="w-10 h-10 rounded-2xl bg-[var(--brand-gold)]/5 flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-[var(--brand-gold)]" />
                   </div>
                   <div>
                     <h3 className="font-bold text-[#1A1A1A]">Project Chat</h3>
-                    <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Direct with Luxury Decking</p>
+                    <p className="text-[10px] text-[var(--brand-gold)] font-bold uppercase tracking-wider">Direct with Luxury Decking</p>
                   </div>
                 </div>
                 <button 
@@ -2027,7 +1844,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       >
                         <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm ${
                           msg.isFromClient 
-                            ? 'bg-emerald-600 text-white rounded-tr-none' 
+                            ? 'bg-[var(--brand-gold)] text-white rounded-tr-none' 
                             : 'bg-white border border-[#F0F0F0] text-[#333] rounded-tl-none shadow-sm'
                         }`}>
                           {msg.text}
@@ -2070,11 +1887,11 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}
                     placeholder="Type your message..."
-                    className="flex-1 bg-slate-50 border-none rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                    className="flex-1 bg-slate-50 border-none rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-[var(--brand-gold)]/20 transition-all"
                   />
                   <button 
                     disabled={!chatMessage.trim() || !currentSession}
-                    className="p-3 bg-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:shadow-none hover:bg-emerald-700 transition-all active:scale-95"
+                    className="p-3 bg-[var(--brand-gold)] text-white rounded-2xl shadow-lg shadow-[var(--brand-gold)]/20 disabled:opacity-50 disabled:shadow-none hover:bg-[var(--brand-gold-dark)] transition-all active:scale-95"
                   >
                     <Send className="w-5 h-5" />
                   </button>

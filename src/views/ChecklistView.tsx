@@ -59,7 +59,7 @@ const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, onUpdate, o
       <section className="space-y-6">
         <div className="flex justify-between items-end px-2">
           <h3 className="font-label">Mandatory Checklist</h3>
-          <span className={`font-label px-3 py-1 rounded-full border ${progress === total ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)]'}`}>
+          <span className={`font-label px-3 py-1 rounded-full border ${progress === total ? 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] border-[var(--brand-gold)]/20' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)]'}`}>
             {progress}/{total} Verified
           </span>
         </div>
@@ -71,7 +71,7 @@ const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, onUpdate, o
               onClick={() => toggleItem(item.id)}
               className={`flex items-center justify-between p-6 border rounded-[2rem] transition-all cursor-pointer group ${
                 item.completed && !item.isNA
-                  ? 'bg-emerald-500/5 border-emerald-500/20 shadow-lg shadow-emerald-500/5' 
+                  ? 'bg-[var(--brand-gold)]/5 border-[var(--brand-gold)]/20 shadow-lg shadow-[var(--brand-gold)]/5' 
                   : item.isNA
                     ? 'bg-amber-500/5 border-amber-500/20 opacity-80'
                     : 'bg-[var(--bg-secondary)] border-[var(--border-color)] shadow-xl hover:bg-[var(--bg-secondary)]/80 hover:border-[var(--text-secondary)]/30'
@@ -83,13 +83,13 @@ const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, onUpdate, o
                     type="checkbox"
                     checked={item.completed && !item.isNA}
                     onChange={() => {}} // Handled by parent div click
-                    className="w-7 h-7 border-2 border-[var(--border-color)] rounded-xl appearance-none checked:bg-emerald-500 checked:border-emerald-500 transition-all cursor-pointer group-hover:border-emerald-500/50"
+                    className="w-7 h-7 border-2 border-[var(--border-color)] rounded-xl appearance-none checked:bg-[var(--brand-gold)] checked:border-[var(--brand-gold)] transition-all cursor-pointer group-hover:border-[var(--brand-gold)]/50"
                   />
                   {item.completed && !item.isNA && (
                     <Check className="absolute left-1.5 top-1.5 text-black" size={16} strokeWidth={4} />
                   )}
                 </div>
-                <span className={`text-sm font-bold select-none leading-snug tracking-tight ${item.completed && !item.isNA ? 'text-emerald-500/70 line-through' : item.isNA ? 'text-amber-500/70 italic' : 'text-[var(--text-secondary)]'}`}>
+                <span className={`text-sm font-bold select-none leading-snug tracking-tight ${item.completed && !item.isNA ? 'text-[var(--brand-gold)]/70 line-through' : item.isNA ? 'text-amber-500/70 italic' : 'text-[var(--text-secondary)]'}`}>
                   {item.label} {item.isNA && <span className="text-[10px] uppercase ml-2 px-2 py-0.5 bg-amber-500/20 rounded-full font-black tracking-widest not-italic">N/A</span>}
                 </span>
               </div>
@@ -128,7 +128,7 @@ const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, onUpdate, o
             disabled={!isComplete}
             className={`flex-[2] py-5 rounded-[2rem] font-label text-[10px] transition-all active:scale-[0.98] shadow-2xl ${
               isComplete 
-                ? 'bg-emerald-600 text-black hover:bg-emerald-500' 
+                ? 'bg-[var(--brand-gold)] text-black hover:bg-[var(--brand-gold)]' 
                 : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]/50 cursor-not-allowed border border-[var(--border-color)]'
             }`}
           >

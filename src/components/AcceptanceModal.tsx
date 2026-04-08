@@ -134,8 +134,8 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] sticky top-0 bg-[var(--bg-primary)] z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-emerald-500" />
+            <div className="w-10 h-10 rounded-xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-[var(--brand-gold)]" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Accept Estimate</h2>
@@ -165,7 +165,7 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
                 <input 
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="text-sm font-bold text-[var(--text-primary)] bg-transparent border-b border-[var(--border-color)] focus:border-emerald-500 focus:outline-none w-full pb-1"
+                  className="text-sm font-bold text-[var(--text-primary)] bg-transparent border-b border-[var(--border-color)] focus:border-[var(--brand-gold)] focus:outline-none w-full pb-1"
                 />
               </div>
               <div>
@@ -174,7 +174,7 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
               </div>
               <div>
                 <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Total Amount</p>
-                <p className="text-xl font-bold text-emerald-500">${amount.toLocaleString()}</p>
+                <p className="text-xl font-bold text-[var(--brand-gold)]">${amount.toLocaleString()}</p>
               </div>
               <div>
                 <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Deposit (30%)</p>
@@ -203,7 +203,7 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
               </div>
               <div className="border-t border-[var(--border-color)] pt-3 flex items-center justify-between">
                 <span className="text-sm font-bold text-[var(--text-primary)]">Total</span>
-                <span className="text-sm font-bold text-emerald-500">${amount.toLocaleString()}</span>
+                <span className="text-sm font-bold text-[var(--brand-gold)]">${amount.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -272,7 +272,7 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
           {/* Agreement Checkbox */}
           <label className="flex items-start gap-3 cursor-pointer group">
             <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-              agreed ? 'bg-emerald-500 border-emerald-500' : 'border-[var(--border-color)] group-hover:border-emerald-500/50'
+              agreed ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)]' : 'border-[var(--border-color)] group-hover:border-[var(--brand-gold)]/50'
             }`} onClick={() => setAgreed(!agreed)}>
               {agreed && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
             </div>
@@ -301,7 +301,7 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
             <button
               onClick={handleAccept}
               disabled={isProcessing || !signature || !agreed}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-600/20"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-[var(--brand-gold)] text-white rounded-xl font-bold text-sm hover:bg-[var(--brand-gold)] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[var(--brand-gold)]/20"
             >
               {isProcessing ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>

@@ -23,16 +23,16 @@ const EstimatorSiteIntake: React.FC<EstimatorSiteIntakeProps> = ({ data, onUpdat
         <button
           onClick={() => onUpdate(id as string)}
           className={`w-full flex items-center gap-4 p-5 transition-all ${
-            completed ? 'bg-emerald-600/5' : 'hover:bg-[var(--text-primary)]/5'
+            completed ? 'bg-[var(--brand-gold)]/5' : 'hover:bg-[var(--text-primary)]/5'
           }`}
         >
           {completed ? (
-            <CheckCircle2 className="w-6 h-6 flex-shrink-0 text-emerald-600" />
+            <CheckCircle2 className="w-6 h-6 flex-shrink-0 text-[var(--brand-gold)]" />
           ) : (
             <Circle className="w-6 h-6 flex-shrink-0 opacity-20" />
           )}
           <div className="text-left">
-            <span className={`block font-bold ${completed ? 'text-emerald-600' : 'text-[var(--text-primary)]'}`}>
+            <span className={`block font-bold ${completed ? 'text-[var(--brand-gold)]' : 'text-[var(--text-primary)]'}`}>
               {label}
             </span>
             {description && (
@@ -53,8 +53,8 @@ const EstimatorSiteIntake: React.FC<EstimatorSiteIntakeProps> = ({ data, onUpdat
 
   return (
     <div className="space-y-6">
-      <div className="bg-emerald-600/5 p-4 rounded-xl border border-emerald-600/20 mb-6">
-        <div className="flex items-center gap-3 text-emerald-600 mb-2">
+      <div className="bg-[var(--brand-gold)]/5 p-4 rounded-xl border border-[var(--brand-gold)]/20 mb-6">
+        <div className="flex items-center gap-3 text-[var(--brand-gold)] mb-2">
           <AlertCircle className="w-5 h-5" />
           <h3 className="font-bold">Site Intake Requirements</h3>
         </div>
@@ -75,7 +75,7 @@ const EstimatorSiteIntake: React.FC<EstimatorSiteIntakeProps> = ({ data, onUpdat
               placeholder="e.g. 24 inches"
               value={data.elevationMeasurement || ''}
               onChange={(e) => onUpdate('elevationMeasurement', e.target.value)}
-              className="flex-1 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all text-sm"
+              className="flex-1 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)] transition-all text-sm"
             />
           </div>
         )}
@@ -97,7 +97,7 @@ const EstimatorSiteIntake: React.FC<EstimatorSiteIntakeProps> = ({ data, onUpdat
               placeholder='Gate width (e.g. 36")'
               value={data.gateOpeningMeasurement || ''}
               onChange={(e) => onUpdate('gateOpeningMeasurement', e.target.value)}
-              className="flex-1 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all text-sm"
+              className="flex-1 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)] transition-all text-sm"
             />
           </div>
         )}
@@ -118,7 +118,7 @@ const EstimatorSiteIntake: React.FC<EstimatorSiteIntakeProps> = ({ data, onUpdat
 
         {/* Marketing Section */}
         <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-3 text-emerald-600 mb-2">
+          <div className="flex items-center gap-3 text-[var(--brand-gold)] mb-2">
             <Megaphone className="w-5 h-5" />
             <h3 className="font-bold">Marketing Tracking</h3>
           </div>
@@ -131,7 +131,7 @@ const EstimatorSiteIntake: React.FC<EstimatorSiteIntakeProps> = ({ data, onUpdat
               <select
                 value={data.marketingSource || ''}
                 onChange={(e) => onUpdate('marketingSource', e.target.value)}
-                className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all text-sm"
+                className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)] transition-all text-sm"
               >
                 <option value="">Select Source...</option>
                 <option value="google">Google Search</option>
@@ -150,7 +150,7 @@ const EstimatorSiteIntake: React.FC<EstimatorSiteIntakeProps> = ({ data, onUpdat
                 placeholder="e.g. Facebook Ad - Summer Deck Promo"
                 value={data.marketingDetail || ''}
                 onChange={(e) => onUpdate('marketingDetail', e.target.value)}
-                className="w-full h-24 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all text-sm resize-none"
+                className="w-full h-24 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)] transition-all text-sm resize-none"
               />
             </div>
           </div>

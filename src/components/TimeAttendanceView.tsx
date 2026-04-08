@@ -74,10 +74,10 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
     <div className="space-y-8">
       {/* Header & Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card-base p-6 bg-emerald-500/5 border-emerald-500/10">
+        <div className="card-base p-6 bg-[var(--brand-gold)]/5 border-[var(--brand-gold)]/10">
           <div className="flex items-center gap-3 mb-2">
-            <Clock className="text-emerald-500" size={20} />
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60">Total Entries</span>
+            <Clock className="text-[var(--brand-gold)]" size={20} />
+            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--brand-gold)]/60">Total Entries</span>
           </div>
           <p className="text-3xl font-black italic uppercase italic leading-none">{entries.length}</p>
         </div>
@@ -106,7 +106,7 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
             placeholder="Search employee or job..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
+            className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-[var(--brand-gold)]/50 transition-colors"
           />
         </div>
 
@@ -125,7 +125,7 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
           </button>
           <button
             onClick={() => setFilter('active')}
-            className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === 'active' ? 'bg-emerald-500/20 text-emerald-400 shadow-lg' : 'text-white/40 hover:text-white/60'}`}
+            className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === 'active' ? 'bg-[var(--brand-gold)]/20 text-[var(--brand-gold-light)] shadow-lg' : 'text-white/40 hover:text-white/60'}`}
           >
             Active
           </button>
@@ -148,7 +148,7 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
               className="card-base p-6 space-y-4"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/10 px-2 py-0.5 rounded border border-[var(--brand-gold)]/20">
                   {job.jobNumber}
                 </span>
                 <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">
@@ -166,20 +166,20 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
                 </div>
                 <div>
                   <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1">Estimated Cost</p>
-                  <p className="text-xl font-black text-emerald-500 italic">${job.summary.estimatedCost.toLocaleString()}</p>
+                  <p className="text-xl font-black text-[var(--brand-gold)] italic">${job.summary.estimatedCost.toLocaleString()}</p>
                 </div>
               </div>
 
               <div className="pt-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Budget Utilization</span>
-                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">
+                  <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest">
                     {Math.round((job.summary.estimatedCost / (job.totalAmount || 1)) * 100)}%
                   </span>
                 </div>
                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                    className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                     style={{ width: `${Math.min(100, (job.summary.estimatedCost / (job.totalAmount || 1)) * 100)}%` }}
                   />
                 </div>
@@ -206,7 +206,7 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
               className="card-base p-5 flex items-center justify-between group hover:border-white/20 transition-all"
             >
               <div className="flex items-center gap-5">
-                <div className={`p-3 rounded-2xl ${entry.type === PunchType.CHECK_IN ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                <div className={`p-3 rounded-2xl ${entry.type === PunchType.CHECK_IN ? 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)]' : 'bg-amber-500/10 text-amber-500'}`}>
                   {entry.type === PunchType.CHECK_IN ? <CheckCircle2 size={20} /> : <LogOut size={20} />}
                 </div>
                 <div>
@@ -223,7 +223,7 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
 
               <div className="flex items-center gap-6">
                 <div className="text-right hidden sm:block">
-                  <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${entry.location.inBounds ? 'text-emerald-500/60' : 'text-amber-500'}`}>
+                  <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${entry.location.inBounds ? 'text-[var(--brand-gold)]/60' : 'text-amber-500'}`}>
                     {entry.location.inBounds ? 'In Bounds' : 'Out of Bounds'}
                   </div>
                   <div className="text-[9px] font-bold text-white/20">

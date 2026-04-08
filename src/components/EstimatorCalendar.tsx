@@ -25,7 +25,7 @@ export const EstimatorCalendar: React.FC<EstimatorCalendarProps> = ({ appointmen
       <div className="bg-[var(--bg-primary)] p-4 border-b border-[var(--border-color)] sticky top-0 z-10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
-            <CalendarIcon className="w-6 h-6 text-emerald-600" />
+            <CalendarIcon className="w-6 h-6 text-[var(--brand-gold)]" />
             Estimator Schedule
           </h2>
           <div className="flex bg-[var(--bg-secondary)] p-1 rounded-xl border border-[var(--border-color)]">
@@ -33,7 +33,7 @@ export const EstimatorCalendar: React.FC<EstimatorCalendarProps> = ({ appointmen
               onClick={() => setView('appointments')}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
                 view === 'appointments'
-                  ? 'bg-emerald-600 text-white shadow-sm'
+                  ? 'bg-[var(--brand-gold)] text-white shadow-sm'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
@@ -66,7 +66,7 @@ export const EstimatorCalendar: React.FC<EstimatorCalendarProps> = ({ appointmen
           </div>
           <button 
             onClick={() => setCurrentDate(new Date())}
-            className="text-xs font-bold text-emerald-600 hover:underline"
+            className="text-xs font-bold text-[var(--brand-gold)] hover:underline"
           >
             Today
           </button>
@@ -91,8 +91,8 @@ export const EstimatorCalendar: React.FC<EstimatorCalendarProps> = ({ appointmen
                 return (
                   <div 
                     key={day} 
-                    className={`aspect-square flex items-center justify-center text-sm font-medium rounded-lg border border-transparent hover:border-emerald-600/30 transition-all cursor-pointer ${
-                      isToday ? 'bg-emerald-600 text-white font-bold' : 'text-[var(--text-primary)]'
+                    className={`aspect-square flex items-center justify-center text-sm font-medium rounded-lg border border-transparent hover:border-[var(--brand-gold)]/30 transition-all cursor-pointer ${
+                      isToday ? 'bg-[var(--brand-gold)] text-white font-bold' : 'text-[var(--text-primary)]'
                     }`}
                   >
                     {day}
@@ -104,14 +104,14 @@ export const EstimatorCalendar: React.FC<EstimatorCalendarProps> = ({ appointmen
             <h4 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-3">Upcoming Appointments</h4>
             <div className="space-y-3">
               {appointments.length > 0 ? appointments.map((apt) => (
-                <div key={apt.id} className="bg-[var(--bg-primary)] p-4 rounded-2xl border border-[var(--border-color)] shadow-sm hover:border-emerald-600/50 transition-all cursor-pointer group">
+                <div key={apt.id} className="bg-[var(--bg-primary)] p-4 rounded-2xl border border-[var(--border-color)] shadow-sm hover:border-[var(--brand-gold)]/50 transition-all cursor-pointer group">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h5 className="font-bold text-[var(--text-primary)] group-hover:text-emerald-600 transition-colors">{apt.clientName}</h5>
+                      <h5 className="font-bold text-[var(--text-primary)] group-hover:text-[var(--brand-gold)] transition-colors">{apt.clientName}</h5>
                       <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">{apt.jobNumber}</p>
                     </div>
                     <div className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
-                      apt.status === 'confirmed' ? 'bg-emerald-600/10 text-emerald-600' : 'bg-amber-600/10 text-amber-600'
+                      apt.status === 'confirmed' ? 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)]' : 'bg-amber-600/10 text-amber-600'
                     }`}>
                       {apt.status}
                     </div>

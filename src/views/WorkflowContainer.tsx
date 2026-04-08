@@ -66,8 +66,8 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
     if (state.isJobSubmitted) {
       return (
         <div className="card-base max-w-2xl mx-auto mt-12 p-12 text-center">
-          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-emerald-500/20">
-            <CheckCircle2 className="h-12 w-12 text-emerald-500" />
+          <div className="w-24 h-24 bg-[var(--brand-gold)]/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-[var(--brand-gold)]/20">
+            <CheckCircle2 className="h-12 w-12 text-[var(--brand-gold)]" />
           </div>
           <h2 className="text-4xl font-display mb-4">Submission Successful!</h2>
           <p className="font-label mb-10 leading-relaxed">
@@ -80,9 +80,9 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
                 href={state.submissionLinks.closeoutPdf} 
                 target="_blank" 
                 rel="noreferrer"
-                className="flex items-center justify-center p-6 bg-[var(--bg-primary)]/50 rounded-2xl border border-[var(--border-color)] hover:bg-[var(--bg-primary)] hover:border-emerald-500/50 transition-all group"
+                className="flex items-center justify-center p-6 bg-[var(--bg-primary)]/50 rounded-2xl border border-[var(--border-color)] hover:bg-[var(--bg-primary)] hover:border-[var(--brand-gold)]/50 transition-all group"
               >
-                <CloudUpload className="h-5 w-5 mr-4 text-emerald-500" />
+                <CloudUpload className="h-5 w-5 mr-4 text-[var(--brand-gold)]" />
                 <span className="font-label group-hover:text-[var(--text-primary)]">View Close-out PDF</span>
               </a>
             )}
@@ -91,9 +91,9 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
                 href={state.submissionLinks.invoicePdf} 
                 target="_blank" 
                 rel="noreferrer"
-                className="flex items-center justify-center p-6 bg-[var(--bg-primary)]/50 rounded-2xl border border-[var(--border-color)] hover:bg-[var(--bg-primary)] hover:border-emerald-500/50 transition-all group"
+                className="flex items-center justify-center p-6 bg-[var(--bg-primary)]/50 rounded-2xl border border-[var(--border-color)] hover:bg-[var(--bg-primary)] hover:border-[var(--brand-gold)]/50 transition-all group"
               >
-                <Mail className="h-5 w-5 mr-4 text-emerald-500" />
+                <Mail className="h-5 w-5 mr-4 text-[var(--brand-gold)]" />
                 <span className="font-label group-hover:text-[var(--text-primary)]">View Invoice PDF</span>
               </a>
             )}
@@ -101,7 +101,7 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
 
           <button 
             onClick={onExit}
-            className="w-full py-5 bg-[var(--text-primary)] text-[var(--bg-primary)] rounded-[2rem] font-label text-xs hover:bg-emerald-500 transition-all active:scale-95 shadow-xl"
+            className="w-full py-5 bg-[var(--text-primary)] text-[var(--bg-primary)] rounded-[2rem] font-label text-xs hover:bg-[var(--brand-gold)] transition-all active:scale-95 shadow-xl"
           >
             Return to Job Details
           </button>
@@ -210,13 +210,13 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
           <div className="card-base p-12 max-w-sm w-full text-center">
             <div className="relative w-24 h-24 mx-auto mb-8">
               <div className="absolute inset-0 border-4 border-[var(--border-color)] rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin"></div>
-              <CloudUpload className="absolute inset-0 m-auto h-10 w-10 text-emerald-500" />
+              <div className="absolute inset-0 border-4 border-[var(--brand-gold)] rounded-full border-t-transparent animate-spin"></div>
+              <CloudUpload className="absolute inset-0 m-auto h-10 w-10 text-[var(--brand-gold)]" />
             </div>
             <h3 className="text-2xl font-display mb-3">Submitting Report</h3>
             <p className="font-label mb-6">{uploadProgress}</p>
             <div className="w-full bg-[var(--bg-primary)]/50 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-emerald-500 h-full animate-pulse w-full"></div>
+              <div className="bg-[var(--brand-gold)] h-full animate-pulse w-full"></div>
             </div>
           </div>
         </div>

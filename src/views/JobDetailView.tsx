@@ -70,7 +70,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
       onSendMessage?.(sessionId, message);
     } else {
       // Handle email intent
-      window.location.href = `mailto:${job.clientEmail}?subject=Luxury Decking: ${job.jobNumber}&body=${encodeURIComponent(message)}`;
+      window.open(`mailto:${job.clientEmail}?subject=Luxury Decking: ${job.jobNumber}&body=${encodeURIComponent(message)}`, '_blank');
     }
     setIsMessageModalOpen(false);
   };
@@ -107,7 +107,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
           transition={{ delay: 0.1 }}
           className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[3rem] p-10 shadow-2xl relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 blur-[100px] -mr-48 -mt-48 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--brand-gold)]/5 blur-[100px] -mr-48 -mt-48 pointer-events-none" />
           
           <div className="flex flex-col lg:flex-row gap-10 relative z-10">
             {/* Map Preview Square */}
@@ -122,7 +122,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
             <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-10">
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-4 py-1.5 rounded-xl border border-emerald-500/20">
+                  <span className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/10 px-4 py-1.5 rounded-xl border border-[var(--brand-gold)]/20">
                     {job.jobNumber}
                   </span>
                   <div className="h-4 w-px bg-[var(--card-border)]" />
@@ -135,7 +135,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                     {job.clientName}
                   </h1>
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em]">
                       <MapPin size={12} /> Project Location
                     </div>
                     <p className="text-lg font-bold text-[var(--text-primary)] uppercase tracking-tight italic leading-tight">
@@ -149,7 +149,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                         setMessageType('sms');
                         setIsMessageModalOpen(true);
                       }}
-                      className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-xl border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-black transition-all"
+                      className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-xl border border-[var(--brand-gold)]/20 text-[10px] font-black uppercase tracking-widest hover:bg-[var(--brand-gold)] hover:text-black transition-all"
                     >
                       <MessageSquare size={12} /> Chat with Client
                     </button>
@@ -182,7 +182,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
               <div className="flex flex-col items-stretch md:items-end gap-6">
                 <button
                   onClick={() => onOpenWorkflow(job)}
-                  className="flex items-center justify-center gap-4 px-10 py-6 bg-emerald-600 text-black rounded-[2rem] text-sm font-black uppercase tracking-[0.3em] hover:bg-emerald-500 transition-all shadow-[0_20px_50px_rgba(5,150,105,0.3)] active:scale-95 group"
+                  className="flex items-center justify-center gap-4 px-10 py-6 bg-[var(--brand-gold)] text-black rounded-[2rem] text-sm font-black uppercase tracking-[0.3em] hover:bg-[var(--brand-gold)] transition-all shadow-[0_20px_50px_rgba(5,150,105,0.3)] active:scale-95 group"
                 >
                   <Play className="w-5 h-5 fill-current group-hover:scale-110 transition-transform" />
                   <span>{job.currentStage > 0 ? 'Resume Workflow' : 'Start Workflow'}</span>
@@ -192,7 +192,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${(job.currentStage / 5) * 100}%` }}
-                      className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                      className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                     />
                   </div>
                   <span className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-widest">
@@ -224,8 +224,8 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
               className="bg-white/[0.03] rounded-[2rem] shadow-2xl border border-white/5 overflow-hidden p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 backdrop-blur-md"
             >
               <div className="flex items-center gap-5">
-                <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
-                  <Settings className="h-7 w-7 text-emerald-500" />
+                <div className="h-14 w-14 rounded-2xl bg-[var(--brand-gold)]/10 flex items-center justify-center border border-[var(--brand-gold)]/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                  <Settings className="h-7 w-7 text-[var(--brand-gold)]" />
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-1">Office Control</p>
@@ -247,7 +247,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                       onClick={() => onUpdateOfficeReviewStatus?.(job.id, status.id)}
                       className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
                         job.officeReviewStatus === status.id 
-                          ? 'bg-emerald-600 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
+                          ? 'bg-[var(--brand-gold)] text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
                           : 'text-gray-500 hover:text-gray-300'
                       }`}
                     >
@@ -266,12 +266,12 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
             transition={{ delay: 0.3 }}
             className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group"
           >
-            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 blur-[100px] -mr-48 -mt-48 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--brand-gold)]/5 blur-[100px] -mr-48 -mt-48 pointer-events-none" />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">
-                  <Calendar size={14} className="text-emerald-500" /> Schedule
+                  <Calendar size={14} className="text-[var(--brand-gold)]" /> Schedule
                 </div>
                 <div className="space-y-1">
                   <p className="text-base font-bold text-[var(--text-primary)]">Start: {job.plannedStartDate || 'TBD'}</p>
@@ -284,7 +284,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
 
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">
-                  <Users size={14} className="text-emerald-500" /> Assignment
+                  <Users size={14} className="text-[var(--brand-gold)]" /> Assignment
                 </div>
                 <div className="space-y-1">
                   <p className="text-base font-bold text-[var(--text-primary)]">{job.assignedCrewOrSubcontractor || 'Unassigned'}</p>
@@ -322,11 +322,11 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                 viewport={{ once: true }}
                 className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-[var(--card-border)] backdrop-blur-md relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
                 
                 <div className="flex items-center justify-between mb-12 relative z-10">
                   <div>
-                    <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-2 flex items-center gap-3">
+                    <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-2 flex items-center gap-3">
                       <Ruler size={16} /> Handoff Package
                     </h3>
                     <h2 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">Build Specifications</h2>
@@ -336,7 +336,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
                   {/* Site & Foundation */}
                   <div className="space-y-6">
-                    <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] border-b border-[var(--card-border)] pb-4">Site & Foundation</h4>
+                    <h4 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] border-b border-[var(--card-border)] pb-4">Site & Foundation</h4>
                       <div className="grid grid-cols-2 gap-8">
                         <div className="space-y-2">
                           <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">Footing Type</p>
@@ -356,7 +356,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
 
                   {/* Framing */}
                   <div className="space-y-6">
-                    <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] border-b border-[var(--card-border)] pb-4">Framing</h4>
+                    <h4 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] border-b border-[var(--card-border)] pb-4">Framing</h4>
                       <div className="grid grid-cols-2 gap-8">
                         <div className="space-y-2">
                           <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">Lumber</p>
@@ -377,7 +377,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
 
                   {/* Decking & Railing */}
                   <div className="space-y-6">
-                    <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] border-b border-[var(--card-border)] pb-4">Decking & Railing</h4>
+                    <h4 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] border-b border-[var(--card-border)] pb-4">Decking & Railing</h4>
                       <div className="grid grid-cols-2 gap-8">
                         <div className="space-y-2">
                           <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">Material</p>
@@ -398,7 +398,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
 
                   {/* Stairs & Skirting */}
                   <div className="space-y-6">
-                    <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] border-b border-[var(--card-border)] pb-4">Stairs & Skirting</h4>
+                    <h4 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] border-b border-[var(--card-border)] pb-4">Stairs & Skirting</h4>
                     <div className="grid grid-cols-2 gap-8">
                       <div className="space-y-2">
                         <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">Stairs</p>
@@ -418,8 +418,8 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
 
                 {job.buildDetails?.features?.customNotes && (
                   <div className="mt-12 p-8 bg-[var(--bg-secondary)] rounded-[2rem] border border-[var(--card-border)] relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500/30" />
-                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-4">Build Notes</p>
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[var(--brand-gold)]/30" />
+                    <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-4">Build Notes</p>
                     <p className="text-base text-[var(--text-primary)] leading-relaxed font-medium italic">"{job.buildDetails.features.customNotes}"</p>
                   </div>
                 )}
@@ -435,16 +435,16 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                 viewport={{ once: true }}
                 className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 shadow-2xl border border-[var(--card-border)] backdrop-blur-md"
               >
-                <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
+                <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
                   <MessageSquare size={16} /> Site Notes
                 </h3>
                 <div className="space-y-6">
                   {job.siteNotes && job.siteNotes.length > 0 ? (
                     job.siteNotes.map(note => (
-                      <div key={note.id} className="bg-[var(--bg-secondary)] rounded-[2rem] p-6 border border-[var(--card-border)] hover:border-emerald-500/20 transition-all">
+                      <div key={note.id} className="bg-[var(--bg-secondary)] rounded-[2rem] p-6 border border-[var(--card-border)] hover:border-[var(--brand-gold)]/20 transition-all">
                         <div className="flex justify-between items-center mb-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-7 h-7 rounded-xl bg-emerald-500/20 flex items-center justify-center text-[11px] font-black text-emerald-500 border border-emerald-500/20">
+                            <div className="w-7 h-7 rounded-xl bg-[var(--brand-gold)]/20 flex items-center justify-center text-[11px] font-black text-[var(--brand-gold)] border border-[var(--brand-gold)]/20">
                               {note.author.charAt(0)}
                             </div>
                             <span className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest">{note.author}</span>
@@ -469,7 +469,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                 viewport={{ once: true }}
                 className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 shadow-2xl border border-[var(--card-border)] backdrop-blur-md"
               >
-                <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
+                <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
                   <Paperclip size={16} /> Job Files
                 </h3>
                 <div className="space-y-4">
@@ -478,16 +478,16 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                       <a 
                         key={file.id}
                         href={file.url}
-                        className="flex items-center p-5 rounded-[2rem] border border-[var(--card-border)] bg-[var(--bg-secondary)] hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all group"
+                        className="flex items-center p-5 rounded-[2rem] border border-[var(--card-border)] bg-[var(--bg-secondary)] hover:bg-[var(--brand-gold)]/10 hover:border-[var(--brand-gold)]/30 transition-all group"
                       >
                         <div className="h-12 w-12 rounded-2xl bg-[var(--card-bg)] shadow-inner flex items-center justify-center mr-5 group-hover:scale-110 transition-transform border border-[var(--card-border)]">
-                          {file.type === 'drawing' && <Ruler className="h-6 w-6 text-emerald-500" />}
+                          {file.type === 'drawing' && <Ruler className="h-6 w-6 text-[var(--brand-gold)]" />}
                           {file.type === 'permit' && <ShieldCheck className="h-6 w-6 text-blue-500" />}
                           {file.type === 'photo' && <Camera className="h-6 w-6 text-purple-500" />}
                           {file.type === 'other' && <FileText className="h-6 w-6 text-gray-400" />}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-bold text-[var(--text-primary)] truncate group-hover:text-emerald-500 transition-colors uppercase tracking-tight">{file.name}</p>
+                          <p className="text-sm font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--brand-gold)] transition-colors uppercase tracking-tight">{file.name}</p>
                           <p className="text-[9px] text-[var(--muted-text)] uppercase font-black tracking-[0.2em] mt-1">{file.type}</p>
                         </div>
                         <ChevronRight className="w-5 h-5 text-[var(--muted-text)] group-hover:text-[var(--text-primary)] transition-all" />
@@ -510,18 +510,18 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
             viewport={{ once: true }}
             className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-[var(--card-border)] backdrop-blur-md relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
             
             <div className="flex items-center justify-between mb-10 relative z-10">
               <div>
-                <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-2 flex items-center gap-3">
+                <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-2 flex items-center gap-3">
                   <History size={16} /> Timeline Forecast
                 </h3>
                 <h2 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">Scheduling & Progress</h2>
               </div>
               {job.officialScheduleStatus && (
                 <span className={`px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-lg ${
-                  job.officialScheduleStatus === ScheduleStatus.ON_SCHEDULE ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                  job.officialScheduleStatus === ScheduleStatus.ON_SCHEDULE ? 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold-light)] border-[var(--brand-gold)]/20' :
                   job.officialScheduleStatus === ScheduleStatus.BEHIND ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                   'bg-rose-500/10 text-rose-400 border-rose-500/20'
                 }`}>
@@ -537,24 +537,24 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                   <div className="flex items-center justify-between">
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <Calendar size={14} className="text-emerald-500" />
+                        <Calendar size={14} className="text-[var(--brand-gold)]" />
                         <p className="text-sm font-bold text-[var(--text-primary)]">Start: {job.plannedStartDate ? new Date(job.plannedStartDate).toLocaleDateString() : 'Not Set'}</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Clock size={14} className="text-emerald-500" />
+                        <Clock size={14} className="text-[var(--brand-gold)]" />
                         <p className="text-sm font-bold text-[var(--text-primary)]">Finish: {job.plannedFinishDate ? new Date(job.plannedFinishDate).toLocaleDateString() : 'Not Set'}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-3xl font-black text-emerald-500 uppercase italic tracking-tighter leading-none">{job.plannedDurationDays || 0}</p>
+                      <p className="text-3xl font-black text-[var(--brand-gold)] uppercase italic tracking-tighter leading-none">{job.plannedDurationDays || 0}</p>
                       <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em] mt-1">Planned Days</p>
                     </div>
                   </div>
                 </div>
 
                 {isAdminOrManager && (
-                  <div className="p-8 bg-emerald-500/5 rounded-[2rem] border border-emerald-500/20">
-                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-6">Office Schedule Control</p>
+                  <div className="p-8 bg-[var(--brand-gold)]/5 rounded-[2rem] border border-[var(--brand-gold)]/20">
+                    <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-6">Office Schedule Control</p>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-3">
                         <label className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">Start Date</label>
@@ -562,7 +562,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                           type="date" 
                           value={job.plannedStartDate || ''}
                           onChange={(e) => onUpdateSchedule?.(job.id, { plannedStartDate: e.target.value })}
-                          className="w-full bg-[var(--bg-primary)]/50 border border-[var(--card-border)] rounded-xl p-4 text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all"
+                          className="w-full bg-[var(--bg-primary)]/50 border border-[var(--card-border)] rounded-xl p-4 text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all"
                         />
                       </div>
                       <div className="space-y-3">
@@ -571,7 +571,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                           type="number" 
                           value={job.plannedDurationDays || 0}
                           onChange={(e) => onUpdateSchedule?.(job.id, { plannedDurationDays: parseInt(e.target.value) })}
-                          className="w-full bg-[var(--bg-primary)]/50 border border-[var(--card-border)] rounded-xl p-4 text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all"
+                          className="w-full bg-[var(--bg-primary)]/50 border border-[var(--card-border)] rounded-xl p-4 text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all"
                         />
                       </div>
                     </div>
@@ -589,8 +589,8 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                     <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] mb-6">Latest Field Forecast</p>
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-xl ${job.fieldForecast.status === ScheduleStatus.BEHIND ? 'bg-amber-500/20' : 'bg-emerald-500/20'}`}>
-                          {job.fieldForecast.status === ScheduleStatus.BEHIND ? <TrendingDown className="w-6 h-6 text-amber-500" /> : <TrendingUp className="w-6 h-6 text-emerald-500" />}
+                        <div className={`p-3 rounded-xl ${job.fieldForecast.status === ScheduleStatus.BEHIND ? 'bg-amber-500/20' : 'bg-[var(--brand-gold)]/20'}`}>
+                          {job.fieldForecast.status === ScheduleStatus.BEHIND ? <TrendingDown className="w-6 h-6 text-amber-500" /> : <TrendingUp className="w-6 h-6 text-[var(--brand-gold)]" />}
                         </div>
                         <span className="text-lg font-black text-[var(--text-primary)] uppercase italic tracking-tight">{job.fieldForecast.status.replace('_', ' ')}</span>
                       </div>
@@ -648,8 +648,8 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                               onClick={() => setForecastStatus(status)}
                               className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border transition-all ${
                                 forecastStatus === status 
-                                  ? 'bg-emerald-500 text-black border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)]' 
-                                  : 'bg-[var(--card-bg)] text-[var(--muted-text)] border-[var(--card-border)] hover:border-emerald-500/30'
+                                  ? 'bg-[var(--brand-gold)] text-black border-[var(--brand-gold)] shadow-[0_0_20px_rgba(16,185,129,0.4)]' 
+                                  : 'bg-[var(--card-bg)] text-[var(--muted-text)] border-[var(--card-border)] hover:border-[var(--brand-gold)]/30'
                               }`}
                             >
                               {status.replace('_', ' ')}
@@ -665,7 +665,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                             type="number" 
                             value={daysRemaining}
                             onChange={(e) => setDaysRemaining(parseInt(e.target.value))}
-                            className="w-full bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all shadow-inner"
+                            className="w-full bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all shadow-inner"
                           />
                         </div>
                         <div className="space-y-3">
@@ -674,7 +674,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                             <select 
                               value={delayReason}
                               onChange={(e) => setDelayReason(e.target.value)}
-                              className="w-full bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 appearance-none transition-all shadow-inner"
+                              className="w-full bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] appearance-none transition-all shadow-inner"
                             >
                               <option value="" className="bg-[var(--bg-primary)]">None / N/A</option>
                               <option value="Weather" className="bg-[var(--bg-primary)]">Rain / Weather</option>
@@ -694,7 +694,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                           placeholder="e.g. Waiting on railing delivery"
                           value={forecastNote}
                           onChange={(e) => setForecastNote(e.target.value)}
-                          className="w-full bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 text-sm font-medium text-[var(--text-primary)] placeholder:text-[var(--muted-text)]/30 focus:outline-none focus:border-emerald-500 transition-all shadow-inner"
+                          className="w-full bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 text-sm font-medium text-[var(--text-primary)] placeholder:text-[var(--muted-text)]/30 focus:outline-none focus:border-[var(--brand-gold)] transition-all shadow-inner"
                         />
                       </div>
 
@@ -728,28 +728,28 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
               className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 shadow-2xl border border-[var(--card-border)] backdrop-blur-md"
             >
               <h3 className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-                <Play size={14} className="text-emerald-500 fill-current" /> Project Health
+                <Play size={14} className="text-[var(--brand-gold)] fill-current" /> Project Health
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="flex items-center justify-between p-6 rounded-[2rem] bg-[var(--bg-secondary)] border border-[var(--card-border)] group hover:border-emerald-500/30 transition-all">
+                <div className="flex items-center justify-between p-6 rounded-[2rem] bg-[var(--bg-secondary)] border border-[var(--card-border)] group hover:border-[var(--brand-gold)]/30 transition-all">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em] mb-2">Current Stage</span>
                     <span className="text-lg font-black text-[var(--text-primary)] uppercase italic tracking-tight">Stage {job.currentStage} of 5</span>
                   </div>
-                  <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.1)]">
-                    <span className="text-xs font-black text-emerald-500">{Math.round((job.currentStage / 5) * 100)}%</span>
+                  <div className="h-14 w-14 rounded-2xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                    <span className="text-xs font-black text-[var(--brand-gold)]">{Math.round((job.currentStage / 5) * 100)}%</span>
                   </div>
                 </div>
                 
                 <div className="flex items-center justify-between p-6 rounded-[2rem] bg-[var(--bg-secondary)] border border-[var(--card-border)] group hover:border-white/20 transition-all">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em] mb-2">Customer Sign-off</span>
-                    <span className={`text-lg font-black uppercase italic tracking-tight ${job.signoffStatus === 'signed' ? 'text-emerald-500' : 'text-[var(--muted-text)]'}`}>
+                    <span className={`text-lg font-black uppercase italic tracking-tight ${job.signoffStatus === 'signed' ? 'text-[var(--brand-gold)]' : 'text-[var(--muted-text)]'}`}>
                       {job.signoffStatus === 'signed' ? 'Completed' : 'Pending'}
                     </span>
                   </div>
                   {job.signoffStatus === 'signed' ? (
-                    <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+                    <CheckCircle2 className="h-8 w-8 text-[var(--brand-gold)]" />
                   ) : (
                     <Clock className="h-8 w-8 text-[var(--muted-text)] group-hover:text-[var(--text-primary)] transition-colors" />
                   )}

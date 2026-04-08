@@ -24,7 +24,7 @@ const NavBar: React.FC<NavBarProps> = ({
       : view === targetView;
     return `flex items-center gap-2 px-4 py-2 rounded-xl font-label transition-all h-10 ${
       isActive 
-        ? 'bg-[var(--bg-primary)]/80 dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-lg border border-[var(--border-color)]' 
+        ? 'bg-[var(--bg-primary)]/80 dark:bg-white/10 text-amber-600 dark:text-amber-400 shadow-lg border border-[var(--border-color)]' 
         : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/5'
     }`;
   };
@@ -38,12 +38,12 @@ const NavBar: React.FC<NavBarProps> = ({
             onClick={() => onNavigate(currentUser.role === Role.ADMIN ? 'office-dashboard' : currentUser.role === Role.ESTIMATOR ? 'estimator-dashboard' : 'jobs')}
             className="flex items-center gap-3 group"
           >
-            <div className="w-10 h-10 bg-emerald-600 rounded-[0.75rem] flex items-center justify-center shadow-lg shadow-emerald-600/20 group-hover:shadow-emerald-600/40 transition-all group-hover:scale-105">
-              <span className="text-white font-black text-sm italic">LD</span>
+            <div className="w-10 h-10 rounded-[0.75rem] flex items-center justify-center overflow-hidden bg-[var(--brand-black)] shadow-lg shadow-[var(--brand-gold)]/10 group-hover:shadow-[var(--brand-gold)]/25 transition-all group-hover:scale-105">
+              <img src="/assets/logo-white.png" alt="Luxury Decking" className="w-8 h-8 object-contain" />
             </div>
             <div className="hidden sm:block">
               <h1 className="text-sm font-display leading-none">Field Pro</h1>
-              <p className="font-label mt-0.5 leading-none">Operations</p>
+              <p className="font-label mt-0.5 leading-none text-[var(--brand-gold)]">Luxury Decking</p>
             </div>
           </button>
 
@@ -122,8 +122,8 @@ const NavBar: React.FC<NavBarProps> = ({
 
           {/* User Info */}
           <div className="flex items-center bg-[var(--text-primary)]/5 px-4 h-12 rounded-xl border border-[var(--border-color)] shadow-inner group hover:border-[var(--text-primary)]/20 transition-all">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center mr-3 border border-emerald-500/20 group-hover:scale-105 transition-transform">
-              <UserIcon className="h-4 w-4 text-emerald-500" />
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center mr-3 border border-amber-500/20 group-hover:scale-105 transition-transform">
+              <UserIcon className="h-4 w-4 text-amber-500" />
             </div>
             <div className="text-left hidden xs:block">
               <p className="font-label opacity-60 leading-none mb-1">{currentUser.role}</p>

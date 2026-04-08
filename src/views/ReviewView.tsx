@@ -29,7 +29,7 @@ const ReviewView: React.FC<ReviewViewProps> = ({ state, isUploading, uploadProgr
         <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
           <FileText size={140} />
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent"></div>
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--brand-gold)]/20 to-transparent"></div>
       </div>
 
       <div className="space-y-6">
@@ -52,8 +52,8 @@ const ReviewView: React.FC<ReviewViewProps> = ({ state, isUploading, uploadProgr
           <div className="space-y-6">
             <div className="flex items-center justify-between group/item">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)]/50 flex items-center justify-center border border-[var(--border-color)] group-hover/item:border-emerald-500/30 transition-colors">
-                  <ImageIcon size={18} className="text-[var(--text-secondary)] group-hover/item:text-emerald-500 transition-colors" />
+                <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)]/50 flex items-center justify-center border border-[var(--border-color)] group-hover/item:border-[var(--brand-gold)]/30 transition-colors">
+                  <ImageIcon size={18} className="text-[var(--text-secondary)] group-hover/item:text-[var(--brand-gold)] transition-colors" />
                 </div>
                 <span className="text-sm font-bold text-[var(--text-secondary)] tracking-tight">Project Photos</span>
               </div>
@@ -62,15 +62,15 @@ const ReviewView: React.FC<ReviewViewProps> = ({ state, isUploading, uploadProgr
             
             <div className="flex items-center justify-between group/item">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)]/50 flex items-center justify-center border border-[var(--border-color)] group-hover/item:border-emerald-500/30 transition-colors">
-                  <CheckCircle2 size={18} className="text-[var(--text-secondary)] group-hover/item:text-emerald-500 transition-colors" />
+                <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)]/50 flex items-center justify-center border border-[var(--border-color)] group-hover/item:border-[var(--brand-gold)]/30 transition-colors">
+                  <CheckCircle2 size={18} className="text-[var(--text-secondary)] group-hover/item:text-[var(--brand-gold)] transition-colors" />
                 </div>
                 <span className="text-sm font-bold text-[var(--text-secondary)] tracking-tight">Customer Signature</span>
               </div>
               {state.customerSignature ? (
                 <div className="flex flex-col items-end gap-3">
-                  <span className="font-label text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">Captured</span>
-                  <div className="h-14 w-28 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-2xl overflow-hidden flex items-center justify-center p-2 group-hover/item:border-emerald-500/30 transition-colors">
+                  <span className="font-label text-[var(--brand-gold)] bg-[var(--brand-gold)]/10 px-3 py-1 rounded-full border border-[var(--brand-gold)]/20">Captured</span>
+                  <div className="h-14 w-28 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-2xl overflow-hidden flex items-center justify-center p-2 group-hover/item:border-[var(--brand-gold)]/30 transition-colors">
                     <img src={state.customerSignature} alt="Signature Preview" className="max-h-full max-w-full object-contain dark:invert opacity-70 group-hover/item:opacity-100 transition-opacity" />
                   </div>
                 </div>
@@ -84,19 +84,19 @@ const ReviewView: React.FC<ReviewViewProps> = ({ state, isUploading, uploadProgr
         {isUploading && (
           <div className="fixed inset-0 bg-[var(--bg-primary)]/95 backdrop-blur-2xl z-[100] flex flex-col items-center justify-center p-12 text-center">
             <div className="relative mb-10">
-              <div className="w-24 h-24 bg-emerald-500/10 rounded-[2rem] flex items-center justify-center border border-emerald-500/20 shadow-2xl shadow-emerald-500/20">
-                <Loader2 className="animate-spin text-emerald-500" size={48} />
+              <div className="w-24 h-24 bg-[var(--brand-gold)]/10 rounded-[2rem] flex items-center justify-center border border-[var(--brand-gold)]/20 shadow-2xl shadow-[var(--brand-gold)]/20">
+                <Loader2 className="animate-spin text-[var(--brand-gold)]" size={48} />
               </div>
-              <div className="absolute -inset-4 bg-emerald-500/10 blur-2xl rounded-full animate-pulse"></div>
+              <div className="absolute -inset-4 bg-[var(--brand-gold)]/10 blur-2xl rounded-full animate-pulse"></div>
             </div>
             <h3 className="text-[var(--text-primary)] text-3xl font-display mb-3">Packaging Job...</h3>
             <p className="font-label mb-10 max-w-xs leading-relaxed opacity-60">Uploading secure assets and generating compliance documentation.</p>
             
             <div className="w-full bg-[var(--bg-secondary)] h-1.5 rounded-full overflow-hidden max-w-xs border border-[var(--border-color)]">
-              <div className="bg-emerald-500 h-full transition-all duration-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]" style={{ width: '100%' }} />
+              <div className="bg-[var(--brand-gold)] h-full transition-all duration-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]" style={{ width: '100%' }} />
             </div>
             
-            <p className="text-emerald-500 font-label mt-6 animate-pulse">
+            <p className="text-[var(--brand-gold)] font-label mt-6 animate-pulse">
               {uploadProgress}
             </p>
           </div>
@@ -130,7 +130,7 @@ const ReviewView: React.FC<ReviewViewProps> = ({ state, isUploading, uploadProgr
             disabled={!canSubmit || isUploading}
             className={`flex-[2] py-5 rounded-[2rem] font-label text-[10px] transition-all active:scale-[0.98] shadow-2xl ${
               canSubmit && !isUploading
-                ? 'bg-emerald-600 text-black hover:bg-emerald-500' 
+                ? 'bg-[var(--brand-gold)] text-black hover:bg-[var(--brand-gold)]' 
                 : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] opacity-50 cursor-not-allowed border border-[var(--border-color)]'
             }`}
           >

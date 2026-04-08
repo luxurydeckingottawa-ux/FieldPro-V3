@@ -78,7 +78,7 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
       case PipelineStage.LEAD_IN: return 'bg-blue-500/10 text-blue-500';
       case PipelineStage.SITE_VISIT_SCHEDULED: return 'bg-purple-500/10 text-purple-500';
       case PipelineStage.ESTIMATE_IN_PROGRESS: return 'bg-amber-500/10 text-amber-500';
-      case PipelineStage.ESTIMATE_SENT: return 'bg-emerald-500/10 text-emerald-500';
+      case PipelineStage.ESTIMATE_SENT: return 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)]';
       case PipelineStage.FOLLOW_UP: return 'bg-rose-500/10 text-rose-500';
       default: return 'bg-gray-500/10 text-gray-500';
     }
@@ -96,17 +96,17 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
           <div className="flex gap-2">
             <button 
               onClick={onNewEstimate}
-              className="h-12 px-5 bg-emerald-600 text-white rounded-xl flex items-center gap-2 hover:bg-emerald-500 transition-all active:scale-[0.97] font-bold text-sm shadow-lg shadow-emerald-600/20"
+              className="h-12 px-5 bg-[var(--brand-gold)] text-white rounded-xl flex items-center gap-2 hover:bg-[var(--brand-gold)] transition-all active:scale-[0.97] font-bold text-sm shadow-lg shadow-[var(--brand-gold)]/20"
             >
               <Plus className="w-5 h-5" />
               New Estimate
             </button>
             <button 
               onClick={onOpenCalendar}
-              className="w-12 h-12 bg-emerald-600/10 rounded-xl flex items-center justify-center hover:bg-emerald-600/20 transition-all"
+              className="w-12 h-12 bg-[var(--brand-gold)]/10 rounded-xl flex items-center justify-center hover:bg-[var(--brand-gold)]/20 transition-all"
               title="View Schedule"
             >
-              <Calendar className="text-emerald-600 w-5 h-5" />
+              <Calendar className="text-[var(--brand-gold)] w-5 h-5" />
             </button>
           </div>
         </div>
@@ -119,7 +119,7 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
               placeholder="Search estimates..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all text-[var(--text-primary)]"
+              className="w-full pl-12 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)] transition-all text-[var(--text-primary)]"
             />
           </div>
 
@@ -130,7 +130,7 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
                 onClick={() => setFilter(f)}
                 className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all ${
                   filter === f 
-                    ? 'bg-[var(--bg-primary)] text-emerald-600 shadow-sm' 
+                    ? 'bg-[var(--bg-primary)] text-[var(--brand-gold)] shadow-sm' 
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
@@ -148,24 +148,24 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
             <button
               key={job.id}
               onClick={() => onSelectJob(job)}
-              className="w-full text-left bg-[var(--bg-primary)] p-5 rounded-2xl border border-[var(--border-color)] shadow-sm hover:border-emerald-600/50 transition-all group active:scale-[0.98]"
+              className="w-full text-left bg-[var(--bg-primary)] p-5 rounded-2xl border border-[var(--border-color)] shadow-sm hover:border-[var(--brand-gold)]/50 transition-all group active:scale-[0.98]"
             >
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-600/10 text-emerald-600 rounded-full uppercase tracking-wider">
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-full uppercase tracking-wider">
                       {job.jobNumber}
                     </span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${getStageColor(job.pipelineStage)}`}>
                       {getStageLabel(job.pipelineStage)}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-[var(--text-primary)] group-hover:text-emerald-600 transition-colors">
+                  <h3 className="text-lg font-bold text-[var(--text-primary)] group-hover:text-[var(--brand-gold)] transition-colors">
                     {job.clientName || 'Unnamed'}
                   </h3>
                 </div>
                 {job.estimateAmount && job.estimateAmount > 0 && (
-                  <span className="text-sm font-bold text-emerald-600">${job.estimateAmount.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-[var(--brand-gold)]">${job.estimateAmount.toLocaleString()}</span>
                 )}
               </div>
 
@@ -192,8 +192,8 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
 
               <div className="flex items-center justify-between pt-4 border-t border-[var(--border-color)]">
                 <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-emerald-600/10 border-2 border-[var(--bg-primary)] flex items-center justify-center">
-                    <ClipboardList className="w-4 h-4 text-emerald-600" />
+                  <div className="w-8 h-8 rounded-full bg-[var(--brand-gold)]/10 border-2 border-[var(--bg-primary)] flex items-center justify-center">
+                    <ClipboardList className="w-4 h-4 text-[var(--brand-gold)]" />
                   </div>
                   <div className="w-8 h-8 rounded-full bg-blue-600/10 border-2 border-[var(--bg-primary)] flex items-center justify-center">
                     <Camera className="w-4 h-4 text-blue-600" />
@@ -202,7 +202,7 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
                     <PenTool className="w-4 h-4 text-purple-600" />
                   </div>
                 </div>
-                <div className="flex items-center text-emerald-600 font-bold text-sm">
+                <div className="flex items-center text-[var(--brand-gold)] font-bold text-sm">
                   Open <ChevronRight className="w-4 h-4" />
                 </div>
               </div>
@@ -210,8 +210,8 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
           ))
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 border border-emerald-500/20">
-              <ClipboardList className="text-emerald-500 w-8 h-8" />
+            <div className="w-20 h-20 bg-[var(--brand-gold)]/10 rounded-2xl flex items-center justify-center mb-4 border border-[var(--brand-gold)]/20">
+              <ClipboardList className="text-[var(--brand-gold)] w-8 h-8" />
             </div>
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">No estimates yet</h3>
             <p className="text-[var(--text-secondary)] text-sm max-w-[250px] mb-6">
@@ -219,7 +219,7 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
             </p>
             <button 
               onClick={onNewEstimate}
-              className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-500 transition-all active:scale-[0.97] shadow-lg shadow-emerald-600/20"
+              className="flex items-center gap-2 px-6 py-3 bg-[var(--brand-gold)] text-white rounded-xl font-bold text-sm hover:bg-[var(--brand-gold)] transition-all active:scale-[0.97] shadow-lg shadow-[var(--brand-gold)]/20"
             >
               <Plus className="w-5 h-5" />
               New Estimate

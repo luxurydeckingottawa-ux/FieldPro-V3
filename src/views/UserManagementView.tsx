@@ -165,7 +165,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
           </button>
           <button
             onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20"
+            className="flex items-center gap-2 px-6 py-3 bg-[var(--brand-gold)] text-white rounded-xl font-bold hover:bg-[var(--brand-gold)] transition-all shadow-lg shadow-[var(--brand-gold)]/20"
           >
             <UserPlus className="w-5 h-5" />
             Add Team Member
@@ -177,7 +177,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
         <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-6 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold flex items-center gap-2">
-              <UserPlus className="w-6 h-6 text-emerald-500" />
+              <UserPlus className="w-6 h-6 text-[var(--brand-gold)]" />
               New Team Member
             </h2>
             <button onClick={() => setIsAdding(false)} className="p-2 hover:bg-[var(--bg-secondary)] rounded-lg">
@@ -192,7 +192,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
                 required
                 value={newUser.name || ''}
                 onChange={e => setNewUser(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:ring-2 focus:ring-[var(--brand-gold)] outline-none"
                 placeholder="John Doe"
               />
             </div>
@@ -203,7 +203,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
                 required
                 value={newUser.email || ''}
                 onChange={e => setNewUser(prev => ({ ...prev, email: e.target.value }))}
-                className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:ring-2 focus:ring-[var(--brand-gold)] outline-none"
                 placeholder="john@luxurydecking.ca"
               />
             </div>
@@ -212,7 +212,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
               <select
                 value={newUser.role}
                 onChange={e => setNewUser(prev => ({ ...prev, role: e.target.value as Role }))}
-                className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:ring-2 focus:ring-[var(--brand-gold)] outline-none"
               >
                 <option value={Role.ADMIN}>Admin</option>
                 <option value={Role.ESTIMATOR}>Estimator</option>
@@ -230,7 +230,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
               </button>
               <button
                 type="submit"
-                className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20"
+                className="px-8 py-3 bg-[var(--brand-gold)] text-white font-bold rounded-xl hover:bg-[var(--brand-gold)] transition-all shadow-lg shadow-[var(--brand-gold)]/20"
               >
                 Create User
               </button>
@@ -254,8 +254,8 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
               <tr key={user.id} className="hover:bg-[var(--bg-secondary)]/50 transition-colors group">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                      <span className="text-emerald-600 font-bold">{user.name.charAt(0)}</span>
+                    <div className="w-10 h-10 rounded-full bg-[var(--brand-gold)]/10 flex items-center justify-center border border-[var(--brand-gold)]/20">
+                      <span className="text-[var(--brand-gold)] font-bold">{user.name.charAt(0)}</span>
                     </div>
                     <div>
                       <p className="font-bold text-[var(--text-primary)]">{user.name}</p>
@@ -270,7 +270,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
                       value={user.role}
                       onChange={e => handleUpdateRole(user.id, e.target.value as Role)}
                       onBlur={() => setEditingId(null)}
-                      className="px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm outline-none focus:ring-2 focus:ring-[var(--brand-gold)]"
                     >
                       <option value={Role.ADMIN}>Admin</option>
                       <option value={Role.ESTIMATOR}>Estimator</option>
@@ -282,7 +282,7 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                         user.role === Role.ADMIN ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' :
                         user.role === Role.ESTIMATOR ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
-                        user.role === Role.FIELD_EMPLOYEE ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                        user.role === Role.FIELD_EMPLOYEE ? 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] border border-[var(--brand-gold)]/20' :
                         'bg-amber-500/10 text-amber-500 border border-amber-500/20'
                       }`}>
                         {user.role.replace('_', ' ')}
@@ -297,8 +297,8 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
                   )}
                 </td>
                 <td className="px-6 py-4">
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--brand-gold)] font-medium">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] animate-pulse" />
                     Active
                   </span>
                 </td>

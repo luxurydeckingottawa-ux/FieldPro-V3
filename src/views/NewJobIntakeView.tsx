@@ -86,7 +86,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col font-sans selection:bg-emerald-500/30 transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col font-sans selection:bg-[var(--brand-gold)]/30 transition-colors duration-300">
       {/* Header */}
       <header className="bg-[var(--bg-primary)]/80 border-b border-[var(--border-color)] sticky top-0 z-50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -99,7 +99,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
             </button>
             <div>
               <h1 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">New Job Intake</h1>
-              <p className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.2em]">{formData.jobNumber}</p>
+              <p className="text-[10px] text-[var(--brand-gold)] font-black uppercase tracking-[0.2em]">{formData.jobNumber}</p>
             </div>
           </div>
           <div className="flex items-center gap-6">
@@ -111,7 +111,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-3 bg-emerald-500 text-black px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all active:scale-95 shadow-[0_20px_40px_rgba(16,185,129,0.1)]"
+              className="flex items-center gap-3 bg-[var(--brand-gold)] text-black px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[var(--brand-gold)] transition-all active:scale-95 shadow-[0_20px_40px_rgba(16,185,129,0.1)]"
             >
               <Save className="w-4 h-4" />
               Save Master Record
@@ -136,7 +136,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                 }`}
               >
                 {activeSection === section.id && (
-                  <div className="absolute left-0 top-0 w-1 h-full bg-emerald-500" />
+                  <div className="absolute left-0 top-0 w-1 h-full bg-[var(--brand-gold)]" />
                 )}
                 <span className="relative z-10">{section.label}</span>
               </button>
@@ -146,7 +146,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
 
         {/* Form Content */}
         <main className="flex-1 bg-[var(--bg-secondary)] rounded-[2.5rem] shadow-2xl border border-[var(--border-color)] p-10 backdrop-blur-md relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl -mr-32 -mt-32" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-3xl -mr-32 -mt-32" />
           
           {error && (
             <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 animate-in fade-in slide-in-from-top-4">
@@ -159,7 +159,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
             <div className="space-y-10">
               <div>
                 <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic mb-10 flex items-center gap-3">
-                  <Info className="w-5 h-5 text-emerald-500" />
+                  <Info className="w-5 h-5 text-[var(--brand-gold)]" />
                   Client & Project Basics
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -169,7 +169,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="text" 
                       value={formData.clientName}
                       onChange={e => setFormData({...formData, clientName: e.target.value})}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all placeholder:text-[var(--text-secondary)]/30"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
                       placeholder="e.g. John Smith"
                     />
                   </div>
@@ -179,8 +179,8 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="text" 
                       value={formData.clientPhone}
                       onChange={e => setFormData({...formData, clientPhone: e.target.value})}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all placeholder:text-[var(--text-secondary)]/30"
-                      placeholder="613-555-0123"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
+                      placeholder="613-707-3060"
                     />
                   </div>
                   <div className="col-span-1 md:col-span-2 space-y-2">
@@ -189,7 +189,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="text" 
                       value={formData.projectAddress}
                       onChange={e => setFormData({...formData, projectAddress: e.target.value})}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all placeholder:text-[var(--text-secondary)]/30"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
                       placeholder="Street, City, Postal Code"
                     />
                   </div>
@@ -199,7 +199,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="text" 
                       value={formData.projectType}
                       onChange={e => setFormData({...formData, projectType: e.target.value})}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all placeholder:text-[var(--text-secondary)]/30"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
                       placeholder="e.g. Composite Deck"
                     />
                   </div>
@@ -209,7 +209,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="date" 
                       value={formData.plannedStartDate}
                       onChange={e => setFormData({...formData, plannedStartDate: e.target.value})}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -218,7 +218,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="number" 
                       value={formData.plannedDurationDays}
                       onChange={e => setFormData({...formData, plannedDurationDays: parseInt(e.target.value) || 0})}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -227,7 +227,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="text" 
                       value={formData.assignedCrewOrSubcontractor}
                       onChange={e => setFormData({...formData, assignedCrewOrSubcontractor: e.target.value})}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all placeholder:text-[var(--text-secondary)]/30"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
                       placeholder="Crew Name or Subcontractor"
                     />
                   </div>
@@ -237,7 +237,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="number" 
                       value={formData.totalAmount}
                       onChange={e => setFormData({...formData, totalAmount: parseFloat(e.target.value) || 0})}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all placeholder:text-[var(--text-secondary)]/30"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
                       placeholder="0.00"
                     />
                   </div>
@@ -247,7 +247,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       value={formData.scopeSummary}
                       onChange={e => setFormData({...formData, scopeSummary: e.target.value})}
                       rows={4}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-medium text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all placeholder:text-[var(--text-secondary)]/30 leading-relaxed"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-medium text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30 leading-relaxed"
                       placeholder="Brief overview of the project scope..."
                     />
                   </div>
@@ -258,7 +258,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     type="number" 
                     value={formData.paidAmount} 
                     onChange={(e) => setFormData({ ...formData, paidAmount: parseFloat(e.target.value) || 0 })}
-                    className="w-full bg-[var(--text-primary)]/5 border border-[var(--border-color)] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
+                    className="w-full bg-[var(--text-primary)]/5 border border-[var(--border-color)] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/50 transition-all"
                     placeholder="0.00"
                   />
                 </div>
@@ -285,10 +285,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                           type="checkbox" 
                           checked={(buildDetails.sitePrep as any)[item.id]}
                           onChange={e => updateBuildDetail('sitePrep', item.id, e.target.checked)}
-                          className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer appearance-none border"
+                          className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                         />
                         <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                          <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                          <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                         </div>
                       </div>
                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">{item.label}</span>
@@ -300,7 +300,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       value={buildDetails.sitePrep.notes}
                       onChange={e => updateBuildDetail('sitePrep', 'notes', e.target.value)}
                       rows={3}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800 leading-relaxed"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800 leading-relaxed"
                     />
                   </div>
                 </div>
@@ -314,7 +314,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     <select 
                       value={buildDetails.footings.type}
                       onChange={e => updateBuildDetail('footings', 'type', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 appearance-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] appearance-none transition-all"
                     >
                       <option value="" className="bg-[#050505]">Select Type...</option>
                       <option value="Helical Piles" className="bg-[#050505]">Helical Piles</option>
@@ -329,7 +329,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="text" 
                       value={buildDetails.footings.bracketType}
                       onChange={e => updateBuildDetail('footings', 'bracketType', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                       placeholder="e.g. 6x6 Adjustable"
                     />
                   </div>
@@ -340,10 +340,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                           type="checkbox" 
                           checked={buildDetails.footings.attachedToHouse}
                           onChange={e => updateBuildDetail('footings', 'attachedToHouse', e.target.checked)}
-                          className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer appearance-none border"
+                          className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                         />
                         <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                          <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                          <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                         </div>
                       </div>
                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Attached to House</span>
@@ -354,10 +354,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                           type="checkbox" 
                           checked={buildDetails.footings.floating}
                           onChange={e => updateBuildDetail('footings', 'floating', e.target.checked)}
-                          className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer appearance-none border"
+                          className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                         />
                         <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                          <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                          <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                         </div>
                       </div>
                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Floating Deck</span>
@@ -378,7 +378,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     <select 
                       value={buildDetails.framing.type}
                       onChange={e => updateBuildDetail('framing', 'type', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 appearance-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] appearance-none transition-all"
                     >
                       <option value="" className="bg-[#050505]">Select Type...</option>
                       <option value="Pressure Treated Brown" className="bg-[#050505]">Pressure Treated Brown</option>
@@ -392,7 +392,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     <select 
                       value={buildDetails.framing.joistSize}
                       onChange={e => updateBuildDetail('framing', 'joistSize', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 appearance-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] appearance-none transition-all"
                     >
                       <option value="" className="bg-[#050505]">Select Size...</option>
                       <option value="2x6" className="bg-[#050505]">2x6</option>
@@ -406,7 +406,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     <select 
                       value={buildDetails.framing.joistSpacing}
                       onChange={e => updateBuildDetail('framing', 'joistSpacing', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 appearance-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] appearance-none transition-all"
                     >
                       <option value="" className="bg-[#050505]">Select Spacing...</option>
                       <option value="12 in OC" className="bg-[#050505]">12 in OC</option>
@@ -420,7 +420,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="text" 
                       value={buildDetails.framing.joistProtectionType}
                       onChange={e => updateBuildDetail('framing', 'joistProtectionType', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                       placeholder="e.g. G-Tape, Liquid Flash"
                     />
                   </div>
@@ -430,10 +430,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         type="checkbox" 
                         checked={buildDetails.framing.joistProtection}
                         onChange={e => updateBuildDetail('framing', 'joistProtection', e.target.checked)}
-                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer appearance-none border"
+                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                       />
                       <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                        <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Joist Protection Included</span>
@@ -449,7 +449,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     <select 
                       value={buildDetails.landscaping.prepType}
                       onChange={e => updateBuildDetail('landscaping', 'prepType', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 appearance-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] appearance-none transition-all"
                     >
                       <option value="" className="bg-[#050505]">Select Type...</option>
                       <option value="None" className="bg-[#050505]">None</option>
@@ -464,7 +464,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       value={buildDetails.landscaping.notes}
                       onChange={e => updateBuildDetail('landscaping', 'notes', e.target.value)}
                       rows={3}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800 leading-relaxed"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800 leading-relaxed"
                     />
                   </div>
                 </div>
@@ -482,7 +482,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     <select 
                       value={buildDetails.decking.type}
                       onChange={e => updateBuildDetail('decking', 'type', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 appearance-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] appearance-none transition-all"
                     >
                       <option value="" className="bg-[#050505]">Select Type...</option>
                       <option value="Composite" className="bg-[#050505]">Composite</option>
@@ -498,7 +498,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="text" 
                       value={buildDetails.decking.brand}
                       onChange={e => updateBuildDetail('decking', 'brand', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                       placeholder="e.g. Trex, TimberTech, Azek"
                     />
                   </div>
@@ -508,7 +508,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="text" 
                       value={buildDetails.decking.color}
                       onChange={e => updateBuildDetail('decking', 'color', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                       placeholder="Primary Board Color"
                     />
                   </div>
@@ -518,7 +518,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       type="text" 
                       value={buildDetails.decking.accentNote}
                       onChange={e => updateBuildDetail('decking', 'accentNote', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                       placeholder="Accent color or pattern"
                     />
                   </div>
@@ -534,10 +534,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         type="checkbox" 
                         checked={buildDetails.railing.included}
                         onChange={e => updateBuildDetail('railing', 'included', e.target.checked)}
-                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer appearance-none border"
+                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                       />
                       <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                        <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Railing Included</span>
@@ -549,7 +549,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         type="text" 
                         value={buildDetails.railing.type}
                         onChange={e => updateBuildDetail('railing', 'type', e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                         placeholder="e.g. Aluminum w/ Glass, Wood"
                       />
                     </div>
@@ -570,10 +570,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         type="checkbox" 
                         checked={buildDetails.stairs.included}
                         onChange={e => updateBuildDetail('stairs', 'included', e.target.checked)}
-                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer appearance-none border"
+                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                       />
                       <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                        <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Stairs Included</span>
@@ -586,7 +586,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                           type="text" 
                           value={buildDetails.stairs.style}
                           onChange={e => updateBuildDetail('stairs', 'style', e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                           placeholder="e.g. Wrap-around, Box"
                         />
                       </div>
@@ -596,7 +596,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                           type="text" 
                           value={buildDetails.stairs.type}
                           onChange={e => updateBuildDetail('stairs', 'type', e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                         />
                       </div>
                     </>
@@ -613,10 +613,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         type="checkbox" 
                         checked={buildDetails.skirting.included}
                         onChange={e => updateBuildDetail('skirting', 'included', e.target.checked)}
-                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer appearance-none border"
+                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                       />
                       <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                        <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Skirting Included</span>
@@ -629,7 +629,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                           type="text" 
                           value={buildDetails.skirting.type}
                           onChange={e => updateBuildDetail('skirting', 'type', e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                           placeholder="e.g. Horizontal PVC, Lattice"
                         />
                       </div>
@@ -639,10 +639,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                             type="checkbox" 
                             checked={buildDetails.skirting.trapDoor}
                             onChange={e => updateBuildDetail('skirting', 'trapDoor', e.target.checked)}
-                            className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer appearance-none border"
+                            className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                           />
                           <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                            <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                            <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                           </div>
                         </div>
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Trap Door / Access Hatch</span>
@@ -665,10 +665,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         type="checkbox" 
                         checked={buildDetails.electrical.lightingIncluded}
                         onChange={e => updateBuildDetail('electrical', 'lightingIncluded', e.target.checked)}
-                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer appearance-none border"
+                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                       />
                       <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                        <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Lighting Included</span>
@@ -680,7 +680,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         type="text" 
                         value={buildDetails.electrical.lightingType}
                         onChange={e => updateBuildDetail('electrical', 'lightingType', e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                         placeholder="e.g. In-deck, Post caps"
                       />
                     </div>
@@ -691,7 +691,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       value={buildDetails.electrical.roughInNotes}
                       onChange={e => updateBuildDetail('electrical', 'roughInNotes', e.target.value)}
                       rows={3}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800 leading-relaxed"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800 leading-relaxed"
                     />
                   </div>
                 </div>
@@ -706,10 +706,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         type="checkbox" 
                         checked={buildDetails.features.privacyWall}
                         onChange={e => updateBuildDetail('features', 'privacyWall', e.target.checked)}
-                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer appearance-none border"
+                        className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                       />
                       <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                        <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Privacy Wall Included</span>
@@ -721,7 +721,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         type="text" 
                         value={buildDetails.features.privacyWallType}
                         onChange={e => updateBuildDetail('features', 'privacyWallType', e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800"
                       />
                     </div>
                   )}
@@ -731,7 +731,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       value={buildDetails.features.customNotes}
                       onChange={e => updateBuildDetail('features', 'customNotes', e.target.value)}
                       rows={4}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-all placeholder:text-gray-800 leading-relaxed"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium text-white focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-gray-800 leading-relaxed"
                       placeholder="Any other specific build details or customer requests..."
                     />
                   </div>
@@ -762,7 +762,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                   handleSave();
                 }
               }}
-              className="bg-white text-black px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-500 hover:text-white transition-all active:scale-95 shadow-2xl shadow-emerald-500/10 flex items-center gap-3"
+              className="bg-white text-black px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[var(--brand-gold)] hover:text-white transition-all active:scale-95 shadow-2xl shadow-[var(--brand-gold)]/10 flex items-center gap-3"
             >
               {activeSection === 'extras' ? (
                 <>

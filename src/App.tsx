@@ -869,7 +869,7 @@ const App: React.FC = () => {
     let body = `Job Close-out Package: ${closeoutUrl}\n`;
     if (invoiceUrl) body += `Subcontractor Invoice: ${invoiceUrl}\n`;
     body += `\nFull documentation verified via Luxury Decking Field Pro.`;
-    window.location.href = `mailto:${OFFICE_EMAIL}?subject=${subject}&body=${encodeURIComponent(body)}`;
+    window.open(`mailto:${OFFICE_EMAIL}?subject=${subject}&body=${encodeURIComponent(body)}`, '_blank');
   }, [workflowState.userRole, workflowState.jobInfo.jobName]);
 
   const handleUpdateOfficeReviewStatus = useCallback((jobId: string, status: OfficeReviewStatus) => {
@@ -1646,7 +1646,7 @@ const App: React.FC = () => {
             <div className="bg-[var(--bg-primary)] p-2 border-b border-[var(--border-color)]">
               <button 
                 onClick={() => setView('estimator-dashboard')}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-emerald-600 hover:bg-emerald-600/5 rounded-xl transition-all"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/5 rounded-xl transition-all"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back to Dashboard

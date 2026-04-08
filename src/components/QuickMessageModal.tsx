@@ -127,9 +127,9 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
           className="relative w-full max-w-lg bg-[var(--bg-primary)] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-br from-emerald-500/5 to-transparent">
+          <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-br from-[var(--brand-gold)]/5 to-transparent">
             <div>
-              <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-1 flex items-center gap-2">
+              <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-1 flex items-center gap-2">
                 <Zap size={14} /> Quick Communication
               </h3>
               <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Message {clientName}</h2>
@@ -147,7 +147,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
             <button
               onClick={handleAiDraft}
               disabled={isAiLoading || !job}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[9px] font-black text-emerald-500 uppercase tracking-widest hover:bg-emerald-500/20 transition-all whitespace-nowrap disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-xl text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest hover:bg-[var(--brand-gold)]/20 transition-all whitespace-nowrap disabled:opacity-50"
             >
               {isAiLoading ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
               Draft with AI
@@ -185,7 +185,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                           onClick={() => handleAiRewrite(action.id as ToneAction)}
                           className="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl transition-all text-left group"
                         >
-                          <action.icon size={12} className="text-gray-500 group-hover:text-emerald-500" />
+                          <action.icon size={12} className="text-gray-500 group-hover:text-[var(--brand-gold)]" />
                           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest group-hover:text-white">{action.label}</span>
                         </button>
                       ))}
@@ -202,7 +202,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
               disabled={type === 'sms' && !clientPhone && !clientName} // Always allow name-based chat if phone is hidden
               onClick={() => setType('sms')}
               className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                type === 'sms' ? 'bg-emerald-600 text-black shadow-lg' : 'text-gray-500 hover:text-white disabled:opacity-30'
+                type === 'sms' ? 'bg-[var(--brand-gold)] text-black shadow-lg' : 'text-gray-500 hover:text-white disabled:opacity-30'
               }`}
             >
               <MessageSquare size={14} /> SMS Text
@@ -225,7 +225,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
             <div className="mx-8 mt-4 p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/5 rounded-lg">
-                  {type === 'sms' ? <MessageSquare size={12} className="text-emerald-500" /> : <Mail size={12} className="text-blue-500" />}
+                  {type === 'sms' ? <MessageSquare size={12} className="text-[var(--brand-gold)]" /> : <Mail size={12} className="text-blue-500" />}
                 </div>
                 <div>
                   <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest">{type === 'sms' ? 'Phone Number' : 'Email Address'}</p>
@@ -234,8 +234,8 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                   </p>
                 </div>
               </div>
-              <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Verified</span>
+              <div className="px-3 py-1 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-full">
+                <span className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-widest">Verified</span>
               </div>
             </div>
           )}
@@ -250,7 +250,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                 </div>
                 <button 
                   onClick={() => setShowTemplates(!showTemplates)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest text-emerald-500 hover:bg-emerald-500/10 transition-all"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/10 transition-all"
                 >
                   Select Template <ChevronDown size={12} className={`transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
                 </button>
@@ -266,9 +266,9 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                     <button
                       key={t.id}
                       onClick={() => applyTemplate(t)}
-                      className="w-full text-left p-3 rounded-xl bg-white/5 border border-white/5 hover:border-emerald-500/30 hover:bg-white/[0.08] transition-all group"
+                      className="w-full text-left p-3 rounded-xl bg-white/5 border border-white/5 hover:border-[var(--brand-gold)]/30 hover:bg-white/[0.08] transition-all group"
                     >
-                      <p className="text-[10px] font-black text-white uppercase tracking-widest group-hover:text-emerald-500">{t.title}</p>
+                      <p className="text-[10px] font-black text-white uppercase tracking-widest group-hover:text-[var(--brand-gold)]">{t.title}</p>
                       <p className="text-[9px] text-gray-500 mt-1 line-clamp-1">{t.content}</p>
                     </button>
                   ))}
@@ -285,12 +285,12 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder={type === 'sms' ? "Type your SMS message..." : "Type your email content..."}
-                  className="w-full h-40 bg-white/5 border border-white/10 rounded-2xl p-6 text-sm font-medium text-white focus:outline-none focus:border-emerald-500/50 transition-all resize-none shadow-inner"
+                  className="w-full h-40 bg-white/5 border border-white/10 rounded-2xl p-6 text-sm font-medium text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all resize-none shadow-inner"
                 />
                 {isAiLoading && (
                   <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] rounded-2xl flex items-center justify-center">
                     <div className="flex items-center gap-3 px-4 py-2 bg-[var(--bg-primary)] border border-white/10 rounded-xl shadow-2xl">
-                      <RefreshCw size={14} className="text-emerald-500 animate-spin" />
+                      <RefreshCw size={14} className="text-[var(--brand-gold)] animate-spin" />
                       <span className="text-[10px] font-black text-white uppercase tracking-widest">AI is thinking...</span>
                     </div>
                   </div>
@@ -302,7 +302,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
             </div>
 
             <div className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
-              <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
+              <ShieldCheck size={16} className="text-[var(--brand-gold)] shrink-0" />
               <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-relaxed">
                 {type === 'sms' 
                   ? "This text will be sent from your business number. History will be saved in the Chat Portal."
@@ -315,9 +315,9 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
               disabled={!content.trim() || isSending || isSent || isAiLoading}
               className={`w-full py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl ${
                 isSent 
-                  ? 'bg-emerald-500 text-black' 
+                  ? 'bg-[var(--brand-gold)] text-black' 
                   : type === 'sms' 
-                    ? 'bg-emerald-600 text-black hover:bg-emerald-500' 
+                    ? 'bg-[var(--brand-gold)] text-black hover:bg-[var(--brand-gold)]' 
                     : 'bg-blue-600 text-white hover:bg-blue-500'
               } disabled:opacity-50`}
             >

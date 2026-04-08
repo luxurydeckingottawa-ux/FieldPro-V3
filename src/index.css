@@ -3,38 +3,44 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #cbd5e1;
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --border-color: rgba(15, 23, 42, 0.25);
-  --card-bg: rgba(255, 255, 255, 0.8);
-  --card-border: rgba(15, 23, 42, 0.1);
-  --muted-text: #64748b;
+  --bg-primary: #faf9f7;
+  --bg-secondary: #f0ece6;
+  --text-primary: #1a1a1a;
+  --text-secondary: #5c5c5c;
+  --border-color: rgba(26, 26, 26, 0.12);
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(26, 26, 26, 0.08);
+  --muted-text: #8c8c8c;
   
-  /* Design System Tokens */
-  --radius-card: 2rem;
+  /* Luxury Decking Brand Tokens */
+  --radius-card: 1.25rem;
   --radius-badge: 0.5rem;
-  --radius-button: 1rem;
-  --shadow-card: 0 10px 30px -10px rgba(15, 23, 42, 0.1);
-  --shadow-accent: 0 10px 30px -10px rgba(16, 185, 129, 0.2);
-  --accent-color: #10b981; /* emerald-500 */
-  --accent-hover: #059669; /* emerald-600 */
+  --radius-button: 0.75rem;
+  --shadow-card: 0 4px 20px -4px rgba(26, 26, 26, 0.08);
+  --shadow-accent: 0 4px 20px -4px rgba(196, 164, 50, 0.2);
+  --accent-color: #C4A432;
+  --accent-hover: #A88B28;
+  --brand-gold: #C4A432;
+  --brand-gold-light: #D4B84A;
+  --brand-gold-dark: #A88B28;
+  --brand-black: #1a1a1a;
 }
 
 .dark {
-  --bg-primary: #050505;
-  --bg-secondary: #0a0a0a;
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --border-color: rgba(255, 255, 255, 0.05);
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #141414;
+  --text-primary: #f5f5f5;
+  --text-secondary: #a1a1a1;
+  --border-color: rgba(255, 255, 255, 0.08);
   --card-bg: rgba(255, 255, 255, 0.03);
-  --card-border: rgba(255, 255, 255, 0.05);
-  --muted-text: #71717a;
+  --card-border: rgba(255, 255, 255, 0.06);
+  --muted-text: #717171;
   
-  /* Design System Tokens - Dark Mode */
-  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-  --shadow-accent: 0 10px 30px -10px rgba(16, 185, 129, 0.3);
+  /* Dark Mode Brand Tokens */
+  --shadow-card: 0 4px 20px -4px rgba(0, 0, 0, 0.5);
+  --shadow-accent: 0 4px 20px -4px rgba(196, 164, 50, 0.3);
+  --accent-color: #D4B84A;
+  --accent-hover: #C4A432;
 }
 
 body {

@@ -70,8 +70,8 @@ const OfficePipelineView: React.FC<OfficePipelineViewProps> = ({ jobs, onSelectJ
       {/* Header */}
       <div className="border-b border-[var(--border-color)] p-6 flex items-center justify-between shrink-0 bg-gradient-to-b from-[var(--text-primary)]/[0.02] to-transparent">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center">
-            <Kanban className="w-5 h-5 text-emerald-500" />
+          <div className="w-10 h-10 bg-[var(--brand-gold)]/10 rounded-xl flex items-center justify-center">
+            <Kanban className="w-5 h-5 text-[var(--brand-gold)]" />
           </div>
           <div>
             <h1 className="text-2xl font-display leading-none">Office Pipeline</h1>
@@ -85,7 +85,7 @@ const OfficePipelineView: React.FC<OfficePipelineViewProps> = ({ jobs, onSelectJ
             <input 
               type="text"
               placeholder="Search pipeline..."
-              className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-emerald-500/50 w-64 transition-all"
+              className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-[var(--brand-gold)]/50 w-64 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -108,7 +108,7 @@ const OfficePipelineView: React.FC<OfficePipelineViewProps> = ({ jobs, onSelectJ
 
           <button 
             onClick={onNewJob}
-            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-black rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/10"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[var(--brand-gold)] text-black rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[var(--brand-gold)] transition-all shadow-lg shadow-[var(--brand-gold)]/10"
           >
             <Plus className="w-4 h-4" />
             New Job
@@ -134,10 +134,10 @@ const OfficePipelineView: React.FC<OfficePipelineViewProps> = ({ jobs, onSelectJ
                     {stage.label}
                   </h3>
                   <div className="flex flex-col items-end">
-                    <span className="px-2 py-0.5 rounded-full bg-[var(--bg-secondary)] text-emerald-500 text-[10px] font-black border border-[var(--border-color)] mb-1">
+                    <span className="px-2 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--brand-gold)] text-[10px] font-black border border-[var(--border-color)] mb-1">
                       {stageJobs.length}
                     </span>
-                    <span className="text-[11px] font-black text-emerald-500/80 tracking-tight">
+                    <span className="text-[11px] font-black text-[var(--brand-gold)]/80 tracking-tight">
                       ${getStageTotal(stage.id).toLocaleString()}
                     </span>
                   </div>
@@ -172,7 +172,7 @@ const OfficePipelineView: React.FC<OfficePipelineViewProps> = ({ jobs, onSelectJ
       <div className="bg-[var(--bg-secondary)] border-t border-[var(--border-color)] p-4 px-8 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <div className="w-2 h-2 rounded-full bg-[var(--brand-gold)] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <span className="font-label">Healthy Flow</span>
           </div>
           <div className="flex items-center gap-2">

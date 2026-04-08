@@ -13,8 +13,8 @@ const EstimatorMeasureSheet: React.FC<EstimatorMeasureSheetProps> = ({ data, onC
   const renderSection = (title: string, icon: any, children: React.ReactNode) => (
     <div className="bg-[var(--bg-primary)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm space-y-6">
       <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-4">
-        <div className="w-10 h-10 bg-emerald-600/10 rounded-xl flex items-center justify-center">
-          {React.createElement(icon, { className: "w-5 h-5 text-emerald-600" })}
+        <div className="w-10 h-10 bg-[var(--brand-gold)]/10 rounded-xl flex items-center justify-center">
+          {React.createElement(icon, { className: "w-5 h-5 text-[var(--brand-gold)]" })}
         </div>
         <h3 className="font-bold text-lg text-[var(--text-primary)]">{title}</h3>
       </div>
@@ -31,7 +31,7 @@ const EstimatorMeasureSheet: React.FC<EstimatorMeasureSheetProps> = ({ data, onC
           <label className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">{label}</label>
           <button
             onClick={() => onChange({ [key]: !data[key] })}
-            className={`w-12 h-6 rounded-full transition-all relative ${data[key] ? 'bg-emerald-600' : 'bg-gray-300'}`}
+            className={`w-12 h-6 rounded-full transition-all relative ${data[key] ? 'bg-[var(--brand-gold)]' : 'bg-gray-300'}`}
           >
             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${data[key] ? 'left-7' : 'left-1'}`} />
           </button>
@@ -46,7 +46,7 @@ const EstimatorMeasureSheet: React.FC<EstimatorMeasureSheetProps> = ({ data, onC
           <select
             value={data[key] as string}
             onChange={(e) => onChange({ [key]: e.target.value })}
-            className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all text-sm font-bold"
+            className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)] transition-all text-sm font-bold"
           >
             {options?.map(opt => <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>)}
           </select>
@@ -62,7 +62,7 @@ const EstimatorMeasureSheet: React.FC<EstimatorMeasureSheetProps> = ({ data, onC
             type={type}
             value={data[key] || ''}
             onChange={(e) => onChange({ [key]: type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value })}
-            className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all text-[var(--text-primary)] font-bold text-lg"
+            className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)] transition-all text-[var(--text-primary)] font-bold text-lg"
             placeholder="0"
           />
           {unit && (

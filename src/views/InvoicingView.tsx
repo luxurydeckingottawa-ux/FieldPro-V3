@@ -112,7 +112,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
     <div className="card-base p-6 space-y-4 group">
       <div className="flex justify-between items-start">
         <label className="font-label flex items-center gap-2">
-          {Icon && <Icon size={14} className="text-emerald-500" />} {label}
+          {Icon && <Icon size={14} className="text-[var(--brand-gold)]" />} {label}
         </label>
         <span className="font-label opacity-60 px-2.5 py-1 rounded-full border border-[var(--border-color)]">
           ${(RATES as any)[field] || '?'}/{unit}
@@ -135,7 +135,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
               const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
               onUpdate({ [field]: isNaN(val) ? 0 : val });
             }}
-            className="w-full h-12 text-center font-black text-2xl bg-transparent rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none border-none p-0 text-[var(--text-primary)] placeholder-[var(--text-secondary)]/30"
+            className="w-full h-12 text-center font-black text-2xl bg-transparent rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)] outline-none border-none p-0 text-[var(--text-primary)] placeholder-[var(--text-secondary)]/30"
             placeholder="0"
           />
           <span className="absolute -bottom-1 left-0 right-0 font-label text-center pointer-events-none opacity-40">
@@ -145,7 +145,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
 
         <button 
           onClick={() => onUpdate({ [field]: (value || 0) + step })}
-          className="w-12 h-12 rounded-2xl bg-emerald-600 text-black hover:bg-emerald-500 active:scale-95 transition-all shrink-0 shadow-lg shadow-emerald-500/20"
+          className="w-12 h-12 rounded-2xl bg-[var(--brand-gold)] text-black hover:bg-[var(--brand-gold)] active:scale-95 transition-all shrink-0 shadow-lg shadow-[var(--brand-gold)]/20"
         >
           <Plus size={18} strokeWidth={3} />
         </button>
@@ -160,13 +160,13 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
           <h2 className="text-2xl font-display leading-none">Final Subcontractor Invoice</h2>
           <p className="font-label mt-3">Luxury DecKing Rate Card</p>
         </div>
-        <Receipt className="text-emerald-500/20" size={48} />
+        <Receipt className="text-[var(--brand-gold)]/20" size={48} />
       </div>
 
       {/* 1. CORE BUILD */}
       <section className="space-y-6">
         <h3 className="font-label px-2 flex items-center gap-2">
-          <Hammer size={14} className="text-emerald-500" /> Framing & Decking
+          <Hammer size={14} className="text-[var(--brand-gold)]" /> Framing & Decking
         </h3>
         <div className="grid grid-cols-1 gap-4">
           <ManualStepper label="Core Decking Area" value={data.deckSqft} field="deckSqft" unit="SQFT" icon={Calculator} />
@@ -180,7 +180,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
       {/* 2. FOOTING SYSTEMS */}
       <section className="space-y-6">
         <h3 className="font-label px-2 flex items-center gap-2">
-          <Footprints size={14} className="text-emerald-500" /> Footing Systems
+          <Footprints size={14} className="text-[var(--brand-gold)]" /> Footing Systems
         </h3>
         <div className="grid grid-cols-1 gap-4">
           <ManualStepper label="Helical Piles" value={data.helicalPiles} field="helicalPiles" unit="EACH" />
@@ -198,17 +198,17 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
       {/* 3. STAIRS */}
       <section className="space-y-6">
         <h3 className="font-label px-2 flex items-center gap-2">
-          <Construction size={14} className="text-emerald-500" /> Stairs & Steps
+          <Construction size={14} className="text-[var(--brand-gold)]" /> Stairs & Steps
         </h3>
         <div className="space-y-4">
           <ManualStepper label="Standard Stairs" value={data.standardStairLf} field="standardStairLf" unit="LF" />
           <label className={`flex items-center justify-between p-6 border rounded-[2rem] transition-all cursor-pointer group ${
             data.hasClosedRisers 
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' 
+              ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/30 text-[var(--brand-gold)]' 
               : 'bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]/80'
           }`}>
             <div className="flex items-center gap-4">
-              <input type="checkbox" checked={data.hasClosedRisers} onChange={(e) => onUpdate({ hasClosedRisers: e.target.checked })} className="w-7 h-7 rounded-xl accent-emerald-500 bg-[var(--bg-primary)]/5 border border-[var(--border-color)]" />
+              <input type="checkbox" checked={data.hasClosedRisers} onChange={(e) => onUpdate({ hasClosedRisers: e.target.checked })} className="w-7 h-7 rounded-xl accent-[var(--brand-gold)] bg-[var(--bg-primary)]/5 border border-[var(--border-color)]" />
               <div>
                 <p className="font-label text-xs">Closed Risers (Std)</p>
                 <p className="font-label opacity-60 mt-1">Surcharge: +$2.00/LF</p>
@@ -218,11 +218,11 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
           <ManualStepper label="Premium PVC Stairs" value={data.premiumStairLf} field="premiumStairLf" unit="LF" />
           <label className={`flex items-center justify-between p-6 border rounded-[2rem] transition-all cursor-pointer group ${
             data.hasMitreSteps 
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' 
+              ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/30 text-[var(--brand-gold)]' 
               : 'bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]/80'
           }`}>
             <div className="flex items-center gap-4">
-              <input type="checkbox" checked={data.hasMitreSteps} onChange={(e) => onUpdate({ hasMitreSteps: e.target.checked })} className="w-7 h-7 rounded-xl accent-emerald-500 bg-[var(--bg-primary)]/5 border border-[var(--border-color)]" />
+              <input type="checkbox" checked={data.hasMitreSteps} onChange={(e) => onUpdate({ hasMitreSteps: e.target.checked })} className="w-7 h-7 rounded-xl accent-[var(--brand-gold)] bg-[var(--bg-primary)]/5 border border-[var(--border-color)]" />
               <div>
                 <p className="font-label text-xs">Mitre Steps (Prem)</p>
                 <p className="font-label opacity-60 mt-1">Surcharge: +$10.00/LF</p>
@@ -235,7 +235,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
       {/* 4. DETAIL & FINISH */}
       <section className="space-y-6">
         <h3 className="font-label px-2 flex items-center gap-2">
-          <Ruler size={14} className="text-emerald-500" /> Detail & Finish
+          <Ruler size={14} className="text-[var(--brand-gold)]" /> Detail & Finish
         </h3>
         <div className="grid grid-cols-1 gap-4">
           <ManualStepper label="Single Picture Border" value={data.singleBorderLf} field="singleBorderLf" unit="LF" />
@@ -247,17 +247,17 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
       {/* 5. RAILING SYSTEMS */}
       <section className="space-y-6">
         <h3 className="font-label px-2 flex items-center gap-2">
-          <ShieldCheck size={14} className="text-emerald-500" /> Railing Systems
+          <ShieldCheck size={14} className="text-[var(--brand-gold)]" /> Railing Systems
         </h3>
         <div className="space-y-4">
           <ManualStepper label="Wood Railing" value={data.woodRailingLf} field="woodRailingLf" unit="LF" />
           <label className={`flex items-center justify-between p-6 border rounded-[2rem] transition-all cursor-pointer group ${
             data.hasAluminumSpindles 
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' 
+              ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/30 text-[var(--brand-gold)]' 
               : 'bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]/80'
           }`}>
             <div className="flex items-center gap-4">
-              <input type="checkbox" checked={data.hasAluminumSpindles} onChange={(e) => onUpdate({ hasAluminumSpindles: e.target.checked })} className="w-7 h-7 rounded-xl accent-emerald-500 bg-[var(--bg-primary)]/5 border border-[var(--border-color)]" />
+              <input type="checkbox" checked={data.hasAluminumSpindles} onChange={(e) => onUpdate({ hasAluminumSpindles: e.target.checked })} className="w-7 h-7 rounded-xl accent-[var(--brand-gold)] bg-[var(--bg-primary)]/5 border border-[var(--border-color)]" />
               <div>
                 <p className="font-label text-xs">Aluminum Spindles</p>
                 <p className="font-label opacity-60 mt-1">Surcharge: +$5.00/LF</p>
@@ -285,7 +285,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
       {/* 6. SKIRTING & PRIVACY */}
       <section className="space-y-6">
         <h3 className="font-label px-2 flex items-center gap-2">
-          <Construction size={14} className="text-emerald-500" /> Skirting & Privacy
+          <Construction size={14} className="text-[var(--brand-gold)]" /> Skirting & Privacy
         </h3>
         <div className="grid grid-cols-1 gap-4">
           <ManualStepper label="Skirting Board/Tape" value={data.skirtingSqft} field="skirtingSqft" unit="SQFT" />
@@ -305,7 +305,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
       {/* 7. SITE PREP & DEMO */}
       <section className="space-y-6">
         <h3 className="font-label px-2 flex items-center gap-2">
-          <Shovel size={14} className="text-emerald-500" /> Site Prep & Demo
+          <Shovel size={14} className="text-[var(--brand-gold)]" /> Site Prep & Demo
         </h3>
         <div className="grid grid-cols-1 gap-4">
           <ManualStepper label="Landscape Fabric + Stone" value={data.landscapeFabricSqft} field="landscapeFabricSqft" unit="SQFT" />
@@ -318,7 +318,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
       {/* 8. LIGHTING & STRUCTURES */}
       <section className="space-y-6">
         <h3 className="font-label px-2 flex items-center gap-2">
-          <Lightbulb size={14} className="text-emerald-500" /> Lighting & Misc
+          <Lightbulb size={14} className="text-[var(--brand-gold)]" /> Lighting & Misc
         </h3>
         <div className="grid grid-cols-1 gap-4">
           <ManualStepper label="8 LED Light Kit" value={data.lightingKits} field="lightingKits" unit="EA" />
@@ -334,14 +334,14 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
       {/* CUSTOM WORK SECTION */}
       <section className="space-y-6 pt-4">
         <h3 className="font-label px-2 flex items-center gap-2">
-          <ClipboardPen size={14} className="text-emerald-500" /> Custom & Extra Items
+          <ClipboardPen size={14} className="text-[var(--brand-gold)]" /> Custom & Extra Items
         </h3>
         <div className="card-base p-8 space-y-6">
           <textarea 
             value={data.customWorkDescription}
             onChange={(e) => onUpdate({ customWorkDescription: e.target.value })}
             placeholder="Detailed description of unlisted work..."
-            className="w-full p-6 bg-[var(--bg-primary)]/5 border border-[var(--border-color)] rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none min-h-[120px] text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50"
+            className="w-full p-6 bg-[var(--bg-primary)]/5 border border-[var(--border-color)] rounded-2xl text-sm focus:ring-2 focus:ring-[var(--brand-gold)] outline-none min-h-[120px] text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50"
           />
           <div className="flex items-center gap-4">
             <div className="flex-1 relative">
@@ -349,7 +349,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
                 type="number"
                 value={data.customWorkAmount || ''}
                 onChange={(e) => onUpdate({ customWorkAmount: parseFloat(e.target.value) || 0 })}
-                className="w-full h-14 text-center font-black text-2xl bg-[var(--bg-primary)]/5 border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none text-[var(--text-primary)]"
+                className="w-full h-14 text-center font-black text-2xl bg-[var(--bg-primary)]/5 border border-[var(--border-color)] rounded-2xl focus:ring-2 focus:ring-[var(--brand-gold)] outline-none text-[var(--text-primary)]"
                 placeholder="Amount ($0.00)"
               />
               <span className="absolute -bottom-1 left-0 right-0 font-label text-center pointer-events-none opacity-40">
@@ -362,7 +362,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
 
       {/* INVOICE SUMMARY PANEL */}
       <div className="card-base p-10 space-y-8 mt-16 mb-12 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] -mr-32 -mt-32 rounded-full group-hover:bg-emerald-500/10 transition-all duration-1000"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[100px] -mr-32 -mt-32 rounded-full group-hover:bg-[var(--brand-gold)]/10 transition-all duration-1000"></div>
         
         <div className="flex justify-between items-center pb-8 border-b border-[var(--border-color)] relative z-10">
           <div>
@@ -372,8 +372,8 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
               <span className="font-label opacity-60">CAD</span>
             </div>
           </div>
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-            <Receipt className="text-emerald-500" size={32} />
+          <div className="w-16 h-16 rounded-2xl bg-[var(--brand-gold)]/10 flex items-center justify-center border border-[var(--brand-gold)]/20">
+            <Receipt className="text-[var(--brand-gold)]" size={32} />
           </div>
         </div>
 
@@ -392,7 +392,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
                       {item.qty} {item.unit} @ ${item.amount.toFixed(2)}
                     </span>
                   </div>
-                  <span className="text-xs font-black tabular-nums text-[var(--text-secondary)] group-hover/item:text-emerald-500 transition-colors">${item.total.toFixed(2)}</span>
+                  <span className="text-xs font-black tabular-nums text-[var(--text-secondary)] group-hover/item:text-[var(--brand-gold)] transition-colors">${item.total.toFixed(2)}</span>
                 </div>
               ))
             )}
@@ -410,7 +410,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
           </div>
           <div className="flex justify-between items-center pt-6 border-t border-[var(--border-color)]">
             <span className="font-label text-sm">Grand Total</span>
-            <span className="text-3xl font-black tabular-nums text-emerald-500">${grandTotal.toLocaleString('en-CA', { minimumFractionDigits: 2 })}</span>
+            <span className="text-3xl font-black tabular-nums text-[var(--brand-gold)]">${grandTotal.toLocaleString('en-CA', { minimumFractionDigits: 2 })}</span>
           </div>
         </div>
 
@@ -429,7 +429,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
           </button>
           <button 
             onClick={onNext}
-            className="flex-[2] py-5 bg-emerald-600 text-black rounded-[2rem] font-label text-[10px] shadow-2xl hover:bg-emerald-500 transition-all active:scale-[0.98]"
+            className="flex-[2] py-5 bg-[var(--brand-gold)] text-black rounded-[2rem] font-label text-[10px] shadow-2xl hover:bg-[var(--brand-gold)] transition-all active:scale-[0.98]"
           >
             Review & Submit
           </button>

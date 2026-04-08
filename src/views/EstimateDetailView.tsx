@@ -71,7 +71,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
   };
 
   const getStageColor = (stage: PipelineStage) => {
-    if ([PipelineStage.EST_APPROVED, PipelineStage.LEAD_WON].includes(stage)) return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+    if ([PipelineStage.EST_APPROVED, PipelineStage.LEAD_WON].includes(stage)) return 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] border-[var(--brand-gold)]/20';
     if ([PipelineStage.EST_REJECTED, PipelineStage.LEAD_LOST].includes(stage)) return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
     if ([PipelineStage.EST_ON_HOLD, PipelineStage.LEAD_ON_HOLD].includes(stage)) return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
     if ([PipelineStage.EST_SENT, PipelineStage.ESTIMATE_SENT].includes(stage)) return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
@@ -130,7 +130,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               </button>
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">{job.jobNumber}</span>
+                  <span className="text-[10px] font-bold text-[var(--brand-gold)] uppercase tracking-widest">{job.jobNumber}</span>
                   <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${getStageColor(job.pipelineStage)}`}>
                     {getStageLabel(job.pipelineStage)}
                   </span>
@@ -147,7 +147,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               <select
                 value={job.pipelineStage}
                 onChange={(e) => onUpdatePipelineStage(job.id, e.target.value as PipelineStage)}
-                className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50"
+                className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)]/50"
               >
                 {moveOptions.map(stage => (
                   <option key={stage} value={stage}>{getStageLabel(stage)}</option>
@@ -155,7 +155,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               </select>
               <button
                 onClick={() => onOpenEstimator(job)}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-500 transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)] text-white rounded-lg text-xs font-bold hover:bg-[var(--brand-gold)] transition-all"
               >
                 <DollarSign className="w-4 h-4" /> Open Estimator
               </button>
@@ -267,12 +267,12 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                   <Users className="w-3.5 h-3.5" /> Client Information
                 </h2>
                 {!editing ? (
-                  <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 hover:text-emerald-400 transition-all">
+                  <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 text-xs font-bold text-[var(--brand-gold)] hover:text-[var(--brand-gold-light)] transition-all">
                     <Edit2 className="w-3.5 h-3.5" /> Edit
                   </button>
                 ) : (
                   <div className="flex gap-2">
-                    <button onClick={handleSaveEdit} className="flex items-center gap-1 text-xs font-bold text-emerald-500 hover:text-emerald-400"><Save className="w-3.5 h-3.5" /> Save</button>
+                    <button onClick={handleSaveEdit} className="flex items-center gap-1 text-xs font-bold text-[var(--brand-gold)] hover:text-[var(--brand-gold-light)]"><Save className="w-3.5 h-3.5" /> Save</button>
                     <button onClick={() => setEditing(false)} className="flex items-center gap-1 text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><X className="w-3.5 h-3.5" /> Cancel</button>
                   </div>
                 )}
@@ -283,27 +283,27 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     <div>
                       <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1 block">Name</label>
                       <input value={editData.clientName} onChange={e => setEditData(p => ({...p, clientName: e.target.value}))}
-                        className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50" />
+                        className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)]/50" />
                     </div>
                     <div>
                       <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1 block">Phone</label>
                       <input value={editData.clientPhone} onChange={e => setEditData(p => ({...p, clientPhone: e.target.value}))}
-                        className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50" />
+                        className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)]/50" />
                     </div>
                     <div>
                       <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1 block">Email</label>
                       <input value={editData.clientEmail} onChange={e => setEditData(p => ({...p, clientEmail: e.target.value}))}
-                        className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50" />
+                        className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)]/50" />
                     </div>
                     <div>
                       <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1 block">Address</label>
                       <input value={editData.projectAddress} onChange={e => setEditData(p => ({...p, projectAddress: e.target.value}))}
-                        className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50" />
+                        className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)]/50" />
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1 block">Scope / Notes</label>
                       <textarea value={editData.scopeSummary} onChange={e => setEditData(p => ({...p, scopeSummary: e.target.value}))} rows={3}
-                        className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50 resize-none" />
+                        className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)]/50 resize-none" />
                     </div>
                   </div>
                 ) : (
@@ -460,13 +460,13 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     {job.estimateData.options.map((option: any) => (
                       <div key={option.id} className={`p-4 rounded-lg border transition-all ${
                         job.acceptedOptionId === option.id 
-                          ? 'bg-emerald-500/10 border-emerald-500/30' 
+                          ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/30' 
                           : 'bg-[var(--bg-secondary)] border-[var(--border-color)] hover:border-[var(--text-secondary)]'
                       }`}>
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">{option.name}</p>
                           {job.acceptedOptionId === option.id && (
-                            <span className="px-2 py-0.5 bg-emerald-500 text-white text-[8px] font-bold uppercase rounded">Accepted</span>
+                            <span className="px-2 py-0.5 bg-[var(--brand-gold)] text-white text-[8px] font-bold uppercase rounded">Accepted</span>
                           )}
                         </div>
                         <p className="text-sm font-bold text-[var(--text-primary)] mb-1">{option.title}</p>
@@ -495,7 +495,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                       <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Total</p>
-                      <p className="text-lg font-bold text-emerald-500">${(job.totalAmount || 0).toLocaleString()}</p>
+                      <p className="text-lg font-bold text-[var(--brand-gold)]">${(job.totalAmount || 0).toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Material</p>
@@ -525,7 +525,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               </div>
               <div className="p-4 space-y-2">
                 <button onClick={() => onOpenEstimator(job)}
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-500 transition-all">
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--brand-gold)] text-white rounded-lg text-sm font-bold hover:bg-[var(--brand-gold)] transition-all">
                   <DollarSign className="w-4 h-4" /> Open in Estimator
                 </button>
                 {amount > 0 && !job.customerSignature && (
@@ -535,7 +535,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                   </button>
                 )}
                 {job.customerSignature && (
-                  <div className="w-full flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-sm font-bold text-emerald-500">
+                  <div className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg text-sm font-bold text-[var(--brand-gold)]">
                     <CheckCircle2 className="w-4 h-4" /> Signed & Accepted
                   </div>
                 )}
@@ -549,12 +549,12 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                   </button>
                 )}
                 <button onClick={() => onPreviewPortal(job)}
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm font-bold text-[var(--text-primary)] hover:border-emerald-500/30 transition-all">
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm font-bold text-[var(--text-primary)] hover:border-[var(--brand-gold)]/30 transition-all">
                   <ExternalLink className="w-4 h-4" /> Preview Portal
                 </button>
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={() => sharePortalLink('sms')}
-                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-500 text-xs font-bold hover:bg-emerald-500/20 transition-all">
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg text-[var(--brand-gold)] text-xs font-bold hover:bg-[var(--brand-gold)]/20 transition-all">
                     <MessageSquare className="w-3.5 h-3.5" /> SMS Link
                   </button>
                   <button onClick={() => sharePortalLink('email')}
@@ -563,13 +563,13 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                   </button>
                 </div>
                 <button onClick={copyPortalLink}
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm font-bold text-[var(--text-primary)] hover:border-emerald-500/30 transition-all">
-                  {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm font-bold text-[var(--text-primary)] hover:border-[var(--brand-gold)]/30 transition-all">
+                  {copied ? <Check className="w-4 h-4 text-[var(--brand-gold)]" /> : <Copy className="w-4 h-4" />}
                   {copied ? 'Copied!' : 'Copy Portal Link'}
                 </button>
                 {job.clientPhone && (
                   <a href={`tel:${job.clientPhone}`}
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm font-bold text-[var(--text-primary)] hover:border-emerald-500/30 transition-all">
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm font-bold text-[var(--text-primary)] hover:border-[var(--brand-gold)]/30 transition-all">
                     <Phone className="w-4 h-4" /> Call Client
                   </a>
                 )}
@@ -607,7 +607,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                 {amount > 0 && (
                   <div>
                     <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Amount</p>
-                    <p className="text-lg font-bold text-emerald-500">${amount.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-[var(--brand-gold)]">${amount.toLocaleString()}</p>
                   </div>
                 )}
                 <div>
@@ -639,14 +639,14 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
 
             {/* Move to Jobs (when approved) */}
             {job.pipelineStage === PipelineStage.EST_APPROVED && (
-              <div className="bg-emerald-500/10 rounded-xl border border-emerald-500/20 p-5">
+              <div className="bg-[var(--brand-gold)]/10 rounded-xl border border-[var(--brand-gold)]/20 p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                  <h3 className="text-sm font-bold text-emerald-500">Estimate Approved</h3>
+                  <CheckCircle2 className="w-5 h-5 text-[var(--brand-gold)]" />
+                  <h3 className="text-sm font-bold text-[var(--brand-gold)]">Estimate Approved</h3>
                 </div>
                 <p className="text-xs text-[var(--text-secondary)] mb-4">Move to the Jobs pipeline to begin the project workflow.</p>
                 <button onClick={() => onUpdatePipelineStage(job.id, PipelineStage.JOB_SOLD)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-500 transition-all">
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--brand-gold)] text-white rounded-lg text-sm font-bold hover:bg-[var(--brand-gold)] transition-all">
                   Move to Job Sold <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -690,8 +690,8 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                       </div>
                     )}
                     {job.aiInsights.nextActionRecommendation && (
-                      <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
-                        <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest mb-1">Recommended Next Step</p>
+                      <div className="p-3 bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/10 rounded-lg">
+                        <p className="text-[9px] font-bold text-[var(--brand-gold)] uppercase tracking-widest mb-1">Recommended Next Step</p>
                         <p className="text-xs font-bold text-[var(--text-primary)]">{job.aiInsights.nextActionRecommendation.action}</p>
                         <p className="text-[10px] text-[var(--text-secondary)] mt-1">{job.aiInsights.nextActionRecommendation.reasoning}</p>
                       </div>

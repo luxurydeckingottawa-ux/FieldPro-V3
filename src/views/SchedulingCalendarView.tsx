@@ -35,7 +35,7 @@ interface SchedulingCalendarViewProps {
 }
 
 const CREW_COLORS: Record<string, string> = {
-  'Luxury Crew A': 'bg-emerald-500',
+  'Luxury Crew A': 'bg-[var(--brand-gold)]',
   'Luxury Crew B': 'bg-sky-500',
   'Luxury Crew C': 'bg-indigo-500',
   'Sub: Elite Decking': 'bg-amber-500',
@@ -86,7 +86,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
 
   const getStatusIndicator = (status?: ScheduleStatus) => {
     switch (status) {
-      case ScheduleStatus.ON_SCHEDULE: return 'bg-emerald-400';
+      case ScheduleStatus.ON_SCHEDULE: return 'bg-[var(--brand-gold)]';
       case ScheduleStatus.AHEAD: return 'bg-sky-400';
       case ScheduleStatus.BEHIND: return 'bg-orange-400';
       case ScheduleStatus.DELAYED: return 'bg-rose-400';
@@ -162,7 +162,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
               <select 
                 value={selectedCrew}
                 onChange={(e) => setSelectedCrew(e.target.value)}
-                className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl px-5 py-2.5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer"
+                className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl px-5 py-2.5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all cursor-pointer"
               >
                 {crews.map(crew => (
                   <option key={crew} value={crew} className="bg-[var(--bg-primary)]">{crew === 'all' ? 'All Crews' : crew}</option>
@@ -176,7 +176,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <Zap className="w-4 h-4 text-emerald-500" />
+              <Zap className="w-4 h-4 text-[var(--brand-gold)]" />
               <p className="font-label tracking-widest uppercase text-[10px] font-black">Planning Intelligence</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -245,15 +245,15 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                   key={i} 
                   className={`min-h-[160px] p-3 border-r border-b border-[var(--border-color)] transition-all ${
                     isCurrentMonth ? 'bg-transparent' : 'bg-[var(--text-primary)]/[0.01] opacity-20'
-                  } ${isSameDay(day, new Date()) ? 'bg-emerald-500/[0.02]' : ''}`}
+                  } ${isSameDay(day, new Date()) ? 'bg-[var(--brand-gold)]/[0.02]' : ''}`}
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex flex-col gap-1">
-                      <span className={`text-xs font-black ${isSameDay(day, new Date()) ? 'text-emerald-500' : 'text-[var(--text-secondary)]'}`}>
+                      <span className={`text-xs font-black ${isSameDay(day, new Date()) ? 'text-[var(--brand-gold)]' : 'text-[var(--text-secondary)]'}`}>
                         {format(day, 'd')}
                       </span>
                       {isSameDay(day, new Date()) && (
-                        <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded">Today</span>
+                        <span className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/10 px-1.5 py-0.5 rounded">Today</span>
                       )}
                     </div>
                   </div>
@@ -294,7 +294,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                           {/* Tooltip-like info on hover */}
                           <div className="absolute bottom-full left-0 mb-3 w-64 card-base p-5 opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-all translate-y-2 group-hover:translate-y-0">
                             <div className="flex items-center justify-between mb-3">
-                              <span className="font-label text-emerald-500">{job.jobNumber}</span>
+                              <span className="font-label text-[var(--brand-gold)]">{job.jobNumber}</span>
                               <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${getStatusIndicator(job.officialScheduleStatus)} text-black`}>
                                 {job.officialScheduleStatus?.replace('_', ' ')}
                               </div>
@@ -303,15 +303,15 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                             
                             <div className="space-y-2">
                               <div className="flex items-center gap-3 font-label">
-                                <Users className="w-3.5 h-3.5 text-emerald-500" />
+                                <Users className="w-3.5 h-3.5 text-[var(--brand-gold)]" />
                                 <span>{job.assignedCrewOrSubcontractor}</span>
                               </div>
                               <div className="flex items-center gap-3 font-label">
-                                <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                                <Clock className="w-3.5 h-3.5 text-[var(--brand-gold)]" />
                                 <span>{job.plannedDurationDays} Days Planned</span>
                               </div>
                               <div className="flex items-center gap-3 font-label">
-                                <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+                                <MapPin className="w-3.5 h-3.5 text-[var(--brand-gold)]" />
                                 <span className="truncate">{job.projectAddress}</span>
                               </div>
                             </div>
@@ -363,7 +363,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
             >
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-label text-emerald-500">{job.jobNumber}</span>
+                  <span className="font-label text-[var(--brand-gold)]">{job.jobNumber}</span>
                   {!job.plannedStartDate && (
                     <span className="px-2 py-0.5 bg-rose-500/10 text-rose-500 text-[8px] font-black uppercase tracking-widest rounded">Unscheduled</span>
                   )}
@@ -376,7 +376,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                   </div>
                 )}
               </div>
-              <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)]/5 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)]/5 flex items-center justify-center group-hover:bg-[var(--brand-gold)] group-hover:text-black transition-all">
                 <ChevronRightIcon className="w-5 h-5" />
               </div>
             </div>

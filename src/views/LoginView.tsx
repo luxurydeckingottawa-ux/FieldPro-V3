@@ -52,7 +52,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
     <div className="min-h-screen bg-[var(--bg-secondary)] flex flex-col items-center justify-center p-4 transition-colors duration-300">
       <div className="w-full max-w-md bg-[var(--bg-primary)] rounded-2xl shadow-xl p-8 border border-[var(--border-color)]">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-emerald-600 rounded-xl flex items-center justify-center mb-4 shadow-lg">
+          <div className="w-16 h-16 bg-[#C4A432] rounded-xl flex items-center justify-center mb-4 shadow-lg">
             <Shield className="text-white w-8 h-8" />
           </div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Luxury Decking</h1>
@@ -78,7 +78,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@luxurydecking.ca"
-                className="w-full pl-12 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-[var(--bg-primary)] transition-all text-[var(--text-primary)]"
+                className="w-full pl-12 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C4A432] focus:bg-[var(--bg-primary)] transition-all text-[var(--text-primary)]"
                 required
               />
             </div>
@@ -95,7 +95,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-12 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-[var(--bg-primary)] transition-all text-[var(--text-primary)]"
+                className="w-full pl-12 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C4A432] focus:bg-[var(--bg-primary)] transition-all text-[var(--text-primary)]"
                 required
               />
             </div>
@@ -104,7 +104,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-4 bg-[#C4A432] text-white font-bold rounded-xl hover:bg-[#D4B84A] transition-all shadow-lg shadow-[#C4A432]/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -123,8 +123,8 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
           </p>
           {isSupabaseConfigured() ? (
             <div className="mt-3 flex items-center justify-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
-              <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Cloud Connected</span>
+              <div className="w-2 h-2 rounded-full bg-[#C4A432] shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+              <span className="text-[10px] text-[#C4A432] font-bold uppercase tracking-widest">Cloud Connected</span>
             </div>
           ) : (
             <div className="mt-4 flex flex-col gap-1 text-[10px] text-[var(--text-secondary)]">

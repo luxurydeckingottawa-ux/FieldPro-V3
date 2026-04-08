@@ -118,7 +118,7 @@ export const OfficeAIAssistant: React.FC<OfficeAIAssistantProps> = ({ job, onUpd
             >
               <div>
                 <div className="flex items-center gap-2 text-slate-900 font-bold mb-2 text-sm">
-                  <TrendingUp className="w-4 h-4 text-emerald-500" />
+                  <TrendingUp className="w-4 h-4 text-[var(--brand-gold)]" />
                   Portal Engagement
                 </div>
                 {insights?.activitySummary ? (
