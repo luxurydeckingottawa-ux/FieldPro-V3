@@ -13,7 +13,6 @@ import {
   User as UserIcon,
   MapPin,
   Plus,
-  CloudRain,
   Zap
 } from 'lucide-react';
 
@@ -66,12 +65,6 @@ const JobCard: React.FC<{ job: Job; onClick: (job: Job) => void }> = ({ job, onC
   const progress = Math.round((job.currentStage / 5) * 100);
   const issues = useMemo(() => getJobIssues(job), [job]);
   const labourSummary = useMemo(() => timeClockService.getLabourSummary(job.id), [job.id]);
-  
-  const hasWeatherRisk = useMemo(() => {
-    if (!job.plannedStartDate || !job.plannedFinishDate) return false;
-    const hash = job.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return hash % 10 > 7;
-  }, [job.id, job.plannedStartDate, job.plannedFinishDate]);
 
   return (
     <button
@@ -96,11 +89,6 @@ const JobCard: React.FC<{ job: Job; onClick: (job: Job) => void }> = ({ job, onC
             {job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED && (
               <div className="flex items-center gap-1 px-2 py-0.5 rounded border border-amber-500/20 bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase tracking-widest">
                 <Zap size={8} /> Review Needed
-              </div>
-            )}
-            {hasWeatherRisk && (
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded border border-rose-500/20 bg-rose-500/10 text-rose-500 text-[8px] font-black uppercase tracking-widest">
-                <CloudRain size={8} /> Weather Risk
               </div>
             )}
             {issues.slice(0, 2).map((issue, idx) => (
@@ -186,18 +174,7 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
         return startDate >= now && startDate <= nextWeek && j.pipelineStage !== PipelineStage.IN_FIELD;
       }).length,
       awaitingReview: jobs.filter(j => j.officeReviewStatus === OfficeReviewStatus.READY_FOR_REVIEW).length,
-      scheduleReview: jobs.filter(j => j.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED).length,
-      weatherRisks: jobs.filter(j => {
-        if (!j.plannedStartDate || !j.plannedFinishDate) return false;
-        const hash = j.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return hash % 10 > 7; // 20% chance of weather risk for mock
-      }).length,
       needsAttention: jobs.filter(j => getJobIssues(j).length > 0).length,
-      completeThisMonth: jobs.filter(j => {
-        if (j.status !== JobStatus.COMPLETED || !j.updatedAt) return false;
-        const updatedDate = new Date(j.updatedAt);
-        return updatedDate.getMonth() === now.getMonth() && updatedDate.getFullYear() === now.getFullYear();
-      }).length,
     };
   }, [jobs]);
 
@@ -281,7 +258,7 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
         </div>
 
         {/* Summary Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <StatCard 
             label="Active Jobs" 
             value={stats.active} 
@@ -293,18 +270,6 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
             value={stats.inField} 
             icon={<MapPin className="w-4 h-4" />} 
             color="blue"
-          />
-          <StatCard 
-            label="Schedule Review" 
-            value={stats.scheduleReview} 
-            icon={<Zap className="w-4 h-4" />} 
-            color="amber"
-          />
-          <StatCard 
-            label="Weather Risks" 
-            value={stats.weatherRisks} 
-            icon={<CloudRain className="w-4 h-4" />} 
-            color="rose"
           />
           <StatCard 
             label="Awaiting Review" 

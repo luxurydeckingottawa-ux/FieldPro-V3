@@ -23,15 +23,10 @@ import {
   Hammer,
   Truck,
   MapPin,
-  Sun,
-  Cloud,
-  CloudRain,
-  CloudLightning,
-  Snowflake,
   AlertTriangle,
   Zap
 } from 'lucide-react';
-import { ForecastReviewStatus, WeatherDay } from '../types';
+import { ForecastReviewStatus } from '../types';
 
 interface SchedulingCalendarViewProps {
   jobs: Job[];
@@ -46,17 +41,6 @@ const CREW_COLORS: Record<string, string> = {
   'Sub: Elite Decking': 'bg-amber-500',
   'Sub: Pro Framers': 'bg-orange-500',
   'default': 'bg-gray-500'
-};
-
-const WeatherIcon = ({ condition, size = 12 }: { condition: WeatherDay['condition'], size?: number }) => {
-  switch (condition) {
-    case 'sunny': return <Sun size={size} className="text-amber-400" />;
-    case 'cloudy': return <Cloud size={size} className="text-gray-400" />;
-    case 'rainy': return <CloudRain size={size} className="text-blue-400" />;
-    case 'stormy': return <CloudLightning size={size} className="text-indigo-400" />;
-    case 'snowy': return <Snowflake size={size} className="text-sky-200" />;
-    default: return null;
-  }
 };
 
 const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, onSelectJob }) => {
@@ -110,19 +94,6 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
     }
   };
 
-  const getDayWeather = (day: Date) => {
-    // In a real app, we'd fetch this. For now, we'll generate it based on the date hash
-    const dayStr = format(day, 'yyyy-MM-dd');
-    const hash = dayStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const conditions: WeatherDay['condition'][] = ['sunny', 'cloudy', 'rainy', 'stormy', 'snowy'];
-    return {
-      condition: conditions[hash % conditions.length],
-      precipitationChance: hash % 100,
-      highTemp: 15 + (hash % 15),
-      lowTemp: 5 + (hash % 10)
-    };
-  };
-
   const planningAlerts = useMemo(() => {
     const alerts = [];
     
@@ -135,24 +106,6 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
         count: reviewNeeded.length,
         icon: <Clock className="w-4 h-4 text-amber-500" />,
         color: 'border-amber-500/20 bg-amber-500/5'
-      });
-    }
-
-    // Weather Risk (Precipitation > 60% on scheduled days)
-    const weatherRisk = jobs.filter(job => {
-      if (!job.plannedStartDate || !job.plannedFinishDate) return false;
-      const start = parseISO(job.plannedStartDate);
-      const end = parseISO(job.plannedFinishDate);
-      const interval = eachDayOfInterval({ start, end });
-      return interval.some(day => getDayWeather(day).precipitationChance > 60);
-    });
-    if (weatherRisk.length > 0) {
-      alerts.push({
-        type: 'weather',
-        title: 'Weather Risk Detected',
-        count: weatherRisk.length,
-        icon: <CloudRain className="w-4 h-4 text-blue-500" />,
-        color: 'border-blue-500/20 bg-blue-500/5'
       });
     }
 
@@ -281,7 +234,6 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
           <div className="grid grid-cols-7 border-t border-l border-[var(--border-color)] rounded-3xl overflow-hidden shadow-2xl">
             {calendarDays.map((day, i) => {
               const isCurrentMonth = isSameDay(startOfMonth(day), monthStart);
-              const dayWeather = getDayWeather(day);
               const dayJobs = filteredJobs.filter(job => {
                 const start = parseISO(job.plannedStartDate!);
                 const end = parseISO(job.plannedFinishDate!);
@@ -304,16 +256,6 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                         <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded">Today</span>
                       )}
                     </div>
-                    
-                    {isCurrentMonth && (
-                      <div className="flex flex-col items-end gap-1 opacity-60 group-hover:opacity-100 transition-all">
-                        <div className="flex items-center gap-1">
-                          <WeatherIcon condition={dayWeather.condition} />
-                          <span className="text-[9px] font-black">{dayWeather.highTemp}°</span>
-                        </div>
-                        <div className="text-[8px] font-bold text-blue-400">{dayWeather.precipitationChance}%</div>
-                      </div>
-                    )}
                   </div>
                   
                   <div className="space-y-2">

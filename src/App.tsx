@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake } from './types';
-import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES, OFFICE_CHECKLIST_CONFIG } from './constants';
+import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES } from './constants';
 import LoginView from './views/LoginView';
 import JobsListView from './views/JobsListView';
 import JobDetailView from './views/JobDetailView';
@@ -10,11 +10,9 @@ import FieldResourcesView from './views/FieldResourcesView';
 import { generateCloseoutPDF, generateInvoicePDF } from './utils/pdfGenerator';
 import { safeSetItem } from './utils/storage';
 import SchedulingCalendarView from './views/SchedulingCalendarView';
-// OfficePipelineView replaced by UnifiedPipelineView
 import OfficeJobDetailView from './views/OfficeJobDetailView';
 import NewJobIntakeView from './views/NewJobIntakeView';
 import CustomerPortalView from './views/CustomerPortalView';
-// CustomersListView merged into UnifiedPipelineView
 import EstimatePortalView from './views/EstimatePortalView';
 import EstimatorDashboardView from './views/EstimatorDashboardView';
 import EstimatorWorkflowView from './views/EstimatorWorkflowView';

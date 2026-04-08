@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Job, ForecastReviewStatus, PipelineStage } from '../types';
-import { MapPin, User as UserIcon, Calendar, AlertCircle, Clock, CheckCircle2, ShieldCheck, RefreshCw, CloudRain, Hourglass, Globe } from 'lucide-react';
+import { MapPin, User as UserIcon, Calendar, AlertCircle, Clock, CheckCircle2, ShieldCheck, RefreshCw, Hourglass, Globe } from 'lucide-react';
 import { getJobIssues } from '../utils/issueLogic';
 
 interface PipelineCardProps {
@@ -30,12 +30,6 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
     ];
     return preWonStages.includes(job.pipelineStage) && agingDays > 14;
   }, [job.pipelineStage, agingDays]);
-
-  const hasWeatherRisk = useMemo(() => {
-    if (!job.plannedStartDate || !job.plannedFinishDate || !job.id) return false;
-    const hash = job.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return hash % 10 > 7;
-  }, [job.id, job.plannedStartDate, job.plannedFinishDate]);
 
   return (
     <div 
@@ -74,11 +68,6 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
           {job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED && (
             <span className="text-[8px] font-black text-white uppercase tracking-widest bg-purple-600 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm animate-pulse">
               <RefreshCw size={10} /> Review Needed
-            </span>
-          )}
-          {hasWeatherRisk && (
-            <span className="text-[8px] font-black text-white uppercase tracking-widest bg-rose-600 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
-              <CloudRain size={10} /> Weather Risk
             </span>
           )}
           {isStuck && (
