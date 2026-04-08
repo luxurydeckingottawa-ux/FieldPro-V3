@@ -487,27 +487,13 @@ const App: React.FC = () => {
   }, [currentUser]);
 
   const handleUpdatePipelineStage = useCallback((jobId: string, newStage: PipelineStage) => {
-    setJobs(prevJobs => prevJobs.map(job => {
-      if (job.id === jobId) {
-        let status = job.status;
-        if (newStage === PipelineStage.IN_FIELD && status === JobStatus.SCHEDULED) {
-          status = JobStatus.IN_PROGRESS;
-        }
-        return { ...job, pipelineStage: newStage, status, updatedAt: new Date().toISOString() };
-      }
-      return job;
-    }));
-    setSelectedJob(prev => {
-      if (prev && prev.id === jobId) {
-        let status = prev.status;
-        if (newStage === PipelineStage.IN_FIELD && status === JobStatus.SCHEDULED) {
-          status = JobStatus.IN_PROGRESS;
-        }
-        return { ...prev, pipelineStage: newStage, status, updatedAt: new Date().toISOString() };
-      }
-      return prev;
-    });
-  }, []);
+    const job = jobs.find(j => j.id === jobId) || selectedJob;
+    const updates: Partial<Job> = { pipelineStage: newStage };
+    if (newStage === PipelineStage.IN_FIELD && job?.status === JobStatus.SCHEDULED) {
+      updates.status = JobStatus.IN_PROGRESS;
+    }
+    handleUpdateJob(jobId, updates);
+  }, [jobs, selectedJob, handleUpdateJob]);
 
   const handleUpdateOfficeChecklist = useCallback((jobId: string, stage: PipelineStage, itemId: string, completed: boolean, isNA: boolean = false) => {
     setJobs(prevJobs => prevJobs.map(job => {
@@ -594,11 +580,8 @@ const App: React.FC = () => {
           selectedAddOnIds: selectedAddOns,
           estimateAmount: totalAmount,
           totalAmount: totalAmount,
-          lifecycleStage: CustomerLifecycle.WON_SOLD,
-          pipelineStage: PipelineStage.JOB_SOLD,
-          status: JobStatus.SCHEDULED,
-          depositStatus: DepositStatus.NOT_SENT,
-          soldWorkflowStatus: SoldWorkflowStatus.ACCEPTED,
+          pipelineStage: PipelineStage.EST_APPROVED,
+          estimateStatus: 'approved' as any,
           updatedAt: new Date().toISOString(),
           acceptedBuildSummary: {
             optionName: selectedOption?.name || 'Selected Option',
@@ -1017,6 +1000,69 @@ const App: React.FC = () => {
     }
   }, [selectedJob, handleTrackPortalEngagement]);
 
+  /** Called when customer signs the contract on the portal */
+  const onSignContract = useCallback(async (jobId: string, signature: string) => {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) return;
+
+    const now = new Date().toISOString();
+    const { generateContractPDF } = await import('./utils/contractPdf');
+    const amount = job.totalAmount || job.estimateAmount || 0;
+
+    try {
+      const contractPdfUrl = await generateContractPDF({
+        jobNumber: job.jobNumber || '',
+        clientName: job.clientName || '',
+        clientEmail: job.clientEmail || '',
+        clientPhone: job.clientPhone || '',
+        projectAddress: job.projectAddress || '',
+        totalAmount: amount,
+        depositAmount: Math.round(amount * 0.3),
+        scopeSummary: job.scopeSummary || job.acceptedBuildSummary?.scopeSummary || '',
+        signature,
+        acceptedDate: now,
+      });
+
+      handleUpdateJob(jobId, {
+        pipelineStage: PipelineStage.JOB_SOLD,
+        lifecycleStage: CustomerLifecycle.WON_SOLD,
+        status: JobStatus.SCHEDULED,
+        depositStatus: DepositStatus.NOT_SENT,
+        soldWorkflowStatus: SoldWorkflowStatus.ACCEPTED,
+        customerSignature: signature,
+        contractPdfUrl: contractPdfUrl,
+        contractSignedDate: now,
+        acceptedDate: now,
+        updatedAt: now,
+        files: [
+          ...(job.files || []),
+          {
+            id: `contract-${Date.now()}`,
+            name: `Contract-${job.jobNumber}.pdf`,
+            url: contractPdfUrl,
+            type: 'contract' as const,
+            uploadedAt: now,
+            uploadedBy: 'customer-portal'
+          }
+        ]
+      });
+    } catch (err) {
+      console.error('Contract generation failed:', err);
+      // Still move to JOB_SOLD even if PDF fails
+      handleUpdateJob(jobId, {
+        pipelineStage: PipelineStage.JOB_SOLD,
+        lifecycleStage: CustomerLifecycle.WON_SOLD,
+        status: JobStatus.SCHEDULED,
+        depositStatus: DepositStatus.NOT_SENT,
+        soldWorkflowStatus: SoldWorkflowStatus.ACCEPTED,
+        customerSignature: signature,
+        contractSignedDate: now,
+        acceptedDate: now,
+        updatedAt: now,
+      });
+    }
+  }, [jobs, handleUpdateJob]);
+
   const handleClosePortal = useCallback(() => {
     if (selectedJob) {
       // Return to the correct detail view based on stage
@@ -1179,6 +1225,111 @@ const App: React.FC = () => {
     }
   }, [calculatorSourceJobId, handleUpdateJob, jobs]);
 
+  /** Called when user clicks "Save Estimate, Send Quote" - saves data and emails portal link */
+  const handleEstimateSaved = useCallback((data: {
+    clientName: string;
+    clientAddress: string;
+    estimateNumber: number;
+    selections: any;
+    dimensions: any;
+    pricingSummary: any;
+    activePackage: any;
+  }) => {
+    const now = new Date().toISOString();
+    const totalAmount = Math.round(data.pricingSummary.finalTotal);
+    const estimateAmount = Math.round(data.pricingSummary.subTotal);
+
+    const acceptedBuildSummary = {
+      optionName: data.activePackage 
+        ? `${data.activePackage.size} ${data.activePackage.level} Package` 
+        : `Custom Estimate #${data.estimateNumber}`,
+      basePrice: estimateAmount,
+      addOns: [] as { name: string; price: number }[],
+      totalPrice: totalAmount,
+      acceptedDate: now,
+      scopeSummary: data.pricingSummary.impacts
+        .filter((imp: any) => Math.round(imp.value) !== 0)
+        .map((imp: any) => imp.label)
+        .join(', ')
+    };
+
+    let targetJobId = calculatorSourceJobId;
+    let portalToken = '';
+
+    if (targetJobId) {
+      // Update existing job to EST_SENT
+      const existingJob = jobs.find(j => j.id === targetJobId);
+      portalToken = existingJob?.customerPortalToken || `portal-${targetJobId}`;
+      handleUpdateJob(targetJobId, {
+        clientName: data.clientName,
+        projectAddress: data.clientAddress,
+        totalAmount,
+        estimateAmount,
+        acceptedBuildSummary,
+        pipelineStage: PipelineStage.EST_SENT,
+        estimateStatus: 'sent' as any,
+        estimateSentDate: now,
+        updatedAt: now,
+      });
+    } else {
+      // Create new job at EST_SENT
+      const newJobId = `j-est-${Date.now()}`;
+      portalToken = `portal-${newJobId}`;
+      const newJob: Job = {
+        id: newJobId,
+        jobNumber: `EST-${new Date().getFullYear()}-${String(data.estimateNumber).padStart(3, '0')}`,
+        clientName: data.clientName,
+        clientEmail: '',
+        clientPhone: '',
+        customerPortalToken: portalToken,
+        projectAddress: data.clientAddress,
+        projectType: data.activePackage 
+          ? `${data.activePackage.level} Package Deck` 
+          : 'Custom Deck Build',
+        assignedUsers: [],
+        assignedCrewOrSubcontractor: '',
+        scheduledDate: '',
+        currentStage: 0,
+        status: JobStatus.SCHEDULED,
+        pipelineStage: PipelineStage.EST_SENT,
+        officeChecklists: createDefaultOfficeChecklists(),
+        buildDetails: createDefaultBuildDetails(),
+        scopeSummary: acceptedBuildSummary.scopeSummary,
+        officeNotes: [],
+        siteNotes: [],
+        files: [],
+        flaggedIssues: [],
+        signoffStatus: 'pending',
+        invoiceSupportStatus: 'not_required',
+        finalSubmissionStatus: 'pending',
+        updatedAt: now,
+        totalAmount,
+        estimateAmount,
+        acceptedBuildSummary,
+        estimateStatus: 'sent' as any,
+        estimateSentDate: now,
+        portalStatus: 'ready',
+      };
+      setJobs(prev => [newJob, ...prev]);
+      targetJobId = newJobId;
+    }
+
+    // Open email to send the portal link to the client
+    const portalUrl = `${window.location.origin}?portal=${portalToken}`;
+    const emailSubject = encodeURIComponent('Your Luxury Decking Estimate');
+    const emailBody = encodeURIComponent(
+      `Hi ${data.clientName},\n\nThank you for your interest in Luxury Decking. Your custom estimate is ready to view.\n\nClick the link below to see your personalized estimate:\n${portalUrl}\n\nIf you have any questions, feel free to reply to this email or call us at 613-707-3060.\n\nBest regards,\nThe Luxury Decking Team`
+    );
+    window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+
+    // Navigate to estimate detail
+    const updatedJob = jobs.find(j => j.id === targetJobId);
+    if (updatedJob) {
+      setSelectedJob({ ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, pipelineStage: PipelineStage.EST_SENT });
+    }
+    setView('estimate-detail');
+  }, [calculatorSourceJobId, handleUpdateJob, jobs]);
+
   if (view === 'login') {
     return <LoginView onLogin={handleLogin} />;
   }
@@ -1204,6 +1355,7 @@ const App: React.FC = () => {
         initialDimensions={calculatorInitialDimensions}
         initialClientInfo={calculatorInitialClientInfo}
         onEstimateAccepted={handleEstimateAccepted}
+        onEstimateSaved={handleEstimateSaved}
         onExit={() => setView(currentUser?.role === Role.ADMIN ? 'office-pipeline' : 'estimator-dashboard')}
       />
     );
@@ -1213,13 +1365,22 @@ const App: React.FC = () => {
       return (
         <div className="min-h-screen bg-slate-50">
           {selectedJob ? (
-            (selectedJob.lifecycleStage === CustomerLifecycle.ESTIMATE_SENT || 
+            (selectedJob.pipelineStage === PipelineStage.EST_SENT ||
+             selectedJob.pipelineStage === PipelineStage.EST_COMPLETED ||
+             selectedJob.pipelineStage === PipelineStage.EST_APPROVED ||
+             selectedJob.pipelineStage === PipelineStage.EST_ON_HOLD ||
+             selectedJob.pipelineStage === PipelineStage.EST_IN_PROGRESS ||
+             selectedJob.pipelineStage === PipelineStage.EST_UNSCHEDULED ||
+             selectedJob.pipelineStage === PipelineStage.EST_SCHEDULED ||
+             // Legacy lifecycle stages
+             selectedJob.lifecycleStage === CustomerLifecycle.ESTIMATE_SENT || 
              selectedJob.lifecycleStage === CustomerLifecycle.FOLLOW_UP_NEEDED ||
              (selectedJob.lifecycleStage === CustomerLifecycle.WON_SOLD && selectedJob.pipelineStage === PipelineStage.JOB_SOLD) ||
              !selectedJob.pipelineStage) ? (
               <EstimatePortalView 
                 job={selectedJob} 
                 onAcceptOption={onAcceptOption}
+                onSignContract={onSignContract}
                 onTrackEngagement={onTrackEngagement}
                 onClose={(currentUser?.role === Role.ADMIN || false) ? handleClosePortal : undefined}
               />

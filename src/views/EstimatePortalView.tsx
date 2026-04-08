@@ -14,6 +14,7 @@ import { AIObjectionHelper } from '../components/AIObjectionHelper';
 interface EstimatePortalViewProps {
   job: Job;
   onAcceptOption: (optionId: string, selectedAddOns: string[]) => void;
+  onSignContract?: (jobId: string, signature: string) => void;
   onTrackEngagement?: (engagement: Partial<PortalEngagement>) => void;
   onClose?: () => void;
 }
@@ -21,6 +22,7 @@ interface EstimatePortalViewProps {
 const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({ 
   job, 
   onAcceptOption,
+  onSignContract,
   onTrackEngagement,
   onClose
 }) => {
@@ -28,6 +30,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>(job.selectedAddOnIds || []);
   const [activeTab, setActiveTab] = useState<'proposal' | 'why-us' | 'process'>('proposal');
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showContractSigning, setShowContractSigning] = useState(false);
   const [startTime] = useState(Date.now());
 
   const isAccepted = job.lifecycleStage === CustomerLifecycle.WON_SOLD;
@@ -180,9 +183,125 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   const handleAccept = () => {
     if (selectedOptionId) {
       onAcceptOption(selectedOptionId, selectedAddOns);
-      setShowConfirmation(true);
+      // Show contract signing step instead of immediate confirmation
+      setShowContractSigning(true);
     }
   };
+
+  const handleSignComplete = (signature: string) => {
+    if (onSignContract) {
+      onSignContract(job.id, signature);
+    }
+    setShowContractSigning(false);
+    setShowConfirmation(true);
+  };
+
+  // Contract Signing Screen
+  if (showContractSigning) {
+    const amount = job.totalAmount || job.estimateAmount || 0;
+    const deposit = Math.round(amount * 0.3);
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl border border-slate-100">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 mb-2">Review & Sign Agreement</h2>
+            <p className="text-slate-500">Please review the project details and sign below to confirm.</p>
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-6 mb-6 border border-slate-100">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Project Summary</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-[10px] font-bold text-slate-400 uppercase">Client</p><p className="text-sm font-bold text-slate-900">{job.clientName}</p></div>
+              <div><p className="text-[10px] font-bold text-slate-400 uppercase">Address</p><p className="text-sm text-slate-900">{job.projectAddress}</p></div>
+              <div><p className="text-[10px] font-bold text-slate-400 uppercase">Total</p><p className="text-xl font-bold text-green-600">${amount.toLocaleString()}</p></div>
+              <div><p className="text-[10px] font-bold text-slate-400 uppercase">Deposit (30%)</p><p className="text-xl font-bold text-slate-900">${deposit.toLocaleString()}</p></div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-6 mb-6 border border-slate-100">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Payment Schedule</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-slate-600">Deposit (30%)</span><span className="font-bold">${deposit.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-slate-600">Material Delivery (30%)</span><span className="font-bold">${Math.round(amount * 0.3).toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-slate-600">Final Handover (40%)</span><span className="font-bold">${Math.round(amount * 0.4).toLocaleString()}</span></div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-6 mb-6 border border-slate-100">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Terms</h3>
+            <div className="text-xs text-slate-500 space-y-2 max-h-32 overflow-y-auto">
+              <p>By signing below, you agree to the project scope, pricing, and payment schedule as outlined above.</p>
+              <p>Any changes to the scope after acceptance will require a written change order with adjusted pricing.</p>
+              <p>Luxury Decking provides a workmanship warranty on all installations. Material warranties are provided by the respective manufacturers.</p>
+              <p>This agreement is governed by the laws of the Province of Ontario.</p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Sign Below</p>
+            <div className="relative bg-white border-2 border-dashed border-slate-200 rounded-2xl overflow-hidden" style={{ height: '120px' }}>
+              <canvas
+                id="portal-signature-canvas"
+                width={600}
+                height={120}
+                className="w-full h-full touch-none cursor-crosshair"
+                style={{ display: 'block' }}
+                ref={(canvas) => {
+                  if (!canvas) return;
+                  let isDrawing = false;
+                  const ctx = canvas.getContext('2d');
+                  if (!ctx) return;
+                  ctx.lineWidth = 2;
+                  ctx.lineCap = 'round';
+                  ctx.strokeStyle = '#1a1a1a';
+
+                  const getPos = (e: MouseEvent | TouchEvent) => {
+                    const rect = canvas.getBoundingClientRect();
+                    if ('touches' in e) {
+                      const t = e.touches[0];
+                      return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+                    }
+                    return { x: (e as MouseEvent).clientX - rect.left, y: (e as MouseEvent).clientY - rect.top };
+                  };
+
+                  canvas.onmousedown = canvas.ontouchstart = (e: any) => { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x * (600 / canvas.offsetWidth), p.y * (120 / canvas.offsetHeight)); };
+                  canvas.onmousemove = canvas.ontouchmove = (e: any) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x * (600 / canvas.offsetWidth), p.y * (120 / canvas.offsetHeight)); ctx.stroke(); };
+                  canvas.onmouseup = canvas.ontouchend = canvas.onmouseleave = () => { isDrawing = false; };
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
+                <span className="text-slate-500 font-bold uppercase tracking-widest text-sm">Sign Here</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowContractSigning(false)}
+              className="flex-1 px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all"
+            >
+              Back
+            </button>
+            <button
+              onClick={() => {
+                const canvas = document.getElementById('portal-signature-canvas') as HTMLCanvasElement;
+                if (canvas) {
+                  const sig = canvas.toDataURL();
+                  handleSignComplete(sig);
+                }
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-500 transition-all shadow-lg shadow-green-600/20"
+            >
+              <CheckCircle2 className="w-4 h-4" /> Confirm & Sign
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showConfirmation) {
     return (

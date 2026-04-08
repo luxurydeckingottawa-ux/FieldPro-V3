@@ -1064,7 +1064,7 @@ const CustomEstimator: React.FC<CustomEstimatorProps> = ({ dimensions, setDimens
           </div>
         </div>
         <div className="control-section">
-          <button className="action-btn" onClick={onSave}>⎙ Save Estimate</button>
+          <button className="action-btn" onClick={onSave}>⎙ Save Estimate, Send Quote</button>
           <button className="accept-btn" onClick={onAccept}>✓ Accept Quote</button>
           <button className="reset-btn" onClick={resetCalculator}>Reset Estimator</button>
         </div>
@@ -1453,11 +1453,21 @@ export interface EstimatorCalculatorProps {
     pricingSummary: any;
     activePackage: PackageSelection | null;
   }) => void;
+  /** Called when user saves estimate and wants to send quote to client */
+  onEstimateSaved?: (data: {
+    clientName: string;
+    clientAddress: string;
+    estimateNumber: number;
+    selections: any;
+    dimensions: Dimensions;
+    pricingSummary: any;
+    activePackage: PackageSelection | null;
+  }) => void;
   /** Called when user wants to exit back to Field Pro */
   onExit?: () => void;
 }
 
-const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, onEstimateAccepted, onExit }) => {
+const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, onEstimateAccepted, onEstimateSaved, onExit }) => {
   const [view, setView] = useState<'calculator' | 'packages' | 'materialMatrix'>('calculator');
   const [calcDimensions, setCalcDimensions] = useState<Dimensions>(() => ({
     ...INITIAL_DIMENSIONS,
@@ -1732,13 +1742,25 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
     }
 
     setClientInfo({ name, address });
-    setDocMode('estimate');
-    setPrintContext('estimate');
-    document.title = `Luxury Decking Estimate - ${name}`;
 
-    setTimeout(() => {
-      window.print();
-    }, 150);
+    // Fire callback to save estimate data and send quote to client
+    if (onEstimateSaved) {
+      onEstimateSaved({
+        clientName: name,
+        clientAddress: address,
+        estimateNumber,
+        selections: calcSelections,
+        dimensions: calcDimensions,
+        pricingSummary,
+        activePackage,
+      });
+    } else {
+      // Fallback: print PDF if no callback
+      setDocMode('estimate');
+      setPrintContext('estimate');
+      document.title = `Luxury Decking Estimate - ${name}`;
+      setTimeout(() => { window.print(); }, 150);
+    }
   };
 
   const handleAcceptQuote = () => {
