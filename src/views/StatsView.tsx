@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Job, PipelineStage } from '../types';
+import { calculateEngagementTier, EngagementTier } from '../utils/engagementScoring';
 import { 
   BarChart3, TrendingUp, Users, Target, DollarSign,
   ArrowLeft, Megaphone, Globe, UserCheck, Share2, 
@@ -238,6 +239,93 @@ const StatsView: React.FC<StatsViewProps> = ({ jobs, onBack }) => {
                 <p className="text-[10px] text-[var(--text-secondary)] opacity-60 mt-1">Sources will appear as estimators capture marketing data during intake</p>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Engagement Tier Distribution + Campaign Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Engagement Distribution */}
+        <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-[var(--border-color)]">
+            <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+              <TrendingUp className="w-3.5 h-3.5" /> Engagement Distribution
+            </h2>
+          </div>
+          <div className="p-5">
+            {(() => {
+              const tiers: Record<EngagementTier, number> = { HOT: 0, WARM: 0, COOL: 0, COLD: 0 };
+              const estimateJobs = jobs.filter(j => j.pipelineStage === PipelineStage.EST_SENT || j.pipelineStage === PipelineStage.EST_COMPLETED);
+              estimateJobs.forEach(j => {
+                const { tier } = calculateEngagementTier(j.portalEngagement);
+                tiers[tier]++;
+              });
+              const total = estimateJobs.length || 1;
+              const tierData = [
+                { tier: 'HOT' as EngagementTier, count: tiers.HOT, colour: 'bg-amber-500', text: 'text-amber-500' },
+                { tier: 'WARM' as EngagementTier, count: tiers.WARM, colour: 'bg-blue-500', text: 'text-blue-500' },
+                { tier: 'COOL' as EngagementTier, count: tiers.COOL, colour: 'bg-purple-500', text: 'text-purple-500' },
+                { tier: 'COLD' as EngagementTier, count: tiers.COLD, colour: 'bg-gray-400', text: 'text-gray-400' },
+              ];
+              return (
+                <div className="space-y-4">
+                  {tierData.map(t => (
+                    <div key={t.tier} className="flex items-center gap-3">
+                      <span className={`text-xs font-bold w-12 ${t.text}`}>{t.tier}</span>
+                      <div className="flex-1 h-3 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                        <div className={`h-full ${t.colour} rounded-full transition-all`} style={{ width: `${(t.count / total) * 100}%` }} />
+                      </div>
+                      <span className="text-xs font-bold text-[var(--text-primary)] w-8 text-right">{t.count}</span>
+                      <span className="text-[10px] text-[var(--text-secondary)] w-10 text-right">{Math.round((t.count / total) * 100)}%</span>
+                    </div>
+                  ))}
+                  {estimateJobs.length === 0 && (
+                    <p className="text-xs text-[var(--text-secondary)] text-center py-4">No active estimates to score</p>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Campaign Activity */}
+        <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-[var(--border-color)]">
+            <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+              <Target className="w-3.5 h-3.5" /> Campaign Activity
+            </h2>
+          </div>
+          <div className="p-5">
+            {(() => {
+              const activeCampaigns = jobs.filter(j => j.dripCampaign?.status === 'active');
+              const leadCampaigns = activeCampaigns.filter(j => j.dripCampaign?.campaignType === 'LEAD_FOLLOW_UP');
+              const estCampaigns = activeCampaigns.filter(j => j.dripCampaign?.campaignType === 'ESTIMATE_FOLLOW_UP');
+              const totalMessagesSent = jobs.reduce((sum, j) => sum + (j.dripCampaign?.sentMessages?.length || 0), 0);
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
+                      <p className="text-2xl font-black text-[var(--text-primary)]">{activeCampaigns.length}</p>
+                      <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Active</p>
+                    </div>
+                    <div className="p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
+                      <p className="text-2xl font-black text-[var(--text-primary)]">{leadCampaigns.length}</p>
+                      <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Lead Drips</p>
+                    </div>
+                    <div className="p-3 bg-[var(--bg-secondary)] rounded-lg text-center">
+                      <p className="text-2xl font-black text-[var(--text-primary)]">{estCampaigns.length}</p>
+                      <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Estimate Drips</p>
+                    </div>
+                  </div>
+                  <div className="pt-3 border-t border-[var(--border-color)]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-[var(--text-secondary)]">Total messages sent</span>
+                      <span className="text-sm font-bold text-[var(--text-primary)]">{totalMessagesSent}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>

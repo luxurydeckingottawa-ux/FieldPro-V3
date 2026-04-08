@@ -8,6 +8,7 @@ import {
   Zap, Camera, Info, BarChart3, Users, PenTool
 } from 'lucide-react';
 import AcceptanceModal from '../components/AcceptanceModal';
+import { calculateEngagementTier } from '../utils/engagementScoring';
 
 interface EstimateDetailViewProps {
   job: Job;
@@ -35,14 +36,11 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
   const [showAcceptance, setShowAcceptance] = useState(false);
 
   // Lead temperature calculation from original
-  const engagementHeat = useMemo(() => {
-    if (!job.portalEngagement) return 'cold';
-    const { totalOpens, totalTimeSpentSeconds, lastOpenedAt } = job.portalEngagement;
-    const isRecentlyOpened = lastOpenedAt && (Date.now() - new Date(lastOpenedAt).getTime()) < 24 * 60 * 60 * 1000;
-    if (totalOpens > 5 || totalTimeSpentSeconds > 300 || isRecentlyOpened) return 'hot';
-    if (totalOpens > 2 || totalTimeSpentSeconds > 60) return 'warm';
-    return 'cold';
+  const engagementScore = useMemo(() => {
+    return calculateEngagementTier(job.portalEngagement);
   }, [job.portalEngagement]);
+
+  const engagementHeat = engagementScore.tier.toLowerCase();
 
   const getStageLabel = (stage: PipelineStage) => {
     const labels: Record<string, string> = {
@@ -79,11 +77,12 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
     return 'bg-[var(--text-primary)]/5 text-[var(--text-secondary)] border-[var(--border-color)]';
   };
 
-  const heatColor = {
-    hot: { bg: 'bg-orange-500/10', border: 'border-orange-500/20', text: 'text-orange-500', badge: 'bg-orange-500 text-black' },
-    warm: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-500', badge: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
-    cold: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-500', badge: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-  }[engagementHeat];
+  const heatColor = ({
+    hot: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-500', badge: 'bg-amber-500 text-white' },
+    warm: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-500', badge: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
+    cool: { bg: 'bg-purple-500/10', border: 'border-purple-500/20', text: 'text-purple-500', badge: 'bg-purple-500/10 text-purple-500 border-purple-500/20' },
+    cold: { bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-500', badge: 'bg-gray-500/10 text-gray-500 border-gray-500/20' },
+  } as Record<string, any>)[engagementHeat] || { bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-500', badge: 'bg-gray-500/10 text-gray-500 border-gray-500/20' };
 
   const isLeadStage = [
     PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
@@ -631,20 +630,65 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     <p className="text-sm font-bold text-[var(--text-primary)] capitalize">{job.estimateStatus.replace('_', ' ')}</p>
                   </div>
                 )}
-                {job.nurtureStatus === 'active' && job.pipelineStage === PipelineStage.EST_SENT && (
-                  <div>
-                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Follow-Up Campaign</p>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                      <p className="text-xs font-bold text-amber-500">Active - 3/4/7 Day Sequence</p>
-                    </div>
-                    {job.estimateSentDate && (
-                      <p className="text-[10px] text-[var(--text-secondary)] mt-1">
-                        Sent {Math.floor((Date.now() - new Date(job.estimateSentDate).getTime()) / (1000 * 60 * 60 * 24))} days ago
+                {/* Drip Campaign Status */}
+                {job.dripCampaign?.status === 'active' && (
+                  <div className="p-3 bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/10 rounded-lg">
+                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-2">Follow-Up Campaign</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-[var(--brand-gold)] animate-pulse" />
+                      <p className="text-xs font-bold text-[var(--brand-gold)]">
+                        {job.dripCampaign.campaignType === 'LEAD_FOLLOW_UP' ? 'Lead Nurture' : 'Estimate Follow-Up'} Active
                       </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-[var(--text-secondary)]">
+                        Touch {job.dripCampaign.completedTouches.length + 1} of {job.dripCampaign.campaignType === 'LEAD_FOLLOW_UP' ? 6 : 5}
+                      </p>
+                      {job.estimateSentDate && (
+                        <p className="text-[10px] text-[var(--text-secondary)]">
+                          Started {Math.floor((Date.now() - new Date(job.dripCampaign.startedAt).getTime()) / (1000 * 60 * 60 * 24))} days ago
+                        </p>
+                      )}
+                    </div>
+                    {/* Progress dots */}
+                    <div className="flex items-center gap-1.5 mt-3">
+                      {Array.from({ length: job.dripCampaign.campaignType === 'LEAD_FOLLOW_UP' ? 6 : 5 }).map((_, i) => (
+                        <div key={i} className={`w-2 h-2 rounded-full ${
+                          i < job.dripCampaign!.completedTouches.length ? 'bg-[var(--brand-gold)]' : 'bg-[var(--bg-secondary)]'
+                        }`} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {job.dripCampaign?.status === 'paused' && (
+                  <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-amber-500" />
+                      <p className="text-xs font-bold text-amber-500">Campaign Paused</p>
+                    </div>
+                    {job.dripCampaign.pauseReason && (
+                      <p className="text-[10px] text-[var(--text-secondary)] mt-1">{job.dripCampaign.pauseReason}</p>
                     )}
                   </div>
                 )}
+                {/* Engagement Tier */}
+                {job.portalEngagement && (() => {
+                  const { tier, label } = calculateEngagementTier(job.portalEngagement);
+                  const styles: Record<string, string> = {
+                    HOT: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+                    WARM: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+                    COOL: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
+                    COLD: 'text-gray-500 bg-gray-500/10 border-gray-500/20',
+                  };
+                  return (
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Engagement Tier</p>
+                      <span className={`inline-flex text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded border ${styles[tier]}`}>
+                        {label}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 

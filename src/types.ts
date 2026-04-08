@@ -403,6 +403,35 @@ export interface Job {
   nurtureStep?: number;
   nurtureStatus?: 'active' | 'paused' | 'completed' | 'none';
   postProjectStatus?: PostProjectStatus;
+
+  // Drip Campaign
+  dripCampaign?: {
+    campaignType: 'LEAD_FOLLOW_UP' | 'ESTIMATE_FOLLOW_UP';
+    startedAt: string;
+    currentTouch: number;
+    completedTouches: string[];
+    nextTouchAt?: string;
+    nextTouchId?: string;
+    status: 'active' | 'paused' | 'completed' | 'cancelled';
+    pauseReason?: string;
+    lastEngagementTier?: string;
+    sentMessages: Array<{
+      touchId: string;
+      channel: 'sms' | 'email';
+      sentAt: string;
+      engagementTier?: string;
+    }>;
+  };
+
+  // Campaign scheduler state (used by automated follow-up engine)
+  campaignState?: {
+    leadStep?: number;
+    estimateStep?: number;
+    campaignStartDate?: string;
+    touchesSent?: Record<string, string>;
+    clientReplied?: boolean;
+    paused?: boolean;
+  };
 }
 
 export interface EstimateOption {

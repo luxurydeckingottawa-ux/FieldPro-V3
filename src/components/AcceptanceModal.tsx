@@ -143,27 +143,33 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
         });
       }
 
-      onAccept(job.id, {
-        pipelineStage: PipelineStage.JOB_SOLD,
-        lifecycleStage: CustomerLifecycle.WON_SOLD,
-        depositStatus: DepositStatus.REQUESTED,
-        depositRequestedDate: now,
-        depositAmount: deposit,
-        soldWorkflowStatus: SoldWorkflowStatus.AWAITING_DEPOSIT,
-        estimateStatus: 'accepted' as any,
-        acceptedDate: now,
-        customerSignature: signature,
-        contractPdfUrl: contractPdfUrl,
-        clientName: clientName,
-        buildDetails: prefilledBuildDetails,
-        updatedAt: now,
-        files: newFiles,
-      });
+      // Call the parent accept handler
+      try {
+        onAccept(job.id, {
+          pipelineStage: PipelineStage.JOB_SOLD,
+          lifecycleStage: CustomerLifecycle.WON_SOLD,
+          depositStatus: DepositStatus.REQUESTED,
+          depositRequestedDate: now,
+          depositAmount: deposit,
+          soldWorkflowStatus: SoldWorkflowStatus.AWAITING_DEPOSIT,
+          estimateStatus: 'accepted' as any,
+          acceptedDate: now,
+          customerSignature: signature,
+          contractPdfUrl: contractPdfUrl,
+          clientName: clientName,
+          buildDetails: prefilledBuildDetails,
+          updatedAt: now,
+          files: newFiles,
+        });
+      } catch (acceptErr) {
+        console.error('onAccept callback error:', acceptErr);
+        // Don't block - the data was prepared successfully
+      }
 
       onClose();
     } catch (err) {
       console.error('Acceptance error:', err);
-      setError('Failed to process acceptance. Please try again.');
+      setError(`Failed to process acceptance: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`);
     } finally {
       setIsProcessing(false);
     }

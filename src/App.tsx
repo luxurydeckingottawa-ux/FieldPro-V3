@@ -637,11 +637,25 @@ const App: React.FC = () => {
   }, []);
 
   const handleCreateJob = useCallback((newJob: Job) => {
-    setJobs(prev => [newJob, ...prev]);
+    const now = new Date().toISOString();
+    // Auto-start lead follow-up campaign for new leads
+    const leadStages = [PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED];
+    const jobWithCampaign = leadStages.includes(newJob.pipelineStage) ? {
+      ...newJob,
+      dripCampaign: {
+        campaignType: 'LEAD_FOLLOW_UP' as const,
+        startedAt: now,
+        currentTouch: 0,
+        completedTouches: [],
+        status: 'active' as const,
+        sentMessages: [],
+      }
+    } : newJob;
+
+    setJobs(prev => [jobWithCampaign, ...prev]);
     // Route based on user role
     if (currentUser?.role === Role.ESTIMATOR) {
-      // Stay in estimator flow - open the new job in estimator workflow
-      setSelectedJob(newJob);
+      setSelectedJob(jobWithCampaign);
       navigateTo('estimator-workflow', selectedJob?.id);
     } else {
       navigateTo('office-pipeline');
@@ -1313,8 +1327,16 @@ const App: React.FC = () => {
         nurtureStatus: 'active',
         nurtureStep: 0,
         followUpStatus: 'scheduled',
-        followUpReason: 'Estimate sent - 3/4/7 day follow-up sequence',
+        followUpReason: 'Estimate sent - automated follow-up sequence active',
         lastContactDate: now,
+        dripCampaign: {
+          campaignType: 'ESTIMATE_FOLLOW_UP',
+          startedAt: now,
+          currentTouch: 0,
+          completedTouches: [],
+          status: 'active',
+          sentMessages: [],
+        },
         updatedAt: now,
       });
     } else {
@@ -1361,6 +1383,14 @@ const App: React.FC = () => {
         followUpStatus: 'scheduled',
         followUpReason: 'Estimate sent - 3/4/7 day follow-up sequence',
         lastContactDate: now,
+        dripCampaign: {
+          campaignType: 'ESTIMATE_FOLLOW_UP',
+          startedAt: now,
+          currentTouch: 0,
+          completedTouches: [],
+          status: 'active',
+          sentMessages: [],
+        },
       };
       setJobs(prev => [newJob, ...prev]);
       targetJobId = newJobId;

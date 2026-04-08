@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { Job, PipelineStage } from '../types';
 import { PIPELINE_STAGES } from '../constants';
 import { getJobIssues } from '../utils/issueLogic';
+import { calculateEngagementTier } from '../utils/engagementScoring';
 import { 
   Search, Plus, ChevronRight, AlertTriangle,
   MapPin, User, DollarSign, Calendar, FileText, 
@@ -399,8 +400,18 @@ const KanbanCard: React.FC<{
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          {job.engagementHeat === 'hot' && <span className="text-[8px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">HOT</span>}
-          {job.engagementHeat === 'warm' && <span className="text-[8px] font-bold text-amber-400 bg-amber-500/5 px-1.5 py-0.5 rounded border border-amber-500/10">WARM</span>}
+          {(() => {
+            const { tier } = calculateEngagementTier(job.portalEngagement);
+            const styles: Record<string, string> = {
+              HOT: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+              WARM: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+              COOL: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
+              COLD: 'text-gray-400 bg-gray-500/10 border-gray-500/20',
+            };
+            return job.portalEngagement ? (
+              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${styles[tier]}`}>{tier}</span>
+            ) : null;
+          })()}
           <GripVertical className="w-4 h-4 text-[var(--text-secondary)] opacity-0 group-hover:opacity-40 transition-opacity cursor-grab" />
         </div>
       </div>
@@ -428,8 +439,14 @@ const KanbanCard: React.FC<{
       )}
 
       {job.updatedAt && (
-        <div className="text-[10px] text-[var(--text-secondary)] mt-2 pt-2 border-t border-[var(--border-color)]">
-          Status updated {getTimeAgo(job.updatedAt)}
+        <div className="text-[10px] text-[var(--text-secondary)] mt-2 pt-2 border-t border-[var(--border-color)] flex items-center justify-between">
+          <span>Status updated {getTimeAgo(job.updatedAt)}</span>
+          {job.dripCampaign?.status === 'active' && (
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] animate-pulse" />
+              <span className="text-[8px] font-bold text-[var(--brand-gold)]">Drip Active</span>
+            </span>
+          )}
         </div>
       )}
 
