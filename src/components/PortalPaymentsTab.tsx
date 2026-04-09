@@ -1,6 +1,7 @@
 import React from 'react';
 import { Job } from '../types';
-import { Receipt, Clock, Wallet, CreditCard, FileText, ArrowRight } from 'lucide-react';
+import { Receipt, Clock, Wallet, CreditCard, FileText, ArrowRight   CheckCircle2
+} from 'lucide-react';
 
 
 interface PortalPaymentsTabProps {

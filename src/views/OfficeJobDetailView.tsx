@@ -56,7 +56,8 @@ import {
   CalendarClock,
   X,
   Activity,
-  BarChart3
+  BarChart3,
+  MapPin
 } from 'lucide-react';
 import { OfficeAIAssistant } from '../components/OfficeAIAssistant';
 import { AIOfficeInsights } from '../components/AIOfficeInsights';

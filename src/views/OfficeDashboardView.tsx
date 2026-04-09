@@ -11,9 +11,9 @@ import {
   FileCheck, 
   ChevronRight,
   User as UserIcon,
-  MapPin,
   Plus,
   Zap
+  MapPin
 } from 'lucide-react';
 
 interface OfficeDashboardViewProps {

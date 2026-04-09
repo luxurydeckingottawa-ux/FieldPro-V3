@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Sparkles, MessageSquare, Send, ArrowRight, TrendingUp, AlertCircle, CheckCircle2, Copy, RefreshCw } from 'lucide-react';
+import { Sparkles, MessageSquare, Send, ArrowRight, TrendingUp, AlertCircle, CheckCircle2, Copy, RefreshCw, Check } from 'lucide-react';
 import { Job } from '../types';
 import { geminiService } from '../services/geminiService';
 

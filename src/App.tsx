@@ -478,6 +478,15 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
+  // Auto-redirect: if user is logged in but view is login, redirect to dashboard
+  useEffect(() => {
+    if (currentUser && view === 'login') {
+      if (currentUser.role === Role.ADMIN) navigateTo('office-dashboard');
+      else if (currentUser.role === Role.ESTIMATOR) navigateTo('estimator-dashboard');
+      else navigateTo('jobs');
+    }
+  }, [currentUser, view]);
+
   const handleLogin = useCallback((user: User) => {
     setCurrentUser(user);
     if (user.role === Role.ADMIN) {
@@ -521,7 +530,21 @@ const App: React.FC = () => {
         navigateTo('office-job-detail', job.id);
       }
     } else if (currentUser.role === Role.ESTIMATOR) {
-      navigateTo('estimator-workflow', job.id);
+      // Estimator: route to estimate detail for pre-sale, estimator workflow for estimate stages, job detail for post-sale
+      const estimateStages = [
+        PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
+        PipelineStage.THIRD_CONTACT, PipelineStage.LEAD_ON_HOLD, PipelineStage.LEAD_WON, PipelineStage.LEAD_LOST,
+        PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED, PipelineStage.EST_IN_PROGRESS,
+        PipelineStage.EST_COMPLETED, PipelineStage.EST_SENT, PipelineStage.EST_ON_HOLD,
+        PipelineStage.EST_APPROVED, PipelineStage.EST_REJECTED,
+        PipelineStage.SITE_VISIT_SCHEDULED, PipelineStage.ESTIMATE_IN_PROGRESS,
+        PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP
+      ];
+      if (estimateStages.includes(job.pipelineStage)) {
+        navigateTo('estimate-detail', job.id);
+      } else {
+        navigateTo('office-job-detail', job.id);
+      }
     } else {
       navigateTo('detail', job.id);
     }
@@ -1562,27 +1585,29 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300">
-      <NavBar
-        currentUser={currentUser}
-        view={view}
-        theme={theme}
-        onNavigate={(v) => navigateTo(v)}
-        onLogout={handleLogout}
-        onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
-        onOpenEstimator={handleOpenNewEstimate}
-        onNewLead={() => {
-          setNewJobInitialStage(PipelineStage.LEAD_IN);
-          navigateTo('new-job');
-        }}
-        onNewEstimateAppointment={() => {
-          setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
-          navigateTo('new-job');
-        }}
-        onNewJob={() => {
-          setNewJobInitialStage(PipelineStage.JOB_SOLD);
-          navigateTo('new-job');
-        }}
-      />
+      {currentUser && (
+        <NavBar
+          currentUser={currentUser}
+          view={view}
+          theme={theme}
+          onNavigate={(v) => navigateTo(v)}
+          onLogout={handleLogout}
+          onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+          onOpenEstimator={handleOpenNewEstimate}
+          onNewLead={() => {
+            setNewJobInitialStage(PipelineStage.LEAD_IN);
+            navigateTo('new-job');
+          }}
+          onNewEstimateAppointment={() => {
+            setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
+            navigateTo('new-job');
+          }}
+          onNewJob={() => {
+            setNewJobInitialStage(PipelineStage.JOB_SOLD);
+            navigateTo('new-job');
+          }}
+        />
+      )}
 
       <main className="py-0 max-w-7xl mx-auto px-6 mt-6">
         {aiError && (

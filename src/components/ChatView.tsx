@@ -11,13 +11,13 @@ import {
   Activity,
   Phone,
   Calendar,
-  MapPin,
   User as UserIcon,
   ChevronRight,
   Clock,
   Sparkles,
   RefreshCw,
   FileText
+  MapPin
 } from 'lucide-react';
 import { ChatSession, User as AppUser, Job, Role } from '../types';
 import { format } from 'date-fns';

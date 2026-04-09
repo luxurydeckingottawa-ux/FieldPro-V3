@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { User, Role } from '../types';
 import { APP_USERS } from '../constants';
-import { UserPlus, Trash2, Edit2, X, AlertCircle, Database, Video, Play, Loader2 } from 'lucide-react';
+import { UserPlus, Trash2, Edit2, X, AlertCircle, Database, Video, Play, Loader2, MessageSquare
+} from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 interface UserManagementViewProps {

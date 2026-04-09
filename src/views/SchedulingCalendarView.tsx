@@ -22,11 +22,11 @@ import {
   ChevronRight as ChevronRightIcon,
   Hammer,
   Truck,
-  MapPin,
   AlertTriangle,
   Zap,
   CalendarDays,
   ClipboardList
+  MapPin
 } from 'lucide-react';
 import { ForecastReviewStatus, PipelineStage } from '../types';
 
