@@ -247,13 +247,6 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
                 Attendance
               </button>
             </div>
-            <button 
-              onClick={onNewJob}
-              className="flex items-center gap-2 px-6 py-3.5 bg-[var(--brand-gold)] text-black rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[var(--brand-gold)] transition-all shadow-xl shadow-[var(--brand-gold)]/20 active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              New Job
-            </button>
           </div>
         </div>
 

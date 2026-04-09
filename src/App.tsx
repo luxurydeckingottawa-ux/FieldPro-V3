@@ -516,14 +516,14 @@ const App: React.FC = () => {
         PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP
       ];
       if (estimateStages.includes(job.pipelineStage)) {
-        navigateTo('estimate-detail', selectedJob?.id);
+        navigateTo('estimate-detail', job.id);
       } else {
-        navigateTo('office-job-detail', selectedJob?.id);
+        navigateTo('office-job-detail', job.id);
       }
     } else if (currentUser.role === Role.ESTIMATOR) {
-      navigateTo('estimator-workflow', selectedJob?.id);
+      navigateTo('estimator-workflow', job.id);
     } else {
-      navigateTo('detail', selectedJob?.id);
+      navigateTo('detail', job.id);
     }
   }, [currentUser]);
 
@@ -1436,7 +1436,7 @@ const App: React.FC = () => {
     if (updatedJob) {
       setSelectedJob({ ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, pipelineStage: PipelineStage.EST_SENT });
     }
-    navigateTo('estimate-detail', selectedJob?.id);
+    navigateTo('estimate-detail', targetJobId);
   }, [calculatorSourceJobId, handleUpdateJob, jobs]);
 
   if (view === 'login') {
