@@ -1,6 +1,6 @@
 import React from 'react';
 import { Job } from '../types';
-import { Receipt, Clock, Wallet, CreditCard, FileText, ArrowRight   CheckCircle2
+import { Receipt, Clock, Wallet, CreditCard, FileText, ArrowRight, CheckCircle2
 } from 'lucide-react';
 
 
