@@ -16,7 +16,7 @@ import {
   Clock,
   Sparkles,
   RefreshCw,
-  FileText
+  FileText,
   MapPin
 } from 'lucide-react';
 import { ChatSession, User as AppUser, Job, Role } from '../types';

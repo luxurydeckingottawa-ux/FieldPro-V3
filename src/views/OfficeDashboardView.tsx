@@ -12,7 +12,7 @@ import {
   ChevronRight,
   User as UserIcon,
   Plus,
-  Zap
+  Zap,
   MapPin
 } from 'lucide-react';
 

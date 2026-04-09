@@ -5,7 +5,6 @@ import {
   BarChart3, TrendingUp, Users, Target, DollarSign,
   ArrowLeft, Megaphone, Globe, UserCheck, Share2, 
   MapPin, Phone, Mail, Repeat, Award, Calendar
-  Globe,
 } from 'lucide-react';
 
 interface StatsViewProps {

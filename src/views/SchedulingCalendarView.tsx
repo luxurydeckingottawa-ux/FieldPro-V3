@@ -25,7 +25,7 @@ import {
   AlertTriangle,
   Zap,
   CalendarDays,
-  ClipboardList
+  ClipboardList,
   MapPin
 } from 'lucide-react';
 import { ForecastReviewStatus, PipelineStage } from '../types';
