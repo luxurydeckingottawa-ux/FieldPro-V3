@@ -28,9 +28,11 @@ import { Calendar, Users, AlertCircle, ChevronLeft, Calculator } from 'lucide-re
 import UnifiedPipelineView from './views/UnifiedPipelineView';
 
 import { geminiService } from './services/geminiService';
+import { supabase } from './lib/supabase';
 import EstimatorCalculatorView from './estimator/EstimatorCalculatorView';
 import { measureSheetToCalculatorDimensions, jobToCalculatorClientInfo, loadEstimatorIntake } from './estimator/dataBridge';
 import { dataService } from './services/dataService';
+import { supabase } from './lib/supabase';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
@@ -247,6 +249,82 @@ const App: React.FC = () => {
   useEffect(() => {
     safeSetItem('luxury_decking_chat_v1', JSON.stringify(chatSessions));
   }, [chatSessions]);
+
+  // Poll Supabase for incoming SMS messages every 15 seconds
+  useEffect(() => {
+    if (!supabase || !currentUser || currentUser.role !== Role.ADMIN) return;
+
+    const pollIncomingMessages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('incoming_messages')
+          .select('*')
+          .eq('read', false)
+          .order('received_at', { ascending: true });
+
+        if (error || !data || data.length === 0) return;
+
+        setChatSessions(prev => {
+          let updated = [...prev];
+
+          for (const msg of data) {
+            // Find matching chat session by phone number
+            const normalizePhone = (p: string) => (p || '').replace(/\D/g, '').slice(-10);
+            const fromNorm = normalizePhone(msg.from_number);
+            
+            let session = updated.find(s => {
+              const sessionPhoneNorm = normalizePhone(s.clientPhone || '');
+              return sessionPhoneNorm === fromNorm && sessionPhoneNorm.length >= 10;
+            });
+
+            if (session) {
+              // Add message to existing session
+              const newMsg: ChatMessage = {
+                id: `incoming-${msg.id}`,
+                senderId: 'client',
+                senderName: session.clientName,
+                text: msg.message_body,
+                timestamp: msg.received_at,
+                isFromClient: true,
+                status: 'delivered'
+              };
+
+              // Avoid duplicate messages
+              if (!session.messages.find(m => m.id === newMsg.id)) {
+                session = {
+                  ...session,
+                  messages: [...session.messages, newMsg],
+                  lastMessage: msg.message_body,
+                  lastMessageTimestamp: msg.received_at,
+                  unreadCount: session.unreadCount + 1
+                };
+                updated = updated.map(s => s.id === session!.id ? session! : s);
+              }
+            }
+            // If no matching session, the message is logged but not displayed
+            // (could be from an unknown number)
+          }
+
+          return updated;
+        });
+
+        // Mark messages as read in Supabase
+        const ids = data.map(m => m.id);
+        await supabase
+          .from('incoming_messages')
+          .update({ read: true })
+          .in('id', ids);
+
+      } catch (err) {
+        console.error('Error polling incoming messages:', err);
+      }
+    };
+
+    // Poll immediately, then every 15 seconds
+    pollIncomingMessages();
+    const interval = setInterval(pollIncomingMessages, 15000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   // Workflow State
   const [workflowState, setWorkflowState] = useState<AppState>(() => {
@@ -478,12 +556,21 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
-  // Auto-redirect: if user is logged in but view is login, redirect to dashboard
+  // Auto-redirect: ensure users see the correct view for their role
   useEffect(() => {
-    if (currentUser && view === 'login') {
+    if (!currentUser) return;
+    
+    if (view === 'login') {
       if (currentUser.role === Role.ADMIN) navigateTo('office-dashboard');
       else if (currentUser.role === Role.ESTIMATOR) navigateTo('estimator-dashboard');
       else navigateTo('jobs');
+      return;
+    }
+
+    // Field employees and subcontractors should not see admin views
+    const adminOnlyViews = ['office-dashboard', 'office-pipeline', 'stats', 'chat', 'user-management'];
+    if ((currentUser.role === Role.FIELD_EMPLOYEE || currentUser.role === Role.SUBCONTRACTOR) && adminOnlyViews.includes(view)) {
+      navigateTo('jobs');
     }
   }, [currentUser, view]);
 
