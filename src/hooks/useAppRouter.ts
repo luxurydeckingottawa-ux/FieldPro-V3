@@ -6,7 +6,7 @@
  * the existing component structure intact.
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 
 // Map view names to URL paths
@@ -111,21 +111,27 @@ export function useAppRouter(
 ) {
   const navigate = useNavigate();
   const location = useLocation();
+  const isMounted = useRef(false);
 
   // Navigate to a view (updates both URL and view state)
   const navigateTo = useCallback((view: string, id?: string) => {
     const path = viewToPath(view, id);
     setView(view);
-    
+
     // Only push to history if the path actually changed
     if (location.pathname !== path) {
       navigate(path, { replace: false });
     }
   }, [navigate, setView, location.pathname]);
 
-  // Handle browser back/forward
+  // Handle browser back/forward — skip initial mount so the App's auth-aware
+  // view initializer (which checks currentUser) is not overridden by the URL.
   useEffect(() => {
-    const { view, id } = pathToView(location.pathname);
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+    const { view } = pathToView(location.pathname);
     setView(view);
   }, [location.pathname, setView]);
 
