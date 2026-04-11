@@ -101,6 +101,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                autoComplete="current-password"
                 className="w-full pl-12 pr-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C4A432] focus:bg-[var(--bg-primary)] transition-all text-[var(--text-primary)]"
                 required
               />

@@ -11,10 +11,10 @@ export const LOST_REASONS = [
 ];
 
 export const APP_USERS: User[] = [
-  { id: 'u1', email: 'admin@luxurydecking.ca', password: 'admin', name: 'Admin User', role: Role.ADMIN },
-  { id: 'u2', email: 'estimator@luxurydecking.ca', password: 'estimator', name: 'Field Estimator', role: Role.ESTIMATOR },
-  { id: 'u3', email: 'field@luxurydecking.ca', password: 'field', name: 'Field Lead', role: Role.FIELD_EMPLOYEE },
-  { id: 'u4', email: 'sub@external.ca', password: 'sub', name: 'Subcontractor A', role: Role.SUBCONTRACTOR },
+  { id: 'u1', email: 'admin@luxurydecking.ca', password: 'LuxDeck2026!', name: 'Admin User', role: Role.ADMIN },
+  { id: 'u2', email: 'estimator@luxurydecking.ca', password: 'LuxDeck2026!', name: 'Field Estimator', role: Role.ESTIMATOR },
+  { id: 'u3', email: 'field@luxurydecking.ca', password: 'LuxDeck2026!', name: 'Field Lead', role: Role.FIELD_EMPLOYEE },
+  { id: 'u4', email: 'sub@external.ca', password: 'LuxDeck2026!', name: 'Subcontractor A', role: Role.SUBCONTRACTOR },
 ];
 
 export const PIPELINE_STAGES = [
