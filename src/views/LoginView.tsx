@@ -28,21 +28,27 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
           onLogin(user);
           return;
         }
-        // If Supabase auth fails, don't fall through to mock - show error
-        setError('Invalid email or password. Please try again.');
-        return;
       }
 
-      // Fallback to mock users when Supabase is not configured
-      const mockUser = APP_USERS.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+      // Fallback to local users (covers dev mode and users not yet in Supabase Auth)
+      const mockUser = APP_USERS.find(
+        u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+      );
       if (mockUser) {
         onLogin(mockUser);
       } else {
         setError('Invalid email or password. Please try again.');
       }
     } catch (err) {
-      console.error('Login error:', err);
-      setError('Login failed. Please check your connection and try again.');
+      // Supabase unreachable — try local fallback
+      const mockUser = APP_USERS.find(
+        u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+      );
+      if (mockUser) {
+        onLogin(mockUser);
+      } else {
+        setError('Login failed. Please check your connection and try again.');
+      }
     } finally {
       setIsLoading(false);
     }

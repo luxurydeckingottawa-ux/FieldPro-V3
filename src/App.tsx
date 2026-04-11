@@ -32,7 +32,6 @@ import { supabase } from './lib/supabase';
 import EstimatorCalculatorView from './estimator/EstimatorCalculatorView';
 import { measureSheetToCalculatorDimensions, jobToCalculatorClientInfo, loadEstimatorIntake } from './estimator/dataBridge';
 import { dataService } from './services/dataService';
-import { supabase } from './lib/supabase';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
@@ -420,7 +419,7 @@ const App: React.FC = () => {
       
       // Check for stage change to trigger automation
       if (jobToUpdate && updates.pipelineStage && updates.pipelineStage !== jobToUpdate.pipelineStage) {
-        const automation = DEFAULT_AUTOMATIONS.find(a => a.stageId === updates.pipelineStage && a.enabled);
+        const automation = DEFAULT_AUTOMATIONS.find(a => a.stage === updates.pipelineStage && a.enabled);
         if (automation) {
           const messageText = automation.messageTemplate
             .replace('{clientName}', jobToUpdate.clientName)
