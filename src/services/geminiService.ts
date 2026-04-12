@@ -10,7 +10,7 @@ export const geminiService = {
     const prompt = `
       You are a helpful sales assistant for Luxury Decking, a premium deck builder.
       The customer is looking at an estimate with the following options:
-      ${options.map(o => `- ${o.name}: ${o.title}. Price: $${o.price}. Features: ${o.features.join(', ')}. Value Insight: ${o.valueInsight}`).join('\n')}
+      ${options.map(o => `- ${o.name}: ${o.title}. Price: $${o.price}. Features: ${o.features.join(', ')}`).join('\n')}
 
       The customer's primary goals are: ${goals.join(', ')}.
 
@@ -148,7 +148,7 @@ export const geminiService = {
     const prompt = `
       Summarize why this lead might be stalling and what the history looks like.
       - Customer: ${job.clientName}
-      - Created: ${job.createdAt}
+      - Last Updated: ${job.updatedAt}
       - Last Contact: ${job.lastContactDate}
       - Stage: ${job.lifecycleStage}
       
