@@ -62,25 +62,6 @@ const JobsListView: React.FC<JobsListViewProps> = ({ user, jobs, onSelectJob, on
         </div>
       )}
 
-      {/* Field Resources Quick Access */}
-      <button 
-        onClick={onViewResources}
-        className="w-full mb-12 bg-[var(--brand-gold)] rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(5,150,105,0.2)] flex items-center justify-between group hover:bg-[var(--brand-gold)] transition-all active:scale-[0.98] border border-white/10"
-      >
-        <div className="flex items-center gap-6">
-          <div className="h-16 w-16 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner backdrop-blur-sm">
-            <BookOpen className="text-white w-8 h-8" />
-          </div>
-          <div className="text-left">
-            <h2 className="text-2xl font-black text-white uppercase italic tracking-tight leading-none mb-2">Field Resources Hub</h2>
-            <p className="text-[var(--brand-gold)]/10 text-[10px] font-black uppercase tracking-[0.2em] opacity-70">SOPs • Build Standards • Handbooks</p>
-          </div>
-        </div>
-        <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all border border-white/10">
-          <ArrowRight className="text-white w-6 h-6 group-hover:translate-x-1 transition-all" />
-        </div>
-      </button>
-
       <div className="space-y-6">
         {filteredJobs.length > 0 ? (
           filteredJobs.map((job) => (
@@ -179,6 +160,25 @@ const JobsListView: React.FC<JobsListViewProps> = ({ user, jobs, onSelectJob, on
           </div>
         )}
       </div>
+
+      {/* Field Resources Quick Access — shown below jobs so crew sees their work first */}
+      <button
+        onClick={onViewResources}
+        className="w-full mt-12 bg-[var(--brand-gold)] rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(5,150,105,0.2)] flex items-center justify-between group hover:bg-[var(--brand-gold)] transition-all active:scale-[0.98] border border-white/10"
+      >
+        <div className="flex items-center gap-6">
+          <div className="h-16 w-16 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner backdrop-blur-sm">
+            <BookOpen className="text-white w-8 h-8" />
+          </div>
+          <div className="text-left">
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tight leading-none mb-2">Field Resources Hub</h2>
+            <p className="text-[var(--brand-gold)]/10 text-[10px] font-black uppercase tracking-[0.2em] opacity-70">SOPs • Build Standards • Handbooks</p>
+          </div>
+        </div>
+        <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all border border-white/10">
+          <ArrowRight className="text-white w-6 h-6 group-hover:translate-x-1 transition-all" />
+        </div>
+      </button>
     </div>
   );
 };
