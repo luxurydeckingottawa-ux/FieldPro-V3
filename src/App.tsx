@@ -843,7 +843,7 @@ const App: React.FC = () => {
           : j
       ));
     }
-    navigateTo('workflow', selectedJob?.id);
+    navigateTo('workflow', job.id);
   }, [currentUser?.name, currentUser?.role, workflowState.jobId]);
 
   const uploadFileToCloudinary = async (file: string, filename: string): Promise<string> => {
