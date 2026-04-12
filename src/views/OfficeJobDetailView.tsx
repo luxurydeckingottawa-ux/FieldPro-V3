@@ -1538,7 +1538,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
           </div>
 
           {/* Right Column: Execution & Status */}
-          <div className="lg:col-span-4 space-y-8">
+          <div className="lg:col-span-4 space-y-8 lg:sticky lg:top-24 lg:self-start">
             
             {/* AI Assistant Section - Only for Estimate Stages */}
             {isEstimateStage && (

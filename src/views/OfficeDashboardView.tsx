@@ -375,7 +375,7 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
         </div>
 
         {/* Sidebar Column */}
-        <div className="lg:col-span-4 space-y-12">
+        <div className="lg:col-span-4 space-y-12 lg:sticky lg:top-24 lg:self-start">
           
           {/* Quick Access */}
           {/* Starting Soon Section */}
