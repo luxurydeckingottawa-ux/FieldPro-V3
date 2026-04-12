@@ -2004,13 +2004,18 @@ const App: React.FC = () => {
                     status: 'scheduled' as const,
                   }))}
                 installSchedule={jobs
-                  .filter(j => j.plannedStartDate && j.pipelineStage && ['JOB_SOLD','ADMIN_SETUP','PRE_PRODUCTION','READY_TO_START','IN_FIELD'].includes(j.pipelineStage))
+                  .filter(j => j.plannedStartDate && j.pipelineStage && [
+                    PipelineStage.JOB_SOLD, PipelineStage.ADMIN_SETUP, PipelineStage.PRE_PRODUCTION,
+                    PipelineStage.READY_TO_START, PipelineStage.IN_FIELD
+                  ].includes(j.pipelineStage))
                   .map(j => ({
                     id: j.id,
                     clientName: j.clientName,
                     address: j.projectAddress || '',
                     startDate: j.plannedStartDate!,
                     endDate: j.plannedFinishDate || j.plannedStartDate!,
+                    crewName: j.assignedCrewOrSubcontractor || 'Unassigned',
+                    status: 'tentative' as const,
                   }))}
               />
             </div>

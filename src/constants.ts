@@ -1,4 +1,4 @@
-import { PhotoUpload, InvoicingData, User, Role, Job, PipelineStage, OfficeChecklist, BuildDetails, PipelineAutomation } from './types';
+import { PhotoUpload, InvoicingData, User, Role, Job, PipelineStage, OfficeChecklist, BuildDetails, PipelineAutomation, MessageTemplate } from './types';
 
 // Pre-sale pipeline stages — jobs in these stages route to estimate-detail view
 export const ESTIMATE_STAGES: PipelineStage[] = [
