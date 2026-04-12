@@ -249,7 +249,7 @@ export const dataService = {
     
     // localStorage fallback
     try {
-      const saved = safeGetItem('luxury_decking_jobs_v4');
+      const saved = safeGetItem('luxury_decking_jobs_v5');
       return saved ? JSON.parse(saved) : [];
     } catch (e) {
       console.error('Failed to parse jobs from localStorage:', e);
@@ -263,7 +263,7 @@ export const dataService = {
       // This bulk save is only used for localStorage mode.
       return;
     }
-    safeSetItem('luxury_decking_jobs_v4', JSON.stringify(jobs));
+    safeSetItem('luxury_decking_jobs_v5', JSON.stringify(jobs));
   },
 
   async createJob(job: Job): Promise<Job | null> {
