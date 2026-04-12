@@ -623,7 +623,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                       <div className="space-y-2">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">Key Measurements</p>
                         <ul className="space-y-1">
-                          {intake.aiInsights.handoff.keyMeasurements.map((m, i) => (
+                          {(intake.aiInsights.handoff.keyMeasurements || []).map((m, i) => (
                             <li key={`measure-${i}`} className="text-sm flex items-center gap-2">
                               <div className="w-1 h-1 bg-[var(--brand-gold)] rounded-full" />
                               {m}
@@ -634,7 +634,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                       <div className="space-y-2">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">Site Conditions</p>
                         <ul className="space-y-1">
-                          {intake.aiInsights.handoff.siteConditions.map((c, i) => (
+                          {(intake.aiInsights.handoff.siteConditions || []).map((c, i) => (
                             <li key={`condition-${i}`} className="text-sm flex items-center gap-2">
                               <div className="w-1 h-1 bg-[var(--brand-gold)] rounded-full" />
                               {c}
@@ -647,12 +647,12 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                     <div className="space-y-2">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">Constraints & Upgrades</p>
                       <div className="flex flex-wrap gap-2">
-                        {intake.aiInsights.handoff.constraints.map((c, i) => (
+                        {(intake.aiInsights.handoff.constraints || []).map((c, i) => (
                           <span key={`constraint-${i}`} className="px-2 py-1 bg-rose-50 text-rose-700 text-[10px] font-bold uppercase rounded border border-rose-100">
                             {c}
                           </span>
                         ))}
-                        {intake.aiInsights.handoff.upgrades.map((u, i) => (
+                        {(intake.aiInsights.handoff.upgrades || []).map((u, i) => (
                           <span key={`upgrade-${i}`} className="px-2 py-1 bg-[var(--brand-gold)]/5 text-[#8B7520] text-[10px] font-bold uppercase rounded border border-[var(--brand-gold)]/10">
                             {u}
                           </span>
@@ -660,14 +660,14 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                       </div>
                     </div>
 
-                    {intake.aiInsights.handoff.missingItems.length > 0 && (
+                    {(intake.aiInsights.handoff.missingItems?.length > 0) && (
                       <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl space-y-2">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700 flex items-center gap-1">
                           <AlertCircle className="w-3 h-3" />
                           Missing Items to Verify
                         </p>
                         <ul className="space-y-1">
-                          {intake.aiInsights.handoff.missingItems.map((item, i) => (
+                          {(intake.aiInsights.handoff.missingItems || []).map((item, i) => (
                             <li key={`missing-${i}`} className="text-sm text-amber-900 flex items-center gap-2">
                               <div className="w-1 h-1 bg-amber-600 rounded-full" />
                               {item}
