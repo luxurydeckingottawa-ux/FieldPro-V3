@@ -455,6 +455,11 @@ const App: React.FC = () => {
       }
       return prev;
     });
+
+    // Persist to Supabase
+    dataService.updateJob(jobId, updates).catch(err =>
+      console.error('[handleUpdateJob] Supabase write failed:', err)
+    );
   }, [handleSendMessage]);
 
   const handleDeleteJob = useCallback((jobId: string) => {
@@ -646,11 +651,10 @@ const App: React.FC = () => {
   }, [jobs, selectedJob, handleUpdateJob]);
 
   const handleUpdateOfficeChecklist = useCallback((jobId: string, stage: PipelineStage, itemId: string, completed: boolean, isNA: boolean = false) => {
-    const updateChecklistJob = (job: Job): Job => {
+    const buildUpdatedJob = (job: Job): Job => {
       if (job.id !== jobId) return job;
-      
-      const checklists = job.officeChecklists || [];
-      const updatedChecklists = checklists.map(cl => {
+
+      const updatedChecklists = (job.officeChecklists || []).map(cl => {
         if (cl.stage === stage) {
           return {
             ...cl,
@@ -660,28 +664,37 @@ const App: React.FC = () => {
         return cl;
       });
 
-      // Auto-advance: check if ALL items in the current stage are completed or N/A
       const currentChecklist = updatedChecklists.find(cl => cl.stage === stage);
       const allComplete = currentChecklist?.items.every(item => item.completed || item.isNA) || false;
-      
+
       let updatedJob = { ...job, officeChecklists: updatedChecklists, updatedAt: new Date().toISOString() };
 
       if (allComplete && job.pipelineStage === stage) {
         const stageOrder = PIPELINE_STAGES.map(s => s.id);
         const currentIndex = stageOrder.indexOf(stage as PipelineStage);
         if (currentIndex >= 0 && currentIndex < stageOrder.length - 1) {
-          const nextStage = stageOrder[currentIndex + 1];
-          updatedJob = { ...updatedJob, pipelineStage: nextStage };
-          console.log(`Auto-advanced job ${job.jobNumber} from ${stage} to ${nextStage}`);
+          updatedJob = { ...updatedJob, pipelineStage: stageOrder[currentIndex + 1] as PipelineStage };
+          console.log(`Auto-advanced job ${job.jobNumber} from ${stage} to ${stageOrder[currentIndex + 1]}`);
         }
       }
 
       return updatedJob;
     };
 
-    setJobs(prevJobs => prevJobs.map(updateChecklistJob));
-    setSelectedJob(prev => prev ? updateChecklistJob(prev) : null);
-  }, []);
+    const original = jobs.find(j => j.id === jobId);
+    setJobs(prevJobs => prevJobs.map(buildUpdatedJob));
+    setSelectedJob(prev => prev ? buildUpdatedJob(prev) : null);
+
+    // Persist to Supabase
+    if (original) {
+      const updated = buildUpdatedJob(original);
+      const dbUpdates: Partial<Job> = { officeChecklists: updated.officeChecklists };
+      if (updated.pipelineStage !== original.pipelineStage) dbUpdates.pipelineStage = updated.pipelineStage;
+      dataService.updateJob(jobId, dbUpdates).catch(err =>
+        console.error('[handleUpdateOfficeChecklist] Supabase write failed:', err)
+      );
+    }
+  }, [jobs]);
 
   const handleAcceptEstimateOption = useCallback((jobId: string, optionId: string, selectedAddOns: string[]) => {
     const updateJob = (job: Job): Job => {
@@ -1032,7 +1045,7 @@ const App: React.FC = () => {
   }, [workflowState.userRole, workflowState.jobInfo.jobName]);
 
   const handleUpdateOfficeReviewStatus = useCallback((jobId: string, status: OfficeReviewStatus) => {
-    setJobs(prevJobs => prevJobs.map(job => 
+    setJobs(prevJobs => prevJobs.map(job =>
       job.id === jobId ? { ...job, officeReviewStatus: status, updatedAt: new Date().toISOString() } : job
     ));
     setSelectedJob(prev => {
@@ -1041,6 +1054,9 @@ const App: React.FC = () => {
       }
       return prev;
     });
+    dataService.updateJob(jobId, { officeReviewStatus: status }).catch(err =>
+      console.error('[handleUpdateOfficeReviewStatus] Supabase write failed:', err)
+    );
   }, []);
 
   const handleUpdateSchedule = useCallback((jobId: string, updates: Partial<Job>) => {
@@ -1077,6 +1093,11 @@ const App: React.FC = () => {
       }
       return prev;
     });
+
+    // Persist to Supabase
+    dataService.updateJob(jobId, updates).catch(err =>
+      console.error('[handleUpdateSchedule] Supabase write failed:', err)
+    );
   }, []);
 
   const handleUpdateEstimatorIntake = useCallback((intake: EstimatorIntake) => {
@@ -1126,19 +1147,30 @@ const App: React.FC = () => {
     ));
     setSelectedJob(prev => {
       if (prev && prev.id === jobId) {
-        return { 
-          ...prev, 
+        return {
+          ...prev,
           fieldForecast: {
             ...forecast,
             updatedAt: new Date().toISOString(),
             updatedBy: currentUser?.name || 'Unknown'
           },
           forecastReviewStatus: ForecastReviewStatus.REVIEW_NEEDED,
-          updatedAt: new Date().toISOString() 
+          updatedAt: new Date().toISOString()
         };
       }
       return prev;
     });
+    const forecastPayload = {
+      ...forecast,
+      updatedAt: new Date().toISOString(),
+      updatedBy: currentUser?.name || 'Unknown'
+    };
+    dataService.updateJob(jobId, {
+      fieldForecast: forecastPayload,
+      forecastReviewStatus: ForecastReviewStatus.REVIEW_NEEDED
+    }).catch(err =>
+      console.error('[handleUpdateFieldForecast] Supabase write failed:', err)
+    );
   }, [currentUser?.name]);
 
   const onAcceptOption = useCallback((optionId: string, addOns: string[]) => {
