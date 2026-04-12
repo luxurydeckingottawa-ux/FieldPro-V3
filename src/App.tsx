@@ -1785,7 +1785,7 @@ const App: React.FC = () => {
             onUpdatePipelineStage={handleUpdatePipelineStage}
             onOpenEstimator={(job) => {
               setSelectedJob(job);
-              handleOpenNewEstimate();
+              handleOpenEstimateForJob(job);
             }}
             onPreviewPortal={(job) => {
               setSelectedJob(job);
