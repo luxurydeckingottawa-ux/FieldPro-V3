@@ -540,7 +540,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                 </button>
                 {amount > 0 && !job.customerSignature && (
                   <button onClick={() => setShowAcceptance(true)}
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-500 transition-all">
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--brand-gold)] text-white rounded-lg text-sm font-bold hover:opacity-90 transition-all">
                     <PenTool className="w-4 h-4" /> Accept & Sign (On-Site)
                   </button>
                 )}
@@ -554,7 +554,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     sharePortalLink('email');
                     onUpdatePipelineStage(job.id, PipelineStage.EST_SENT);
                   }}
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-500 transition-all">
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--brand-gold)] text-white rounded-lg text-sm font-bold hover:opacity-90 transition-all">
                     <Send className="w-4 h-4" /> Send Estimate to Client
                   </button>
                 )}

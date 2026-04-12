@@ -46,7 +46,7 @@ export const AISalesAssistant: React.FC<AISalesAssistantProps> = ({ job }) => {
     <div className="relative">
       <button 
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all active:scale-95"
+        className="flex items-center gap-3 px-6 py-3 bg-[var(--brand-gold)] text-white rounded-2xl font-bold text-sm shadow-lg shadow-[var(--brand-gold)]/20 hover:scale-105 transition-all active:scale-95"
       >
         <Sparkles className="w-4 h-4" />
         Help Me Choose

@@ -32,7 +32,7 @@ export const getJobIssues = (job: Job): JobIssue[] => {
 
     case PipelineStage.ADMIN_SETUP:
     case PipelineStage.PRE_PRODUCTION: {
-      if (!job.assignedCrewOrSubcontractor) {
+      if (!job.assignedUsers || job.assignedUsers.length === 0) {
         issues.push({ type: 'error', label: 'Assignment Missing' });
       }
       if (!job.plannedStartDate) {
@@ -47,7 +47,7 @@ export const getJobIssues = (job: Job): JobIssue[] => {
     }
 
     case PipelineStage.READY_TO_START: {
-      if (!job.assignedCrewOrSubcontractor) {
+      if (!job.assignedUsers || job.assignedUsers.length === 0) {
         issues.push({ type: 'error', label: 'Assignment Missing' });
       }
       const readyChecklist = job.officeChecklists?.find(cl => cl.stage === PipelineStage.READY_TO_START);

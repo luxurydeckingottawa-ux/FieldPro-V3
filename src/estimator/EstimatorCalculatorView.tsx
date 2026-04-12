@@ -454,7 +454,7 @@ const STYLES = `
     --savings: #27ae60;
     --border: #333;
     --danger: #e74c3c;
-    --primary: #3498db;
+    --primary: #D4AF37;
     --preferred-yellow: #ffff00;
   }
 

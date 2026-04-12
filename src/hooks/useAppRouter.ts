@@ -28,7 +28,7 @@ const VIEW_TO_PATH: Record<string, string> = {
   'chat': '/chat',
   'customers': '/customers',
   'user-management': '/users',
-  'detail': '/jobs', // legacy - same as office-job-detail
+  'detail': '/field/jobs', // field job detail view
   'jobs': '/field/jobs',
   'workflow': '/field/workflow', // needs /:id appended
   'customer-portal': '/portal', // needs /:token appended
@@ -63,6 +63,9 @@ export function pathToView(pathname: string): { view: string; id?: string } {
   }
 
   // Dynamic route matches
+  if (pathname.startsWith('/field/jobs/')) {
+    return { view: 'detail', id: pathname.split('/')[3] };
+  }
   if (pathname.startsWith('/jobs/')) {
     return { view: 'office-job-detail', id: pathname.split('/')[2] };
   }

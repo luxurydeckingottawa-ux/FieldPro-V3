@@ -59,7 +59,7 @@ const EstimatorSketchPad: React.FC<EstimatorSketchPadProps> = ({ data, onChange 
     setIsDrawing(true);
     const newStroke: SketchStroke = {
       points: [pos.x, pos.y],
-      color: tool === 'eraser' ? '#ffffff' : '#10b981',
+      color: tool === 'eraser' ? '#ffffff' : '#D4AF37',
       width: tool === 'eraser' ? 20 : 3
     };
     onChange({ strokes: [...(data.strokes || []), newStroke] });

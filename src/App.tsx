@@ -2031,8 +2031,19 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
+        {view === 'estimator-workflow' && !selectedJob && (
+          <div className="flex flex-col items-center justify-center h-full gap-4 text-[var(--text-secondary)]">
+            <p className="text-lg font-bold">No job selected.</p>
+            <button
+              onClick={() => navigateTo('office-pipeline')}
+              className="px-6 py-3 bg-[var(--brand-gold)] text-white rounded-xl font-bold hover:opacity-90 transition-all"
+            >
+              Go to Pipeline
+            </button>
+          </div>
+        )}
         {view === 'estimator-workflow' && selectedJob && currentUser && (
-          <EstimatorWorkflowView 
+          <EstimatorWorkflowView
             key={selectedJob.id}
             job={selectedJob}
             onBack={() => navigateTo('estimator-dashboard')}

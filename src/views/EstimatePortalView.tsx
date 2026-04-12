@@ -1302,13 +1302,18 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 </button>
                 <div className="flex items-center gap-4">
                   <AISalesAssistant job={job} />
-                  <button 
-                    onClick={handleAccept}
-                    className="flex-1 sm:flex-none px-8 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-all flex items-center justify-center gap-2 group shadow-lg shadow-slate-900/10"
-                  >
-                    Accept & Secure Your Spot
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
+                  <div className="relative group/tip">
+                    <button
+                      disabled
+                      className="flex-1 sm:flex-none px-8 py-3 bg-slate-300 text-slate-500 rounded-xl font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10"
+                    >
+                      Accept & Secure Your Spot
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none">
+                      Coming Soon — Stripe integration pending
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

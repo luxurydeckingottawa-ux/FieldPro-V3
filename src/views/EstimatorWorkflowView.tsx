@@ -303,7 +303,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
           {status === 'scheduled' && (
             <button 
               onClick={() => handleStatusChange('on_way')}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 active:scale-[0.98]"
+              className="flex-1 bg-[var(--brand-gold)] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-[var(--brand-gold)]/20 active:scale-[0.98]"
             >
               <Navigation className="w-5 h-5" />
               On My Way
