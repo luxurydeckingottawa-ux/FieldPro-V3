@@ -955,7 +955,13 @@ const App: React.FC = () => {
       setUploadProgress('Generating Verified Build Passport...');
       const updatedStateWithPhotos = { ...workflowState, pages: updatedPages, customerSignatureCloudinaryUrl: sigUrl };
       const closeoutDataUri = await generateCloseoutPDF(updatedStateWithPhotos);
-      const verifiedBuildPassportUrl = await uploadFileToCloudinary(closeoutDataUri, `Passport_${workflowState.jobInfo.jobName}_${Date.now()}`);
+      let verifiedBuildPassportUrl = '';
+      try {
+        verifiedBuildPassportUrl = await uploadFileToCloudinary(closeoutDataUri, `Passport_${workflowState.jobInfo.jobName}_${Date.now()}`);
+      } catch (pdfUploadErr) {
+        console.warn('Closeout PDF upload to Cloudinary failed, using local URI:', pdfUploadErr);
+        verifiedBuildPassportUrl = closeoutDataUri;
+      }
 
       let subcontractorInvoiceUrl = '';
       if (workflowState.userRole === UserRole.SUBCONTRACTOR) {
