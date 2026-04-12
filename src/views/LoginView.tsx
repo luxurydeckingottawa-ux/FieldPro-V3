@@ -20,10 +20,16 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
     setError('');
     setIsLoading(true);
 
+    // Chrome autofill sets DOM values without triggering React onChange.
+    // Read from DOM directly as the authoritative source to handle both cases.
+    const form = e.target as HTMLFormElement;
+    const emailVal = (form.querySelector('input[type="email"]') as HTMLInputElement)?.value || email;
+    const pwVal = (form.querySelector('input[type="password"]') as HTMLInputElement)?.value || password;
+
     try {
       // Try Supabase auth first if configured
       if (isSupabaseConfigured()) {
-        const user = await dataService.signIn(email, password);
+        const user = await dataService.signIn(emailVal, pwVal);
         if (user) {
           onLogin(user);
           return;
@@ -32,7 +38,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
 
       // Fallback to local users (covers dev mode and users not yet in Supabase Auth)
       const mockUser = APP_USERS.find(
-        u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+        u => u.email.toLowerCase() === emailVal.toLowerCase() && u.password === pwVal
       );
       if (mockUser) {
         onLogin(mockUser);
@@ -42,7 +48,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
     } catch (err) {
       // Supabase unreachable — try local fallback
       const mockUser = APP_USERS.find(
-        u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+        u => u.email.toLowerCase() === emailVal.toLowerCase() && u.password === pwVal
       );
       if (mockUser) {
         onLogin(mockUser);
