@@ -588,8 +588,7 @@ export const dataService = {
       });
 
       if (authError || !authData.user) {
-        console.error('Sign in failed:', authError);
-        return null;
+        throw new Error(authError?.message || 'Invalid email or password.');
       }
 
       // Load profile
@@ -600,8 +599,7 @@ export const dataService = {
         .single();
 
       if (profileError || !profile) {
-        console.error('Failed to load profile:', profileError);
-        return null;
+        throw new Error('Account profile not found. Contact your administrator.');
       }
 
       return {

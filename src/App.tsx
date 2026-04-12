@@ -582,7 +582,7 @@ const App: React.FC = () => {
     } else {
       navigateTo('jobs');
     }
-  }, []);
+  }, [navigateTo]);
 
   const handleLogout = useCallback(() => {
     dataService.signOut();
