@@ -37,9 +37,9 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
           <label className="block font-label mb-4">Login Identity</label>
           <div className="grid grid-cols-2 gap-4">
             <button 
-              onClick={() => setRole(UserRole.EMPLOYEE)}
+              onClick={() => setRole(UserRole.FIELD_EMPLOYEE)}
               className={`p-6 rounded-2xl border-2 transition-all font-label ${
-                role === UserRole.EMPLOYEE 
+                role === UserRole.FIELD_EMPLOYEE
                   ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)] shadow-2xl scale-[1.02]' 
                   : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]'
               }`}
