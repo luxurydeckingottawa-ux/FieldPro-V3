@@ -457,8 +457,7 @@ const App: React.FC = () => {
             headers: internalHeaders(),
             body: JSON.stringify({ to: session.clientPhone, message: text }),
           }).then(res => res.json()).then(data => {
-            if (data.success) { /* SMS sent */ };
-            else console.error('SMS failed:', data.error);
+            if (!data.success) console.error('SMS failed:', data.error);
           }).catch(err => console.error('SMS error:', err));
         }
 
