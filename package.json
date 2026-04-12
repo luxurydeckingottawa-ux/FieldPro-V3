@@ -6,6 +6,7 @@
   "main": "index.js",
   "dependencies": {
     "@google/genai": "^1.47.0",
+    "@sentry/react": "^8.0.0",
     "@supabase/supabase-js": "^2.49.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@tailwindcss/vite": "^4.0.0",
