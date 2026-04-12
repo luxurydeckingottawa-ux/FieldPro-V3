@@ -249,80 +249,74 @@ const App: React.FC = () => {
     safeSetItem('luxury_decking_chat_v1', JSON.stringify(chatSessions));
   }, [chatSessions]);
 
-  // Poll Supabase for incoming SMS messages every 15 seconds
+  // Subscribe to Supabase Realtime for incoming SMS messages
   useEffect(() => {
     if (!supabase || !currentUser || currentUser.role !== Role.ADMIN) return;
 
-    const pollIncomingMessages = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('incoming_messages')
-          .select('*')
-          .eq('read', false)
-          .order('received_at', { ascending: true });
+    const normalizePhone = (p: string) => (p || '').replace(/\D/g, '').slice(-10);
 
-        if (error || !data || data.length === 0) return;
+    const processIncomingMessage = async (msg: Record<string, unknown>) => {
+      const fromNorm = normalizePhone(msg.from_number as string);
 
-        setChatSessions(prev => {
-          let updated = [...prev];
-
-          for (const msg of data) {
-            // Find matching chat session by phone number
-            const normalizePhone = (p: string) => (p || '').replace(/\D/g, '').slice(-10);
-            const fromNorm = normalizePhone(msg.from_number);
-            
-            let session = updated.find(s => {
-              const sessionPhoneNorm = normalizePhone(s.clientPhone || '');
-              return sessionPhoneNorm === fromNorm && sessionPhoneNorm.length >= 10;
-            });
-
-            if (session) {
-              // Add message to existing session
-              const newMsg: ChatMessage = {
-                id: `incoming-${msg.id}`,
-                senderId: 'client',
-                senderName: session.clientName,
-                text: msg.message_body,
-                timestamp: msg.received_at,
-                isFromClient: true,
-                status: 'delivered'
-              };
-
-              // Avoid duplicate messages
-              if (!session.messages.find(m => m.id === newMsg.id)) {
-                session = {
-                  ...session,
-                  messages: [...session.messages, newMsg],
-                  lastMessage: msg.message_body,
-                  lastMessageTimestamp: msg.received_at,
-                  unreadCount: session.unreadCount + 1
-                };
-                updated = updated.map(s => s.id === session!.id ? session! : s);
-              }
-            }
-            // If no matching session, the message is logged but not displayed
-            // (could be from an unknown number)
-          }
-
-          return updated;
+      setChatSessions(prev => {
+        let updated = [...prev];
+        let session = updated.find(s => {
+          const sessionPhoneNorm = normalizePhone(s.clientPhone || '');
+          return sessionPhoneNorm === fromNorm && sessionPhoneNorm.length >= 10;
         });
 
-        // Mark messages as read in Supabase
-        const ids = data.map(m => m.id);
-        await supabase
-          .from('incoming_messages')
-          .update({ read: true })
-          .in('id', ids);
+        if (!session) return updated;
 
-      } catch (err) {
-        console.error('Error polling incoming messages:', err);
-      }
+        const newMsg: ChatMessage = {
+          id: `incoming-${msg.id}`,
+          senderId: 'client',
+          senderName: session.clientName,
+          text: msg.message_body as string,
+          timestamp: msg.received_at as string,
+          isFromClient: true,
+          status: 'delivered'
+        };
+
+        if (session.messages.find(m => m.id === newMsg.id)) return updated;
+
+        session = {
+          ...session,
+          messages: [...session.messages, newMsg],
+          lastMessage: msg.message_body as string,
+          lastMessageTimestamp: msg.received_at as string,
+          unreadCount: session.unreadCount + 1
+        };
+        return updated.map(s => s.id === session!.id ? session! : s);
+      });
+
+      // Mark as read
+      await supabase
+        .from('incoming_messages')
+        .update({ read: true })
+        .eq('id', msg.id);
     };
 
-    // Poll immediately, then every 15 seconds
-    pollIncomingMessages();
-    const interval = setInterval(pollIncomingMessages, 15000);
-    return () => clearInterval(interval);
+    // Subscribe to new messages via Realtime (requires Realtime enabled on incoming_messages table)
+    const channel = supabase
+      .channel('incoming-sms-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'incoming_messages' },
+        (payload) => { processIncomingMessage(payload.new as Record<string, unknown>); }
+      )
+      .subscribe();
+
+    // Initial fetch: pick up any unread messages that arrived before the subscription started
+    (async () => {
+      const { data, error } = await supabase
+        .from('incoming_messages')
+        .select('*')
+        .eq('read', false)
+        .order('received_at', { ascending: true });
+      if (!error && data) {
+        for (const msg of data) await processIncomingMessage(msg);
+      }
+    })();
+
+    return () => { supabase.removeChannel(channel); };
   }, [currentUser]);
 
   // Workflow State
