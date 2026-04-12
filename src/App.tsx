@@ -1013,6 +1013,23 @@ const App: React.FC = () => {
         }
       }
 
+      // Persist completion to Supabase so office view updates in real time
+      if (workflowState.jobId) {
+        dataService.updateJob(workflowState.jobId, {
+          status: JobStatus.COMPLETED,
+          currentStage: 5,
+          pipelineStage: PipelineStage.COMPLETION,
+          signoffStatus: 'signed' as const,
+          finalSubmissionStatus: 'submitted' as const,
+          invoiceSupportStatus: workflowState.userRole === UserRole.SUBCONTRACTOR ? 'submitted' as const : 'not_required' as const,
+          officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
+          verifiedBuildPassportUrl,
+          subcontractorInvoiceUrl,
+          ...(workflowState.fieldForecast ? { fieldForecast: workflowState.fieldForecast } : {}),
+          updatedAt: new Date().toISOString()
+        }).catch(err => console.error('[handleFullSubmission] Supabase write failed:', err));
+      }
+
       // Netlify form submission (non-blocking for UI)
       try {
         await fetch("/", {

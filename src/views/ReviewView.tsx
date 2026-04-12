@@ -42,7 +42,7 @@ const ReviewView: React.FC<ReviewViewProps> = ({ state, isUploading, uploadProgr
             </div>
             <div>
               <p className="font-label opacity-60 mb-1">Role</p>
-              <p className="text-sm font-bold tracking-tight">{state.userRole || 'N/A'}</p>
+              <p className="text-sm font-bold tracking-tight">{state.userRole === 'FIELD_EMPLOYEE' ? 'Employee' : state.userRole === 'SUBCONTRACTOR' ? 'Subcontractor' : 'N/A'}</p>
             </div>
           </div>
         </section>
