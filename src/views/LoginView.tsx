@@ -136,7 +136,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
           </p>
           {isSupabaseConfigured() ? (
             <div className="mt-3 flex items-center justify-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-[#C4A432] shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+              <div className="w-2 h-2 rounded-full bg-[#C4A432] shadow-[0_0_6px_rgba(196,164,50,0.5)]" />
               <span className="text-[10px] text-[#C4A432] font-bold uppercase tracking-widest">Cloud Connected</span>
             </div>
           ) : (

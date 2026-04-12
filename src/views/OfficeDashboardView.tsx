@@ -123,7 +123,7 @@ const JobCard: React.FC<{ job: Job; onClick: (job: Job) => void }> = ({ job, onC
           </div>
           <div className="h-1.5 w-full bg-[var(--text-primary)]/5 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-1000"
+              className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(196,164,50,0.5)] transition-all duration-1000"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -222,7 +222,7 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-[var(--brand-gold)] animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                <div className="w-2 h-2 rounded-full bg-[var(--brand-gold)] animate-pulse shadow-[0_0_8px_rgba(196,164,50,0.5)]" />
                 <span className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em]">System Live</span>
               </div>
               <h1 className="text-5xl font-display leading-none">Operations Hub</h1>

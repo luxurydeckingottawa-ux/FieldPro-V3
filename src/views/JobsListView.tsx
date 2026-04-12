@@ -36,7 +36,7 @@ const JobsListView: React.FC<JobsListViewProps> = ({ user, jobs, onSelectJob, on
       <header className="mb-12">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(196,164,50,0.5)] animate-pulse" />
             <span className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em]">Live Operations</span>
           </div>
           {isEmployee && (
@@ -114,7 +114,7 @@ const JobsListView: React.FC<JobsListViewProps> = ({ user, jobs, onSelectJob, on
                       <div className="h-2 w-32 bg-[var(--bg-primary)]/10 rounded-full overflow-hidden border border-[var(--card-border)]">
                         <div 
                           style={{ width: `${(job.currentStage / 5) * 100}%` }}
-                          className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                          className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(196,164,50,0.5)]"
                         />
                       </div>
                       <span className="text-xs font-black text-[var(--text-primary)] italic">
@@ -164,7 +164,7 @@ const JobsListView: React.FC<JobsListViewProps> = ({ user, jobs, onSelectJob, on
       {/* Field Resources Quick Access — shown below jobs so crew sees their work first */}
       <button
         onClick={onViewResources}
-        className="w-full mt-12 bg-[var(--brand-gold)] rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(5,150,105,0.2)] flex items-center justify-between group hover:bg-[var(--brand-gold)] transition-all active:scale-[0.98] border border-white/10"
+        className="w-full mt-12 bg-[var(--brand-gold)] rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(180,148,30,0.2)] flex items-center justify-between group hover:bg-[var(--brand-gold)] transition-all active:scale-[0.98] border border-white/10"
       >
         <div className="flex items-center gap-6">
           <div className="h-16 w-16 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner backdrop-blur-sm">

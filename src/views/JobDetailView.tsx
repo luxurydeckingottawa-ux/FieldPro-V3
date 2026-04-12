@@ -182,7 +182,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
               <div className="flex flex-col items-stretch md:items-end gap-6">
                 <button
                   onClick={() => onOpenWorkflow(job)}
-                  className="flex items-center justify-center gap-4 px-10 py-6 bg-[var(--brand-gold)] text-black rounded-[2rem] text-sm font-black uppercase tracking-[0.3em] hover:bg-[var(--brand-gold)] transition-all shadow-[0_20px_50px_rgba(5,150,105,0.3)] active:scale-95 group"
+                  className="flex items-center justify-center gap-4 px-10 py-6 bg-[var(--brand-gold)] text-black rounded-[2rem] text-sm font-black uppercase tracking-[0.3em] hover:bg-[var(--brand-gold)] transition-all shadow-[0_20px_50px_rgba(180,148,30,0.3)] active:scale-95 group"
                 >
                   <Play className="w-5 h-5 fill-current group-hover:scale-110 transition-transform" />
                   <span>{job.currentStage > 0 ? 'Resume Workflow' : 'Start Workflow'}</span>
@@ -192,7 +192,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                     <div 
                       
                       style={{ width: `${(job.currentStage / 5) * 100}%` }}
-                      className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                      className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(196,164,50,0.5)]"
                     />
                   </div>
                   <span className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-widest">
@@ -224,7 +224,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
               className="bg-white/[0.03] rounded-[2rem] shadow-2xl border border-white/5 overflow-hidden p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 backdrop-blur-md"
             >
               <div className="flex items-center gap-5">
-                <div className="h-14 w-14 rounded-2xl bg-[var(--brand-gold)]/10 flex items-center justify-center border border-[var(--brand-gold)]/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                <div className="h-14 w-14 rounded-2xl bg-[var(--brand-gold)]/10 flex items-center justify-center border border-[var(--brand-gold)]/20 shadow-[0_0_20px_rgba(196,164,50,0.1)]">
                   <Settings className="h-7 w-7 text-[var(--brand-gold)]" />
                 </div>
                 <div>
@@ -247,7 +247,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                       onClick={() => onUpdateOfficeReviewStatus?.(job.id, status.id)}
                       className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
                         job.officeReviewStatus === status.id 
-                          ? 'bg-[var(--brand-gold)] text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
+                          ? 'bg-[var(--brand-gold)] text-black shadow-[0_0_15px_rgba(196,164,50,0.3)]' 
                           : 'text-gray-500 hover:text-gray-300'
                       }`}
                     >
@@ -648,7 +648,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                               onClick={() => setForecastStatus(status)}
                               className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border transition-all ${
                                 forecastStatus === status 
-                                  ? 'bg-[var(--brand-gold)] text-black border-[var(--brand-gold)] shadow-[0_0_20px_rgba(16,185,129,0.4)]' 
+                                  ? 'bg-[var(--brand-gold)] text-black border-[var(--brand-gold)] shadow-[0_0_20px_rgba(196,164,50,0.4)]' 
                                   : 'bg-[var(--card-bg)] text-[var(--muted-text)] border-[var(--card-border)] hover:border-[var(--brand-gold)]/30'
                               }`}
                             >
@@ -736,7 +736,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                     <span className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em] mb-2">Current Stage</span>
                     <span className="text-lg font-black text-[var(--text-primary)] uppercase italic tracking-tight">Stage {job.currentStage} of 5</span>
                   </div>
-                  <div className="h-14 w-14 rounded-2xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                  <div className="h-14 w-14 rounded-2xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center shadow-[0_0_20px_rgba(196,164,50,0.1)]">
                     <span className="text-xs font-black text-[var(--brand-gold)]">{Math.round((job.currentStage / 5) * 100)}%</span>
                   </div>
                 </div>

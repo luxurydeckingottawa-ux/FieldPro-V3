@@ -891,11 +891,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       }`}
                     >
                       {item.completed && !item.isNA && (
-                        <div className="absolute top-0 left-0 w-1 h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                        <div className="absolute top-0 left-0 w-1 h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(196,164,50,0.5)]"></div>
                       )}
                       <div className={`shrink-0 w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
                         item.completed && !item.isNA
-                          ? 'bg-[var(--brand-gold)] text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
+                          ? 'bg-[var(--brand-gold)] text-black shadow-[0_0_15px_rgba(196,164,50,0.3)]' 
                           : item.isNA
                             ? 'bg-amber-500/20 border border-amber-500/30'
                             : 'bg-white/5 border border-white/10 group-hover:border-white/30'

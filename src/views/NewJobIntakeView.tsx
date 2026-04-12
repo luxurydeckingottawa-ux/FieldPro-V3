@@ -111,7 +111,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-3 bg-[var(--brand-gold)] text-black px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[var(--brand-gold)] transition-all active:scale-95 shadow-[0_20px_40px_rgba(16,185,129,0.1)]"
+              className="flex items-center gap-3 bg-[var(--brand-gold)] text-black px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[var(--brand-gold)] transition-all active:scale-95 shadow-[0_20px_40px_rgba(196,164,50,0.1)]"
             >
               <Save className="w-4 h-4" />
               Save Master Record

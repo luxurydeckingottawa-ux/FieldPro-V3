@@ -179,7 +179,7 @@ const TimeAttendanceView: React.FC<TimeAttendanceViewProps> = ({ jobs }) => {
                 </div>
                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                    className="h-full bg-[var(--brand-gold)] shadow-[0_0_10px_rgba(196,164,50,0.5)]"
                     style={{ width: `${Math.min(100, (job.summary.estimatedCost / (job.totalAmount || 1)) * 100)}%` }}
                   />
                 </div>

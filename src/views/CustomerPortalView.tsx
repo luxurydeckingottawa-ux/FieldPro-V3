@@ -724,7 +724,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       
                       style={{ width: `${getConstructionProgressPercentage()}%` }}
                       
-                      className="h-full bg-[var(--brand-gold)] rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                      className="h-full bg-[var(--brand-gold)] rounded-full shadow-[0_0_15px_rgba(196,164,50,0.3)]"
                     />
                   </div>
                   <div className="flex justify-between text-[10px] font-black text-[#BBB] uppercase tracking-widest">

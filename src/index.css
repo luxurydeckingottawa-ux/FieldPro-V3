@@ -79,7 +79,7 @@ body {
 
 .card-base:hover {
   background-color: var(--bg-primary);
-  border-color: rgba(16, 185, 129, 0.3);
+  border-color: rgba(196, 164, 50, 0.3);
   box-shadow: var(--shadow-accent);
 }
 

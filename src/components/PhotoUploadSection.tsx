@@ -26,7 +26,7 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, onUploa
         <div key={photo.key} className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-[2.5rem] p-6 flex flex-col gap-4 shadow-2xl backdrop-blur-md group hover:border-[var(--text-secondary)]/30 transition-all">
           <div className="flex items-center justify-between px-2">
             <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">{photo.label}</span>
-            {photo.url && <CheckCircle2 className="text-[var(--brand-gold)] w-5 h-5 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />}
+            {photo.url && <CheckCircle2 className="text-[var(--brand-gold)] w-5 h-5 shadow-[0_0_10px_rgba(196,164,50,0.3)]" />}
           </div>
 
           <div className="relative aspect-video bg-[var(--bg-primary)]/5 rounded-[1.5rem] overflow-hidden border border-[var(--border-color)] group/photo">

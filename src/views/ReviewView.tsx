@@ -93,7 +93,7 @@ const ReviewView: React.FC<ReviewViewProps> = ({ state, isUploading, uploadProgr
             <p className="font-label mb-10 max-w-xs leading-relaxed opacity-60">Uploading secure assets and generating compliance documentation.</p>
             
             <div className="w-full bg-[var(--bg-secondary)] h-1.5 rounded-full overflow-hidden max-w-xs border border-[var(--border-color)]">
-              <div className="bg-[var(--brand-gold)] h-full transition-all duration-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]" style={{ width: '100%' }} />
+              <div className="bg-[var(--brand-gold)] h-full transition-all duration-500 shadow-[0_0_20px_rgba(196,164,50,0.5)]" style={{ width: '100%' }} />
             </div>
             
             <p className="text-[var(--brand-gold)] font-label mt-6 animate-pulse">

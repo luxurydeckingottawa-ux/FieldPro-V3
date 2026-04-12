@@ -172,7 +172,7 @@ const OfficePipelineView: React.FC<OfficePipelineViewProps> = ({ jobs, onSelectJ
       <div className="bg-[var(--bg-secondary)] border-t border-[var(--border-color)] p-4 px-8 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[var(--brand-gold)] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <div className="w-2 h-2 rounded-full bg-[var(--brand-gold)] shadow-[0_0_8px_rgba(196,164,50,0.5)]" />
             <span className="font-label">Healthy Flow</span>
           </div>
           <div className="flex items-center gap-2">
