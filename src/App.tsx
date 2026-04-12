@@ -562,8 +562,14 @@ const App: React.FC = () => {
 
   // Auto-redirect: ensure users see the correct view for their role
   useEffect(() => {
-    if (!currentUser) return;
-    
+    // Auth guard: unauthenticated users can only see login or customer portal
+    if (!currentUser) {
+      if (view !== 'login' && view !== 'customer-portal') {
+        navigateTo('login');
+      }
+      return;
+    }
+
     if (view === 'login') {
       if (currentUser.role === Role.ADMIN) navigateTo('office-dashboard');
       else if (currentUser.role === Role.ESTIMATOR) navigateTo('estimator-dashboard');
