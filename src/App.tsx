@@ -860,13 +860,10 @@ const App: React.FC = () => {
 
     setJobs(prev => [jobWithCampaign, ...prev]);
     dataService.createJob(jobWithCampaign).catch(err => console.error('Failed to persist new job:', err));
-    // Route based on user role
-    if (currentUser?.role === Role.ESTIMATOR) {
-      setSelectedJob(jobWithCampaign);
-      navigateTo('estimator-workflow', jobWithCampaign.id);
-    } else {
-      navigateTo('office-pipeline');
-    }
+    // Always route to estimator workflow — the on-site checklist, measurements, sketch, and photos
+    // must be completed before the job moves into the pipeline regardless of who created it
+    setSelectedJob(jobWithCampaign);
+    navigateTo('estimator-workflow', jobWithCampaign.id);
   }, [currentUser]);
 
   const handleOpenWorkflow = useCallback((job: Job) => {
