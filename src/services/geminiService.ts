@@ -23,7 +23,7 @@ export const geminiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "I'm sorry, I couldn't generate a recommendation right now. Please contact our office for personalized advice.";
@@ -56,7 +56,7 @@ export const geminiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "That's a great question. I'll have one of our project managers reach out to discuss this with you in detail.";
@@ -88,7 +88,7 @@ export const geminiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "Hi " + job.clientName + ", just checking in to see if you had any questions about the proposal we sent over. We'd love to help you get started on your new deck!";
@@ -120,7 +120,7 @@ export const geminiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -159,7 +159,7 @@ export const geminiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "Lead has been inactive for over 30 days. No response to last two follow-ups.";
@@ -187,7 +187,7 @@ export const geminiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "Customer has viewed the proposal multiple times, indicating high interest.";
@@ -270,7 +270,7 @@ export const geminiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "Project is currently in the initial stages. No significant history recorded yet.";

@@ -29,7 +29,7 @@ export const crmAiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "Failed to generate draft.";
@@ -73,7 +73,7 @@ export const crmAiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
         config: { responseMimeType: "application/json" }
       });
@@ -114,7 +114,7 @@ export const crmAiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "No insight available.";
@@ -149,7 +149,7 @@ export const crmAiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
         config: { responseMimeType: "application/json" }
       });
@@ -182,7 +182,7 @@ export const crmAiService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "No summary available.";

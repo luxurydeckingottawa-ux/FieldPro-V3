@@ -35,7 +35,7 @@ export const aiCommunicationService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "Failed to generate draft.";
@@ -71,7 +71,7 @@ export const aiCommunicationService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || content;
@@ -111,7 +111,7 @@ export const aiCommunicationService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "Failed to generate summary.";
@@ -146,7 +146,7 @@ export const aiCommunicationService = {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt,
       });
       return response.text || "";
