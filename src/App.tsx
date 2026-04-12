@@ -935,8 +935,13 @@ const App: React.FC = () => {
           const photo = page.photos[j];
           if (photo.url && !photo.cloudinaryUrl) {
             setUploadProgress(`Uploading ${PAGE_TITLES[i]} photo ${j+1}...`);
-            const url = await uploadFileToCloudinary(photo.url, `${photo.key}_${Date.now()}`);
-            photo.cloudinaryUrl = url;
+            try {
+              const url = await uploadFileToCloudinary(photo.url, `${photo.key}_${Date.now()}`);
+              photo.cloudinaryUrl = url;
+            } catch (uploadErr) {
+              console.warn(`Photo upload skipped for ${photo.key}, using local URL as fallback:`, uploadErr);
+              photo.cloudinaryUrl = photo.url; // use data URL as fallback
+            }
           }
         }
       }
