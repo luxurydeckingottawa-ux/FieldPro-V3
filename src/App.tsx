@@ -154,7 +154,9 @@ const App: React.FC = () => {
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(() => {
     const params = new URLSearchParams(window.location.search);
-    const portalToken = params.get('portal');
+    // Check both ?portal=TOKEN (legacy) and /portal/:token (path-based)
+    const portalToken = params.get('portal')
+      || (window.location.pathname.startsWith('/portal/') ? window.location.pathname.split('/')[2] : null);
     if (portalToken) {
       // Use the logic above to get the full list of migrated jobs
       let currentJobs: Job[] = [];
@@ -166,19 +168,20 @@ const App: React.FC = () => {
       } catch (e) {
         console.error("Failed to parse jobs state for portal", e);
       }
-      
+
       const migratedJobs = currentJobs.map(job => ({
         ...job,
         officeChecklists: job.officeChecklists || createDefaultOfficeChecklists(),
         buildDetails: job.buildDetails || createDefaultBuildDetails(),
         customerPortalToken: job.customerPortalToken || `portal-${job.id.replace(/[^a-z0-9]/gi, '')}`
       }));
-      
+
       const foundJob = migratedJobs.find(j => j.customerPortalToken === portalToken);
       return foundJob || null;
     }
     return null;
   });
+  const [portalLoading, setPortalLoading] = useState(false);
 
   // Router hook - provides navigateTo() which updates both URL and view state
   const { navigateTo } = useAppRouter(setView, selectedJob?.id);
@@ -205,6 +208,22 @@ const App: React.FC = () => {
       window.removeEventListener('storage-quota-error', handleStorageError);
     };
   }, []);
+
+  // Fetch portal job from Supabase when accessed directly (no localStorage data)
+  const portalFetchAttempted = React.useRef(false);
+  useEffect(() => {
+    if (view !== 'customer-portal' || selectedJob !== null || portalFetchAttempted.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('portal')
+      || (window.location.pathname.startsWith('/portal/') ? window.location.pathname.split('/')[2] : null);
+    if (!token) return;
+    portalFetchAttempted.current = true;
+    setPortalLoading(true);
+    dataService.getJobByPortalToken(token).then(job => {
+      if (job) setSelectedJob(job);
+      setPortalLoading(false);
+    });
+  }, [view, selectedJob]);
 
   // Sync URL with portal token for refreshes
   useEffect(() => {
@@ -1649,7 +1668,14 @@ const App: React.FC = () => {
   if (view === 'customer-portal') {
       return (
         <div className="min-h-screen bg-slate-50">
-          {selectedJob ? (
+          {portalLoading ? (
+            <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB]">
+              <div className="text-center space-y-4">
+                <div className="h-12 w-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-slate-500 text-sm">Loading your project...</p>
+              </div>
+            </div>
+          ) : selectedJob ? (
             (selectedJob.pipelineStage === PipelineStage.EST_SENT ||
              selectedJob.pipelineStage === PipelineStage.EST_COMPLETED ||
              selectedJob.pipelineStage === PipelineStage.EST_APPROVED ||

@@ -257,6 +257,26 @@ export const dataService = {
     }
   },
 
+  async getJobByPortalToken(token: string): Promise<Job | null> {
+    if (isSupabaseConfigured()) {
+      const { data, error } = await supabase!
+        .from('jobs')
+        .select('*')
+        .eq('customer_portal_token', token)
+        .single();
+      if (error || !data) return null;
+      return rowToJob(data);
+    }
+    // localStorage fallback
+    try {
+      const saved = safeGetItem('luxury_decking_jobs_v5');
+      const jobs: Job[] = saved ? JSON.parse(saved) : [];
+      return jobs.find(j => j.customerPortalToken === token) || null;
+    } catch (e) {
+      return null;
+    }
+  },
+
   async saveJobs(jobs: Job[]): Promise<void> {
     if (isSupabaseConfigured()) {
       // With Supabase, individual updates are handled by updateJob/createJob.
