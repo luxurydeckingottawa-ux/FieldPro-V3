@@ -12,6 +12,7 @@
 import { supabase, isSupabaseConfigured, LUXURY_DECKING_ORG_ID } from '../lib/supabase';
 import { safeSetItem, safeGetItem } from '../utils/storage';
 import { Job, EstimatorIntake, ChatSession, User } from '../types';
+import { APP_USERS } from '../constants';
 
 // ============================================================
 // Type converters: camelCase (app) <-> snake_case (database)
@@ -602,11 +603,14 @@ export const dataService = {
         throw new Error('Account profile not found. Contact your administrator.');
       }
 
+      // Map Supabase UUID back to APP_USERS mock ID (by email) so that
+      // job.assignedUsers entries (which store mock IDs) match currentUser.id.
+      const appUser = APP_USERS.find(u => u.email.toLowerCase() === profile.email.toLowerCase());
       return {
-        id: profile.id,
+        id: appUser?.id || profile.id,
         email: profile.email,
-        name: profile.name,
-        role: profile.role as any,
+        name: profile.name || appUser?.name || '',
+        role: (profile.role || appUser?.role) as any,
       };
     }
 
