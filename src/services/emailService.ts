@@ -1,9 +1,11 @@
 /**
  * Message Service
- * 
+ *
  * Sends emails and SMS through Netlify serverless functions.
  * Used by the drip campaign engine to send automated follow-ups.
  */
+
+const internalSecret = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
 
 interface SendEmailParams {
   to: string;
@@ -30,7 +32,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendResult> {
   try {
     const response = await fetch('/.netlify/functions/send-email', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(internalSecret ? { 'X-Internal-Secret': internalSecret } : {}) },
       body: JSON.stringify({
         to: params.to,
         subject: params.subject,
@@ -60,7 +62,7 @@ export async function sendSms(params: SendSmsParams): Promise<SendResult> {
   try {
     const response = await fetch('/.netlify/functions/send-sms', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(internalSecret ? { 'X-Internal-Secret': internalSecret } : {}) },
       body: JSON.stringify({
         to: params.to,
         message: params.message,

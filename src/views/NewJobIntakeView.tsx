@@ -14,6 +14,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
     jobNumber: `LD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
     clientName: '',
     clientPhone: '',
+    clientEmail: '',
     projectAddress: '',
     projectType: '',
     scopeSummary: '',
@@ -60,7 +61,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
       updatedAt: new Date().toISOString(),
       officialScheduleStatus: ScheduleStatus.ON_SCHEDULE,
       buildDetails: buildDetails,
-      customerPortalToken: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+      customerPortalToken: crypto.randomUUID(),
     };
 
     onSave(newJob);
@@ -175,12 +176,22 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Client Phone</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={formData.clientPhone}
                       onChange={e => setFormData({...formData, clientPhone: e.target.value})}
                       className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
                       placeholder="613-707-3060"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Client Email *</label>
+                    <input
+                      type="email"
+                      value={formData.clientEmail}
+                      onChange={e => setFormData({...formData, clientEmail: e.target.value})}
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
+                      placeholder="client@email.com"
                     />
                   </div>
                   <div className="col-span-1 md:col-span-2 space-y-2">
@@ -195,13 +206,17 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Project Type</label>
-                    <input 
-                      type="text" 
+                    <select
                       value={formData.projectType}
                       onChange={e => setFormData({...formData, projectType: e.target.value})}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
-                      placeholder="e.g. Composite Deck"
-                    />
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all appearance-none"
+                    >
+                      <option value="">Select Type...</option>
+                      <option value="Deck">Deck Only</option>
+                      <option value="Deck+Stairs">Deck + Stairs</option>
+                      <option value="Deck+Railings">Deck + Railings</option>
+                      <option value="FullBuild">Full Build (Deck+Stairs+Railings)</option>
+                    </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Target Start Date</label>

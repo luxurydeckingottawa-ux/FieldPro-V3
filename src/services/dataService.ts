@@ -98,7 +98,7 @@ function jobToRow(job: Job): Record<string, any> {
   };
 }
 
-function rowToJob(row: Record<string, any>): Job {
+export function rowToJob(row: Record<string, any>): Job {
   return {
     id: row.id,
     jobNumber: row.job_number,
@@ -255,6 +255,26 @@ export const dataService = {
       console.error('Failed to parse jobs from localStorage:', e);
       return [];
     }
+  },
+
+  async getJobById(jobId: string): Promise<Job | null> {
+    if (!isSupabaseConfigured()) return null;
+    const { data, error } = await supabase!.from('jobs').select('*').eq('id', jobId).single();
+    if (error || !data) return null;
+    const job = rowToJob(data);
+    const [notesResult, filesResult] = await Promise.all([
+      supabase!.from('job_notes').select('*').eq('job_id', jobId),
+      supabase!.from('job_files').select('*').eq('job_id', jobId),
+    ]);
+    const allNotes = (notesResult.data || []).map((n: any) => ({
+      id: n.id, author: n.author, text: n.text, timestamp: n.created_at, type: n.note_type,
+    }));
+    job.officeNotes = allNotes.filter((n: any) => n.type === 'office');
+    job.siteNotes = allNotes.filter((n: any) => n.type === 'site');
+    job.files = (filesResult.data || []).map((f: any) => ({
+      id: f.id, name: f.name, url: f.url, type: f.file_type, uploadedAt: f.uploaded_at,
+    }));
+    return job;
   },
 
   async getJobByPortalToken(token: string): Promise<Job | null> {

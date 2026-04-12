@@ -35,25 +35,6 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
   const currentSession = chatSessions.find(s => s.jobId === job.id);
 
-  // Mock weather data for the next 7 days
-  const mockWeather = [
-    { date: '2026-03-29', condition: 'sunny', temp: 18 },
-    { date: '2026-03-30', condition: 'sunny', temp: 20 },
-    { date: '2026-03-31', condition: 'cloudy', temp: 17 },
-    { date: '2026-04-01', condition: 'rainy', temp: 14 },
-    { date: '2026-04-02', condition: 'cloudy', temp: 16 },
-    { date: '2026-04-03', condition: 'sunny', temp: 19 },
-    { date: '2026-04-04', condition: 'sunny', temp: 21 },
-  ];
-
-  const getWeatherIcon = (condition: string) => {
-    switch (condition) {
-      case 'sunny': return <Sun className="w-4 h-4 text-amber-500" />;
-      case 'cloudy': return <Cloud className="w-4 h-4 text-slate-400" />;
-      case 'rainy': return <CloudRain className="w-4 h-4 text-blue-400" />;
-      default: return <Sun className="w-4 h-4 text-amber-500" />;
-    }
-  };
 
   // Calculate queue position
   const getQueuePosition = () => {
@@ -62,7 +43,11 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
     const queueStages = [PipelineStage.ADMIN_SETUP, PipelineStage.PRE_PRODUCTION, PipelineStage.READY_TO_START];
     const queueJobs = allJobs
       .filter(j => queueStages.includes(j.pipelineStage))
-      .sort((a, b) => new Date(a.scheduledDate || '').getTime() - new Date(b.scheduledDate || '').getTime());
+      .sort((a, b) => {
+        const aTime = a.scheduledDate ? new Date(a.scheduledDate).getTime() : Infinity;
+        const bTime = b.scheduledDate ? new Date(b.scheduledDate).getTime() : Infinity;
+        return aTime - bTime;
+      });
     
     const position = queueJobs.findIndex(j => j.id === job.id);
     if (position === -1) return null;
@@ -1192,19 +1177,6 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-end px-2">
-                    {mockWeather.map((day, i) => (
-                      <div key={i} className="flex flex-col items-center gap-3 group">
-                        <span className="text-[10px] font-bold text-[#999] uppercase tracking-widest group-hover:text-[#1A1A1A] transition-colors">
-                          {format(new Date(day.date), 'EEE')}
-                        </span>
-                        <div className="w-10 h-16 bg-slate-50 rounded-2xl flex flex-col items-center justify-center gap-2 border border-transparent group-hover:border-amber-200 group-hover:bg-amber-50 transition-all">
-                          {getWeatherIcon(day.condition)}
-                          <span className="text-[10px] font-bold text-[#1A1A1A]">{day.temp}°</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm space-y-6">
@@ -1270,7 +1242,6 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   <div className="grid grid-cols-7 gap-px bg-[#F0F0F0] border border-[#F0F0F0] rounded-2xl overflow-hidden">
                     {calendarDays.map((day, i) => {
                       const jobInfo = getJobAtDate(day.date);
-                      const weather = mockWeather.find(w => new Date(w.date).toDateString() === day.date.toDateString());
                       
                       return (
                         <div 
@@ -1286,11 +1257,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                             }`}>
                               {day.date.getDate()}
                             </span>
-                            {weather && (
-                              <div className="opacity-40 group-hover:opacity-100 transition-opacity">
-                                {getWeatherIcon(weather.condition)}
-                              </div>
-                            )}
+
                           </div>
 
                           {jobInfo && (

@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { User, Role } from '../types';
 import { APP_USERS } from '../constants';
-import { UserPlus, Trash2, Edit2, X, AlertCircle, Database, Video, Play, Loader2, MessageSquare
-} from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { UserPlus, Trash2, Edit2, X, AlertCircle, Database } from 'lucide-react';
 
 interface UserManagementViewProps {
   onBack: () => void;
@@ -19,81 +17,6 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
   const [newUser, setNewUser] = useState<Partial<User>>({
     role: Role.FIELD_EMPLOYEE
   });
-
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [generationStatus, setGenerationStatus] = useState<string>('');
-
-  const handleGenerateVideo = async () => {
-    if (typeof window === 'undefined') return;
-
-    try {
-      // Check for API key
-      if (window.aistudio) {
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        if (!hasKey) {
-          await window.aistudio.openSelectKey();
-          // After opening, we assume they might have selected it or will try again
-          return;
-        }
-      }
-
-      setIsGenerating(true);
-      setGenerationStatus('Initializing video generation...');
-      
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-      
-      const prompt = `Realistic iPhone iMessage text conversation animation. Light blue background. Contact name 'Mom mobile' at the top with a back arrow. Empty conversation screen initially. First blue bubble: 'We're thinking about building a new deck.' Grey typing indicator. Photo message: couple relaxing on a stunning custom wood deck with glass railings, lush landscaping, modern home. Grey text bubble: 'Oh, we just had Luxury DecKing build ours, and we love! You should check them out.' Final blue bubble: 'Ok, thanks, we'll definitely give them a call.' Authentic iMessage sound effects, smooth sliding animations, organic pacing, static camera, 9:16 portrait.`;
-
-      let operation = await ai.models.generateVideos({
-        model: 'veo-3.1-lite-generate-preview',
-        prompt,
-        config: {
-          numberOfVideos: 1,
-          resolution: '1080p',
-          aspectRatio: '9:16'
-        }
-      });
-
-      setGenerationStatus('Generating video frames (this may take a few minutes)...');
-
-      // Poll for completion
-      while (!operation.done) {
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        try {
-          operation = await ai.operations.getVideosOperation({ operation: operation });
-        } catch (pollError: any) {
-          if (pollError.message?.includes('Requested entity was not found')) {
-            setIsGenerating(false);
-            setGenerationStatus('');
-            if (window.aistudio) await window.aistudio.openSelectKey();
-            return;
-          }
-          throw pollError;
-        }
-      }
-
-      const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-      if (downloadLink) {
-        setGenerationStatus('Finalizing video...');
-        const response = await fetch(downloadLink, {
-          method: 'GET',
-          headers: {
-            'x-goog-api-key': process.env.API_KEY || '',
-          },
-        });
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        setVideoUrl(url);
-      }
-    } catch (error: any) {
-      console.error("Video generation failed:", error);
-      alert(`Video generation failed: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsGenerating(false);
-      setGenerationStatus('');
-    }
-  };
 
   const saveUsers = (updatedUsers: User[]) => {
     setUsers(updatedUsers);
@@ -315,102 +238,6 @@ const UserManagementView: React.FC<UserManagementViewProps> = () => {
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-8 shadow-xl space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-              <Video className="w-6 h-6 text-blue-500" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">Marketing Assets</h2>
-              <p className="text-sm text-[var(--text-secondary)]">Generate high-quality promotional videos using AI.</p>
-            </div>
-          </div>
-          {videoUrl && (
-            <button 
-              onClick={() => setVideoUrl(null)}
-              className="text-xs font-bold text-rose-500 hover:underline"
-            >
-              Clear Video
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-          <div className="space-y-4">
-            <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
-              <h3 className="font-bold flex items-center gap-2 mb-2">
-                <MessageSquare className="w-4 h-4 text-blue-500" />
-                iMessage Ad Concept
-              </h3>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                Creates a realistic iMessage conversation animation between "Mom" and a potential customer, 
-                showcasing a Luxury DecKing project recommendation. Perfect for social media ads.
-              </p>
-            </div>
-
-            <button
-              onClick={handleGenerateVideo}
-              disabled={isGenerating}
-              className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-bold transition-all shadow-lg ${
-                isGenerating 
-                  ? 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-not-allowed' 
-                  : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/20'
-              }`}
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {generationStatus || 'Generating...'}
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5" />
-                  Generate iMessage Ad Video
-                </>
-              )}
-            </button>
-            
-            <p className="text-[10px] text-[var(--text-secondary)] italic text-center">
-              Powered by Veo 3.1 Lite. Generation takes 2-5 minutes.
-            </p>
-          </div>
-
-          <div className="aspect-[9/16] bg-black rounded-2xl overflow-hidden border border-[var(--border-color)] shadow-2xl relative group">
-            {videoUrl ? (
-              <video 
-                src={videoUrl} 
-                controls 
-                autoPlay 
-                loop 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--text-secondary)] p-8 text-center">
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                  <Video className="w-8 h-8 opacity-20" />
-                </div>
-                <p className="text-sm font-medium opacity-40">No video generated yet</p>
-                <p className="text-[10px] mt-2 opacity-30">The preview will appear here once generation is complete.</p>
-              </div>
-            )}
-            
-            {isGenerating && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center">
-                <div className="relative">
-                  <div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-                  <Video className="absolute inset-0 m-auto w-6 h-6 text-blue-500 animate-pulse" />
-                </div>
-                <p className="mt-6 text-white font-bold">{generationStatus}</p>
-                <div className="mt-4 w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 animate-[loading_2s_ease-in-out_infinite]" />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-6 flex gap-4">

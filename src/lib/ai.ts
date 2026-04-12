@@ -1,83 +1,80 @@
-import { GoogleGenAI } from "@google/genai";
+/**
+ * AI client — routes all Gemini calls through the server-side proxy function so
+ * the API key is never exposed in the browser bundle.
+ *
+ * Drop-in replacement for the old GoogleGenAI approach:
+ *   const ai = getAI();
+ *   const response = await ai.models.generateContent({ model, contents, config });
+ *   response.text
+ */
 
-declare global {
-  interface Window {
-    aistudio?: {
-      hasSelectedApiKey: () => Promise<boolean>;
-      openSelectKey: () => Promise<void>;
-    };
+const INTERNAL_SECRET = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
+
+interface GenerateContentParams {
+  model?: string;
+  contents: string | Array<{ role?: string; parts: Array<{ text: string }> }>;
+  config?: {
+    responseMimeType?: string;
+    responseSchema?: unknown;
+  };
+}
+
+interface GenerateContentResponse {
+  text: string;
+}
+
+async function generateViaProxy(params: GenerateContentParams): Promise<GenerateContentResponse> {
+  // Flatten contents to a single prompt string (covers all current usages which pass a plain string)
+  const prompt =
+    typeof params.contents === 'string'
+      ? params.contents
+      : params.contents.map((c) => c.parts.map((p) => p.text).join('\n')).join('\n');
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (INTERNAL_SECRET) headers['X-Internal-Secret'] = INTERNAL_SECRET;
+
+  const response = await fetch('/.netlify/functions/gemini-proxy', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: params.model || 'gemini-2.0-flash',
+      prompt,
+      responseMimeType: params.config?.responseMimeType,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || `Gemini proxy error ${response.status}`);
   }
+
+  return { text: data.text || '' };
 }
 
 /**
- * Creates a fresh instance of GoogleGenAI using the latest environment variables.
- * This ensures we always pick up the most up-to-date API key from the platform.
+ * Returns a lightweight proxy client with the same shape as GoogleGenAI
+ * so geminiService.ts callers require zero changes.
  */
-export const getAI = () => {
-  // The platform injects the key into GEMINI_API_KEY or API_KEY
-  // We check process.env (defined in vite.config.ts) and import.meta.env as a fallback
-  const rawKey = (
-    process.env.GEMINI_API_KEY || 
-    process.env.API_KEY || 
-    (import.meta.env.VITE_GEMINI_API_KEY as string) || 
-    (import.meta.env.VITE_API_KEY as string)
-  );
-
-  const apiKey = typeof rawKey === 'string' ? rawKey.trim() : '';
-  
-  const isPlaceholder = [
-    '',
-    'undefined',
-    'null',
-    'YOUR_GEMINI_API_KEY',
-    'YOUR_API_KEY',
-    'REPLACE_WITH_YOUR_KEY'
-  ].includes(apiKey.toLowerCase()) || apiKey.length < 5; // Real keys are much longer
-  
-  if (isPlaceholder) {
-    // If we're in AI Studio and no key is set, we might need to prompt
-    if (window.aistudio) {
-      window.aistudio.hasSelectedApiKey().then(hasKey => {
-        if (!hasKey) {
-          console.warn("No API key selected in AI Studio. Opening selector...");
-          window.aistudio?.openSelectKey();
-        }
-      });
-    }
-
-    const msg = "Gemini API Key is missing or invalid. Please provide a valid API key in the Settings menu (GEMINI_API_KEY).";
-    console.error(msg);
-    throw new Error(msg);
-  }
-  
-  // Basic format check for AIza...
-  if (!apiKey.startsWith('AIza')) {
-    console.warn("API Key does not start with 'AIza'. This might be an invalid Gemini API key.");
-  }
-  
-  return new GoogleGenAI({ apiKey });
-};
+export const getAI = () => ({
+  models: {
+    generateContent: generateViaProxy,
+  },
+});
 
 /**
  * Helper to handle AI errors, specifically invalid API keys.
  */
-export const handleAiError = async (error: any) => {
-  const errorMsg = error?.message || JSON.stringify(error);
-  console.error("AI Service Error:", error);
+export const handleAiError = async (error: unknown): Promise<string> => {
+  const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+  console.error('AI Service Error:', error);
 
   if (errorMsg.includes('API key not valid') || errorMsg.includes('API_KEY_INVALID')) {
-    // Dispatch a custom event so the UI can show a warning
-    window.dispatchEvent(new CustomEvent('ai-key-error', { 
-      detail: { message: "Your Gemini API key is invalid or missing." } 
+    window.dispatchEvent(new CustomEvent('ai-key-error', {
+      detail: { message: 'The Gemini API key on the server is invalid. Contact the administrator.' },
     }));
-
-    if (window.aistudio) {
-      console.warn("Detected invalid API key. Opening AI Studio key selector...");
-      await window.aistudio.openSelectKey();
-      return "Your API key is invalid. Please select a valid key in the dialog that appeared.";
-    }
-    return "The Gemini API key provided is invalid. Please check your settings.";
+    return 'The Gemini API key is invalid. Please contact the administrator.';
   }
 
-  return "An error occurred while communicating with the AI service. Please try again later.";
+  return 'An error occurred while communicating with the AI service. Please try again later.';
 };

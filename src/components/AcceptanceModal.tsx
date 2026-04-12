@@ -163,7 +163,8 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
         });
       } catch (acceptErr) {
         console.error('onAccept callback error:', acceptErr);
-        // Don't block - the data was prepared successfully
+        setError(`Failed to save acceptance: ${acceptErr instanceof Error ? acceptErr.message : 'Unknown error'}. Please try again.`);
+        return; // don't close — job may not be at JOB_SOLD
       }
 
       onClose();

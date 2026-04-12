@@ -1,4 +1,3 @@
-import { Type } from "@google/genai";
 import { Job, PortalEngagement } from "../types";
 import { getAI, handleAiError } from "../lib/ai";
 
@@ -125,12 +124,12 @@ export const geminiService = {
         config: {
           responseMimeType: "application/json",
           responseSchema: {
-            type: Type.OBJECT,
+            type: 'object',
             properties: {
-              action: { type: Type.STRING },
-              reasoning: { type: Type.STRING }
+              action: { type: 'string' },
+              reasoning: { type: 'string' }
             },
-            required: ["action", "reasoning"]
+            required: ['action', 'reasoning']
           }
         }
       });

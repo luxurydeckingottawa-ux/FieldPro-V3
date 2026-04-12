@@ -1,5 +1,16 @@
 import { PhotoUpload, InvoicingData, User, Role, Job, PipelineStage, OfficeChecklist, BuildDetails, PipelineAutomation } from './types';
 
+// Pre-sale pipeline stages — jobs in these stages route to estimate-detail view
+export const ESTIMATE_STAGES: PipelineStage[] = [
+  PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
+  PipelineStage.THIRD_CONTACT, PipelineStage.LEAD_ON_HOLD, PipelineStage.LEAD_WON, PipelineStage.LEAD_LOST,
+  PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED, PipelineStage.EST_IN_PROGRESS,
+  PipelineStage.EST_COMPLETED, PipelineStage.EST_SENT, PipelineStage.EST_ON_HOLD,
+  PipelineStage.EST_APPROVED, PipelineStage.EST_REJECTED,
+  PipelineStage.SITE_VISIT_SCHEDULED, PipelineStage.ESTIMATE_IN_PROGRESS,
+  PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP,
+];
+
 export const LOST_REASONS = [
   'Too expensive',
   'No response',

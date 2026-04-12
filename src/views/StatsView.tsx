@@ -61,8 +61,10 @@ const StatsView: React.FC<StatsViewProps> = ({ jobs, onBack }) => {
         conversionRate: data.count > 0 ? Math.round((data.won / data.count) * 100) : 0
       }));
     
-    // Completed jobs
-    const completedJobs = jobs.filter(j => j.pipelineStage === PipelineStage.PAID_CLOSED);
+    // Completed jobs — include both COMPLETION (field done) and PAID_CLOSED (fully invoiced)
+    const completedJobs = jobs.filter(j =>
+      j.pipelineStage === PipelineStage.COMPLETION || j.pipelineStage === PipelineStage.PAID_CLOSED
+    );
     
     return {
       activeLeads: activeLeads.length,

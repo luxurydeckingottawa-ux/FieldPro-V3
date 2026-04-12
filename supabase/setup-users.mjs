@@ -11,16 +11,24 @@
  * to verify all 4 users were created.
  */
 
-const SUPABASE_URL = 'https://jcxvkyfmoiwayxfmgnif.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjeHZreWZtb2l3YXl4Zm1nbmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjM2OTAsImV4cCI6MjA5MTEzOTY5MH0.9l_YlvldWuf3RZO4KWw6eIxG0Kc9fqMtM1qCONwJuXw';
-const ORG_ID = '00000000-0000-0000-0000-000000000001';
+// Load credentials from environment variables — NEVER hardcode credentials in source files
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const ORG_ID = process.env.ORG_ID || '00000000-0000-0000-0000-000000000001';
 
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('ERROR: Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables before running this script.');
+  console.error('  SUPABASE_URL=https://your-project.supabase.co SUPABASE_ANON_KEY=eyJ... node supabase/setup-users.mjs');
+  process.exit(1);
+}
+
+// Update these emails/passwords before running. Do NOT commit real passwords to git.
 const USERS = [
-  { email: 'admin@luxurydecking.ca', password: 'LuxDeck2026!', name: 'Admin User', role: 'ADMIN' },
-  { email: 'estimator@luxurydecking.ca', password: 'LuxDeck2026!', name: 'Field Estimator', role: 'ESTIMATOR' },
-  { email: 'field@luxurydecking.ca', password: 'LuxDeck2026!', name: 'Field Lead', role: 'FIELD_EMPLOYEE' },
-  { email: 'sub@external.ca', password: 'LuxDeck2026!', name: 'Subcontractor A', role: 'SUBCONTRACTOR' },
-];
+  { email: process.env.ADMIN_EMAIL || 'admin@yourdomain.com', password: process.env.ADMIN_PASSWORD || '', name: 'Admin User', role: 'ADMIN' },
+  { email: process.env.ESTIMATOR_EMAIL || 'estimator@yourdomain.com', password: process.env.ESTIMATOR_PASSWORD || '', name: 'Field Estimator', role: 'ESTIMATOR' },
+  { email: process.env.FIELD_EMAIL || 'field@yourdomain.com', password: process.env.FIELD_PASSWORD || '', name: 'Field Lead', role: 'FIELD_EMPLOYEE' },
+  { email: process.env.SUB_EMAIL || 'sub@yourdomain.com', password: process.env.SUB_PASSWORD || '', name: 'Subcontractor A', role: 'SUBCONTRACTOR' },
+].filter(u => u.password); // Skip any users whose password env var wasn't set
 
 async function createUser(user) {
   console.log(`Creating user: ${user.email}...`);
@@ -128,8 +136,7 @@ async function main() {
   if (allSuccess) {
     console.log('=== All users created successfully! ===');
     console.log('');
-    console.log('You can now sign in with:');
-    USERS.forEach(u => console.log(`  ${u.email} / ${u.password} (${u.role})`));
+    console.log('You can now sign in with the emails and passwords you provided.');
     console.log('');
     console.log('If email confirmation is required, go to:');
     console.log(`  ${SUPABASE_URL.replace('.supabase.co', '')}/dashboard/project/jcxvkyfmoiwayxfmgnif/auth/users`);

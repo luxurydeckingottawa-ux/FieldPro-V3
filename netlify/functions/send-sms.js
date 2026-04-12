@@ -14,9 +14,21 @@
 
 const https = require('https');
 
+// Shared secret guard. TODO: replace with Supabase JWT verification once auth is fully integrated.
+function checkInternalSecret(event) {
+  const secret = process.env.INTERNAL_API_SECRET;
+  if (!secret) return true;
+  const provided = event.headers['x-internal-secret'] || event.headers['X-Internal-Secret'];
+  return provided === secret;
+}
+
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+  if (!checkInternalSecret(event)) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 
   let payload;
@@ -92,13 +104,11 @@ exports.handler = async function(event) {
               }),
             });
           } else {
+            // Log full error server-side but return generic message to client
             console.error('Twilio error:', res.statusCode, data.message || responseBody);
             resolve({
-              statusCode: res.statusCode,
-              body: JSON.stringify({
-                error: 'Failed to send SMS',
-                details: data.message || responseBody,
-              }),
+              statusCode: 500,
+              body: JSON.stringify({ error: 'SMS delivery failed. Please try again.' }),
             });
           }
         } catch (e) {

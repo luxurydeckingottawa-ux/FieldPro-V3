@@ -27,34 +27,32 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
     const pwVal = (form.querySelector('input[type="password"]') as HTMLInputElement)?.value || password;
 
     try {
-      // Try Supabase auth first if configured
       if (isSupabaseConfigured()) {
+        // Production path: Supabase Auth only — no local fallback
         const user = await dataService.signIn(emailVal, pwVal);
         if (user) {
           onLogin(user);
-          return;
+        } else {
+          setError('Invalid email or password. Please try again.');
         }
+        return;
       }
 
-      // Fallback to local users (covers dev mode and users not yet in Supabase Auth)
-      const mockUser = APP_USERS.find(
-        u => u.email.toLowerCase() === emailVal.toLowerCase() && u.password === pwVal
-      );
-      if (mockUser) {
-        onLogin(mockUser);
+      // Dev-only fallback: local APP_USERS (never runs in production since Supabase is always configured there)
+      if (import.meta.env.DEV) {
+        const mockUser = APP_USERS.find(
+          u => u.email.toLowerCase() === emailVal.toLowerCase() && u.password === pwVal
+        );
+        if (mockUser) {
+          onLogin(mockUser);
+        } else {
+          setError('Invalid email or password.');
+        }
       } else {
-        setError('Invalid email or password. Please try again.');
+        setError('Authentication service unavailable. Please contact the administrator.');
       }
     } catch (err) {
-      // Supabase unreachable — try local fallback
-      const mockUser = APP_USERS.find(
-        u => u.email.toLowerCase() === emailVal.toLowerCase() && u.password === pwVal
-      );
-      if (mockUser) {
-        onLogin(mockUser);
-      } else {
-        setError('Login failed. Please check your connection and try again.');
-      }
+      setError('Login failed. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -140,11 +138,9 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
               <span className="text-[10px] text-[#C4A432] font-bold uppercase tracking-widest">Cloud Connected</span>
             </div>
           ) : (
-            <div className="mt-4 flex flex-col gap-1 text-[10px] text-[var(--text-secondary)]">
-              <p>Admin: admin@luxurydecking.ca / admin</p>
-              <p>Field: field@luxurydecking.ca / field</p>
-              <p>Estimator: estimator@luxurydecking.ca / estimator</p>
-              <p>Sub: sub@external.ca / sub</p>
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
+              <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">Dev Mode</span>
             </div>
           )}
         </div>

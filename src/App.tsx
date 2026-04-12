@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence } from './types';
 import { useAppRouter, pathToView } from './hooks/useAppRouter';
-import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES } from './constants';
+import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES, ESTIMATE_STAGES } from './constants';
 import LoginView from './views/LoginView';
 import JobsListView from './views/JobsListView';
 import JobDetailView from './views/JobDetailView';
@@ -32,6 +32,13 @@ import { supabase } from './lib/supabase';
 import EstimatorCalculatorView from './estimator/EstimatorCalculatorView';
 import { measureSheetToCalculatorDimensions, jobToCalculatorClientInfo, loadEstimatorIntake } from './estimator/dataBridge';
 import { dataService } from './services/dataService';
+
+const INTERNAL_SECRET = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
+const internalHeaders = (extra: Record<string, string> = {}) => ({
+  'Content-Type': 'application/json',
+  ...(INTERNAL_SECRET ? { 'X-Internal-Secret': INTERNAL_SECRET } : {}),
+  ...extra,
+});
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
@@ -77,7 +84,7 @@ const STORAGE_KEY = 'luxury_decking_app_state_v4';
 const JOBS_STORAGE_KEY = 'luxury_decking_jobs_v5'; // v5: mock data removed, clean start
 const AUTH_KEY = 'luxury_decking_auth_v1';
 const THEME_KEY = 'luxury_decking_theme_v1';
-const OFFICE_EMAIL = 'luxurydeckingteam@gmail.com';
+const OFFICE_EMAIL = import.meta.env.VITE_OFFICE_EMAIL || 'luxurydeckingteam@gmail.com';
 
 const createDefaultPageState = (pageIndex: number): PageState => {
   const config = PAGE_CONFIGS[pageIndex];
@@ -148,7 +155,7 @@ const App: React.FC = () => {
       ...job,
       officeChecklists: job.officeChecklists || createDefaultOfficeChecklists(),
       buildDetails: job.buildDetails || createDefaultBuildDetails(),
-      customerPortalToken: job.customerPortalToken || `portal-${job.id.replace(/[^a-z0-9]/gi, '')}`
+      customerPortalToken: job.customerPortalToken || crypto.randomUUID()
     }));
   });
 
@@ -173,7 +180,7 @@ const App: React.FC = () => {
         ...job,
         officeChecklists: job.officeChecklists || createDefaultOfficeChecklists(),
         buildDetails: job.buildDetails || createDefaultBuildDetails(),
-        customerPortalToken: job.customerPortalToken || `portal-${job.id.replace(/[^a-z0-9]/gi, '')}`
+        customerPortalToken: job.customerPortalToken || crypto.randomUUID()
       }));
 
       const foundJob = migratedJobs.find(j => j.customerPortalToken === portalToken);
@@ -231,6 +238,8 @@ const App: React.FC = () => {
       const params = new URLSearchParams(window.location.search);
       if (params.get('portal') !== selectedJob.customerPortalToken) {
         params.set('portal', selectedJob.customerPortalToken || '');
+        // replaceState is intentional here: updating a legacy query-param (?portal=TOKEN)
+        // that lives outside React Router's route config. Does not affect navigation stack.
         window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
       }
 
@@ -338,6 +347,45 @@ const App: React.FC = () => {
     return () => { supabase.removeChannel(channel); };
   }, [currentUser]);
 
+  // Subscribe to Supabase Realtime for live job updates (multi-device sync)
+  useEffect(() => {
+    if (!supabase || !currentUser) return;
+
+    const jobsChannel = supabase
+      .channel('jobs-realtime')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'jobs' },
+        async (payload) => {
+          const updated = await dataService.getJobById(payload.new.id as string);
+          if (!updated) return;
+          setJobs(prev => prev.map(j => j.id === updated.id ? {
+            ...updated,
+            officeChecklists: updated.officeChecklists || createDefaultOfficeChecklists(),
+            buildDetails: updated.buildDetails || createDefaultBuildDetails(),
+          } : j));
+          setSelectedJob(prev => prev?.id === updated.id ? updated : prev);
+        }
+      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'jobs' },
+        async (payload) => {
+          const inserted = await dataService.getJobById(payload.new.id as string);
+          if (!inserted) return;
+          setJobs(prev => {
+            if (prev.find(j => j.id === inserted.id)) return prev;
+            return [inserted, ...prev];
+          });
+        }
+      )
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'jobs' },
+        (payload) => {
+          setJobs(prev => prev.filter(j => j.id !== payload.old.id));
+          setSelectedJob(prev => prev?.id === payload.old.id ? null : prev);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(jobsChannel); };
+  }, [currentUser]);
+
   // Workflow State
   const [workflowState, setWorkflowState] = useState<AppState>(() => {
     const initialState: AppState = {
@@ -406,10 +454,10 @@ const App: React.FC = () => {
         if (!isFromClient && session.clientPhone) {
           fetch('/.netlify/functions/send-sms', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: internalHeaders(),
             body: JSON.stringify({ to: session.clientPhone, message: text }),
           }).then(res => res.json()).then(data => {
-            if (data.success) console.log('SMS sent to', session.clientPhone);
+            if (data.success) { /* SMS sent */ };
             else console.error('SMS failed:', data.error);
           }).catch(err => console.error('SMS error:', err));
         }
@@ -446,10 +494,10 @@ const App: React.FC = () => {
             if (jobToUpdate.clientPhone) {
               fetch('/.netlify/functions/send-sms', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: internalHeaders(),
                 body: JSON.stringify({ to: jobToUpdate.clientPhone, message: messageText }),
               }).then(res => res.json()).then(data => {
-                if (data.success) console.log(`Auto SMS sent for ${jobToUpdate.jobNumber}`);
+                if (data.success) { /* auto SMS sent */ }
                 else console.error('Auto SMS failed:', data.error);
               }).catch(err => console.error('Auto SMS error:', err));
             }
@@ -599,6 +647,17 @@ const App: React.FC = () => {
 
   const handleLogin = useCallback((user: User) => {
     setCurrentUser(user);
+    // Load jobs from Supabase on login (replaces stale localStorage snapshot)
+    dataService.loadJobs().then(supabaseJobs => {
+      if (supabaseJobs.length > 0) {
+        setJobs(supabaseJobs.map(job => ({
+          ...job,
+          officeChecklists: job.officeChecklists || createDefaultOfficeChecklists(),
+          buildDetails: job.buildDetails || createDefaultBuildDetails(),
+          customerPortalToken: job.customerPortalToken || crypto.randomUUID(),
+        })));
+      }
+    }).catch(() => { /* Supabase unavailable — localStorage data stays */ });
     if (user.role === Role.ADMIN) {
       navigateTo('office-dashboard');
     } else if (user.role === Role.ESTIMATOR) {
@@ -617,40 +676,20 @@ const App: React.FC = () => {
 
   const handleSelectJob = useCallback((job: Job) => {
     setSelectedJob(job);
-    (window as any).selectedJobId = job?.id;
     if (!currentUser) {
       console.warn('No current user found during job selection');
       return;
     }
     if (currentUser.role === Role.ADMIN) {
       // Route to estimate detail for pre-sale stages, job detail for post-sale
-      const estimateStages = [
-        PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
-        PipelineStage.THIRD_CONTACT, PipelineStage.LEAD_ON_HOLD, PipelineStage.LEAD_WON, PipelineStage.LEAD_LOST,
-        PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED, PipelineStage.EST_IN_PROGRESS,
-        PipelineStage.EST_COMPLETED, PipelineStage.EST_SENT, PipelineStage.EST_ON_HOLD,
-        PipelineStage.EST_APPROVED, PipelineStage.EST_REJECTED,
-        // Legacy
-        PipelineStage.SITE_VISIT_SCHEDULED, PipelineStage.ESTIMATE_IN_PROGRESS,
-        PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP
-      ];
-      if (estimateStages.includes(job.pipelineStage)) {
+      if (ESTIMATE_STAGES.includes(job.pipelineStage)) {
         navigateTo('estimate-detail', job.id);
       } else {
         navigateTo('office-job-detail', job.id);
       }
     } else if (currentUser.role === Role.ESTIMATOR) {
-      // Estimator: route to estimate detail for pre-sale, estimator workflow for estimate stages, job detail for post-sale
-      const estimateStages = [
-        PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
-        PipelineStage.THIRD_CONTACT, PipelineStage.LEAD_ON_HOLD, PipelineStage.LEAD_WON, PipelineStage.LEAD_LOST,
-        PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED, PipelineStage.EST_IN_PROGRESS,
-        PipelineStage.EST_COMPLETED, PipelineStage.EST_SENT, PipelineStage.EST_ON_HOLD,
-        PipelineStage.EST_APPROVED, PipelineStage.EST_REJECTED,
-        PipelineStage.SITE_VISIT_SCHEDULED, PipelineStage.ESTIMATE_IN_PROGRESS,
-        PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP
-      ];
-      if (estimateStages.includes(job.pipelineStage)) {
+      // Estimator: route to estimate detail for pre-sale, job detail for post-sale
+      if (ESTIMATE_STAGES.includes(job.pipelineStage)) {
         navigateTo('estimate-detail', job.id);
       } else {
         navigateTo('office-job-detail', job.id);
@@ -693,7 +732,6 @@ const App: React.FC = () => {
         const currentIndex = stageOrder.indexOf(stage as PipelineStage);
         if (currentIndex >= 0 && currentIndex < stageOrder.length - 1) {
           updatedJob = { ...updatedJob, pipelineStage: stageOrder[currentIndex + 1] as PipelineStage };
-          console.log(`Auto-advanced job ${job.jobNumber} from ${stage} to ${stageOrder[currentIndex + 1]}`);
         }
       }
 
@@ -719,9 +757,13 @@ const App: React.FC = () => {
     const updateJob = (job: Job): Job => {
       if (job.id === jobId) {
         const selectedOption = job.estimateData?.options.find(o => o.id === optionId);
+        if (!selectedOption) {
+          console.error(`[handleAcceptEstimateOption] Option ${optionId} not found on job ${jobId} — acceptance aborted`);
+          return job;
+        }
         const selectedAddOnObjects = job.estimateData?.addOns.filter(a => selectedAddOns.includes(a.id)) || [];
         const addOnsTotal = selectedAddOnObjects.reduce((sum, a) => sum + a.price, 0);
-        const basePrice = selectedOption?.price || 0;
+        const basePrice = selectedOption.price;
         const totalAmount = basePrice + addOnsTotal;
 
         return {
@@ -817,10 +859,11 @@ const App: React.FC = () => {
     } : newJob;
 
     setJobs(prev => [jobWithCampaign, ...prev]);
+    dataService.createJob(jobWithCampaign).catch(err => console.error('Failed to persist new job:', err));
     // Route based on user role
     if (currentUser?.role === Role.ESTIMATOR) {
       setSelectedJob(jobWithCampaign);
-      navigateTo('estimator-workflow', selectedJob?.id);
+      navigateTo('estimator-workflow', jobWithCampaign.id);
     } else {
       navigateTo('office-pipeline');
     }
@@ -839,7 +882,7 @@ const App: React.FC = () => {
           jobAddress: job.projectAddress,
           customerName: job.clientName,
           crewLeadName: currentUser?.name || '',
-          date: job.scheduledDate,
+          date: job.scheduledDate || new Date().toISOString().split('T')[0],
           jobType: job.projectType
         },
         // Initialize pages from job.fieldProgress if available, otherwise reset to avoid cross-contamination
@@ -866,29 +909,23 @@ const App: React.FC = () => {
   }, [currentUser?.name, currentUser?.role, workflowState.jobId]);
 
   const uploadFileToCloudinary = async (file: string, filename: string): Promise<string> => {
-    try {
-      const response = await fetch('/.netlify/functions/upload', {
-        method: 'POST',
-        body: JSON.stringify({ file, filename, folder: `luxury_decking/${workflowState.jobInfo.jobName}` }),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return data.url;
-      }
-      
-      // Fallback for demo/dev environment if function is missing
-      console.warn('Upload function not found or failed, using mock URL for demo');
-      return `https://res.cloudinary.com/demo/image/upload/v1234567890/mock_${filename}.png`;
-    } catch (error) {
-      console.error('Upload error:', error);
-      // Fallback for demo/dev environment
-      return `https://res.cloudinary.com/demo/image/upload/v1234567890/mock_${filename}.png`;
+    const response = await fetch('/.netlify/functions/upload', {
+      method: 'POST',
+      headers: internalHeaders(),
+      body: JSON.stringify({ file, filename, folder: `luxury_decking/${workflowState.jobInfo.jobName}` }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => response.statusText);
+      throw new Error(`Photo upload failed (${response.status}): ${text}`);
     }
+
+    const data = await response.json();
+    if (!data.url) throw new Error(`Photo upload succeeded but returned no URL for ${filename}`);
+    return data.url;
   };
 
   const handleFullSubmission = async () => {
-    console.log("Starting full submission for job:", workflowState.jobId);
     try {
       setIsUploading(true);
       setUploadProgress('Uploading project photos...');
@@ -1032,9 +1069,9 @@ const App: React.FC = () => {
         }
       }
 
-      // Persist completion to Supabase so office view updates in real time
+      // Persist completion to Supabase — await so a failure surfaces to the crew (not silent)
       if (workflowState.jobId) {
-        dataService.updateJob(workflowState.jobId, {
+        await dataService.updateJob(workflowState.jobId, {
           status: JobStatus.COMPLETED,
           currentStage: 5,
           pipelineStage: PipelineStage.COMPLETION,
@@ -1046,7 +1083,7 @@ const App: React.FC = () => {
           subcontractorInvoiceUrl,
           ...(workflowState.fieldForecast ? { fieldForecast: workflowState.fieldForecast } : {}),
           updatedAt: new Date().toISOString()
-        }).catch(err => console.error('[handleFullSubmission] Supabase write failed:', err));
+        });
       }
 
       // Netlify form submission (non-blocking for UI)
@@ -1232,7 +1269,8 @@ const App: React.FC = () => {
     const amount = job.totalAmount || job.estimateAmount || 0;
 
     try {
-      const contractPdfUrl = await generateContractPDF({
+      // Generate PDFs (returns blob: URL)
+      const contractBlobUrl = await generateContractPDF({
         jobNumber: job.jobNumber || '',
         clientName: job.clientName || '',
         clientEmail: job.clientEmail || '',
@@ -1245,8 +1283,7 @@ const App: React.FC = () => {
         acceptedDate: now,
       });
 
-      // Generate deposit invoice
-      const depositInvoiceUrl = generateDepositInvoice({
+      const depositBlobUrl = generateDepositInvoice({
         jobNumber: job.jobNumber || '',
         clientName: job.clientName || '',
         clientEmail: job.clientEmail || '',
@@ -1256,6 +1293,21 @@ const App: React.FC = () => {
         depositPercent: 30,
         invoiceDate: now,
       });
+
+      // Upload to Cloudinary for permanent storage (avoid ephemeral blob: URLs)
+      let contractPdfUrl = contractBlobUrl;
+      let depositInvoiceUrl = depositBlobUrl;
+      try {
+        [contractPdfUrl, depositInvoiceUrl] = await Promise.all([
+          uploadFileToCloudinary(contractBlobUrl, `contract-${job.jobNumber}-${Date.now()}`),
+          uploadFileToCloudinary(depositBlobUrl, `deposit-invoice-${job.jobNumber}-${Date.now()}`),
+        ]);
+        // Revoke the temporary blob: URLs
+        URL.revokeObjectURL(contractBlobUrl);
+        URL.revokeObjectURL(depositBlobUrl);
+      } catch {
+        // Upload failed — fall back to blob: URLs (works in current session only)
+      }
 
       handleUpdateJob(jobId, {
         pipelineStage: PipelineStage.JOB_SOLD,
@@ -1309,16 +1361,7 @@ const App: React.FC = () => {
   const handleClosePortal = useCallback(() => {
     if (selectedJob) {
       // Return to the correct detail view based on stage
-      const estimateStages = [
-        PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
-        PipelineStage.THIRD_CONTACT, PipelineStage.LEAD_ON_HOLD, PipelineStage.LEAD_WON, PipelineStage.LEAD_LOST,
-        PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED, PipelineStage.EST_IN_PROGRESS,
-        PipelineStage.EST_COMPLETED, PipelineStage.EST_SENT, PipelineStage.EST_ON_HOLD,
-        PipelineStage.EST_APPROVED, PipelineStage.EST_REJECTED,
-        PipelineStage.SITE_VISIT_SCHEDULED, PipelineStage.ESTIMATE_IN_PROGRESS,
-        PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP
-      ];
-      if (estimateStages.includes(selectedJob.pipelineStage)) {
+      if (ESTIMATE_STAGES.includes(selectedJob.pipelineStage)) {
         navigateTo('estimate-detail', selectedJob?.id);
       } else {
         navigateTo('office-job-detail', selectedJob?.id);
@@ -1441,7 +1484,7 @@ const App: React.FC = () => {
         clientName: data.clientName,
         clientEmail: '',
         clientPhone: '',
-        customerPortalToken: `portal-${newJobId}`,
+        customerPortalToken: crypto.randomUUID(),
         projectAddress: data.clientAddress,
         projectType: data.activePackage 
           ? `${data.activePackage.level} Package Deck` 
@@ -1507,11 +1550,12 @@ const App: React.FC = () => {
 
     let targetJobId = calculatorSourceJobId;
     let portalToken = '';
+    let createdNewJob: Job | null = null;
 
     if (targetJobId) {
       // Update existing job to EST_SENT
       const existingJob = jobs.find(j => j.id === targetJobId);
-      portalToken = existingJob?.customerPortalToken || `portal-${targetJobId}`;
+      portalToken = existingJob?.customerPortalToken || crypto.randomUUID();
       handleUpdateJob(targetJobId, {
         clientName: data.clientName,
         projectAddress: data.clientAddress,
@@ -1542,7 +1586,7 @@ const App: React.FC = () => {
     } else {
       // Create new job at EST_SENT
       const newJobId = `j-est-${Date.now()}`;
-      portalToken = `portal-${newJobId}`;
+      portalToken = crypto.randomUUID();
       const newJob: Job = {
         id: newJobId,
         jobNumber: `EST-${new Date().getFullYear()}-${String(data.estimateNumber).padStart(3, '0')}`,
@@ -1593,7 +1637,9 @@ const App: React.FC = () => {
         },
       };
       setJobs(prev => [newJob, ...prev]);
+      dataService.createJob(newJob).catch(err => console.error('Failed to persist estimate job:', err));
       targetJobId = newJobId;
+      createdNewJob = newJob;
     }
 
     // Open email to send the portal link to the client
@@ -1608,8 +1654,8 @@ const App: React.FC = () => {
     mailLink.href = `mailto:${clientEmail}?subject=${emailSubject}&body=${emailBody}`;
     mailLink.click();
 
-    // Navigate to estimate detail
-    const updatedJob = jobs.find(j => j.id === targetJobId);
+    // Navigate to estimate detail — use createdNewJob for fresh jobs (jobs state is stale for new records)
+    const updatedJob = createdNewJob ?? jobs.find(j => j.id === targetJobId);
     if (updatedJob) {
       setSelectedJob({ ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, pipelineStage: PipelineStage.EST_SENT });
     }
@@ -1617,6 +1663,13 @@ const App: React.FC = () => {
   }, [calculatorSourceJobId, handleUpdateJob, jobs]);
 
   if (view === 'login') {
+    return <LoginView onLogin={handleLogin} />;
+  }
+
+  // Auth guard: unauthenticated access to any non-public view redirects to login
+  // customer-portal and estimate-portal are publicly accessible via token
+  const PUBLIC_VIEWS = ['customer-portal', 'estimate-portal'];
+  if (!currentUser && !PUBLIC_VIEWS.includes(view)) {
     return <LoginView onLogin={handleLogin} />;
   }
 
@@ -1941,9 +1994,27 @@ const App: React.FC = () => {
               </button>
             </div>
             <div className="flex-1 overflow-hidden">
-              <EstimatorCalendar 
-                appointments={[]}
-                installSchedule={[]}
+              <EstimatorCalendar
+                appointments={jobs
+                  .filter(j => j.scheduledDate && j.clientName)
+                  .map(j => ({
+                    id: j.id,
+                    clientName: j.clientName,
+                    address: j.projectAddress || '',
+                    time: '',
+                    date: j.scheduledDate!,
+                    type: 'estimate' as const,
+                    status: 'scheduled' as const,
+                  }))}
+                installSchedule={jobs
+                  .filter(j => j.plannedStartDate && j.pipelineStage && ['JOB_SOLD','ADMIN_SETUP','PRE_PRODUCTION','READY_TO_START','IN_FIELD'].includes(j.pipelineStage))
+                  .map(j => ({
+                    id: j.id,
+                    clientName: j.clientName,
+                    address: j.projectAddress || '',
+                    startDate: j.plannedStartDate!,
+                    endDate: j.plannedFinishDate || j.plannedStartDate!,
+                  }))}
               />
             </div>
           </div>

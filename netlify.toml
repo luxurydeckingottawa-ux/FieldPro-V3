@@ -3,6 +3,26 @@
   publish = "dist"
   functions = "netlify/functions"
 
+[functions]
+  # Default timeout for all functions (Netlify free tier max = 10s)
+  # upload and gemini-proxy get longer limits as they call external APIs
+  node_bundler = "esbuild"
+
+[functions."upload"]
+  timeout = 30
+
+[functions."gemini-proxy"]
+  timeout = 30
+
+[functions."send-sms"]
+  timeout = 10
+
+[functions."send-email"]
+  timeout = 10
+
+[functions."incoming-sms"]
+  timeout = 10
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

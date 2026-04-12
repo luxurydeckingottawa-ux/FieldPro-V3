@@ -10,16 +10,32 @@
  *   SENDGRID_FROM_NAME - Sender name (Angela - Luxury Decking)
  */
 
+// Shared secret guard. TODO: replace with Supabase JWT verification once auth is fully integrated.
+function checkInternalSecret(event) {
+  const secret = process.env.INTERNAL_API_SECRET;
+  if (!secret) return true;
+  const provided = event.headers['x-internal-secret'] || event.headers['X-Internal-Secret'];
+  return provided === secret;
+}
+
 exports.handler = async function(event) {
   // Only allow POST
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
+  if (!checkInternalSecret(event)) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+  }
+
   const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-  const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'admin@luxurydecking.ca';
-  const FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Angela - Luxury Decking';
-  const REPLY_TO_EMAIL = process.env.SENDGRID_REPLY_TO || 'admin@luxurydecking.ca';
+  const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL;
+  const FROM_NAME = process.env.SENDGRID_FROM_NAME || 'FieldPro';
+  const REPLY_TO_EMAIL = process.env.SENDGRID_REPLY_TO || FROM_EMAIL;
+
+  if (!FROM_EMAIL) {
+    return { statusCode: 500, body: JSON.stringify({ error: 'Email sender not configured. Set SENDGRID_FROM_EMAIL.' }) };
+  }
 
   if (!SENDGRID_API_KEY) {
     console.error('SENDGRID_API_KEY not configured');
@@ -42,8 +58,22 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields: to, subject, and htmlBody or textBody' }) };
   }
 
+  // Validate recipient email format (prevent header injection)
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRe.test(to)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid recipient email address' }) };
+  }
+
+  // Sanitise htmlBody — strip <script>, <iframe>, on* attributes, and javascript: hrefs
+  // This prevents stored-XSS via email body being reflected back into admin UI
+  const sanitiseHtml = (raw) => raw
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript\s*:/gi, 'blocked:');
+
   // Convert plain text body to simple HTML if no HTML provided
-  const html = htmlBody || textBody.replace(/\n/g, '<br>');
+  const html = htmlBody ? sanitiseHtml(htmlBody) : textBody.replace(/\n/g, '<br>');
 
   const sgPayload = {
     personalizations: [{ to: [{ email: to }] }],

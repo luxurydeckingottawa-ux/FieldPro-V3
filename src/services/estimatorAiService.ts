@@ -1,4 +1,3 @@
-import { Type } from "@google/genai";
 import { getAI, handleAiError } from "../lib/ai";
 import { EstimatorIntake, AiFlag, AiHandoffSummary } from "../types";
 
@@ -43,16 +42,16 @@ export const estimatorAiService = {
         config: {
           responseMimeType: "application/json",
           responseSchema: {
-            type: Type.ARRAY,
+            type: 'array',
             items: {
-              type: Type.OBJECT,
+              type: 'object',
               properties: {
-                id: { type: Type.STRING },
-                type: { type: Type.STRING, enum: ["missing", "mismatch", "suggestion", "reminder"] },
-                category: { type: Type.STRING, enum: ["intake", "measures", "sketch", "photos"] },
-                message: { type: Type.STRING },
-                severity: { type: Type.STRING, enum: ["low", "medium", "high"] },
-                resolved: { type: Type.BOOLEAN }
+                id: { type: 'string' },
+                type: { type: 'string', enum: ["missing", "mismatch", "suggestion", "reminder"] },
+                category: { type: 'string', enum: ["intake", "measures", "sketch", "photos"] },
+                message: { type: 'string' },
+                severity: { type: 'string', enum: ["low", "medium", "high"] },
+                resolved: { type: 'boolean' }
               },
               required: ["id", "type", "category", "message", "severity", "resolved"]
             }
@@ -128,16 +127,16 @@ export const estimatorAiService = {
         config: {
           responseMimeType: "application/json",
           responseSchema: {
-            type: Type.ARRAY,
+            type: 'array',
             items: {
-              type: Type.OBJECT,
+              type: 'object',
               properties: {
-                id: { type: Type.STRING },
-                type: { type: Type.STRING, enum: ["missing", "mismatch", "suggestion", "reminder"] },
-                category: { type: Type.STRING, enum: ["intake", "measures", "sketch", "photos"] },
-                message: { type: Type.STRING },
-                severity: { type: Type.STRING, enum: ["low", "medium", "high"] },
-                resolved: { type: Type.BOOLEAN }
+                id: { type: 'string' },
+                type: { type: 'string', enum: ["missing", "mismatch", "suggestion", "reminder"] },
+                category: { type: 'string', enum: ["intake", "measures", "sketch", "photos"] },
+                message: { type: 'string' },
+                severity: { type: 'string', enum: ["low", "medium", "high"] },
+                resolved: { type: 'boolean' }
               },
               required: ["id", "type", "category", "message", "severity", "resolved"]
             }
@@ -182,14 +181,14 @@ export const estimatorAiService = {
         config: {
           responseMimeType: "application/json",
           responseSchema: {
-            type: Type.OBJECT,
+            type: 'object',
             properties: {
-              keyMeasurements: { type: Type.ARRAY, items: { type: Type.STRING } },
-              siteConditions: { type: Type.ARRAY, items: { type: Type.STRING } },
-              constraints: { type: Type.ARRAY, items: { type: Type.STRING } },
-              upgrades: { type: Type.ARRAY, items: { type: Type.STRING } },
-              missingItems: { type: Type.ARRAY, items: { type: Type.STRING } },
-              overallCompletion: { type: Type.NUMBER }
+              keyMeasurements: { type: 'array', items: { type: 'string' } },
+              siteConditions: { type: 'array', items: { type: 'string' } },
+              constraints: { type: 'array', items: { type: 'string' } },
+              upgrades: { type: 'array', items: { type: 'string' } },
+              missingItems: { type: 'array', items: { type: 'string' } },
+              overallCompletion: { type: 'number' }
             },
             required: ["keyMeasurements", "siteConditions", "constraints", "upgrades", "missingItems", "overallCompletion"]
           }
@@ -237,16 +236,16 @@ export const estimatorAiService = {
         config: {
           responseMimeType: "application/json",
           responseSchema: {
-            type: Type.ARRAY,
+            type: 'array',
             items: {
-              type: Type.OBJECT,
+              type: 'object',
               properties: {
-                id: { type: Type.STRING },
-                type: { type: Type.STRING, enum: ["missing", "mismatch", "suggestion", "reminder"] },
-                category: { type: Type.STRING, enum: ["intake", "measures", "sketch", "photos"] },
-                message: { type: Type.STRING },
-                severity: { type: Type.STRING, enum: ["low", "medium", "high"] },
-                resolved: { type: Type.BOOLEAN }
+                id: { type: 'string' },
+                type: { type: 'string', enum: ["missing", "mismatch", "suggestion", "reminder"] },
+                category: { type: 'string', enum: ["intake", "measures", "sketch", "photos"] },
+                message: { type: 'string' },
+                severity: { type: 'string', enum: ["low", "medium", "high"] },
+                resolved: { type: 'boolean' }
               },
               required: ["id", "type", "category", "message", "severity", "resolved"]
             }
