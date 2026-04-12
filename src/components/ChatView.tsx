@@ -90,7 +90,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
   };
 
   return (
-    <div className="flex h-screen bg-[var(--bg-primary)] overflow-hidden">
+    <div className="flex h-[calc(100vh-6rem)] bg-[var(--bg-primary)] overflow-hidden">
       {/* Sidebar: Session List */}
       <div className="w-80 border-r border-[var(--border-color)] flex flex-col bg-[var(--bg-primary)] z-10 shrink-0">
         <div className="p-6 border-b border-[var(--border-color)]">

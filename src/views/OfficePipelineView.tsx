@@ -66,7 +66,7 @@ const OfficePipelineView: React.FC<OfficePipelineViewProps> = ({ jobs, onSelectJ
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-6rem)] bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden">
       {/* Header */}
       <div className="border-b border-[var(--border-color)] p-6 flex items-center justify-between shrink-0 bg-gradient-to-b from-[var(--text-primary)]/[0.02] to-transparent">
         <div className="flex items-center gap-4">
