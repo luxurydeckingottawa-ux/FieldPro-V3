@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AppState, PageState, UserRole } from '../types';
+import { AppState, PageState, UserRole, ScheduleStatus } from '../types';
 import { PAGE_TITLES } from '../constants';
 import ProgressBar from '../components/ProgressBar';
 import ConnectivityStatus from '../components/ConnectivityStatus';
@@ -20,7 +20,7 @@ interface WorkflowContainerProps {
   onFullSubmission: () => Promise<void>;
   onExit: () => void;
   clientPhone?: string;
-  onScheduleUpdate?: (daysRemaining: number) => void;
+  onScheduleUpdate?: (daysRemaining: number, status: ScheduleStatus, note: string) => void;
 }
 
 const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
@@ -37,6 +37,8 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
 }) => {
   const [showScheduleUpdate, setShowScheduleUpdate] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState(3);
+  const [scheduleStatus, setScheduleStatus] = useState<ScheduleStatus>(ScheduleStatus.ON_SCHEDULE);
+  const [scheduleNote, setScheduleNote] = useState('');
 
   const handleNext = () => setState(prev => ({ ...prev, currentPage: prev.currentPage + 1 }));
   const handleBack = () => setState(prev => ({ ...prev, currentPage: Math.max(0, prev.currentPage - 1) }));
@@ -240,9 +242,34 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
             <Calendar size={18} className="text-black" />
           </button>
           {showScheduleUpdate && (
-            <div className="absolute bottom-14 right-0 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 shadow-2xl">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Update Finish Estimate</p>
-              <div className="flex items-center gap-2">
+            <div className="absolute bottom-14 right-0 w-72 bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 shadow-2xl">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Daily Schedule Update</p>
+
+              {/* Status selector */}
+              <div className="grid grid-cols-3 gap-1.5 mb-3">
+                {([
+                  { value: ScheduleStatus.ON_SCHEDULE, label: 'On Track', color: 'emerald' },
+                  { value: ScheduleStatus.BEHIND, label: 'Behind', color: 'rose' },
+                  { value: ScheduleStatus.AHEAD, label: 'Ahead', color: 'blue' },
+                ] as { value: ScheduleStatus; label: string; color: string }[]).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setScheduleStatus(opt.value)}
+                    className={`py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${
+                      scheduleStatus === opt.value
+                        ? opt.color === 'emerald' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                          : opt.color === 'rose' ? 'bg-rose-500/20 border-rose-500/40 text-rose-400'
+                          : 'bg-blue-500/20 border-blue-500/40 text-blue-400'
+                        : 'bg-white/5 border-white/10 text-gray-500 hover:bg-white/10'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Days remaining */}
+              <div className="flex items-center gap-2 mb-3">
                 <input
                   type="number"
                   min={1}
@@ -253,14 +280,27 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
                 />
                 <span className="text-[10px] text-gray-500">days left</span>
               </div>
+
+              {/* Note / reason (optional) */}
+              {scheduleStatus !== ScheduleStatus.ON_SCHEDULE && (
+                <input
+                  type="text"
+                  placeholder={scheduleStatus === ScheduleStatus.BEHIND ? 'Reason for delay...' : 'What got you ahead?'}
+                  value={scheduleNote}
+                  onChange={e => setScheduleNote(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs mb-3 placeholder-gray-600"
+                />
+              )}
+
               <button
                 onClick={() => {
-                  onScheduleUpdate(daysRemaining);
+                  onScheduleUpdate(daysRemaining, scheduleStatus, scheduleNote);
                   setShowScheduleUpdate(false);
+                  setScheduleNote('');
                 }}
-                className="mt-3 w-full py-2 bg-[var(--brand-gold)] text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:brightness-110 transition-all active:scale-95"
+                className="w-full py-2 bg-[var(--brand-gold)] text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:brightness-110 transition-all active:scale-95"
               >
-                Update
+                Submit Update
               </button>
             </div>
           )}

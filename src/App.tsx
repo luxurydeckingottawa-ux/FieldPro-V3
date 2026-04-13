@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence } from './types';
+import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence, EstimateOption, EstimateData, ScheduleStatus } from './types';
 import { useAppRouter, pathToView } from './hooks/useAppRouter';
 import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES, ESTIMATE_STAGES, RATES } from './constants';
 import LoginView from './views/LoginView';
@@ -748,6 +748,37 @@ const App: React.FC = () => {
           body: JSON.stringify({ to: job.clientPhone, message: warrantyMsg }),
         }).catch(err => console.warn('[warranty-sms] failed:', err));
       }
+
+      // Auto-send warranty delivery EMAIL
+      if (job.clientEmail && job.customerPortalToken) {
+        const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
+        const pdfUrl = (job as any).verifiedBuildPassportUrl as string | undefined;
+        const warrantyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;padding:40px;border-radius:16px">
+  <div style="text-align:center;margin-bottom:32px">
+    <p style="margin:0;font-size:11px;font-weight:900;color:#c9a227;letter-spacing:3px;text-transform:uppercase">Luxury Decking</p>
+    <h1 style="margin:8px 0 0;font-size:28px;font-weight:900;color:#fff">Your Project is Complete!</h1>
+  </div>
+  <p style="color:#aaa;font-size:15px;line-height:1.6">Hi ${firstName},</p>
+  <p style="color:#aaa;font-size:15px;line-height:1.6">Your Luxury Decking project is officially complete. Your <strong style="color:#c9a227">5-year warranty is now active</strong>.</p>
+  <div style="background:#111;border:1px solid #333;border-radius:12px;padding:24px;margin:24px 0;text-align:center">
+    <p style="margin:0 0 4px;font-size:11px;font-weight:900;color:#888;letter-spacing:2px;text-transform:uppercase">Your Warranty</p>
+    <p style="margin:0;font-size:20px;font-weight:900;color:#c9a227">5-Year Structural Warranty</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#666">Access your full warranty certificate and project documentation below</p>
+  </div>
+  <a href="${portalUrl}" style="display:block;background:#c9a227;color:#000;text-align:center;padding:16px;border-radius:12px;font-weight:900;text-decoration:none;font-size:14px;letter-spacing:1px;text-transform:uppercase;margin:24px 0">Access Your Project Portal →</a>
+  ${pdfUrl ? `<a href="${pdfUrl}" style="display:block;border:1px solid #333;color:#c9a227;text-align:center;padding:14px;border-radius:12px;font-weight:700;text-decoration:none;font-size:13px;margin:0 0 24px 0">Download Warranty Certificate (PDF)</a>` : ''}
+  <p style="color:#555;font-size:12px;text-align:center">Questions? Call us at 613-707-3060<br>Luxury Decking — Ottawa, ON</p>
+</div>`;
+        fetch('/.netlify/functions/send-email', {
+          method: 'POST',
+          headers: internalHeaders(),
+          body: JSON.stringify({
+            to: job.clientEmail,
+            subject: `Your Luxury Decking Warranty is Now Active`,
+            htmlBody: warrantyHtml,
+          }),
+        }).catch(err => console.warn('[warranty-email] failed:', err));
+      }
     }
   }, [jobs, selectedJob, handleUpdateJob]);
 
@@ -1240,7 +1271,7 @@ const App: React.FC = () => {
 
   // Field worker schedule update: receives days-remaining from WorkflowContainer,
   // computes a new plannedFinishDate from today and persists via handleUpdateSchedule.
-  const handleFieldScheduleUpdate = useCallback((daysRemaining: number) => {
+  const handleFieldScheduleUpdate = useCallback((daysRemaining: number, status: ScheduleStatus = ScheduleStatus.ON_SCHEDULE, note: string = '') => {
     if (!workflowState.jobId) return;
     const newFinish = new Date();
     newFinish.setDate(newFinish.getDate() + daysRemaining);
@@ -1254,6 +1285,13 @@ const App: React.FC = () => {
     handleUpdateSchedule(workflowState.jobId, {
       plannedFinishDate: finishStr,
       plannedDurationDays: newDuration,
+      fieldForecast: {
+        status,
+        estimatedDaysRemaining: daysRemaining,
+        note,
+        updatedAt: new Date().toISOString(),
+        updatedBy: 'field',
+      },
     });
   }, [workflowState.jobId, jobs, handleUpdateSchedule]);
 
@@ -1746,17 +1784,81 @@ const App: React.FC = () => {
       createdNewJob = newJob;
     }
 
-    // Open email to send the portal link to the client
+    // Build and persist estimateData for portal multi-option view (#23)
+    const existingJob = jobs.find(j => j.id === targetJobId);
+    const existingOptions: EstimateOption[] = existingJob?.estimateData?.options || [];
+    const newOptionName = data.activePackage ? `${data.activePackage.level}` : 'Custom';
+    const newOption: EstimateOption = {
+      id: `opt-${Date.now()}`,
+      name: newOptionName,
+      title: data.activePackage
+        ? `${data.activePackage.size} ${data.activePackage.level} Package`
+        : `Custom Estimate #${data.estimateNumber}`,
+      description: acceptedBuildSummary.scopeSummary || '',
+      price: totalAmount,
+      features: data.pricingSummary.impacts
+        ?.filter((imp: any) => Math.round(imp.value) !== 0)
+        ?.map((imp: any) => imp.label) || [],
+      differences: [],
+    };
+    const updatedOptions = [
+      ...existingOptions.filter(o => o.name !== newOptionName),
+      newOption,
+    ];
+    const estimateData: EstimateData = {
+      options: updatedOptions,
+      addOns: existingJob?.estimateData?.addOns || [],
+    };
+    handleUpdateJob(targetJobId!, { estimateData });
+
+    // Send HTML estimate email (#61)
     const portalUrl = `${window.location.origin}?portal=${portalToken}`;
     const clientEmail = jobs.find(j => j.id === targetJobId)?.clientEmail || '';
-    const emailSubject = encodeURIComponent('Your Luxury Decking Estimate');
-    const emailBody = encodeURIComponent(
-      `Hi ${data.clientName},\n\nThank you for your interest in Luxury Decking. Your custom estimate is ready to view.\n\nClick the link below to see your personalized estimate:\n${portalUrl}\n\nIf you have any questions, feel free to reply to this email or call us at 613-707-3060.\n\nBest regards,\nThe Luxury Decking Team`
-    );
-    // Use hidden anchor to open email without blank tab
-    const mailLink = document.createElement('a');
-    mailLink.href = `mailto:${clientEmail}?subject=${emailSubject}&body=${emailBody}`;
-    mailLink.click();
+    if (clientEmail) {
+      const estimateHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;padding:40px;border-radius:16px">
+  <div style="text-align:center;margin-bottom:32px">
+    <p style="margin:0;font-size:11px;font-weight:900;color:#c9a227;letter-spacing:3px;text-transform:uppercase">Luxury Decking</p>
+    <h1 style="margin:8px 0 0;font-size:28px;font-weight:900;color:#fff">Your Custom Estimate is Ready</h1>
+  </div>
+  <p style="color:#aaa;font-size:15px;line-height:1.6">Hi ${data.clientName},</p>
+  <p style="color:#aaa;font-size:15px;line-height:1.6">Thank you for your interest in Luxury Decking. Your custom deck estimate is ready to review online.</p>
+  <div style="background:#111;border:1px solid #333;border-radius:12px;padding:24px;margin:24px 0">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:900;color:#888;letter-spacing:2px;text-transform:uppercase">Estimate Total</span>
+      <span style="font-size:28px;font-weight:900;color:#c9a227">$${totalAmount.toLocaleString()}</span>
+    </div>
+    <div style="border-top:1px solid #222;padding-top:12px">
+      <p style="margin:0;font-size:12px;color:#666">Estimate #${data.estimateNumber} &bull; ${data.clientAddress}</p>
+    </div>
+  </div>
+  <a href="${portalUrl}" style="display:block;background:#c9a227;color:#000;text-align:center;padding:16px;border-radius:12px;font-weight:900;text-decoration:none;font-size:14px;letter-spacing:1px;text-transform:uppercase;margin:24px 0">Review Your Estimate Online →</a>
+  <p style="color:#aaa;font-size:14px;line-height:1.6">Your portal lets you:</p>
+  <ul style="color:#888;font-size:14px;line-height:2;padding-left:20px">
+    <li>Review the full estimate breakdown</li>
+    <li>Accept and secure your spot with a deposit</li>
+    <li>Track your project from start to finish</li>
+  </ul>
+  <p style="color:#555;font-size:12px;text-align:center;margin-top:32px">Questions? Call us at <strong style="color:#c9a227">613-707-3060</strong> or reply to this email.<br>Luxury Decking — Ottawa, ON</p>
+</div>`;
+      fetch('/.netlify/functions/send-email', {
+        method: 'POST',
+        headers: internalHeaders(),
+        body: JSON.stringify({
+          to: clientEmail,
+          subject: `Your Luxury Decking Estimate #${data.estimateNumber} — $${totalAmount.toLocaleString()}`,
+          htmlBody: estimateHtml,
+        }),
+      }).catch(err => console.warn('[estimate-email] failed:', err));
+    } else {
+      // Fallback: open mailto if no email on file
+      const emailSubject = encodeURIComponent('Your Luxury Decking Estimate');
+      const emailBody = encodeURIComponent(
+        `Hi ${data.clientName},\n\nYour custom estimate is ready: ${portalUrl}\n\nLuxury Decking — 613-707-3060`
+      );
+      const mailLink = document.createElement('a');
+      mailLink.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+      mailLink.click();
+    }
 
     // Navigate to estimate detail — use createdNewJob for fresh jobs (jobs state is stale for new records)
     const updatedJob = createdNewJob ?? jobs.find(j => j.id === targetJobId);

@@ -1456,6 +1456,14 @@ Ottawa's Premium Deck Builders`;
                   <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mt-2">
                     {labourSummary.totalHours} Total Hours
                   </p>
+                  {labourSummary.estimatedCost > 0 && (
+                    <button
+                      onClick={() => onUpdateJob(job.id, { labourCost: Math.round(labourSummary.estimatedCost) })}
+                      className="mt-3 w-full py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-500/20 transition-all"
+                    >
+                      ↑ Sync ${Math.round(labourSummary.estimatedCost).toLocaleString()} from Time Clock
+                    </button>
+                  )}
                 </div>
               </div>
             </section>
@@ -1606,17 +1614,26 @@ Ottawa's Premium Deck Builders`;
                   <CreditCard size={13} className="text-[var(--brand-gold)]" />
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Deposit Collection</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl border border-white/5 mb-3">
-                  <span className="text-[10px] text-gray-500">Deposit Amount (25%)</span>
-                  <span className="text-sm font-black text-white">${Math.round((job.estimateAmount || 0) * 0.25).toLocaleString()}</span>
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center justify-between p-2.5 bg-white/[0.02] rounded-lg">
+                    <span className="text-[10px] text-gray-500">Deposit (25%)</span>
+                    <span className="text-sm font-black text-white">${Math.round((job.estimateAmount || 0) * 0.25).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 bg-white/[0.02] rounded-lg">
+                    <span className="text-[10px] text-gray-500">Remaining Balance</span>
+                    <span className="text-sm font-black text-gray-400">${Math.round((job.estimateAmount || 0) * 0.75).toLocaleString()}</span>
+                  </div>
                 </div>
                 <button
                   disabled
                   className="w-full py-3 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-[var(--brand-gold)]/50 cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  <CreditCard size={12} /> Send Stripe Invoice — Coming Soon
+                  <CreditCard size={12} /> Send Deposit Request via Stripe
                 </button>
-                <p className="text-[9px] text-gray-700 text-center mt-2">Stripe integration pending setup</p>
+                <div className="flex items-center gap-2 mt-2 p-2.5 bg-white/[0.02] rounded-lg border border-white/5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                  <p className="text-[9px] text-gray-600">Connect Stripe in Settings to enable online deposits. Once connected, clients receive a secure payment link via SMS.</p>
+                </div>
               </section>
             )}
 

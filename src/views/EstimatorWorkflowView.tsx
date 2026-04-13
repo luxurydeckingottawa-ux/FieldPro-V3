@@ -21,7 +21,10 @@ import {
   ArrowRight,
   RefreshCw,
   ExternalLink,
-  Satellite
+  Satellite,
+  MessageSquare,
+  Send,
+  X
 } from 'lucide-react';
 
 import EstimatorSiteIntake from '../components/EstimatorSiteIntake';
@@ -41,7 +44,34 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
   const [activeTab, setActiveTab] = useState<'info' | 'intake' | 'measures' | 'sketch' | 'photos' | 'notes' | 'summary'>('info');
   const [status, setStatus] = useState<'scheduled' | 'on_way' | 'in_progress' | 'completed'>('scheduled');
   const [isGeneratingHandoff, setIsGeneratingHandoff] = useState(false);
-  
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessage, setChatMessage] = useState('');
+  const [chatSending, setChatSending] = useState(false);
+  const [chatSent, setChatSent] = useState(false);
+
+  const handleSendMessage = async () => {
+    if (!chatMessage.trim() || !job.clientPhone) return;
+    setChatSending(true);
+    try {
+      const secret = (import.meta as any).env?.VITE_INTERNAL_API_SECRET;
+      await fetch('/.netlify/functions/send-sms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(secret ? { 'X-Internal-Secret': secret } : {}),
+        },
+        body: JSON.stringify({ to: job.clientPhone, message: chatMessage }),
+      });
+      setChatSent(true);
+      setChatMessage('');
+      setTimeout(() => setChatSent(false), 3000);
+    } catch {
+      // Non-blocking
+    } finally {
+      setChatSending(false);
+    }
+  };
+
   const [intake, setIntake] = useState<EstimatorIntake>(() => {
     const defaultIntake: EstimatorIntake = {
       jobId: job?.id || '',
@@ -790,6 +820,47 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
           Last updated: {intake.updatedAt ? new Date(intake.updatedAt).toLocaleTimeString() : 'Never'}
         </div>
       </div>
+
+      {/* Floating SMS chat button */}
+      {job.clientPhone && (
+        <div className="fixed bottom-6 right-4 z-50">
+          <button
+            onClick={() => setShowChat(prev => !prev)}
+            className="w-12 h-12 rounded-full bg-[var(--brand-gold)] shadow-xl flex items-center justify-center hover:brightness-110 transition-all active:scale-95"
+            title="Message client"
+          >
+            <MessageSquare size={18} className="text-black" />
+          </button>
+          {showChat && (
+            <div className="absolute bottom-14 right-0 w-72 bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 shadow-2xl">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Message Client</p>
+                <button onClick={() => setShowChat(false)} className="text-gray-600 hover:text-white transition-all">
+                  <X size={14} />
+                </button>
+              </div>
+              <p className="text-[9px] text-gray-600 mb-2 truncate">To: {job.clientName} ({job.clientPhone})</p>
+              <textarea
+                value={chatMessage}
+                onChange={e => setChatMessage(e.target.value)}
+                placeholder="Type a message..."
+                rows={3}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs resize-none placeholder-gray-600 focus:outline-none focus:border-[var(--brand-gold)]/40"
+              />
+              {chatSent && (
+                <p className="text-[9px] text-emerald-400 font-black uppercase tracking-widest mt-1">Message sent!</p>
+              )}
+              <button
+                onClick={handleSendMessage}
+                disabled={!chatMessage.trim() || chatSending}
+                className="mt-2 w-full py-2 bg-[var(--brand-gold)] text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:brightness-110 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <Send size={12} /> {chatSending ? 'Sending...' : 'Send SMS'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
