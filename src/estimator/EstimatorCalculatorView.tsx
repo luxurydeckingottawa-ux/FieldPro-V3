@@ -104,6 +104,12 @@ export interface PackagePriceRow {
   };
 }
 
+export interface SavedEstimateOption {
+  name: string;
+  price: number;
+  summary: string;
+}
+
 export interface CustomEstimatorProps {
   dimensions: Dimensions;
   setDimensions: React.Dispatch<React.SetStateAction<Dimensions>>;
@@ -123,6 +129,12 @@ export interface CustomEstimatorProps {
   estimateNumber: number;
   activePackage: PackageSelection | null;
   setActivePackage: (pkg: PackageSelection | null) => void;
+  // Multi-option estimate (Good / Better / Best)
+  savedOptions: SavedEstimateOption[];
+  optionName: string;
+  setOptionName: React.Dispatch<React.SetStateAction<string>>;
+  onSaveOption: (name: string) => void;
+  onRemoveOption: (name: string) => void;
 }
 
 interface PackageSelection {
@@ -785,7 +797,7 @@ const MaterialCard = ({ material, size, showRailings, railingCost, isSelected, o
   );
 };
 
-const CustomEstimator: React.FC<CustomEstimatorProps> = ({ dimensions, setDimensions, selections, setSelections, lightingQuantities, setLightingQuantities, clientInfo, setClientInfo, activeCategory, setActiveCategory, resetCalculator, onSave, onAccept, onGenerateGBB, pricingSummary, estimateNumber, activePackage, setActivePackage }) => {
+const CustomEstimator: React.FC<CustomEstimatorProps> = ({ dimensions, setDimensions, selections, setSelections, lightingQuantities, setLightingQuantities, clientInfo, setClientInfo, activeCategory, setActiveCategory, resetCalculator, onSave, onAccept, onGenerateGBB, pricingSummary, estimateNumber, activePackage, setActivePackage, savedOptions, optionName, setOptionName, onSaveOption, onRemoveOption }) => {
 
   const updateDim = (key: keyof Dimensions, val: string) => {
     setDimensions(prev => ({ ...prev, [key]: parseInt(val) || 0 }));
@@ -1074,6 +1086,61 @@ const CustomEstimator: React.FC<CustomEstimatorProps> = ({ dimensions, setDimens
             </button>
           )}
           <button className="reset-btn" onClick={resetCalculator}>Reset Estimator</button>
+        </div>
+
+        {/* Save as Named Estimate Option */}
+        <div className="control-section">
+          <div className="mt-4 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3">Save as Estimate Option</div>
+            <div className="flex gap-2 mb-3">
+              {(['Good', 'Better', 'Best'] as const).map(tier => (
+                <button
+                  key={tier}
+                  onClick={() => setOptionName(tier)}
+                  className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
+                    optionName === tier
+                      ? 'bg-[var(--brand-gold)]/20 border-[var(--brand-gold)]/40 text-[var(--brand-gold)]'
+                      : 'bg-white/[0.03] border-white/10 text-gray-500 hover:text-white'
+                  }`}
+                >
+                  {tier}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-black text-white">
+                ${Math.round(pricingSummary.subTotal).toLocaleString()}
+                <span className="text-[9px] text-gray-500 ml-1 font-normal">+ HST</span>
+              </div>
+              <button
+                onClick={() => onSaveOption(optionName)}
+                disabled={savedOptions.some(o => o.name === optionName) || savedOptions.length >= 3}
+                className="px-3 py-1.5 bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)] transition-all disabled:opacity-40"
+              >
+                {savedOptions.some(o => o.name === optionName) ? 'Saved' : 'Save Option'}
+              </button>
+            </div>
+          </div>
+
+          {/* Saved Options Summary */}
+          {savedOptions.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {savedOptions.map(opt => (
+                <div key={opt.name} className="flex items-center justify-between px-3 py-2 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+                  <span className="text-[10px] font-bold text-emerald-400">{opt.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-white font-black">${opt.price.toLocaleString()}</span>
+                    <button
+                      onClick={() => onRemoveOption(opt.name)}
+                      className="text-gray-600 hover:text-red-400 transition-colors text-sm leading-none"
+                    >
+                      x
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <div className="display-stage">
@@ -1495,6 +1562,10 @@ const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDi
     return saved ? parseInt(saved) : 2601;
   });
 
+  // Multi-option estimate state (Good / Better / Best)
+  const [savedOptions, setSavedOptions] = useState<SavedEstimateOption[]>([]);
+  const [optionName, setOptionName] = useState<string>('Good');
+
   // Printing state
   const [matrixPrintData, setMatrixPrintData] = useState<{ materials: Material[], size: DeckSize, railings: boolean, mode: 'single' | 'compare' } | null>(null);
   const [packagesPrintData, setPackagesPrintData] = useState<{ size: PackageSize, railings: boolean } | null>(null);
@@ -1771,6 +1842,32 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
     }
   };
 
+  const handleSaveOption = (name: string) => {
+    if (savedOptions.length >= 3) return;
+    if (savedOptions.some(o => o.name === name)) return;
+    const newOption: SavedEstimateOption = {
+      name,
+      price: Math.round(pricingSummary.subTotal),
+      summary: `${name} package — $${Math.round(pricingSummary.subTotal).toLocaleString()}`,
+    };
+    setSavedOptions(prev => [...prev, newOption]);
+    if (onEstimateSaved) {
+      onEstimateSaved({
+        clientName: clientInfo.name,
+        clientAddress: clientInfo.address,
+        estimateNumber,
+        selections: calcSelections,
+        dimensions: calcDimensions,
+        pricingSummary,
+        activePackage,
+      });
+    }
+  };
+
+  const handleRemoveOption = (name: string) => {
+    setSavedOptions(prev => prev.filter(o => o.name !== name));
+  };
+
   const handleAcceptQuote = () => {
     let name = clientInfo.name;
     let address = clientInfo.address;
@@ -2002,7 +2099,7 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
           </div>
         )}
         {view === 'calculator' && (
-          <CustomEstimator dimensions={calcDimensions} setDimensions={setCalcDimensions} selections={calcSelections} setSelections={setCalcSelections} lightingQuantities={lightingQuantities} setLightingQuantities={setLightingQuantities} clientInfo={clientInfo} setClientInfo={setClientInfo} activeCategory={calcActiveCategory} setActiveCategory={setCalcActiveCategory} resetCalculator={resetCalculator} onSave={handleSaveEstimate} onAccept={handleAcceptQuote} onGenerateGBB={handleGenerateGBB} pricingSummary={pricingSummary} estimateNumber={estimateNumber} activePackage={activePackage} setActivePackage={setActivePackage} />
+          <CustomEstimator dimensions={calcDimensions} setDimensions={setCalcDimensions} selections={calcSelections} setSelections={setCalcSelections} lightingQuantities={lightingQuantities} setLightingQuantities={setLightingQuantities} clientInfo={clientInfo} setClientInfo={setClientInfo} activeCategory={calcActiveCategory} setActiveCategory={setCalcActiveCategory} resetCalculator={resetCalculator} onSave={handleSaveEstimate} onAccept={handleAcceptQuote} onGenerateGBB={handleGenerateGBB} pricingSummary={pricingSummary} estimateNumber={estimateNumber} activePackage={activePackage} setActivePackage={setActivePackage} savedOptions={savedOptions} optionName={optionName} setOptionName={setOptionName} onSaveOption={handleSaveOption} onRemoveOption={handleRemoveOption} />
         )}
         {view === 'packages' && (
           <PackageShowcase 

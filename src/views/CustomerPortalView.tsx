@@ -27,7 +27,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   onSendMessage, 
   onBack 
 }) => {
-  const [activeTab, setActiveTab] = useState<'status' | 'schedule' | 'scope' | 'payments' | 'documents' | 'archive'>('status');
+  const [activeTab, setActiveTab] = useState<'project' | 'timeline' | 'portal'>('project');
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -673,13 +673,13 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
         {/* Navigation Tabs */}
         <div className="flex p-1 bg-[#F0F0F0] rounded-2xl overflow-x-auto no-scrollbar">
-          {(['status', 'schedule', 'scope', 'payments', 'documents', ...(job.pipelineStage === PipelineStage.PAID_CLOSED ? ['archive'] : [])] as const).map((tab) => (
+          {(['project', 'timeline', 'portal'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 min-w-[80px] py-3 text-sm font-bold rounded-xl transition-all ${
-                activeTab === tab 
-                  ? 'bg-white text-[var(--brand-gold)] shadow-sm' 
+                activeTab === tab
+                  ? 'bg-white text-[var(--brand-gold)] shadow-sm'
                   : 'text-[#666] hover:text-[#333]'
               }`}
             >
@@ -690,10 +690,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
         {/* Tab Content */}
         <div className="min-h-[400px]">
-          {activeTab === 'status' && (
-            <div 
-              
-              
+          {activeTab === 'project' && (
+            <div
+
+
               className="space-y-6"
             >
               {/* Progress Overview */}
@@ -1146,10 +1146,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </div>
           )}
 
-          {activeTab === 'schedule' && (
-            <div 
-              
-              
+          {activeTab === 'timeline' && (
+            <div
+
+
               className="space-y-6"
             >
               <div className="flex items-center justify-between px-2">
@@ -1317,10 +1317,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </div>
           )}
 
-          {activeTab === 'scope' && (
-            <div 
-              
-              
+          {activeTab === 'project' && (
+            <div
+
+
               className="space-y-6"
             >
               <div className="flex items-center justify-between px-2">
@@ -1329,7 +1329,61 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   <ShieldCheck size={12} className="inline mr-1" /> Verified Specs
                 </div>
               </div>
-              
+
+              {/* Multi-Option Estimate Display */}
+              {job.estimateData?.options && job.estimateData.options.length > 1 && !job.acceptedOptionId && (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Choose Your Package</p>
+                  {job.estimateData.options.map((option) => (
+                    <div
+                      key={option.id}
+                      className={`p-5 rounded-2xl border transition-all ${
+                        option.isRecommended
+                          ? 'bg-[var(--brand-gold)]/5 border-[var(--brand-gold)]/30'
+                          : 'bg-white/[0.02] border-white/10'
+                      }`}
+                    >
+                      {option.isRecommended && (
+                        <div className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Recommended</div>
+                      )}
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="text-sm font-black text-white">{option.title || option.name}</h3>
+                          {option.description && (
+                            <p className="text-[10px] text-gray-500 mt-0.5">{option.description}</p>
+                          )}
+                        </div>
+                        <div className="text-right ml-4">
+                          <div className="text-lg font-black text-white">${option.price.toLocaleString()}</div>
+                          <div className="text-[8px] text-gray-600">+ HST</div>
+                        </div>
+                      </div>
+                      {option.features && option.features.length > 0 && (
+                        <ul className="space-y-1 mt-3">
+                          {option.features.slice(0, 4).map((f, i) => (
+                            <li key={i} className="flex items-center gap-2 text-[10px] text-gray-400">
+                              <span className="text-[var(--brand-gold)] text-[8px]">+</span> {f}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <p className="text-[9px] text-gray-600 mt-3">Contact us to select this package.</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Accepted Option Display */}
+              {job.acceptedOptionId && job.acceptedBuildSummary && (
+                <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
+                  <div className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-2">Package Selected</div>
+                  <div className="text-sm font-black text-white">{job.acceptedBuildSummary.optionName}</div>
+                  <div className="text-base font-black text-[var(--brand-gold)] mt-1">
+                    ${(job.acceptedBuildSummary.totalPrice || job.estimateAmount || 0).toLocaleString()} + HST
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 gap-6">
                 {job.buildDetails ? (
                   <>
@@ -1428,10 +1482,10 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </div>
           )}
 
-          {activeTab === 'documents' && (
-            <div 
-              
-              
+          {activeTab === 'portal' && (
+            <div
+
+
               className="space-y-8"
             >
               <div className="flex items-center justify-between px-2">
@@ -1589,14 +1643,14 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </div>
           )}
 
-          {activeTab === 'payments' && (
+          {activeTab === 'portal' && (
             <PortalPaymentsTab job={job} />
           )}
 
-          {activeTab === 'archive' && (
-            <div 
-              
-              
+          {activeTab === 'portal' && job.pipelineStage === PipelineStage.PAID_CLOSED && (
+            <div
+
+
               className="space-y-8"
             >
               <div className="flex items-center justify-between px-2">

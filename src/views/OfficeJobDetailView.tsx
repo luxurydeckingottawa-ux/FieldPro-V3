@@ -58,7 +58,12 @@ import {
   Activity,
   BarChart3,
   MapPin,
-  Check
+  Check,
+  Sparkles,
+  Loader2,
+  CreditCard,
+  CheckCircle,
+  DollarSign
 } from 'lucide-react';
 import { OfficeAIAssistant } from '../components/OfficeAIAssistant';
 import { AIOfficeInsights } from '../components/AIOfficeInsights';
@@ -99,6 +104,9 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [officeNotesCollapsed, setOfficeNotesCollapsed] = useState(false);
   const [siteNotesCollapsed, setSiteNotesCollapsed] = useState(false);
   const [assignmentExpanded, setAssignmentExpanded] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string>('');
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'estimating' | 'schedule' | 'field' | 'files' | 'office'>('overview');
 
   const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === job.pipelineStage);
   const currentStageInfo = stageIndex !== -1 ? PIPELINE_STAGES[stageIndex] : null;
@@ -180,10 +188,45 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
     return 'cold';
   }, [job.portalEngagement]);
 
+  const generateProjectSummary = async () => {
+    setAiSummaryLoading(true);
+    try {
+      const prompt = `You are a professional construction project manager. Write a concise 3-4 sentence project summary for this job:
+Client: ${job.clientName}
+Address: ${job.clientAddress}
+Stage: ${job.pipelineStage}
+Estimate Amount: $${(job.estimateAmount || 0).toLocaleString()}
+Description: ${job.description || 'Deck construction project'}
+Start Date: ${job.plannedStartDate || 'TBD'}
+Duration: ${job.plannedDurationDays || 'TBD'} days
+Assigned Crew: ${job.assignedCrewOrSubcontractor || 'TBD'}
+Notes: ${job.officeNotes?.map(n => n.text).join('; ') || 'None'}
+
+Write a professional, factual summary suitable for a project file. Focus on scope, timeline, and current status.`;
+
+      const secret = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
+      const response = await fetch('/.netlify/functions/gemini-proxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(secret ? { 'X-Internal-Secret': secret } : {}),
+        },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await response.json();
+      const text = data?.text || 'Unable to generate summary.';
+      setAiSummary(text);
+    } catch (err) {
+      setAiSummary('Failed to generate summary. Please try again.');
+    } finally {
+      setAiSummaryLoading(false);
+    }
+  };
+
   return (
-    <div 
-      
-      
+    <div
+
+
       className="flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen"
     >
       {/* Header / Navigation */}
@@ -219,6 +262,38 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     className="flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold text-[var(--brand-gold)] bg-[var(--brand-gold)]/5 rounded border border-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/10 transition-colors">
                     <MapPin className="w-3 h-3" /> Map
                   </a>
+                </div>
+              )}
+              {job.projectAddress && (
+                <div className="mt-3 rounded-2xl overflow-hidden border border-white/5 h-32 relative">
+                  <img
+                    src={`https://maps.googleapis.com/maps/api/streetview?size=600x200&location=${encodeURIComponent(job.projectAddress + ', Ottawa, ON')}&key=PLACEHOLDER_KEY`}
+                    alt="Street view"
+                    className="w-full h-full object-cover opacity-60"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.style.display = 'none';
+                      const parent = img.parentElement;
+                      if (parent) {
+                        parent.classList.add('flex', 'items-center', 'justify-center', 'bg-white/[0.02]');
+                        const addressText = document.createTextNode(job.projectAddress ?? '');
+                        const addressDiv = document.createElement('div');
+                        addressDiv.className = 'text-gray-800 text-[9px] mt-1';
+                        addressDiv.appendChild(addressText);
+                        const labelDiv = document.createElement('div');
+                        labelDiv.className = 'text-gray-700 text-[10px] font-black uppercase tracking-widest';
+                        labelDiv.textContent = 'Street View';
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'text-center';
+                        wrapper.appendChild(labelDiv);
+                        wrapper.appendChild(addressDiv);
+                        parent.innerHTML = '';
+                        parent.appendChild(wrapper);
+                      }
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+                  <div className="absolute bottom-2 left-3 text-[8px] font-black text-white/60 uppercase tracking-widest">Street View · Google Maps</div>
                 </div>
               )}
             </div>
@@ -288,6 +363,32 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
         </div>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="sticky top-0 z-20 bg-[#030303]/95 backdrop-blur-xl border-b border-white/5 px-6 py-0">
+        <div className="flex items-center gap-0 overflow-x-auto scrollbar-none">
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'estimating', label: 'Estimating' },
+            { id: 'schedule', label: 'Schedule' },
+            { id: 'field', label: 'Field' },
+            { id: 'files', label: 'Files' },
+            { id: 'office', label: 'Office' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${
+                activeTab === tab.id
+                  ? 'text-[var(--brand-gold)] border-[var(--brand-gold)]'
+                  : 'text-gray-600 border-transparent hover:text-gray-400'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto bg-[var(--bg-primary)]">
         <div className="max-w-[1600px] mx-auto p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -295,9 +396,9 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
           {/* Left Column: Primary Controls & Info */}
           <div className="lg:col-span-8 space-y-8">
             
-            {/* Generated Packages Review (Always visible if submitted) - MOVED TO TOP FOR PROMINENCE */}
-            {(job.verifiedBuildPassportUrl || job.subcontractorInvoiceUrl) && (
-              <section 
+            {/* Generated Packages Review — Files tab */}
+            {activeTab === 'files' && (job.verifiedBuildPassportUrl || job.subcontractorInvoiceUrl) && (
+              <section
                 
                 
                 className="bg-[var(--brand-gold)]/10 border-2 border-[var(--brand-gold)]/30 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
@@ -367,9 +468,9 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             )}
             
 
-            {/* Proposal Engagement Tracking - Only shown during estimate/pre-sale stages */}
-            {isEstimateStage && job.portalEngagement && (
-              <section 
+            {/* Proposal Engagement Tracking — Estimating tab */}
+            {activeTab === 'estimating' && isEstimateStage && job.portalEngagement && (
+              <section
                 
                 
                 
@@ -485,13 +586,13 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               </section>
             )}
 
-            {/* Sales & Estimating Profile (Prominent in Estimating Phase) */}
-            {(job.lifecycleStage === CustomerLifecycle.ESTIMATE_IN_PROGRESS || 
-              job.lifecycleStage === CustomerLifecycle.ESTIMATE_SENT || 
+            {/* Sales & Estimating Profile — Estimating tab */}
+            {activeTab === 'estimating' && (job.lifecycleStage === CustomerLifecycle.ESTIMATE_IN_PROGRESS ||
+              job.lifecycleStage === CustomerLifecycle.ESTIMATE_SENT ||
               job.lifecycleStage === CustomerLifecycle.FOLLOW_UP_NEEDED ||
               job.lifecycleStage === CustomerLifecycle.NEW_LEAD ||
               job.lifecycleStage === CustomerLifecycle.CONTACTED) && (
-              <section 
+              <section
                 
                 
                 
@@ -634,8 +735,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {job.estimateData.options.map((option) => (
                         <div key={option.id} className={`p-4 rounded-2xl border transition-all ${
-                          job.acceptedOptionId === option.id 
-                            ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/30' 
+                          job.acceptedOptionId === option.id
+                            ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/30'
                             : 'bg-white/5 border-white/5 hover:border-white/10'
                         }`}>
                           <div className="flex items-center justify-between mb-2">
@@ -656,11 +757,89 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </div>
                   </div>
                 )}
+
+                {/* Itemized Estimate Breakdown — Feature #18 */}
+                <div className="mt-8 pt-8 border-t border-white/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">
+                      <DollarSign size={14} className="text-[var(--brand-gold)]" /> Estimate Breakdown
+                    </div>
+                    {/* Feature #61 — Email Estimate button */}
+                    {job.clientEmail && job.estimateAmount && (
+                      <button
+                        onClick={() => {
+                          const firstName = job.clientName?.split(' ')[0] || 'there';
+                          const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
+                          const subject = `Your Luxury Decking Estimate ${job.jobNumber ? `#${job.jobNumber}` : ''} — ${job.clientName}`;
+                          const body = `Hi ${firstName},
+
+Thank you for choosing Luxury Decking! We're excited to present your custom deck estimate.
+
+ESTIMATE SUMMARY
+────────────────
+Project: ${job.projectAddress || ''}
+${job.acceptedBuildSummary?.optionName ? `Option: ${job.acceptedBuildSummary.optionName}` : ''}
+Estimate Amount: $${(job.estimateAmount || 0).toLocaleString()} + HST
+
+WHAT HAPPENS NEXT
+─────────────────
+1. Review your estimate in your Project Portal
+2. Accept your preferred option
+3. We'll reach out to schedule your project start date
+
+View your personalised Project Portal:
+${portalUrl}
+
+This estimate is valid for 30 days.
+
+Questions? Reply to this email or call us anytime.
+
+- The Luxury Decking Team
+Ottawa's Premium Deck Builders`;
+                          window.location.href = `mailto:${job.clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-blue-400 transition-all"
+                      >
+                        <Mail size={11} /> Email Estimate
+                      </button>
+                    )}
+                  </div>
+
+                  {job.acceptedBuildSummary ? (
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-2">
+                      <div className="flex items-center justify-between py-2 border-b border-white/5">
+                        <span className="text-[11px] font-bold text-white">{job.acceptedBuildSummary.optionName}</span>
+                        <span className="text-[11px] font-bold text-white">${job.acceptedBuildSummary.basePrice.toLocaleString()}</span>
+                      </div>
+                      {job.acceptedBuildSummary.addOns && job.acceptedBuildSummary.addOns.map((addon, i) => (
+                        <div key={i} className="flex items-center justify-between py-1">
+                          <span className="text-[10px] text-gray-500">+ {addon.name}</span>
+                          <span className="text-[10px] text-gray-400">+${addon.price.toLocaleString()}</span>
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-between py-1 border-t border-white/5 mt-1">
+                        <span className="text-[10px] text-gray-500">HST (13%)</span>
+                        <span className="text-[10px] text-gray-400">+${Math.round((job.acceptedBuildSummary.totalPrice || job.estimateAmount || 0) * 0.13).toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-t border-white/5">
+                        <span className="text-[11px] font-black text-[var(--brand-gold)] uppercase tracking-wider">Total</span>
+                        <span className="text-base font-black text-[var(--brand-gold)]">${Math.round((job.acceptedBuildSummary.totalPrice || job.estimateAmount || 0) * 1.13).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-[10px] text-gray-500">Estimate</span>
+                        <span className="text-sm font-black text-white">${(job.estimateAmount || 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </section>
             )}
 
-            {/* Job Summary Card */}
-            <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2rem] shadow-2xl overflow-hidden">
+            {/* Job Summary Card — Overview tab */}
+            {activeTab === 'overview' && <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2rem] shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-8 py-5">
                 <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
                   <Info size={14} className="text-[var(--brand-gold)]" /> Client Info
@@ -688,16 +867,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   />
                 </div>
               )}
-            </div>
+            </div>}
 
 
-            {/* Stage Checklist */}
-            <section 
-              
-              
-              
-              className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md"
-            >
+            {/* Stage Checklist — Overview tab */}
+            {activeTab === 'overview' && <section className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
@@ -822,11 +996,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </p>
                 </div>
               )}
-            </section>
+            </section>}
 
-            {/* Build Specifications / Digital Work Order */}
-            {job.buildDetails && (
-              <section 
+            {/* Build Specifications / Digital Work Order — Field tab */}
+            {activeTab === 'field' && job.buildDetails && (
+              <section
                 
                 
                 
@@ -1031,8 +1205,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               </section>
             )}
 
-            {/* Estimator Field Notes */}
-            {job.estimatorIntake && (
+            {/* Estimator Field Notes — Field tab */}
+            {activeTab === 'field' && job.estimatorIntake && (
               <div className="rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden">
                 <div className="px-6 py-4 border-b border-white/5">
                   <h3 className="text-xs font-black text-white uppercase tracking-widest">Estimator Field Notes</h3>
@@ -1119,13 +1293,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               </div>
             )}
 
-            {/* Scope Summary */}
-            <section
-
-
-
-              className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md"
-            >
+            {/* Scope Summary — Overview tab */}
+            {activeTab === 'overview' && <section className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
                   <FileText size={14} className="text-[var(--brand-gold)]" /> Scope Summary
@@ -1143,10 +1312,10 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               <div className="bg-white/5 border border-white/10 rounded-[1.5rem] p-6 text-gray-300 leading-relaxed font-medium min-h-[120px]">
                 {job.scopeSummary || <span className="text-gray-600 italic">No scope summary provided.</span>}
               </div>
-            </section>
+            </section>}
 
-            {/* Scheduling — Compact card, visible for Ready to Start only (In Field/Completion handled in right column) */}
-            {job.pipelineStage === PipelineStage.READY_TO_START && (
+            {/* Scheduling — Compact card — Schedule tab */}
+            {activeTab === 'schedule' && job.pipelineStage === PipelineStage.READY_TO_START && (
               <section className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2rem] overflow-hidden shadow-2xl backdrop-blur-md">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
                   <div className="flex items-center gap-2">
@@ -1187,8 +1356,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               </section>
             )}
 
-            {/* Financial Performance Overview - Bottom of page, hidden during estimate stages */}
-            {!isEstimateStage && (
+            {/* Financial Performance Overview — Office tab */}
+            {activeTab === 'office' && !isEstimateStage && (
             <section className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
               <div className="flex items-center justify-between mb-8 relative z-10">
@@ -1275,13 +1444,13 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
           {/* Right Column: Execution & Status */}
           <div className="lg:col-span-4 space-y-8 lg:sticky lg:top-24 lg:self-start">
             
-            {/* AI Assistant Section - Only for Estimate Stages */}
-            {isEstimateStage && (
+            {/* AI Assistant Section — Estimating tab */}
+            {activeTab === 'estimating' && isEstimateStage && (
               <OfficeAIAssistant job={job} onUpdateJob={onUpdateJob} />
             )}
 
-            {/* Field Execution + Scheduling — Combined box, IN_FIELD / COMPLETION / PAID_CLOSED only */}
-            {(job.pipelineStage === PipelineStage.IN_FIELD || job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
+            {/* Field Execution + Scheduling — Schedule tab */}
+            {activeTab === 'schedule' && (job.pipelineStage === PipelineStage.IN_FIELD || job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
             <section className="bg-white/[0.03] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl">
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
@@ -1395,21 +1564,68 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             </section>
             )}
 
-            {/* AI Office Insights - For Pipeline Stages */}
-            {!isEstimateStage && (
+            {/* AI Office Insights — Office tab */}
+            {activeTab === 'office' && !isEstimateStage && (
               <AIOfficeInsights job={job} onUpdateJob={onUpdateJob} />
             )}
 
-            {/* Customer Experience Portal Sharing */}
-            <PortalSharingCard
+            {/* Customer Experience Portal Sharing — Overview tab */}
+            {activeTab === 'overview' && <PortalSharingCard
               job={job}
               allJobs={allJobs}
               isEstimateStage={isEstimateStage}
               onPreviewPortal={onPreviewPortal}
-            />
+            />}
 
-            {/* Assignment & Handoff - Inline row */}
-            <div className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] shadow-2xl overflow-hidden">
+            {/* AI Project Summary — Office tab */}
+            {activeTab === 'office' && <section className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] p-5 shadow-2xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={13} className="text-[var(--brand-gold)]" />
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">AI Project Summary</span>
+                </div>
+                <button
+                  onClick={generateProjectSummary}
+                  disabled={aiSummaryLoading}
+                  className="px-3 py-1.5 bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)] transition-all disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {aiSummaryLoading ? (
+                    <><Loader2 size={10} className="animate-spin" /> Generating...</>
+                  ) : (
+                    <><Sparkles size={10} /> Generate</>
+                  )}
+                </button>
+              </div>
+              {aiSummary ? (
+                <p className="text-[11px] text-gray-300 leading-relaxed">{aiSummary}</p>
+              ) : (
+                <p className="text-[10px] text-gray-600 italic">Click Generate to create an AI-powered project summary using job data.</p>
+              )}
+            </section>}
+
+            {/* Stripe Deposit — Estimating tab */}
+            {activeTab === 'estimating' && job.pipelineStage === PipelineStage.PRE_PRODUCTION && (
+              <section className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] p-5 shadow-2xl">
+                <div className="flex items-center gap-2 mb-3">
+                  <CreditCard size={13} className="text-[var(--brand-gold)]" />
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Deposit Collection</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl border border-white/5 mb-3">
+                  <span className="text-[10px] text-gray-500">Deposit Amount (25%)</span>
+                  <span className="text-sm font-black text-white">${Math.round((job.estimateAmount || 0) * 0.25).toLocaleString()}</span>
+                </div>
+                <button
+                  disabled
+                  className="w-full py-3 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-[var(--brand-gold)]/50 cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <CreditCard size={12} /> Send Stripe Invoice — Coming Soon
+                </button>
+                <p className="text-[9px] text-gray-700 text-center mt-2">Stripe integration pending setup</p>
+              </section>
+            )}
+
+            {/* Assignment & Handoff — Overview tab */}
+            {activeTab === 'overview' && <div className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-3">
                   <Users size={14} className="text-[var(--brand-gold)] shrink-0" />
@@ -1460,10 +1676,42 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </button>
                 </div>
               )}
-            </div>
+            </div>}
 
-            {/* Office Notes — Side Box */}
-            <div className="bg-white/[0.03] border border-[var(--border-color)] rounded-[1.5rem] shadow-2xl overflow-hidden">
+            {/* Sub Labour Cost — Office tab */}
+            {activeTab === 'office' && job.invoiceSupportStatus !== 'not_required' && (
+              <div className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] p-4 shadow-2xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <DollarSign size={13} className="text-[var(--brand-gold)]" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Sub Labour Cost</span>
+                  </div>
+                  {job.labourCost ? (
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle size={11} className="text-emerald-400" />
+                      <span className="text-sm font-black text-white">${job.labourCost.toLocaleString()}</span>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
+                      {job.invoiceSupportStatus === 'submitted' ? 'Invoice Submitted' : 'Pending'}
+                    </span>
+                  )}
+                </div>
+                {job.subcontractorInvoiceUrl && (
+                  <a
+                    href={job.subcontractorInvoiceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 flex items-center gap-1.5 text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest hover:opacity-80 transition-opacity"
+                  >
+                    <ExternalLink size={10} /> View Invoice PDF
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Office Notes — Office tab */}
+            {activeTab === 'office' && <div className="bg-white/[0.03] border border-[var(--border-color)] rounded-[1.5rem] shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
                   <MessageSquare size={13} className="text-[var(--brand-gold)]" /> Office Notes
@@ -1500,10 +1748,10 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   )}
                 </div>
               )}
-            </div>
+            </div>}
 
-            {/* Site Notes — Side Box */}
-            <div className="bg-white/[0.03] border border-[var(--border-color)] rounded-[1.5rem] shadow-2xl overflow-hidden">
+            {/* Site Notes — Field tab */}
+            {activeTab === 'field' && <div className="bg-white/[0.03] border border-[var(--border-color)] rounded-[1.5rem] shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
                   <History size={13} className="text-[var(--brand-gold)]" /> Site Notes
@@ -1535,15 +1783,10 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   )}
                 </div>
               )}
-            </div>
+            </div>}
 
-            {/* Job Files & Documents Package */}
-            <section
-
-
-
-              className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
-            >
+            {/* Job Files & Documents Package — Files tab */}
+            {activeTab === 'files' && <section className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 blur-[60px] -mr-24 -mt-24 pointer-events-none" />
               
               <div className="flex items-center justify-between mb-8 relative z-10">
@@ -1618,7 +1861,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </div>
                 )}
               </div>
-            </section>
+            </section>}
           </div>
         </div>
       </div>

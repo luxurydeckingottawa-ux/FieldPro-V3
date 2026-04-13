@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence } from './types';
 import { useAppRouter, pathToView } from './hooks/useAppRouter';
-import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES, ESTIMATE_STAGES } from './constants';
+import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES, ESTIMATE_STAGES, RATES } from './constants';
 import LoginView from './views/LoginView';
 import JobsListView from './views/JobsListView';
 import JobDetailView from './views/JobDetailView';
@@ -718,6 +718,17 @@ const App: React.FC = () => {
           body: JSON.stringify({ to: job.clientPhone, message: reviewMsg }),
         }).catch(err => console.warn('[review-sms] failed:', err));
       }
+
+      // Auto-send warranty delivery SMS
+      if (job.clientPhone && job.customerPortalToken) {
+        const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
+        const warrantyMsg = `Hi ${firstName}, your Luxury Decking project is officially complete! Your 5-year warranty is now active. Access your Project Portal and Warranty Package here: ${portalUrl}`;
+        fetch('/.netlify/functions/send-sms', {
+          method: 'POST',
+          headers: internalHeaders(),
+          body: JSON.stringify({ to: job.clientPhone, message: warrantyMsg }),
+        }).catch(err => console.warn('[warranty-sms] failed:', err));
+      }
     }
   }, [jobs, selectedJob, handleUpdateJob]);
 
@@ -978,10 +989,21 @@ const App: React.FC = () => {
       }
 
       let subcontractorInvoiceUrl = '';
+      let subInvoiceTotal = 0;
       if (workflowState.userRole === UserRole.SUBCONTRACTOR) {
         setUploadProgress('Generating Subcontractor Invoice Package...');
         const invoiceDataUri = await generateInvoicePDF(updatedStateWithPhotos);
         subcontractorInvoiceUrl = await uploadFileToCloudinary(invoiceDataUri, `Invoice_${workflowState.jobInfo.jobName}_${Date.now()}`);
+        // Calculate invoice total using same rate logic as pdfGenerator.ts lines 207-234
+        const r = RATES as any;
+        const d = workflowState.invoicing as any;
+        let invSubtotal = 0;
+        if (d?.deckSqft > 0) invSubtotal += (d.deckSqft * r.deckSqft);
+        if (d?.standardStairLf > 0) invSubtotal += (d.standardStairLf * r.standardStairLf);
+        if (d?.helicalPiles > 0) invSubtotal += (d.helicalPiles * r.helicalPiles);
+        if (d?.railingPosts > 0) invSubtotal += (d.railingPosts * r.railingPosts);
+        if (d?.customWorkAmount > 0) invSubtotal += d.customWorkAmount;
+        subInvoiceTotal = Math.round(invSubtotal * 1.13); // with HST
       }
 
       setUploadProgress('Finalizing submission...');
@@ -1019,9 +1041,9 @@ const App: React.FC = () => {
         setJobs(prevJobs => {
           const updatedJobs = prevJobs.map(job => {
             if (job.id === workflowState.jobId) {
-              return { 
-                ...job, 
-                status: JobStatus.COMPLETED, 
+              return {
+                ...job,
+                status: JobStatus.COMPLETED,
                 currentStage: 5,
                 pipelineStage: job.pipelineStage === PipelineStage.IN_FIELD ? PipelineStage.COMPLETION : job.pipelineStage,
                 signoffStatus: 'signed' as const,
@@ -1030,6 +1052,7 @@ const App: React.FC = () => {
                 officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
                 verifiedBuildPassportUrl,
                 subcontractorInvoiceUrl,
+                ...(workflowState.userRole === UserRole.SUBCONTRACTOR ? { labourCost: subInvoiceTotal } : {}),
                 files: [
                   ...(job.files || []),
                   {
@@ -1068,6 +1091,7 @@ const App: React.FC = () => {
             officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
             verifiedBuildPassportUrl,
             subcontractorInvoiceUrl,
+            ...(workflowState.userRole === UserRole.SUBCONTRACTOR ? { labourCost: subInvoiceTotal } : {}),
             files: [
               ...(prev.files || []),
               {
@@ -1102,6 +1126,7 @@ const App: React.FC = () => {
           officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
           verifiedBuildPassportUrl,
           subcontractorInvoiceUrl,
+          ...(workflowState.userRole === UserRole.SUBCONTRACTOR ? { labourCost: subInvoiceTotal } : {}),
           ...(workflowState.fieldForecast ? { fieldForecast: workflowState.fieldForecast } : {}),
           updatedAt: new Date().toISOString()
         });
@@ -1193,6 +1218,25 @@ const App: React.FC = () => {
       console.error('[handleUpdateSchedule] Supabase write failed:', err)
     );
   }, []);
+
+  // Field worker schedule update: receives days-remaining from WorkflowContainer,
+  // computes a new plannedFinishDate from today and persists via handleUpdateSchedule.
+  const handleFieldScheduleUpdate = useCallback((daysRemaining: number) => {
+    if (!workflowState.jobId) return;
+    const newFinish = new Date();
+    newFinish.setDate(newFinish.getDate() + daysRemaining);
+    const finishStr = newFinish.toISOString().split('T')[0];
+    const job = jobs.find(j => j.id === workflowState.jobId);
+    let newDuration = daysRemaining;
+    if (job?.plannedStartDate) {
+      const start = new Date(job.plannedStartDate);
+      newDuration = Math.ceil((newFinish.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    }
+    handleUpdateSchedule(workflowState.jobId, {
+      plannedFinishDate: finishStr,
+      plannedDurationDays: newDuration,
+    });
+  }, [workflowState.jobId, jobs, handleUpdateSchedule]);
 
   const handleUpdateEstimatorIntake = useCallback((intake: EstimatorIntake) => {
     
@@ -1722,7 +1766,7 @@ const App: React.FC = () => {
 
   if (view === 'workflow') {
     return (
-      <WorkflowContainer 
+      <WorkflowContainer
         state={workflowState}
         setState={setWorkflowState}
         isOnline={isOnline}
@@ -1731,6 +1775,8 @@ const App: React.FC = () => {
         error={submissionError}
         onFullSubmission={handleFullSubmission}
         onExit={() => navigateTo('detail', selectedJob?.id)}
+        clientPhone={selectedJob?.clientPhone}
+        onScheduleUpdate={handleFieldScheduleUpdate}
       />
     );
   }

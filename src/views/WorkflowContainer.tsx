@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AppState, PageState, UserRole } from '../types';
 import { PAGE_TITLES } from '../constants';
 import ProgressBar from '../components/ProgressBar';
@@ -8,7 +8,7 @@ import ChecklistView from '../views/ChecklistView';
 import FinalCompletionView from '../views/FinalCompletionView';
 import InvoicingView from '../views/InvoicingView';
 import ReviewView from '../views/ReviewView';
-import { CheckCircle2, CloudUpload, Mail, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, CloudUpload, Mail, ArrowLeft, MessageSquare, Calendar } from 'lucide-react';
 
 interface WorkflowContainerProps {
   state: AppState;
@@ -19,6 +19,8 @@ interface WorkflowContainerProps {
   error?: string | null;
   onFullSubmission: () => Promise<void>;
   onExit: () => void;
+  clientPhone?: string;
+  onScheduleUpdate?: (daysRemaining: number) => void;
 }
 
 const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
@@ -29,8 +31,13 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
   uploadProgress,
   error,
   onFullSubmission,
-  onExit
+  onExit,
+  clientPhone,
+  onScheduleUpdate,
 }) => {
+  const [showScheduleUpdate, setShowScheduleUpdate] = useState(false);
+  const [daysRemaining, setDaysRemaining] = useState(3);
+
   const handleNext = () => setState(prev => ({ ...prev, currentPage: prev.currentPage + 1 }));
   const handleBack = () => setState(prev => ({ ...prev, currentPage: Math.max(0, prev.currentPage - 1) }));
 
@@ -187,7 +194,7 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] pb-20">
       <nav className="bg-[var(--bg-secondary)]/80 border-b border-[var(--border-color)] sticky top-0 z-30 px-4 py-4 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <button 
+          <button
             onClick={onExit}
             className="p-2.5 hover:bg-[var(--bg-primary)]/50 rounded-xl transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent hover:border-[var(--border-color)]"
             title="Exit Workflow"
@@ -197,13 +204,68 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
           <div className="flex-1 px-8">
             <ProgressBar current={state.currentPage} total={state.userRole === UserRole.SUBCONTRACTOR ? 7 : 6} />
           </div>
-          <ConnectivityStatus isOnline={isOnline} />
+          <div className="flex items-center gap-2">
+            {/* Message Client button — field workers only */}
+            {(state.userRole === UserRole.FIELD_EMPLOYEE || state.userRole === UserRole.SUBCONTRACTOR) &&
+              clientPhone && (
+              <button
+                onClick={() => {
+                  const firstName = state.jobInfo.customerName?.split(' ')[0] || 'there';
+                  const msg = `Hi ${firstName}, this is your Luxury Decking crew. `;
+                  window.location.href = `sms:${clientPhone}?body=${encodeURIComponent(msg)}`;
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all"
+                title="Message client"
+              >
+                <MessageSquare size={12} /> Message Client
+              </button>
+            )}
+            <ConnectivityStatus isOnline={isOnline} />
+          </div>
         </div>
       </nav>
 
       <main className="max-w-4xl mx-auto px-4 py-10">
         {renderPage()}
       </main>
+
+      {/* Floating schedule update widget — field workers only */}
+      {(state.userRole === UserRole.FIELD_EMPLOYEE || state.userRole === UserRole.SUBCONTRACTOR) && onScheduleUpdate && (
+        <div className="fixed bottom-20 right-4 z-40">
+          <button
+            onClick={() => setShowScheduleUpdate(prev => !prev)}
+            className="w-12 h-12 rounded-full bg-[var(--brand-gold)] shadow-xl flex items-center justify-center hover:brightness-110 transition-all active:scale-95"
+            title="Update finish estimate"
+          >
+            <Calendar size={18} className="text-black" />
+          </button>
+          {showScheduleUpdate && (
+            <div className="absolute bottom-14 right-0 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 shadow-2xl">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Update Finish Estimate</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={daysRemaining}
+                  onChange={e => setDaysRemaining(Number(e.target.value))}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm text-center"
+                />
+                <span className="text-[10px] text-gray-500">days left</span>
+              </div>
+              <button
+                onClick={() => {
+                  onScheduleUpdate(daysRemaining);
+                  setShowScheduleUpdate(false);
+                }}
+                className="mt-3 w-full py-2 bg-[var(--brand-gold)] text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:brightness-110 transition-all active:scale-95"
+              >
+                Update
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {isUploading && (
         <div className="fixed inset-0 bg-[var(--bg-primary)]/80 backdrop-blur-xl z-50 flex items-center justify-center p-6">
