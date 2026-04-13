@@ -28,6 +28,9 @@ const VIEW_TO_PATH: Record<string, string> = {
   'chat': '/chat',
   'customers': '/customers',
   'user-management': '/users',
+  'booking-settings': '/settings/booking',
+  'automation-settings': '/settings/automations',
+  'business-info': '/settings/business',
   'detail': '/field/jobs', // field job detail view
   'jobs': '/field/jobs',
   'workflow': '/field/workflow', // needs /:id appended
@@ -49,6 +52,9 @@ const PATH_TO_VIEW: Record<string, string> = {
   '/chat': 'chat',
   '/customers': 'customers',
   '/users': 'user-management',
+  '/settings/booking': 'booking-settings',
+  '/settings/automations': 'automation-settings',
+  '/settings/business': 'business-info',
   '/field/jobs': 'jobs',
 };
 

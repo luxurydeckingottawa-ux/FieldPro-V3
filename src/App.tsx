@@ -21,6 +21,7 @@ import EstimatorWorkflowView from './views/EstimatorWorkflowView';
 import BookingSettingsView from './views/BookingSettingsView';
 import PublicBookingView from './views/PublicBookingView';
 import AutomationSettingsView from './views/AutomationSettingsView';
+import BusinessInfoView from './views/BusinessInfoView';
 import EstimateDetailView from './views/EstimateDetailView';
 import NavBar from './components/NavBar';
 import AcceptanceModal from './components/AcceptanceModal';
@@ -697,8 +698,16 @@ const App: React.FC = () => {
         navigateTo('office-job-detail', job.id);
       }
     } else if (currentUser.role === Role.ESTIMATOR) {
-      // Estimator: route to estimate detail for pre-sale, job detail for post-sale
-      if (ESTIMATE_STAGES.includes(job.pipelineStage)) {
+      // Estimator: stages before EST_SENT → open estimator workflow (intake/site data)
+      // EST_SENT and beyond → estimate-detail (read-only review)
+      const ESTIMATOR_WORKFLOW_STAGES = new Set([
+        PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED,
+        PipelineStage.EST_IN_PROGRESS, PipelineStage.EST_COMPLETED, PipelineStage.EST_ON_HOLD,
+      ]);
+      if (ESTIMATOR_WORKFLOW_STAGES.has(job.pipelineStage)) {
+        setSelectedJob(job);
+        navigateTo('estimator-workflow', job.id);
+      } else if (ESTIMATE_STAGES.includes(job.pipelineStage)) {
         navigateTo('estimate-detail', job.id);
       } else {
         navigateTo('office-job-detail', job.id);
@@ -2188,11 +2197,17 @@ const App: React.FC = () => {
         {view === 'booking-settings' && currentUser && (
           <BookingSettingsView
             onBack={() => navigateTo('office-dashboard')}
+            onNavigate={navigateTo}
           />
         )}
         {view === 'automation-settings' && currentUser && (
           <AutomationSettingsView
             onBack={() => navigateTo('office-pipeline')}
+          />
+        )}
+        {view === 'business-info' && currentUser?.role === Role.ADMIN && (
+          <BusinessInfoView
+            onBack={() => navigateTo('booking-settings')}
           />
         )}
         </ErrorBoundary>

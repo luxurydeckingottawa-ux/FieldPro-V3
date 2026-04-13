@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Link, ExternalLink, Check } from 'lucide-react';
+import { ArrowLeft, Link, ExternalLink, Check, Building2, Calendar, Users, Zap } from 'lucide-react';
 import { BookingConfig, loadBookingConfig, saveBookingConfig, getAvailableTimeSlots } from '../utils/bookingConfig';
 
 interface BookingSettingsViewProps {
   onBack: () => void;
+  onNavigate?: (view: string) => void;
 }
 
 const DURATION_OPTIONS = [
@@ -31,7 +32,7 @@ function formatHour(h: number): string {
 
 const HOUR_OPTIONS = Array.from({ length: 14 }, (_, i) => i + 7); // 7 to 20
 
-const BookingSettingsView: React.FC<BookingSettingsViewProps> = ({ onBack }) => {
+const BookingSettingsView: React.FC<BookingSettingsViewProps> = ({ onBack, onNavigate }) => {
   const [config, setConfig] = useState<BookingConfig>(loadBookingConfig);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -107,6 +108,26 @@ const BookingSettingsView: React.FC<BookingSettingsViewProps> = ({ onBack }) => 
           )}
         </div>
       </header>
+
+      {/* Settings sub-nav */}
+      {onNavigate && (
+        <div className="bg-[var(--bg-primary)] border-b border-[var(--border-color)]">
+          <div className="max-w-3xl mx-auto px-6 flex gap-1 py-2 overflow-x-auto">
+            {[
+              { view: 'booking-settings', label: 'Booking', icon: <Calendar className="w-3.5 h-3.5" /> },
+              { view: 'automation-settings', label: 'Automations', icon: <Zap className="w-3.5 h-3.5" /> },
+              { view: 'user-management', label: 'Users', icon: <Users className="w-3.5 h-3.5" /> },
+              { view: 'business-info', label: 'Business Info', icon: <Building2 className="w-3.5 h-3.5" /> },
+            ].map(item => (
+              <button key={item.view}
+                onClick={() => onNavigate(item.view)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${item.view === 'booking-settings' ? 'bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] border border-[var(--brand-gold)]/20' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'}`}>
+                {item.icon} {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-6">
 
