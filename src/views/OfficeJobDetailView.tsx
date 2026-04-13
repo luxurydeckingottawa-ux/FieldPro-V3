@@ -1203,6 +1203,103 @@ Ottawa's Premium Deck Builders`;
                     )}
                   </div>
 
+                  {/* Site Measurements */}
+                  {job.estimatorIntake.measureSheet && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Measurements</p>
+                      <div className="bg-white/[0.02] rounded-xl border border-white/5 overflow-hidden divide-y divide-white/5">
+                        {/* Deck Structure */}
+                        {(job.estimatorIntake.measureSheet.deckSqft > 0 || job.estimatorIntake.measureSheet.fasciaLf > 0 || job.estimatorIntake.measureSheet.joistProtection) && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Deck Structure</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              {job.estimatorIntake.measureSheet.deckSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Deck Area</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.deckSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.fasciaLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Fascia</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.fasciaLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.pictureFrameLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Picture Frame</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.pictureFrameLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.joistProtection && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Joist Protection</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes</span></div>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Footings */}
+                        {job.estimatorIntake.measureSheet.footingCount > 0 && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Footings</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              <div className="flex justify-between"><span className="text-[10px] text-gray-500">Type</span><span className="text-[10px] font-semibold text-white capitalize">{job.estimatorIntake.measureSheet.footingType}</span></div>
+                              <div className="flex justify-between"><span className="text-[10px] text-gray-500">Count</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.footingCount} pcs</span></div>
+                              {job.estimatorIntake.measureSheet.namiFixCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Namifix Brackets</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.namiFixCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.ledgerLength > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Ledger</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.ledgerLength} lf</span></div>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Stairs & Railing */}
+                        {(job.estimatorIntake.measureSheet.stairLf > 0 || job.estimatorIntake.measureSheet.woodRailingLf > 0 || job.estimatorIntake.measureSheet.aluminumPostCount > 0 || job.estimatorIntake.measureSheet.glassSection6Count > 0 || job.estimatorIntake.measureSheet.framelessSectionCount > 0) && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Stairs & Railing</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              {job.estimatorIntake.measureSheet.stairLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Stairs</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.stairLf} steps</span></div>}
+                              {job.estimatorIntake.measureSheet.woodRailingLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Wood Railing</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.woodRailingLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.drinkRailLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Drink Rail</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.drinkRailLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminumPostCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum Posts</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.aluminumPostCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminum6ftSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum 6ft Sections</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.aluminum6ftSections} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminum8ftSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum 8ft Sections</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.aluminum8ftSections} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminumStairSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum Stair Sections</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.aluminumStairSections} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.glassSection6Count > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Glass 6ft Sections</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.glassSection6Count} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.glassPanelsLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Glass Panels</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.glassPanelsLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.framelessSectionCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Frameless Glass</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.framelessSectionCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.framelessLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Frameless LF</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.framelessLf} lf</span></div>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Skirting & Privacy */}
+                        {(job.estimatorIntake.measureSheet.skirtingSqft > 0 || job.estimatorIntake.measureSheet.privacyWallLf > 0) && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Skirting & Privacy</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              {job.estimatorIntake.measureSheet.skirtingSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Skirting</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.skirtingSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.privacyWallLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Privacy Wall</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.privacyWallLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.privacyPostCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Privacy Posts</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.privacyPostCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.privacyScreenCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Privacy Screens</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.privacyScreenCount} pcs</span></div>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Site Prep & Landscaping */}
+                        {(job.estimatorIntake.measureSheet.removeDispose || job.estimatorIntake.measureSheet.fabricStoneSqft > 0 || job.estimatorIntake.measureSheet.riverWashSqft > 0 || job.estimatorIntake.measureSheet.mulchSqft > 0 || job.estimatorIntake.measureSheet.steppingStonesCount > 0) && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Site Prep & Landscaping</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              {job.estimatorIntake.measureSheet.removeDispose && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Demo/Removal</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes{job.estimatorIntake.measureSheet.demoSqft > 0 ? ` (${job.estimatorIntake.measureSheet.demoSqft} sqft)` : ''}</span></div>}
+                              {job.estimatorIntake.measureSheet.fabricStoneSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Fabric Stone</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.fabricStoneSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.riverWashSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">River Wash</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.riverWashSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.mulchSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Mulch</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.mulchSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.steppingStonesCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Stepping Stones</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.steppingStonesCount} pcs</span></div>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Extras & Flags */}
+                        {(job.estimatorIntake.measureSheet.lightingFixtures > 0 || job.estimatorIntake.measureSheet.pergolaRequired || job.estimatorIntake.measureSheet.permitRequired || job.estimatorIntake.measureSheet.elevationNote) && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Extras & Flags</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              {job.estimatorIntake.measureSheet.lightingFixtures > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Lighting</span><span className="text-[10px] font-semibold text-white">{job.estimatorIntake.measureSheet.lightingFixtures} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.pergolaRequired && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Pergola</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes{job.estimatorIntake.measureSheet.pergolaSize ? ` (${job.estimatorIntake.measureSheet.pergolaSize})` : ''}</span></div>}
+                              {job.estimatorIntake.measureSheet.permitRequired && <div className="flex justify-between col-span-2"><span className="text-[10px] text-gray-500">Permit Required</span><span className="text-[10px] font-semibold text-amber-400">Yes — Flag for scheduling</span></div>}
+                            </div>
+                            {job.estimatorIntake.measureSheet.elevationNote && <p className="mt-2 text-xs text-gray-400">Elevation Note: <span className="text-white">{job.estimatorIntake.measureSheet.elevationNote}</span></p>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Marketing Source */}
+                  {job.estimatorIntake.checklist.marketingSource && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Lead Source (confirmed on site)</p>
+                      <p className="text-sm text-gray-300 capitalize">{job.estimatorIntake.checklist.marketingSource}{job.estimatorIntake.checklist.marketingDetail ? ` — ${job.estimatorIntake.checklist.marketingDetail}` : ''}</p>
+                    </div>
+                  )}
+
                   {/* Site Photos */}
                   {job.estimatorIntake.photos && job.estimatorIntake.photos.length > 0 && (
                     <div>

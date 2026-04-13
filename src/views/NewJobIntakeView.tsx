@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Job, PipelineStage, JobStatus, FieldStatus, CompletionPackageStatus, PhotoCompletionStatus, CompletionReadinessStatus, OfficeReviewStatus, ScheduleStatus, BuildDetails } from '../types';
-import { createDefaultBuildDetails, createDefaultOfficeChecklists } from '../constants';
-import { ArrowLeft, Save, Info, AlertCircle } from 'lucide-react';
+import { Job, PipelineStage, JobStatus, FieldStatus, CompletionPackageStatus, PhotoCompletionStatus, CompletionReadinessStatus, OfficeReviewStatus, ScheduleStatus, BuildDetails, Role } from '../types';
+import { createDefaultBuildDetails, createDefaultOfficeChecklists, APP_USERS } from '../constants';
+import { ArrowLeft, Save, Info, AlertCircle, Calendar, Clock, User } from 'lucide-react';
 
 interface NewJobIntakeViewProps {
   onSave: (job: Job) => void;
@@ -15,8 +15,12 @@ const LEAD_STAGES = new Set([
   PipelineStage.SECOND_CONTACT,
 ]);
 
+const ESTIMATORS = APP_USERS.filter(u => u.role === Role.ESTIMATOR || u.role === Role.ADMIN);
+
 const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, initialStage = PipelineStage.LEAD_IN }) => {
   const isLeadMode = LEAD_STAGES.has(initialStage);
+  const isEstimateMode = initialStage === PipelineStage.EST_UNSCHEDULED;
+  const useSimpleForm = isLeadMode || isEstimateMode;
 
   const [formData, setFormData] = useState({
     jobNumber: `LD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -36,6 +40,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
     paidAmount: 0,
   });
 
+  const [apptDate, setApptDate] = useState('');
+  const [apptTime, setApptTime] = useState('');
+  const [apptEstimator, setApptEstimator] = useState('');
+
   const [buildDetails, setBuildDetails] = useState<BuildDetails>(createDefaultBuildDetails());
   const [activeSection, setActiveSection] = useState('basic');
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +61,11 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
       ...formData,
       currentStage: 0,
       status: JobStatus.SCHEDULED,
-      pipelineStage: initialStage,
+      pipelineStage: isEstimateMode && apptDate ? PipelineStage.EST_SCHEDULED : initialStage,
+      scheduledDate: isEstimateMode && apptDate
+        ? (apptTime ? `${apptDate}T${apptTime}:00` : apptDate)
+        : formData.plannedStartDate || undefined,
+      assignedCrewOrSubcontractor: isEstimateMode && apptEstimator ? apptEstimator : formData.assignedCrewOrSubcontractor,
       officeChecklists: createDefaultOfficeChecklists(),
       officeNotes: [],
       siteNotes: [],
@@ -109,7 +121,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
               <ArrowLeft className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors" />
             </button>
             <div>
-              <h1 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">{isLeadMode ? 'New Lead' : 'New Job Intake'}</h1>
+              <h1 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">{isLeadMode ? 'New Lead' : isEstimateMode ? 'Estimate Appointment' : 'New Job Intake'}</h1>
               <p className="text-[10px] text-[var(--brand-gold)] font-black uppercase tracking-[0.2em]">{formData.jobNumber}</p>
             </div>
           </div>
@@ -131,13 +143,13 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
         </div>
       </header>
 
-      {/* LEAD MODE: simplified form */}
-      {isLeadMode && (
+      {/* SIMPLE FORM: leads + estimate appointments */}
+      {useSimpleForm && (
         <div className="flex-1 max-w-2xl mx-auto w-full px-6 py-12">
           <div className="bg-[var(--bg-secondary)] rounded-[2.5rem] shadow-2xl border border-[var(--border-color)] p-10 space-y-8">
             <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic flex items-center gap-3">
               <Info className="w-5 h-5 text-[var(--brand-gold)]" />
-              New Lead
+              {isEstimateMode ? 'Estimate Appointment' : 'New Lead'}
             </h2>
             {error && (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500">
@@ -194,6 +206,50 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                   placeholder="What did they describe? Any specific requests or notes..." />
               </div>
             </div>
+
+            {/* ESTIMATE APPOINTMENT: scheduling section */}
+            {isEstimateMode && (
+              <div className="space-y-4 pt-2 border-t border-[var(--border-color)]">
+                <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] flex items-center gap-2">
+                  <Calendar className="w-4 h-4" /> Schedule Appointment
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
+                      <Calendar className="w-3 h-3" /> Date
+                    </label>
+                    <input type="date" value={apptDate} onChange={e => setApptDate(e.target.value)}
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
+                      <Clock className="w-3 h-3" /> Time
+                    </label>
+                    <input type="time" value={apptTime} onChange={e => setApptTime(e.target.value)}
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all" />
+                  </div>
+                  <div className="col-span-1 md:col-span-2 space-y-2">
+                    <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1 flex items-center gap-1.5">
+                      <User className="w-3 h-3" /> Assign Estimator
+                    </label>
+                    <select value={apptEstimator} onChange={e => setApptEstimator(e.target.value)}
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all appearance-none">
+                      <option value="">Unassigned</option>
+                      {ESTIMATORS.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                {apptDate && apptTime && (
+                  <div className="p-3 bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-2xl">
+                    <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest">
+                      Appointment: {new Date(`${apptDate}T${apptTime}`).toLocaleDateString('en-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at {new Date(`${apptDate}T${apptTime}`).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })}
+                      {apptEstimator && ` — ${apptEstimator}`}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex justify-end gap-4 pt-4 border-t border-[var(--border-color)]">
               <button onClick={onCancel} className="text-[10px] font-black text-[var(--text-secondary)] hover:text-[var(--text-primary)] uppercase tracking-[0.2em] transition-colors px-6 py-3">
                 Cancel
@@ -201,7 +257,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
               <button onClick={handleSave}
                 className="flex items-center gap-3 bg-[var(--brand-gold)] text-black px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:opacity-90 transition-all active:scale-95">
                 <Save className="w-4 h-4" />
-                Save Lead
+                {isEstimateMode ? 'Book Appointment' : 'Save Lead'}
               </button>
             </div>
           </div>
@@ -209,7 +265,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
       )}
 
       {/* FULL FORM: estimates and jobs */}
-      {!isLeadMode && <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-12 flex flex-col md:flex-row gap-12">
+      {!useSimpleForm && <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-12 flex flex-col md:flex-row gap-12">
         {/* Sidebar Nav */}
         <aside className="w-full md:w-72 flex-shrink-0">
           <nav className="space-y-2 sticky top-32">

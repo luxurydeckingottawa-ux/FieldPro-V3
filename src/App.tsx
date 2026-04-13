@@ -1907,15 +1907,15 @@ const App: React.FC = () => {
           onOpenEstimator={handleOpenNewEstimate}
           onNewLead={() => {
             setNewJobInitialStage(PipelineStage.LEAD_IN);
-            navigateTo('new-job');
+            navigateTo('office-new-job');
           }}
           onNewEstimateAppointment={() => {
             setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
-            navigateTo('new-job');
+            navigateTo('office-new-job');
           }}
           onNewJob={() => {
             setNewJobInitialStage(PipelineStage.JOB_SOLD);
-            navigateTo('new-job');
+            navigateTo('office-new-job');
           }}
         />
       )}
