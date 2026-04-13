@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Job, PipelineStage, CustomerLifecycle } from '../types';
-import { 
-  ArrowLeft, User, MapPin, Phone, Mail, Calendar, 
+import {
+  ArrowLeft, User, MapPin, Phone, Mail, Calendar,
   DollarSign, FileText, MessageSquare, ExternalLink,
   Copy, Check, Edit2, Save, X, ChevronRight,
   ClipboardList, Send, Clock, AlertCircle, CheckCircle2,
-  Zap, Camera, Info, BarChart3, Users, PenTool
+  Zap, Camera, Info, BarChart3, Users, PenTool, CalendarPlus
 } from 'lucide-react';
 import AcceptanceModal from '../components/AcceptanceModal';
 import { calculateEngagementTier } from '../utils/engagementScoring';
@@ -19,10 +19,11 @@ interface EstimateDetailViewProps {
   onPreviewPortal: (job: Job) => void;
   onDeleteJob?: (jobId: string) => void;
   onJobAccepted?: (jobId: string) => void;
+  onBookAppointment?: (job: Job) => void;
 }
 
 const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
-  job, onBack, onUpdateJob, onUpdatePipelineStage, onOpenEstimator, onPreviewPortal, onDeleteJob, onJobAccepted
+  job, onBack, onUpdateJob, onUpdatePipelineStage, onOpenEstimator, onPreviewPortal, onDeleteJob, onJobAccepted, onBookAppointment
 }) => {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({
@@ -259,6 +260,40 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               </div>
             )}
             
+            {/* Scheduled Appointment Banner */}
+            {job.pipelineStage === PipelineStage.EST_SCHEDULED && job.scheduledDate && (() => {
+              const appt = new Date(job.scheduledDate);
+              const hasTime = job.scheduledDate.includes('T');
+              const dateStr = appt.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+              const timeStr = hasTime ? appt.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true }) : null;
+              const isToday = appt.toDateString() === new Date().toDateString();
+              const isTomorrow = appt.toDateString() === new Date(Date.now() + 86400000).toDateString();
+              const urgencyLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : null;
+              return (
+                <div className={`rounded-xl border overflow-hidden ${isToday ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/40' : 'bg-blue-500/5 border-blue-500/20'}`}>
+                  <div className={`px-5 py-3 border-b ${isToday ? 'border-[var(--brand-gold)]/20' : 'border-blue-500/10'} flex items-center gap-2`}>
+                    <Calendar className={`w-3.5 h-3.5 ${isToday ? 'text-[var(--brand-gold)]' : 'text-blue-400'}`} />
+                    <span className={`text-xs font-black uppercase tracking-widest ${isToday ? 'text-[var(--brand-gold)]' : 'text-blue-400'}`}>
+                      Scheduled Appointment{urgencyLabel ? ` — ${urgencyLabel}` : ''}
+                    </span>
+                  </div>
+                  <div className="px-5 py-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-[var(--text-primary)]">{dateStr}</p>
+                      {timeStr && <p className={`text-2xl font-black mt-1 ${isToday ? 'text-[var(--brand-gold)]' : 'text-[var(--text-primary)]'}`}>{timeStr}</p>}
+                    </div>
+                    {job.projectAddress && (
+                      <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.projectAddress)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--brand-gold)] hover:border-[var(--brand-gold)]/30 transition-all">
+                        <MapPin className="w-3.5 h-3.5" /> Directions
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Client Information */}
             <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-color)]">
@@ -534,6 +569,12 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                 <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Quick Actions</h2>
               </div>
               <div className="p-4 space-y-2">
+                {onBookAppointment && (
+                  <button onClick={() => onBookAppointment(job)}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg text-sm font-bold hover:bg-blue-500/20 transition-all">
+                    <CalendarPlus className="w-4 h-4" /> Book Appointment
+                  </button>
+                )}
                 <button onClick={() => onOpenEstimator(job)}
                   className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--brand-gold)] text-white rounded-lg text-sm font-bold hover:bg-[var(--brand-gold)] transition-all">
                   <DollarSign className="w-4 h-4" /> Open in Estimator

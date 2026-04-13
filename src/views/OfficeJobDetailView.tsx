@@ -100,8 +100,6 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [customerInfoCollapsed, setCustomerInfoCollapsed] = useState(false);
   const [officeNotesCollapsed, setOfficeNotesCollapsed] = useState(false);
   const [siteNotesCollapsed, setSiteNotesCollapsed] = useState(false);
-  const [aiSummary, setAiSummary] = useState<string>('');
-  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
 
   const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === job.pipelineStage);
   const currentStageInfo = stageIndex !== -1 ? PIPELINE_STAGES[stageIndex] : null;
@@ -183,40 +181,6 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
     return 'cold';
   }, [job.portalEngagement]);
 
-  const generateProjectSummary = async () => {
-    setAiSummaryLoading(true);
-    try {
-      const prompt = `You are a professional construction project manager. Write a concise 3-4 sentence project summary for this job:
-Client: ${job.clientName}
-Address: ${job.clientAddress}
-Stage: ${job.pipelineStage}
-Estimate Amount: $${(job.estimateAmount || 0).toLocaleString()}
-Description: ${job.description || 'Deck construction project'}
-Start Date: ${job.plannedStartDate || 'TBD'}
-Duration: ${job.plannedDurationDays || 'TBD'} days
-Assigned Crew: ${job.assignedCrewOrSubcontractor || 'TBD'}
-Notes: ${job.officeNotes?.map(n => n.text).join('; ') || 'None'}
-
-Write a professional, factual summary suitable for a project file. Focus on scope, timeline, and current status.`;
-
-      const secret = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
-      const response = await fetch('/.netlify/functions/gemini-proxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(secret ? { 'X-Internal-Secret': secret } : {}),
-        },
-        body: JSON.stringify({ prompt }),
-      });
-      const data = await response.json();
-      const text = data?.text || 'Unable to generate summary.';
-      setAiSummary(text);
-    } catch (err) {
-      setAiSummary('Failed to generate summary. Please try again.');
-    } finally {
-      setAiSummaryLoading(false);
-    }
-  };
 
   return (
     <div
@@ -1634,31 +1598,6 @@ Ottawa's Premium Deck Builders`;
               onPreviewPortal={onPreviewPortal}
             />
 
-            {/* AI Project Summary */}
-            <section className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] p-5 shadow-2xl">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles size={13} className="text-[var(--brand-gold)]" />
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">AI Project Summary</span>
-                </div>
-                <button
-                  onClick={generateProjectSummary}
-                  disabled={aiSummaryLoading}
-                  className="px-3 py-1.5 bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)] transition-all disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {aiSummaryLoading ? (
-                    <><Loader2 size={10} className="animate-spin" /> Generating...</>
-                  ) : (
-                    <><Sparkles size={10} /> Generate</>
-                  )}
-                </button>
-              </div>
-              {aiSummary ? (
-                <p className="text-[11px] text-gray-300 leading-relaxed">{aiSummary}</p>
-              ) : (
-                <p className="text-[10px] text-gray-600 italic">Click Generate to create an AI-powered project summary using job data.</p>
-              )}
-            </section>
 
             {/* Stripe Deposit */}
             {job.pipelineStage === PipelineStage.PRE_PRODUCTION && (

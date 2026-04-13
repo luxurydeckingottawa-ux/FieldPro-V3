@@ -10,6 +10,7 @@ interface NewJobIntakeViewProps {
   initialStage?: PipelineStage;
   initialDate?: string;  // YYYY-MM-DD format
   allJobs?: Job[];       // for double-booking check
+  prefilledContact?: { clientName?: string; clientPhone?: string; clientEmail?: string; projectAddress?: string };
 }
 
 const LEAD_STAGES = new Set([
@@ -20,7 +21,7 @@ const LEAD_STAGES = new Set([
 
 const ESTIMATORS = APP_USERS.filter(u => u.role === Role.ESTIMATOR || u.role === Role.ADMIN);
 
-const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, initialStage = PipelineStage.LEAD_IN, initialDate, allJobs = [] }) => {
+const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, initialStage = PipelineStage.LEAD_IN, initialDate, allJobs = [], prefilledContact }) => {
   const bookingConfig = loadBookingConfig();
   const isLeadMode = LEAD_STAGES.has(initialStage);
   const isEstimateMode = initialStage === PipelineStage.EST_UNSCHEDULED;
@@ -28,10 +29,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
 
   const [formData, setFormData] = useState({
     jobNumber: `LD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-    clientName: '',
-    clientPhone: '',
-    clientEmail: '',
-    projectAddress: '',
+    clientName: prefilledContact?.clientName || '',
+    clientPhone: prefilledContact?.clientPhone || '',
+    clientEmail: prefilledContact?.clientEmail || '',
+    projectAddress: prefilledContact?.projectAddress || '',
     projectType: '',
     scopeSummary: '',
     leadSource: '',

@@ -20,6 +20,7 @@ import EstimatorDashboardView from './views/EstimatorDashboardView';
 import EstimatorWorkflowView from './views/EstimatorWorkflowView';
 import BookingSettingsView from './views/BookingSettingsView';
 import PublicBookingView from './views/PublicBookingView';
+import AutomationSettingsView from './views/AutomationSettingsView';
 import EstimateDetailView from './views/EstimateDetailView';
 import NavBar from './components/NavBar';
 import AcceptanceModal from './components/AcceptanceModal';
@@ -202,6 +203,7 @@ const App: React.FC = () => {
 
   const [newJobInitialStage, setNewJobInitialStage] = useState<PipelineStage>(PipelineStage.LEAD_IN);
   const [newJobPrefilledDate, setNewJobPrefilledDate] = useState<string | undefined>(undefined);
+  const [newJobPrefilledContact, setNewJobPrefilledContact] = useState<{ clientName?: string; clientPhone?: string; clientEmail?: string; projectAddress?: string } | undefined>(undefined);
 
   useEffect(() => {
     const handleAiKeyError = (e: any) => {
@@ -1984,21 +1986,23 @@ const App: React.FC = () => {
           />
         )}
         {(view === 'office-pipeline' || view === 'customers') && currentUser && (
-          <UnifiedPipelineView 
+          <UnifiedPipelineView
             jobs={jobs}
             onSelectJob={handleSelectJob}
             onNewJob={(stage) => { setNewJobInitialStage(stage); navigateTo('office-new-job'); }}
             onOpenEstimator={handleOpenNewEstimate}
             onUpdatePipelineStage={handleUpdatePipelineStage}
+            onAutomationSettings={() => navigateTo('automation-settings')}
           />
         )}
         {view === 'office-new-job' && currentUser && (
           <NewJobIntakeView
-            onSave={(job) => { setNewJobPrefilledDate(undefined); handleCreateJob(job); }}
-            onCancel={() => { setNewJobPrefilledDate(undefined); navigateTo(currentUser?.role === Role.ESTIMATOR ? 'estimator-dashboard' : 'office-pipeline'); }}
+            onSave={(job) => { setNewJobPrefilledDate(undefined); setNewJobPrefilledContact(undefined); handleCreateJob(job); }}
+            onCancel={() => { setNewJobPrefilledDate(undefined); setNewJobPrefilledContact(undefined); navigateTo(currentUser?.role === Role.ESTIMATOR ? 'estimator-dashboard' : 'office-pipeline'); }}
             initialStage={newJobInitialStage}
             initialDate={newJobPrefilledDate}
             allJobs={jobs}
+            prefilledContact={newJobPrefilledContact}
           />
         )}
         {view === 'office-job-detail' && selectedJob && currentUser && (
@@ -2039,6 +2043,16 @@ const App: React.FC = () => {
             }}
             onDeleteJob={handleDeleteJob}
             onJobAccepted={() => navigateTo('office-job-detail', selectedJob?.id)}
+            onBookAppointment={(job) => {
+              setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
+              setNewJobPrefilledContact({
+                clientName: job.clientName,
+                clientPhone: job.clientPhone,
+                clientEmail: job.clientEmail,
+                projectAddress: job.projectAddress,
+              });
+              navigateTo('office-new-job');
+            }}
           />
         )}
         {view === 'office-dashboard' && currentUser && (
@@ -2174,6 +2188,11 @@ const App: React.FC = () => {
         {view === 'booking-settings' && currentUser && (
           <BookingSettingsView
             onBack={() => navigateTo('office-dashboard')}
+          />
+        )}
+        {view === 'automation-settings' && currentUser && (
+          <AutomationSettingsView
+            onBack={() => navigateTo('office-pipeline')}
           />
         )}
         </ErrorBoundary>

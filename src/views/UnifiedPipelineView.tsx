@@ -3,11 +3,11 @@ import { Job, PipelineStage } from '../types';
 import { PIPELINE_STAGES } from '../constants';
 import { getJobIssues } from '../utils/issueLogic';
 import { calculateEngagementTier } from '../utils/engagementScoring';
-import { 
+import {
   Search, Plus, ChevronRight, AlertTriangle,
-  MapPin, User, DollarSign, Calendar, FileText, 
+  MapPin, User, DollarSign, Calendar, FileText,
   CircleDot, Phone, Mail, LayoutGrid, List,
-  GripVertical, Users, Briefcase, TrendingUp
+  GripVertical, Users, Briefcase, TrendingUp, Zap
 } from 'lucide-react';
 
 interface UnifiedPipelineViewProps {
@@ -16,6 +16,7 @@ interface UnifiedPipelineViewProps {
   onNewJob: (initialStage: PipelineStage) => void;
   onOpenEstimator: () => void;
   onUpdatePipelineStage?: (jobId: string, newStage: PipelineStage) => void;
+  onAutomationSettings?: () => void;
 }
 
 // Pipeline board definitions
@@ -45,8 +46,8 @@ const JOB_COLUMNS = PIPELINE_STAGES;
 type BoardType = 'leads' | 'estimates' | 'jobs';
 type ViewMode = 'board' | 'table';
 
-const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({ 
-  jobs, onSelectJob, onNewJob, onOpenEstimator, onUpdatePipelineStage 
+const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
+  jobs, onSelectJob, onNewJob, onOpenEstimator, onUpdatePipelineStage, onAutomationSettings
 }) => {
   const [activeBoard, setActiveBoard] = useState<BoardType>('leads');
   const [searchTerm, setSearchTerm] = useState('');
@@ -165,7 +166,7 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
   return (
     <div className="flex h-[calc(100vh-80px)] bg-[var(--bg-secondary)] overflow-hidden">
       {/* Sidebar */}
-      <div className="w-48 bg-[var(--bg-primary)] border-r border-[var(--border-color)] flex flex-col shrink-0">
+      <div className="w-36 bg-[var(--bg-primary)] border-r border-[var(--border-color)] flex flex-col shrink-0">
         <div className="p-4 border-b border-[var(--border-color)]">
           <h2 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Pipeline</h2>
         </div>
@@ -195,21 +196,6 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
           })}
         </div>
 
-        <div className="p-3 border-t border-[var(--border-color)] space-y-2">
-          <button 
-            onClick={() => {
-              const stageMap: Record<BoardType, PipelineStage> = {
-                leads: PipelineStage.LEAD_IN,
-                estimates: PipelineStage.EST_UNSCHEDULED,
-                jobs: PipelineStage.JOB_SOLD
-              };
-              onNewJob(stageMap[activeBoard]);
-            }} 
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-[var(--brand-gold)] text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[var(--brand-gold)] transition-all active:scale-[0.97]"
-          >
-            <Plus className="w-3.5 h-3.5" /> New
-          </button>
-        </div>
       </div>
 
       {/* Main Content */}
@@ -225,6 +211,29 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {onAutomationSettings && (
+              <button
+                onClick={onAutomationSettings}
+                className="flex items-center gap-1.5 px-3 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-xs font-bold hover:text-[var(--brand-gold)] hover:border-[var(--brand-gold)]/30 transition-all"
+                title="Automation Settings"
+              >
+                <Zap className="w-3.5 h-3.5" /> Automations
+              </button>
+            )}
+            <button
+              onClick={() => {
+                const stageMap: Record<BoardType, PipelineStage> = {
+                  leads: PipelineStage.LEAD_IN,
+                  estimates: PipelineStage.EST_UNSCHEDULED,
+                  jobs: PipelineStage.JOB_SOLD
+                };
+                onNewJob(stageMap[activeBoard]);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)] text-black rounded-lg text-xs font-black uppercase tracking-wider hover:opacity-90 transition-all active:scale-[0.97] shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {activeBoard === 'leads' ? 'New Lead' : activeBoard === 'estimates' ? 'New Estimate' : 'New Job'}
+            </button>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" />
               <input

@@ -165,27 +165,32 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
                   const isToday = date.toDateString() === new Date().toDateString();
                   const isTomorrow = date.toDateString() === new Date(Date.now() + 86400000).toDateString();
                   const dayLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : date.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
-                  
+                  const hasTime = job.scheduledDate!.includes('T');
+                  const timeLabel = hasTime ? date.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true }) : null;
+
                   return (
                     <button key={job.id} onClick={() => onSelectJob(job)}
-                      className="w-full flex items-center gap-4 px-4 py-3 hover:bg-[var(--brand-gold)]/5 transition-colors text-left">
-                      <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 ${isToday ? 'bg-[var(--brand-gold)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'}`}>
+                      className="w-full flex items-center gap-4 px-4 py-4 hover:bg-[var(--brand-gold)]/5 transition-colors text-left">
+                      <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${isToday ? 'bg-[var(--brand-gold)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'}`}>
                         <span className="text-[9px] font-bold uppercase">{date.toLocaleDateString('en-CA', { month: 'short' })}</span>
-                        <span className="text-lg font-black leading-none">{date.getDate()}</span>
+                        <span className="text-xl font-black leading-none">{date.getDate()}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-[var(--text-primary)] truncate">{job.clientName || 'Unnamed'}</p>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mt-0.5">
                           <p className="text-xs text-[var(--text-secondary)] truncate">{job.projectAddress || 'No address'}</p>
                           {job.projectAddress && (
-                            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.projectAddress)}`} 
+                            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.projectAddress)}`}
                               target="_blank" rel="noopener noreferrer"
                               onClick={e => e.stopPropagation()}
                               className="text-[8px] font-bold text-[var(--brand-gold)] hover:underline shrink-0">
-                              Map
+                              Directions
                             </a>
                           )}
                         </div>
+                        {timeLabel && (
+                          <p className={`text-base font-black mt-1 ${isToday ? 'text-[var(--brand-gold)]' : 'text-[var(--text-primary)]'}`}>{timeLabel}</p>
+                        )}
                       </div>
                       <div className="text-right shrink-0">
                         <span className={`text-[10px] font-bold ${isToday ? 'text-[var(--brand-gold)]' : 'text-[var(--text-secondary)]'}`}>{dayLabel}</span>
