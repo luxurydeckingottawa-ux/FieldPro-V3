@@ -13,11 +13,11 @@ import {
   startOfWeek,
   endOfWeek
 } from 'date-fns';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Users, 
-  Clock, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  Clock,
   AlertCircle,
   ChevronRight as ChevronRightIcon,
   Hammer,
@@ -26,7 +26,8 @@ import {
   Zap,
   CalendarDays,
   ClipboardList,
-  MapPin
+  MapPin,
+  MessageSquare
 } from 'lucide-react';
 import { ForecastReviewStatus, PipelineStage } from '../types';
 
@@ -34,6 +35,8 @@ interface SchedulingCalendarViewProps {
   jobs: Job[];
   onSelectJob: (job: Job) => void;
   onUpdateSchedule: (jobId: string, updates: Partial<Job>) => void;
+  onNewAppointment?: (date: string) => void;  // date in YYYY-MM-DD
+  onSendMessage?: (phone: string, name: string) => void;
 }
 
 const CREW_COLORS: Record<string, string> = {
@@ -45,7 +48,7 @@ const CREW_COLORS: Record<string, string> = {
   'default': 'bg-gray-500'
 };
 
-const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, onSelectJob }) => {
+const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, onSelectJob, onNewAppointment, onSendMessage }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedCrew, setSelectedCrew] = useState<string>('all');
   const [calendarMode, setCalendarMode] = useState<'crew' | 'appointments'>('crew');
@@ -448,7 +451,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                 });
                 const isToday = isSameDay(day, new Date());
                 return (
-                  <div key={i} className={`border-r border-b border-[var(--border-color)] min-h-[110px] p-2 transition-colors ${
+                  <div key={i} className={`group border-r border-b border-[var(--border-color)] min-h-[110px] p-2 transition-colors ${
                     !isCurrentMonth ? 'bg-[var(--bg-secondary)]/30 opacity-40' : isToday ? 'bg-[var(--brand-gold)]/5' : 'bg-[var(--bg-primary)]'
                   }`}>
                     <div className="flex items-center justify-between mb-1">
@@ -458,11 +461,26 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                     <div className="space-y-1">
                       {dayAppointments.map(appt => (
                         <button key={appt.id} onClick={() => onSelectJob(appt)}
-                          className="w-full text-left p-1.5 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg hover:bg-[var(--brand-gold)]/20 transition-colors group">
-                          <p className="text-[10px] font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--brand-gold)]">{appt.clientName}</p>
-                          <p className="text-[9px] text-[var(--text-secondary)] truncate">{appt.projectAddress}</p>
+                          className="w-full text-left p-1.5 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg hover:bg-[var(--brand-gold)]/20 transition-colors group/chip">
+                          <p className="text-[10px] font-bold text-[var(--text-primary)] truncate group-hover/chip:text-[var(--brand-gold)]">{appt.clientName}</p>
+                          {appt.scheduledDate && appt.scheduledDate.includes('T') && (
+                            <p className="text-[9px] text-[var(--brand-gold)]/70">
+                              {(() => {
+                                const d = new Date(appt.scheduledDate);
+                                const h = d.getHours(); const m = d.getMinutes();
+                                return `${h > 12 ? h - 12 : h}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+                              })()}
+                              {appt.assignedCrewOrSubcontractor ? ` · ${appt.assignedCrewOrSubcontractor.split(' ')[0]}` : ''}
+                            </p>
+                          )}
                         </button>
                       ))}
+                      {onNewAppointment && (
+                        <button onClick={() => onNewAppointment(format(day, 'yyyy-MM-dd'))}
+                          className="w-full mt-1 text-center text-[9px] font-black text-gray-600 hover:text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/5 rounded py-0.5 transition-colors opacity-0 group-hover:opacity-100">
+                          + Add
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -478,18 +496,25 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                   .filter(j => j.scheduledDate && new Date(j.scheduledDate) >= new Date())
                   .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime())
                   .map(appt => (
-                    <button key={appt.id} onClick={() => onSelectJob(appt)}
-                      className="w-full flex items-center gap-4 p-4 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl hover:border-[var(--brand-gold)]/30 transition-all text-left">
-                      <div className="w-12 h-12 rounded-xl bg-[var(--brand-gold)]/10 flex flex-col items-center justify-center shrink-0">
-                        <span className="text-[8px] font-bold text-[var(--brand-gold)] uppercase">{format(new Date(appt.scheduledDate!), 'MMM')}</span>
-                        <span className="text-lg font-black text-[var(--text-primary)] leading-none">{format(new Date(appt.scheduledDate!), 'd')}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[var(--text-primary)]">{appt.clientName || 'Unnamed'}</p>
-                        <p className="text-xs text-[var(--text-secondary)] truncate">{appt.projectAddress || 'No address'}</p>
-                      </div>
-                      <span className="text-[10px] font-bold text-[var(--text-secondary)] shrink-0">{format(new Date(appt.scheduledDate!), 'EEE, MMM d')}</span>
-                    </button>
+                    <div key={appt.id} className="w-full flex items-center gap-4 p-4 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl hover:border-[var(--brand-gold)]/30 transition-all">
+                      <button onClick={() => onSelectJob(appt)} className="flex items-center gap-4 flex-1 min-w-0 text-left">
+                        <div className="w-12 h-12 rounded-xl bg-[var(--brand-gold)]/10 flex flex-col items-center justify-center shrink-0">
+                          <span className="text-[8px] font-bold text-[var(--brand-gold)] uppercase">{format(new Date(appt.scheduledDate!), 'MMM')}</span>
+                          <span className="text-lg font-black text-[var(--text-primary)] leading-none">{format(new Date(appt.scheduledDate!), 'd')}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-[var(--text-primary)]">{appt.clientName || 'Unnamed'}</p>
+                          <p className="text-xs text-[var(--text-secondary)] truncate">{appt.projectAddress || 'No address'}</p>
+                        </div>
+                        <span className="text-[10px] font-bold text-[var(--text-secondary)] shrink-0">{format(new Date(appt.scheduledDate!), 'EEE, MMM d')}</span>
+                      </button>
+                      {onSendMessage && appt.clientPhone && (
+                        <button onClick={(e) => { e.stopPropagation(); onSendMessage(appt.clientPhone!, appt.clientName || ''); }}
+                          className="p-2 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 rounded-xl transition-all shrink-0">
+                          <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                        </button>
+                      )}
+                    </div>
                   ))
                 }
                 {appointmentJobs.filter(j => j.scheduledDate && new Date(j.scheduledDate) >= new Date()).length === 0 && (

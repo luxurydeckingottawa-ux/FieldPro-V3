@@ -194,6 +194,7 @@ const App: React.FC = () => {
   const { navigateTo } = useAppRouter(setView, selectedJob?.id);
 
   const [newJobInitialStage, setNewJobInitialStage] = useState<PipelineStage>(PipelineStage.LEAD_IN);
+  const [newJobPrefilledDate, setNewJobPrefilledDate] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const handleAiKeyError = (e: any) => {
@@ -1974,10 +1975,12 @@ const App: React.FC = () => {
           />
         )}
         {view === 'office-new-job' && currentUser && (
-          <NewJobIntakeView 
-            onSave={handleCreateJob}
-            onCancel={() => navigateTo(currentUser?.role === Role.ESTIMATOR ? 'estimator-dashboard' : 'office-pipeline')}
+          <NewJobIntakeView
+            onSave={(job) => { setNewJobPrefilledDate(undefined); handleCreateJob(job); }}
+            onCancel={() => { setNewJobPrefilledDate(undefined); navigateTo(currentUser?.role === Role.ESTIMATOR ? 'estimator-dashboard' : 'office-pipeline'); }}
             initialStage={newJobInitialStage}
+            initialDate={newJobPrefilledDate}
+            allJobs={jobs}
           />
         )}
         {view === 'office-job-detail' && selectedJob && currentUser && (
@@ -2057,10 +2060,19 @@ const App: React.FC = () => {
           />
         )}
         {view === 'scheduling' && currentUser && (
-          <SchedulingCalendarView 
+          <SchedulingCalendarView
             jobs={jobs}
             onSelectJob={handleSelectJob}
             onUpdateSchedule={handleUpdateSchedule}
+            onNewAppointment={(date) => {
+              setNewJobPrefilledDate(date);
+              setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
+              navigateTo('office-new-job');
+            }}
+            onSendMessage={(phone, name) => {
+              const msg = `Hi ${name.split(' ')[0]}, this is Luxury Decking confirming your estimate appointment. Reply to this message if you have any questions!`;
+              window.open(`sms:${phone}?body=${encodeURIComponent(msg)}`);
+            }}
           />
         )}
         {view === 'chat' && currentUser && (
