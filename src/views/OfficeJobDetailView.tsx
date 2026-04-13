@@ -13,7 +13,6 @@ import {
   CustomerLifecycle
 } from '../types';
 import { PIPELINE_STAGES, APP_USERS, PAGE_TITLES, createDefaultBuildDetails } from '../constants';
-import ProjectLocationMap from '../components/ProjectLocationMap';
 import JobSummaryCard from '../components/JobSummaryCard';
 import PortalSharingCard from '../components/PortalSharingCard';
 import QuickMessageModal from '../components/QuickMessageModal';
@@ -57,12 +56,10 @@ import {
   X,
   Activity,
   BarChart3,
-  MapPin,
   Check,
   Sparkles,
   Loader2,
   CreditCard,
-  CheckCircle,
   DollarSign
 } from 'lucide-react';
 import { OfficeAIAssistant } from '../components/OfficeAIAssistant';
@@ -103,10 +100,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [customerInfoCollapsed, setCustomerInfoCollapsed] = useState(false);
   const [officeNotesCollapsed, setOfficeNotesCollapsed] = useState(false);
   const [siteNotesCollapsed, setSiteNotesCollapsed] = useState(false);
-  const [assignmentExpanded, setAssignmentExpanded] = useState(false);
   const [aiSummary, setAiSummary] = useState<string>('');
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'estimating' | 'schedule' | 'field' | 'files' | 'office'>('overview');
 
   const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === job.pipelineStage);
   const currentStageInfo = stageIndex !== -1 ? PIPELINE_STAGES[stageIndex] : null;
@@ -255,47 +250,6 @@ Write a professional, factual summary suitable for a project file. Focus on scop
               <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
                 {job.projectType}
               </p>
-              {job.projectAddress && (
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-xs text-gray-400">{job.projectAddress}</p>
-                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.projectAddress)}`} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold text-[var(--brand-gold)] bg-[var(--brand-gold)]/5 rounded border border-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/10 transition-colors">
-                    <MapPin className="w-3 h-3" /> Map
-                  </a>
-                </div>
-              )}
-              {job.projectAddress && (
-                <div className="mt-3 rounded-2xl overflow-hidden border border-white/5 h-32 relative">
-                  <img
-                    src={`https://maps.googleapis.com/maps/api/streetview?size=600x200&location=${encodeURIComponent(job.projectAddress + ', Ottawa, ON')}&key=${import.meta.env.VITE_GOOGLE_MAPS_KEY || ''}`}
-                    alt="Street view"
-                    className="w-full h-full object-cover opacity-60"
-                    onError={(e) => {
-                      const img = e.target as HTMLImageElement;
-                      img.style.display = 'none';
-                      const parent = img.parentElement;
-                      if (parent) {
-                        parent.classList.add('flex', 'items-center', 'justify-center', 'bg-white/[0.02]');
-                        const addressText = document.createTextNode(job.projectAddress ?? '');
-                        const addressDiv = document.createElement('div');
-                        addressDiv.className = 'text-gray-800 text-[9px] mt-1';
-                        addressDiv.appendChild(addressText);
-                        const labelDiv = document.createElement('div');
-                        labelDiv.className = 'text-gray-700 text-[10px] font-black uppercase tracking-widest';
-                        labelDiv.textContent = 'Street View';
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'text-center';
-                        wrapper.appendChild(labelDiv);
-                        wrapper.appendChild(addressDiv);
-                        parent.innerHTML = '';
-                        parent.appendChild(wrapper);
-                      }
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-                  <div className="absolute bottom-2 left-3 text-[8px] font-black text-white/60 uppercase tracking-widest">Street View · Google Maps</div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -363,31 +317,6 @@ Write a professional, factual summary suitable for a project file. Focus on scop
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="sticky top-0 z-20 bg-[#030303]/95 backdrop-blur-xl border-b border-white/5 px-6 py-0">
-        <div className="flex items-center gap-0 overflow-x-auto scrollbar-none">
-          {[
-            { id: 'overview', label: 'Overview' },
-            { id: 'estimating', label: 'Estimating' },
-            { id: 'schedule', label: 'Schedule' },
-            { id: 'field', label: 'Field' },
-            { id: 'files', label: 'Files' },
-            { id: 'office', label: 'Office' },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'text-[var(--brand-gold)] border-[var(--brand-gold)]'
-                  : 'text-gray-600 border-transparent hover:text-gray-400'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto bg-[var(--bg-primary)]">
@@ -396,8 +325,8 @@ Write a professional, factual summary suitable for a project file. Focus on scop
           {/* Left Column: Primary Controls & Info */}
           <div className="lg:col-span-8 space-y-8">
             
-            {/* Generated Packages Review — Files tab */}
-            {activeTab === 'files' && (job.verifiedBuildPassportUrl || job.subcontractorInvoiceUrl) && (
+            {/* Generated Packages Review */}
+            {(job.verifiedBuildPassportUrl || job.subcontractorInvoiceUrl) && (
               <section
                 
                 
@@ -468,8 +397,8 @@ Write a professional, factual summary suitable for a project file. Focus on scop
             )}
             
 
-            {/* Proposal Engagement Tracking — Estimating tab */}
-            {activeTab === 'estimating' && isEstimateStage && job.portalEngagement && (
+            {/* Proposal Engagement Tracking */}
+            {isEstimateStage && job.portalEngagement && (
               <section
                 
                 
@@ -586,8 +515,8 @@ Write a professional, factual summary suitable for a project file. Focus on scop
               </section>
             )}
 
-            {/* Sales & Estimating Profile — Estimating tab */}
-            {activeTab === 'estimating' && (job.lifecycleStage === CustomerLifecycle.ESTIMATE_IN_PROGRESS ||
+            {/* Sales & Estimating Profile */}
+            {(job.lifecycleStage === CustomerLifecycle.ESTIMATE_IN_PROGRESS ||
               job.lifecycleStage === CustomerLifecycle.ESTIMATE_SENT ||
               job.lifecycleStage === CustomerLifecycle.FOLLOW_UP_NEEDED ||
               job.lifecycleStage === CustomerLifecycle.NEW_LEAD ||
@@ -838,8 +767,8 @@ Ottawa's Premium Deck Builders`;
               </section>
             )}
 
-            {/* Job Summary Card — Overview tab */}
-            {activeTab === 'overview' && <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2rem] shadow-2xl overflow-hidden">
+            {/* Job Summary Card */}
+            <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2rem] shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-8 py-5">
                 <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
                   <Info size={14} className="text-[var(--brand-gold)]" /> Client Info
@@ -864,14 +793,25 @@ Ottawa's Premium Deck Builders`;
                       setMessageType(type);
                       setIsMessageModalOpen(true);
                     }}
+                    onEditAssignment={() => {
+                      setEditFormData({
+                        assignedUsers: job.assignedUsers,
+                        assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
+                        plannedStartDate: job.plannedStartDate,
+                        plannedDurationDays: job.plannedDurationDays,
+                        plannedFinishDate: job.plannedFinishDate,
+                        officialScheduleStatus: job.officialScheduleStatus
+                      });
+                      setEditingSection('schedule');
+                    }}
                   />
                 </div>
               )}
-            </div>}
+            </div>
 
 
-            {/* Stage Checklist — Overview tab */}
-            {activeTab === 'overview' && <section className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md">
+            {/* Stage Checklist */}
+            <section className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
@@ -996,10 +936,10 @@ Ottawa's Premium Deck Builders`;
                   </p>
                 </div>
               )}
-            </section>}
+            </section>
 
-            {/* Build Specifications / Digital Work Order — Field tab */}
-            {activeTab === 'field' && job.buildDetails && (
+            {/* Build Specifications / Digital Work Order */}
+            {job.buildDetails && (
               <section
                 
                 
@@ -1205,8 +1145,8 @@ Ottawa's Premium Deck Builders`;
               </section>
             )}
 
-            {/* Estimator Field Notes — Field tab */}
-            {activeTab === 'field' && job.estimatorIntake && (
+            {/* Estimator Field Notes */}
+            {job.estimatorIntake && (
               <div className="rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden">
                 <div className="px-6 py-4 border-b border-white/5">
                   <h3 className="text-xs font-black text-white uppercase tracking-widest">Estimator Field Notes</h3>
@@ -1293,8 +1233,8 @@ Ottawa's Premium Deck Builders`;
               </div>
             )}
 
-            {/* Scope Summary — Overview tab */}
-            {activeTab === 'overview' && <section className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md">
+            {/* Scope Summary */}
+            <section className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
                   <FileText size={14} className="text-[var(--brand-gold)]" /> Scope Summary
@@ -1312,10 +1252,10 @@ Ottawa's Premium Deck Builders`;
               <div className="bg-white/5 border border-white/10 rounded-[1.5rem] p-6 text-gray-300 leading-relaxed font-medium min-h-[120px]">
                 {job.scopeSummary || <span className="text-gray-600 italic">No scope summary provided.</span>}
               </div>
-            </section>}
+            </section>
 
-            {/* Scheduling — Compact card — Schedule tab */}
-            {activeTab === 'schedule' && job.pipelineStage === PipelineStage.READY_TO_START && (
+            {/* Scheduling — Compact card */}
+            {job.pipelineStage === PipelineStage.READY_TO_START && (
               <section className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2rem] overflow-hidden shadow-2xl backdrop-blur-md">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
                   <div className="flex items-center gap-2">
@@ -1356,8 +1296,8 @@ Ottawa's Premium Deck Builders`;
               </section>
             )}
 
-            {/* Financial Performance Overview — Office tab */}
-            {activeTab === 'office' && !isEstimateStage && (
+            {/* Financial Performance Overview */}
+            {!isEstimateStage && (
             <section className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
               <div className="flex items-center justify-between mb-8 relative z-10">
@@ -1444,13 +1384,13 @@ Ottawa's Premium Deck Builders`;
           {/* Right Column: Execution & Status */}
           <div className="lg:col-span-4 space-y-8 lg:sticky lg:top-24 lg:self-start">
             
-            {/* AI Assistant Section — Estimating tab */}
-            {activeTab === 'estimating' && isEstimateStage && (
+            {/* AI Assistant Section */}
+            {isEstimateStage && (
               <OfficeAIAssistant job={job} onUpdateJob={onUpdateJob} />
             )}
 
-            {/* Field Execution + Scheduling — Schedule tab */}
-            {activeTab === 'schedule' && (job.pipelineStage === PipelineStage.IN_FIELD || job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
+            {/* Field Execution + Scheduling */}
+            {(job.pipelineStage === PipelineStage.IN_FIELD || job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
             <section className="bg-white/[0.03] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl">
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
@@ -1564,21 +1504,21 @@ Ottawa's Premium Deck Builders`;
             </section>
             )}
 
-            {/* AI Office Insights — Office tab */}
-            {activeTab === 'office' && !isEstimateStage && (
+            {/* AI Office Insights */}
+            {!isEstimateStage && (
               <AIOfficeInsights job={job} onUpdateJob={onUpdateJob} />
             )}
 
-            {/* Customer Experience Portal Sharing — Overview tab */}
-            {activeTab === 'overview' && <PortalSharingCard
+            {/* Customer Experience Portal Sharing */}
+            <PortalSharingCard
               job={job}
               allJobs={allJobs}
               isEstimateStage={isEstimateStage}
               onPreviewPortal={onPreviewPortal}
-            />}
+            />
 
-            {/* AI Project Summary — Office tab */}
-            {activeTab === 'office' && <section className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] p-5 shadow-2xl">
+            {/* AI Project Summary */}
+            <section className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] p-5 shadow-2xl">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Sparkles size={13} className="text-[var(--brand-gold)]" />
@@ -1601,10 +1541,10 @@ Ottawa's Premium Deck Builders`;
               ) : (
                 <p className="text-[10px] text-gray-600 italic">Click Generate to create an AI-powered project summary using job data.</p>
               )}
-            </section>}
+            </section>
 
-            {/* Stripe Deposit — Estimating tab */}
-            {activeTab === 'estimating' && job.pipelineStage === PipelineStage.PRE_PRODUCTION && (
+            {/* Stripe Deposit */}
+            {job.pipelineStage === PipelineStage.PRE_PRODUCTION && (
               <section className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] p-5 shadow-2xl">
                 <div className="flex items-center gap-2 mb-3">
                   <CreditCard size={13} className="text-[var(--brand-gold)]" />
@@ -1624,94 +1564,8 @@ Ottawa's Premium Deck Builders`;
               </section>
             )}
 
-            {/* Assignment & Handoff — Overview tab */}
-            {activeTab === 'overview' && <div className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] shadow-2xl overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <Users size={14} className="text-[var(--brand-gold)] shrink-0" />
-                  <div>
-                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Assigned To</p>
-                    <p className="text-sm font-bold text-white">
-                      {APP_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'Unassigned'}
-                      {job.assignedCrewOrSubcontractor ? (
-                        <span className="text-[10px] font-bold text-gray-400 ml-2">/ {job.assignedCrewOrSubcontractor}</span>
-                      ) : null}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setAssignmentExpanded(prev => !prev)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all"
-                >
-                  <Edit2 size={12} />
-                  {assignmentExpanded ? 'Close' : 'Edit'}
-                </button>
-              </div>
-              {assignmentExpanded && (
-                <div className="border-t border-white/5 px-6 py-5 space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                      <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Start Date</p>
-                      <p className="text-xs font-bold text-white">{job.plannedStartDate || 'TBD'}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                      <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Duration</p>
-                      <p className="text-xs font-bold text-white">{job.plannedDurationDays || 0} Days</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setEditFormData({
-                        assignedUsers: job.assignedUsers,
-                        assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
-                        plannedStartDate: job.plannedStartDate,
-                        plannedDurationDays: job.plannedDurationDays
-                      });
-                      setEditingSection('schedule');
-                      setAssignmentExpanded(false);
-                    }}
-                    className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all flex items-center justify-center gap-2"
-                  >
-                    <Edit2 size={12} /> Edit Full Schedule & Assignment
-                  </button>
-                </div>
-              )}
-            </div>}
-
-            {/* Sub Labour Cost — Office tab */}
-            {activeTab === 'office' && job.invoiceSupportStatus !== 'not_required' && (
-              <div className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] p-4 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <DollarSign size={13} className="text-[var(--brand-gold)]" />
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Sub Labour Cost</span>
-                  </div>
-                  {job.labourCost ? (
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle size={11} className="text-emerald-400" />
-                      <span className="text-sm font-black text-white">${job.labourCost.toLocaleString()}</span>
-                    </div>
-                  ) : (
-                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                      {job.invoiceSupportStatus === 'submitted' ? 'Invoice Submitted' : 'Pending'}
-                    </span>
-                  )}
-                </div>
-                {job.subcontractorInvoiceUrl && (
-                  <a
-                    href={job.subcontractorInvoiceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 flex items-center gap-1.5 text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest hover:opacity-80 transition-opacity"
-                  >
-                    <ExternalLink size={10} /> View Invoice PDF
-                  </a>
-                )}
-              </div>
-            )}
-
-            {/* Office Notes — Office tab */}
-            {activeTab === 'office' && <div className="bg-white/[0.03] border border-[var(--border-color)] rounded-[1.5rem] shadow-2xl overflow-hidden">
+            {/* Office Notes */}
+            <div className="bg-white/[0.03] border border-[var(--border-color)] rounded-[1.5rem] shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
                   <MessageSquare size={13} className="text-[var(--brand-gold)]" /> Office Notes
@@ -1748,10 +1602,10 @@ Ottawa's Premium Deck Builders`;
                   )}
                 </div>
               )}
-            </div>}
+            </div>
 
-            {/* Site Notes — Field tab */}
-            {activeTab === 'field' && <div className="bg-white/[0.03] border border-[var(--border-color)] rounded-[1.5rem] shadow-2xl overflow-hidden">
+            {/* Site Notes */}
+            <div className="bg-white/[0.03] border border-[var(--border-color)] rounded-[1.5rem] shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
                   <History size={13} className="text-[var(--brand-gold)]" /> Site Notes
@@ -1783,10 +1637,10 @@ Ottawa's Premium Deck Builders`;
                   )}
                 </div>
               )}
-            </div>}
+            </div>
 
-            {/* Job Files & Documents Package — Files tab */}
-            {activeTab === 'files' && <section className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+            {/* Job Files & Documents Package */}
+            <section className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 blur-[60px] -mr-24 -mt-24 pointer-events-none" />
               
               <div className="flex items-center justify-between mb-8 relative z-10">
@@ -1861,7 +1715,7 @@ Ottawa's Premium Deck Builders`;
                   </div>
                 )}
               </div>
-            </section>}
+            </section>
           </div>
         </div>
       </div>

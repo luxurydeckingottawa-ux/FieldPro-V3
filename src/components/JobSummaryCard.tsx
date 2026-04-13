@@ -1,18 +1,18 @@
 import React from 'react';
 import { Job } from '../types';
 import { APP_USERS } from '../constants';
-import ProjectLocationMap from './ProjectLocationMap';
-import { 
-  Info, MapPin, Zap, Users, Phone, Mail, MessageSquare 
+import {
+  Info, MapPin, Zap, Users, Phone, Mail, MessageSquare
 } from 'lucide-react';
 
 
 interface JobSummaryCardProps {
   job: Job;
   onOpenMessageModal: (type: 'sms' | 'email') => void;
+  onEditAssignment?: () => void;
 }
 
-const JobSummaryCard: React.FC<JobSummaryCardProps> = ({ job, onOpenMessageModal }) => {
+const JobSummaryCard: React.FC<JobSummaryCardProps> = ({ job, onOpenMessageModal, onEditAssignment }) => {
   return (
     <section 
       
@@ -29,12 +29,21 @@ const JobSummaryCard: React.FC<JobSummaryCardProps> = ({ job, onOpenMessageModal
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 relative z-10">
-        <div className="w-full md:w-48 h-48 shrink-0">
-          <ProjectLocationMap 
-            address={job.projectAddress} 
-            hideAddress={true} 
-            className="h-full w-full shadow-xl" 
+        <div className="w-full md:w-48 h-48 shrink-0 rounded-2xl overflow-hidden border border-white/10 relative bg-white/5">
+          <img
+            src={`https://maps.googleapis.com/maps/api/streetview?size=400x400&location=${encodeURIComponent((job.projectAddress || '') + ', Ottawa, ON')}&key=${(import.meta as any).env?.VITE_GOOGLE_MAPS_KEY || ''}`}
+            alt="Street view"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const img = e.target as HTMLImageElement;
+              img.style.display = 'none';
+              const parent = img.parentElement;
+              if (parent) {
+                parent.innerHTML = '<div class="flex flex-col items-center justify-center h-full gap-2"><div class="text-gray-700 text-[10px] font-black uppercase tracking-widest">House Preview</div><div class="text-gray-800 text-[9px] text-center px-2">' + (job.projectAddress || '') + '</div></div>';
+              }
+            }}
           />
+          <div className="absolute bottom-2 left-2 text-[7px] font-black text-white/40 uppercase tracking-widest">Street View</div>
         </div>
 
         <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -139,14 +148,27 @@ const JobSummaryCard: React.FC<JobSummaryCardProps> = ({ job, onOpenMessageModal
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">
-              <Users size={14} className="text-[var(--brand-gold)]" /> Assignment
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em]">
+                <Users size={14} className="text-[var(--brand-gold)]" /> Assignment
+              </div>
+              {onEditAssignment && (
+                <button onClick={onEditAssignment} className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-widest hover:opacity-80 transition-opacity">
+                  Edit
+                </button>
+              )}
             </div>
-            <div className="space-y-1">
-              <p className="text-sm font-bold text-[var(--text-primary)]">{job.assignedCrewOrSubcontractor || 'Unassigned'}</p>
+            <div className="space-y-1 cursor-pointer" onClick={onEditAssignment}>
+              <p className="text-sm font-bold text-[var(--text-primary)] hover:text-[var(--brand-gold)] transition-colors">{job.assignedCrewOrSubcontractor || 'Tap to assign'}</p>
               <p className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-widest">
                 Lead: {APP_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'None'}
               </p>
+              {job.plannedStartDate && (
+                <p className="text-[10px] text-gray-500">Start: {job.plannedStartDate}</p>
+              )}
+              {job.plannedDurationDays && (
+                <p className="text-[10px] text-gray-500">Duration: {job.plannedDurationDays}d</p>
+              )}
             </div>
           </div>
         </div>
