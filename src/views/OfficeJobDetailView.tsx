@@ -735,24 +735,44 @@ Ottawa's Premium Deck Builders`;
                   </div>
 
                   {job.acceptedBuildSummary ? (
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-2">
-                      <div className="flex items-center justify-between py-2 border-b border-white/5">
-                        <span className="text-[11px] font-bold text-white">{job.acceptedBuildSummary.optionName}</span>
-                        <span className="text-[11px] font-bold text-white">${job.acceptedBuildSummary.basePrice.toLocaleString()}</span>
+                    <div className="bg-white/5 rounded-2xl border border-white/5 overflow-hidden">
+                      {/* Option name header */}
+                      <div className="px-4 py-3 border-b border-white/5">
+                        <span className="text-[11px] font-black text-white uppercase tracking-wide">{job.acceptedBuildSummary.optionName}</span>
                       </div>
-                      {job.acceptedBuildSummary.addOns && job.acceptedBuildSummary.addOns.map((addon, i) => (
-                        <div key={i} className="flex items-center justify-between py-1">
-                          <span className="text-[10px] text-gray-500">+ {addon.name}</span>
-                          <span className="text-[10px] text-gray-400">+${addon.price.toLocaleString()}</span>
+                      {/* Line items */}
+                      <div className="divide-y divide-white/5">
+                        {(() => {
+                          const addOnsTotal = (job.acceptedBuildSummary!.addOns || []).reduce((s, a) => s + a.price, 0);
+                          const baseInstall = (job.acceptedBuildSummary!.basePrice || 0) - addOnsTotal;
+                          return baseInstall > 50 ? (
+                            <div className="flex items-center justify-between px-4 py-2.5">
+                              <span className="text-[10px] text-gray-400">Base Deck Installation</span>
+                              <span className="text-[10px] font-semibold text-white">${baseInstall.toLocaleString()}</span>
+                            </div>
+                          ) : null;
+                        })()}
+                        {(job.acceptedBuildSummary.addOns || []).map((addon, i) => (
+                          <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                            <span className="text-[10px] text-gray-400">{addon.name}</span>
+                            <span className="text-[10px] font-semibold text-white">${addon.price.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Totals */}
+                      <div className="border-t border-white/10 divide-y divide-white/5">
+                        <div className="flex items-center justify-between px-4 py-2.5">
+                          <span className="text-[10px] text-gray-500">Subtotal</span>
+                          <span className="text-[10px] text-gray-300">${(job.acceptedBuildSummary.basePrice || job.estimateAmount || 0).toLocaleString()}</span>
                         </div>
-                      ))}
-                      <div className="flex items-center justify-between py-1 border-t border-white/5 mt-1">
-                        <span className="text-[10px] text-gray-500">HST (13%)</span>
-                        <span className="text-[10px] text-gray-400">+${Math.round((job.acceptedBuildSummary.totalPrice || job.estimateAmount || 0) * 0.13).toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center justify-between py-2 border-t border-white/5">
-                        <span className="text-[11px] font-black text-[var(--brand-gold)] uppercase tracking-wider">Total</span>
-                        <span className="text-base font-black text-[var(--brand-gold)]">${Math.round((job.acceptedBuildSummary.totalPrice || job.estimateAmount || 0) * 1.13).toLocaleString()}</span>
+                        <div className="flex items-center justify-between px-4 py-2.5">
+                          <span className="text-[10px] text-gray-500">HST (13%)</span>
+                          <span className="text-[10px] text-gray-300">+${Math.round((job.acceptedBuildSummary.basePrice || job.estimateAmount || 0) * 0.13).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between px-4 py-3 bg-[var(--brand-gold)]/5">
+                          <span className="text-[11px] font-black text-[var(--brand-gold)] uppercase tracking-wider">Total</span>
+                          <span className="text-base font-black text-[var(--brand-gold)]">${Math.round((job.acceptedBuildSummary.basePrice || job.estimateAmount || 0) * 1.13).toLocaleString()}</span>
+                        </div>
                       </div>
                     </div>
                   ) : (

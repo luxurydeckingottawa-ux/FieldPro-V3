@@ -1523,11 +1523,13 @@ const App: React.FC = () => {
 
     // Build the accepted summary
     const acceptedBuildSummary = {
-      optionName: data.activePackage 
-        ? `${data.activePackage.size} ${data.activePackage.level} Package` 
+      optionName: data.activePackage
+        ? `${data.activePackage.size} ${data.activePackage.level} Package`
         : `Custom Estimate #${data.estimateNumber}`,
       basePrice: estimateAmount,
-      addOns: [] as { name: string; price: number }[],
+      addOns: data.pricingSummary.impacts
+        .filter((imp: any) => Math.round(imp.value) !== 0)
+        .map((imp: any) => ({ name: imp.label, price: Math.round(imp.value) })) as { name: string; price: number }[],
       totalPrice: totalAmount,
       acceptedDate: now,
       scopeSummary: data.pricingSummary.impacts
@@ -1616,11 +1618,13 @@ const App: React.FC = () => {
     const estimateAmount = Math.round(data.pricingSummary.subTotal);
 
     const acceptedBuildSummary = {
-      optionName: data.activePackage 
-        ? `${data.activePackage.size} ${data.activePackage.level} Package` 
+      optionName: data.activePackage
+        ? `${data.activePackage.size} ${data.activePackage.level} Package`
         : `Custom Estimate #${data.estimateNumber}`,
       basePrice: estimateAmount,
-      addOns: [] as { name: string; price: number }[],
+      addOns: data.pricingSummary.impacts
+        .filter((imp: any) => Math.round(imp.value) !== 0)
+        .map((imp: any) => ({ name: imp.label, price: Math.round(imp.value) })) as { name: string; price: number }[],
       totalPrice: totalAmount,
       acceptedDate: now,
       scopeSummary: data.pricingSummary.impacts
