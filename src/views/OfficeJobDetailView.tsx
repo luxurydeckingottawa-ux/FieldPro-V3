@@ -756,7 +756,7 @@ Ottawa's Premium Deck Builders`;
               <div className="flex items-center justify-between px-8 py-5">
                 <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
                   <Info size={14} className="text-[var(--brand-gold)]" /> Client Info
-                  <span className="ml-2 text-white font-bold normal-case tracking-normal">{job.clientName}</span>
+                  <span className="ml-2 text-white/50 font-bold normal-case tracking-normal text-[10px]">{job.projectAddress}</span>
                 </div>
                 <button
                   onClick={() => setCustomerInfoCollapsed(prev => !prev)}

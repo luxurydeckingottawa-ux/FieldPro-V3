@@ -1789,7 +1789,9 @@ useEffect(() => {
 
   const resetCalculator = () => {
     if (confirm('Reset this estimate?')) {
-      setEstimateNumber(prev => prev + 1);
+      const nextNum = estimateNumber + 1;
+      localStorage.setItem('luxury_decking_estimate_count', nextNum.toString());
+      setEstimateNumber(nextNum);
       setActivePackage(null);
       setCalcDimensions(INITIAL_DIMENSIONS);
       setCalcSelections(getInitialSelections());
@@ -1823,6 +1825,10 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
 
     // Fire callback to save estimate data and send quote to client
     if (onEstimateSaved) {
+      // Increment and persist BEFORE firing callback (callback may navigate away, unmounting component)
+      const nextNumber = estimateNumber + 1;
+      localStorage.setItem('luxury_decking_estimate_count', nextNumber.toString());
+      setEstimateNumber(nextNumber);
       onEstimateSaved({
         clientName: name,
         clientAddress: address,
@@ -1832,7 +1838,6 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
         pricingSummary,
         activePackage,
       });
-      setEstimateNumber(prev => prev + 1);
     } else {
       // Fallback: print PDF if no callback
       setDocMode('estimate');

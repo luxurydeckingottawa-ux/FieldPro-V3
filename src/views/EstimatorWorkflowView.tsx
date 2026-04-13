@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Job, EstimatorIntake, SiteIntakeChecklist, MeasureSheet, SketchData, EstimatorPhoto } from '../types';
-import { 
-  ChevronLeft, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Navigation, 
-  CheckCircle2, 
-  Camera, 
-  ClipboardList, 
-  PenTool, 
+import {
+  ChevronLeft,
+  MapPin,
+  Phone,
+  Mail,
+  Navigation,
+  CheckCircle2,
+  Camera,
+  ClipboardList,
+  PenTool,
   FileText,
   Save,
   AlertCircle,
@@ -19,7 +19,9 @@ import {
   Sparkles,
   Loader2,
   ArrowRight,
-  RefreshCw
+  RefreshCw,
+  ExternalLink,
+  Satellite
 } from 'lucide-react';
 
 import EstimatorSiteIntake from '../components/EstimatorSiteIntake';
@@ -439,6 +441,47 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                   </div>
                 </div>
               </div>
+
+              {/* Street View / Satellite Image */}
+              {job.projectAddress && (() => {
+                const mapsKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_KEY;
+                const encodedAddr = encodeURIComponent(job.projectAddress);
+                const streetViewUrl = mapsKey
+                  ? `https://maps.googleapis.com/maps/api/streetview?size=600x200&location=${encodedAddr}&key=${mapsKey}&fov=90&pitch=10`
+                  : null;
+                const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodedAddr}`;
+                return (
+                  <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-color)]">
+                      <div className="flex items-center gap-2">
+                        <Satellite className="w-4 h-4 text-[var(--brand-gold)]" />
+                        <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Site Preview</h3>
+                      </div>
+                      <a href={mapsLink} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[10px] font-bold text-[var(--brand-gold)] hover:underline">
+                        <ExternalLink className="w-3 h-3" /> Open in Maps
+                      </a>
+                    </div>
+                    {streetViewUrl ? (
+                      <img
+                        src={streetViewUrl}
+                        alt={`Street view of ${job.projectAddress}`}
+                        className="w-full h-40 object-cover"
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="h-40 bg-[var(--bg-secondary)] flex flex-col items-center justify-center gap-2">
+                        <Satellite className="w-8 h-8 text-[var(--text-secondary)]/30" />
+                        <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Street View</p>
+                        <p className="text-[10px] text-[var(--text-secondary)]/60">API key required</p>
+                      </div>
+                    )}
+                    <div className="px-4 py-2">
+                      <p className="text-xs text-[var(--text-secondary)] truncate">{job.projectAddress}</p>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="bg-[var(--bg-primary)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm">
                 <h3 className="text-lg font-bold mb-4">Project Overview</h3>
