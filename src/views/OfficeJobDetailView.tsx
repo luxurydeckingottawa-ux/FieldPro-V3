@@ -267,7 +267,7 @@ Write a professional, factual summary suitable for a project file. Focus on scop
               {job.projectAddress && (
                 <div className="mt-3 rounded-2xl overflow-hidden border border-white/5 h-32 relative">
                   <img
-                    src={`https://maps.googleapis.com/maps/api/streetview?size=600x200&location=${encodeURIComponent(job.projectAddress + ', Ottawa, ON')}&key=PLACEHOLDER_KEY`}
+                    src={`https://maps.googleapis.com/maps/api/streetview?size=600x200&location=${encodeURIComponent(job.projectAddress + ', Ottawa, ON')}&key=${import.meta.env.VITE_GOOGLE_MAPS_KEY || ''}`}
                     alt="Street view"
                     className="w-full h-full object-cover opacity-60"
                     onError={(e) => {
