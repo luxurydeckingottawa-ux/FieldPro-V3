@@ -5,10 +5,11 @@ import {
   DollarSign, FileText, MessageSquare, ExternalLink,
   Copy, Check, Edit2, Save, X, ChevronRight,
   ClipboardList, Send, Clock, AlertCircle, CheckCircle2,
-  Zap, Camera, Info, BarChart3, Users, PenTool, CalendarPlus
+  Zap, Camera, Info, BarChart3, Users, PenTool, CalendarPlus, ChevronDown, ChevronUp
 } from 'lucide-react';
 import AcceptanceModal from '../components/AcceptanceModal';
 import { calculateEngagementTier } from '../utils/engagementScoring';
+import { getCampaignTouches } from '../utils/dripCampaign';
 
 interface EstimateDetailViewProps {
   job: Job;
@@ -35,6 +36,57 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
   });
   const [copied, setCopied] = useState(false);
   const [showAcceptance, setShowAcceptance] = useState(false);
+  const [sendingTouchId, setSendingTouchId] = useState<string | null>(null);
+  const [expandedTouchId, setExpandedTouchId] = useState<string | null>(null);
+  const [touchSentFeedback, setTouchSentFeedback] = useState<string | null>(null);
+
+  // Campaign queue: get engagement-adapted touches for this job
+  const campaignTouches = useMemo(() => {
+    if (!job.dripCampaign) return [];
+    return getCampaignTouches(job.dripCampaign.campaignType, job, job.portalEngagement);
+  }, [job]);
+
+  const handleSendTouch = async (touchId: string, channel: 'sms' | 'email' | 'sms+email', smsBody: string, emailBody: string, subject?: string) => {
+    if (!job.clientPhone && !job.clientEmail) return;
+    setSendingTouchId(touchId);
+    try {
+      const sends: Promise<any>[] = [];
+      if ((channel === 'sms' || channel === 'sms+email') && job.clientPhone) {
+        sends.push(fetch('/.netlify/functions/send-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: job.clientPhone, message: smsBody }),
+        }));
+      }
+      if ((channel === 'email' || channel === 'sms+email') && job.clientEmail) {
+        const htmlBody = emailBody.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>').replace(/^/, '<p>').replace(/$/, '</p>');
+        sends.push(fetch('/.netlify/functions/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: job.clientEmail, subject: subject || 'Luxury Decking Follow-Up', htmlBody }),
+        }));
+      }
+      await Promise.all(sends);
+      const tier = calculateEngagementTier(job.portalEngagement).tier;
+      const updatedCampaign = {
+        ...job.dripCampaign!,
+        completedTouches: [...(job.dripCampaign!.completedTouches || []), touchId],
+        sentMessages: [...(job.dripCampaign!.sentMessages || []), {
+          touchId,
+          channel: (channel === 'sms+email' ? 'email' : channel) as 'sms' | 'email',
+          sentAt: new Date().toISOString(),
+          engagementTier: tier,
+        }],
+      };
+      onUpdateJob(job.id, { dripCampaign: updatedCampaign });
+      setTouchSentFeedback(touchId);
+      setTimeout(() => setTouchSentFeedback(null), 3000);
+    } catch (err) {
+      console.error('Failed to send touch:', err);
+    } finally {
+      setSendingTouchId(null);
+    }
+  };
 
   // Lead temperature calculation from original
   const engagementScore = useMemo(() => {
@@ -671,62 +723,125 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     <p className="text-sm font-bold text-[var(--text-primary)] capitalize">{job.estimateStatus.replace('_', ' ')}</p>
                   </div>
                 )}
-                {/* Drip Campaign Status */}
-                {job.dripCampaign?.status === 'active' && (
-                  <div className="p-3 bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/10 rounded-lg">
-                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-2">Follow-Up Campaign</p>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-[var(--brand-gold)] animate-pulse" />
-                      <p className="text-xs font-bold text-[var(--brand-gold)]">
-                        {job.dripCampaign.campaignType === 'LEAD_FOLLOW_UP' ? 'Lead Nurture' : 'Estimate Follow-Up'} Active
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] text-[var(--text-secondary)]">
-                        Touch {job.dripCampaign.completedTouches.length + 1} of {job.dripCampaign.campaignType === 'LEAD_FOLLOW_UP' ? 6 : 5}
-                      </p>
-                      {job.estimateSentDate && (
-                        <p className="text-[10px] text-[var(--text-secondary)]">
-                          Started {Math.floor((Date.now() - new Date(job.dripCampaign.startedAt).getTime()) / (1000 * 60 * 60 * 24))} days ago
-                        </p>
-                      )}
-                    </div>
-                    {/* Progress dots */}
-                    <div className="flex items-center gap-1.5 mt-3">
-                      {Array.from({ length: job.dripCampaign.campaignType === 'LEAD_FOLLOW_UP' ? 6 : 5 }).map((_, i) => (
-                        <div key={i} className={`w-2 h-2 rounded-full ${
-                          i < job.dripCampaign!.completedTouches.length ? 'bg-[var(--brand-gold)]' : 'bg-[var(--bg-secondary)]'
-                        }`} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {job.dripCampaign?.status === 'paused' && (
-                  <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-amber-500" />
-                      <p className="text-xs font-bold text-amber-500">Campaign Paused</p>
-                    </div>
-                    {job.dripCampaign.pauseReason && (
-                      <p className="text-[10px] text-[var(--text-secondary)] mt-1">{job.dripCampaign.pauseReason}</p>
-                    )}
-                  </div>
-                )}
-                {/* Engagement Tier */}
-                {job.portalEngagement && (() => {
-                  const { tier, label } = calculateEngagementTier(job.portalEngagement);
-                  const styles: Record<string, string> = {
+                {/* Campaign Queue - full drip follow-up panel */}
+                {job.dripCampaign && (() => {
+                  const tierInfo = calculateEngagementTier(job.portalEngagement);
+                  const { tier } = tierInfo;
+                  const tierStyles: Record<string, string> = {
                     HOT: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
                     WARM: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
                     COOL: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
                     COLD: 'text-gray-500 bg-gray-500/10 border-gray-500/20',
                   };
+                  const sentDate = job.estimateSentDate ? new Date(job.estimateSentDate) : new Date(job.dripCampaign.startedAt);
+                  const daysSinceSent = Math.floor((Date.now() - sentDate.getTime()) / (1000 * 60 * 60 * 24));
+                  const completedIds = new Set(job.dripCampaign.completedTouches || []);
+
+                  const touchDayMap: Record<string, number> = {
+                    'est-fu1-day0': 0,
+                    [`est-fu2-day3-${tier.toLowerCase()}`]: 3,
+                    [`est-fu3-day7-${tier.toLowerCase()}`]: 7,
+                    [`est-fu4-day14-${tier === 'HOT' || tier === 'WARM' ? 'hot-warm' : 'cool-cold'}`]: 14,
+                    'est-fu5-day30': 30,
+                  };
+
                   return (
-                    <div>
-                      <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Engagement Tier</p>
-                      <span className={`inline-flex text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded border ${styles[tier]}`}>
-                        {label}
-                      </span>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Follow-Up Campaign</p>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-1.5 h-1.5 rounded-full ${job.dripCampaign.status === 'active' ? 'bg-[var(--brand-gold)] animate-pulse' : 'bg-gray-500'}`} />
+                          <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${tierStyles[tier]}`}>
+                            {tier}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 mt-2">
+                        {campaignTouches.map((touch) => {
+                          const touchPrefix = touch.id.split('-').slice(0, 3).join('-');
+                          const isDone = completedIds.has(touch.id) ||
+                            [...completedIds].some(id => id.startsWith(touchPrefix));
+                          const touchDay = touchDayMap[touch.id] ?? touch.delayDays;
+                          const isDue = !isDone && daysSinceSent >= touchDay;
+                          const isExpanded = expandedTouchId === touch.id;
+                          const isSending = sendingTouchId === touch.id;
+                          const justSent = touchSentFeedback === touch.id;
+
+                          const touchLabel: Record<number, string> = { 0: 'Day 0', 3: 'Day 3', 7: 'Day 7', 14: 'Day 14', 30: 'Day 30' };
+                          const dueDate = new Date(sentDate.getTime() + touchDay * 24 * 60 * 60 * 1000);
+                          const dueDateStr = dueDate.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+
+                          return (
+                            <div key={touch.id} className={`rounded-lg border transition-all ${
+                              isDone ? 'border-[var(--border-color)] bg-[var(--bg-secondary)]/40' :
+                              isDue ? 'border-[var(--brand-gold)]/30 bg-[var(--brand-gold)]/5' :
+                              'border-[var(--border-color)] bg-transparent'
+                            }`}>
+                              <button
+                                onClick={() => setExpandedTouchId(isExpanded ? null : touch.id)}
+                                className="w-full flex items-center justify-between p-2.5 text-left"
+                              >
+                                <div className="flex items-center gap-2">
+                                  {isDone ? (
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-[var(--brand-gold)] shrink-0" />
+                                  ) : isDue ? (
+                                    <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--brand-gold)] shrink-0" />
+                                  ) : (
+                                    <div className="w-3.5 h-3.5 rounded-full border border-[var(--border-color)] shrink-0" />
+                                  )}
+                                  <span className="text-[10px] font-bold text-[var(--text-primary)]">{touchLabel[touchDay] || `Day ${touchDay}`}</span>
+                                  {isDue && !isDone && <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest">Due</span>}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  {isDone ? (
+                                    <span className="text-[9px] text-[var(--text-secondary)]">Sent</span>
+                                  ) : (
+                                    <span className="text-[9px] text-[var(--text-secondary)]">{dueDateStr}</span>
+                                  )}
+                                  {isExpanded ? <ChevronUp className="w-3 h-3 text-[var(--text-secondary)]" /> : <ChevronDown className="w-3 h-3 text-[var(--text-secondary)]" />}
+                                </div>
+                              </button>
+
+                              {isExpanded && (
+                                <div className="px-2.5 pb-2.5 space-y-2 border-t border-[var(--border-color)]">
+                                  {touch.emailTemplate && (
+                                    <div className="mt-2">
+                                      {touch.subject && <p className="text-[9px] font-bold text-[var(--text-secondary)] mb-1">Subject: {touch.subject}</p>}
+                                      <p className="text-[10px] text-[var(--text-primary)] leading-relaxed line-clamp-3 whitespace-pre-line">{touch.emailTemplate.substring(0, 200)}{touch.emailTemplate.length > 200 ? '…' : ''}</p>
+                                    </div>
+                                  )}
+                                  {touch.smsTemplate && (
+                                    <div className="p-2 bg-[var(--bg-secondary)] rounded-lg">
+                                      <p className="text-[9px] font-bold text-[var(--text-secondary)] mb-0.5 flex items-center gap-1"><MessageSquare className="w-2.5 h-2.5" /> SMS</p>
+                                      <p className="text-[10px] text-[var(--text-primary)] leading-relaxed">{touch.smsTemplate.substring(0, 140)}{touch.smsTemplate.length > 140 ? '…' : ''}</p>
+                                    </div>
+                                  )}
+                                  {!isDone && (
+                                    <button
+                                      onClick={() => handleSendTouch(touch.id, touch.channel, touch.smsTemplate, touch.emailTemplate, touch.subject)}
+                                      disabled={isSending || !!sendingTouchId}
+                                      className={`w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 ${
+                                        justSent ? 'bg-[var(--brand-gold)]/20 text-[var(--brand-gold)] border border-[var(--brand-gold)]/30' :
+                                        isDue ? 'bg-[var(--brand-gold)] text-black hover:opacity-90' :
+                                        'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-color)] hover:border-[var(--brand-gold)]/30'
+                                      } disabled:opacity-50`}
+                                    >
+                                      {isSending ? (
+                                        <><Clock className="w-3 h-3 animate-spin" /> Sending...</>
+                                      ) : justSent ? (
+                                        <><CheckCircle2 className="w-3 h-3" /> Sent!</>
+                                      ) : (
+                                        <><Send className="w-3 h-3" /> Send Now</>
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })()}

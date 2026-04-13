@@ -934,6 +934,18 @@ const App: React.FC = () => {
 
     setJobs(prev => [jobWithCampaign, ...prev]);
     dataService.createJob(jobWithCampaign).catch(err => console.error('Failed to persist new job:', err));
+
+    // Auto-fire Touch 1: instant SMS acknowledgement for new leads
+    if (newJob.pipelineStage === PipelineStage.LEAD_IN && newJob.clientPhone) {
+      const firstName = newJob.clientName?.split(' ')[0] || 'there';
+      const smsT1 = `Hi ${firstName}, this is Angela from Luxury Decking. Thank you for reaching out about your deck project. We will be in touch shortly to learn more about what you have in mind. In the meantime, feel free to explore our transparent pricing packages here: https://luxurydecking.ca/pricing. Talk soon!`;
+      fetch('/.netlify/functions/send-sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: newJob.clientPhone, message: smsT1 }),
+      }).catch(err => console.warn('[T1 SMS] failed:', err));
+    }
+
     // Always route to estimator workflow — the on-site checklist, measurements, sketch, and photos
     // must be completed before the job moves into the pipeline regardless of who created it
     setSelectedJob(jobWithCampaign);
@@ -1718,10 +1730,10 @@ const App: React.FC = () => {
         dripCampaign: {
           campaignType: 'ESTIMATE_FOLLOW_UP',
           startedAt: now,
-          currentTouch: 0,
-          completedTouches: [],
+          currentTouch: 1,
+          completedTouches: ['est-fu1-day0'],
           status: 'active',
-          sentMessages: [],
+          sentMessages: [{ touchId: 'est-fu1-day0', channel: 'email' as const, sentAt: now, engagementTier: 'COLD' }],
         },
         updatedAt: now,
       });
@@ -1772,10 +1784,10 @@ const App: React.FC = () => {
         dripCampaign: {
           campaignType: 'ESTIMATE_FOLLOW_UP',
           startedAt: now,
-          currentTouch: 0,
-          completedTouches: [],
+          currentTouch: 1,
+          completedTouches: ['est-fu1-day0'],
           status: 'active',
-          sentMessages: [],
+          sentMessages: [{ touchId: 'est-fu1-day0', channel: 'email' as const, sentAt: now, engagementTier: 'COLD' }],
         },
       };
       setJobs(prev => [newJob, ...prev]);
