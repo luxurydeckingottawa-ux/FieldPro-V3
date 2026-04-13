@@ -18,6 +18,8 @@ import CustomerPortalView from './views/CustomerPortalView';
 import EstimatePortalView from './views/EstimatePortalView';
 import EstimatorDashboardView from './views/EstimatorDashboardView';
 import EstimatorWorkflowView from './views/EstimatorWorkflowView';
+import BookingSettingsView from './views/BookingSettingsView';
+import PublicBookingView from './views/PublicBookingView';
 import EstimateDetailView from './views/EstimateDetailView';
 import NavBar from './components/NavBar';
 import AcceptanceModal from './components/AcceptanceModal';
@@ -121,11 +123,16 @@ const App: React.FC = () => {
   });
   
   const [view, setView] = useState<string>(() => {
-    // Check for portal token in query params (legacy support)
+    // Check for public booking widget
     const params = new URLSearchParams(window.location.search);
+    if (params.get('booking') === 'true') {
+      return 'public-booking';
+    }
+
+    // Check for portal token in query params (legacy support)
     const portalToken = params.get('portal');
     if (portalToken) {
-      return 'customer-portal'; 
+      return 'customer-portal';
     }
 
     // Check URL path for initial view
@@ -1816,6 +1823,17 @@ const App: React.FC = () => {
     );
   }
 
+  if (view === 'public-booking') {
+    return (
+      <PublicBookingView
+        existingJobs={jobs}
+        onBookingComplete={(job) => {
+          setJobs(prev => [job, ...prev]);
+        }}
+      />
+    );
+  }
+
   if (view === 'customer-portal') {
       return (
         <div className="min-h-screen bg-slate-50">
@@ -2151,6 +2169,11 @@ const App: React.FC = () => {
             onBack={() => navigateTo('estimator-dashboard')}
             onSave={handleUpdateEstimatorIntake}
             onPushToEstimating={handlePushToEstimating}
+          />
+        )}
+        {view === 'booking-settings' && currentUser && (
+          <BookingSettingsView
+            onBack={() => navigateTo('office-dashboard')}
           />
         )}
         </ErrorBoundary>

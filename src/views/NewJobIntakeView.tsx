@@ -2,47 +2,7 @@ import React, { useState } from 'react';
 import { Job, PipelineStage, JobStatus, FieldStatus, CompletionPackageStatus, PhotoCompletionStatus, CompletionReadinessStatus, OfficeReviewStatus, ScheduleStatus, BuildDetails, Role } from '../types';
 import { createDefaultBuildDetails, createDefaultOfficeChecklists, APP_USERS } from '../constants';
 import { ArrowLeft, Save, Info, AlertCircle, Calendar, Clock, User } from 'lucide-react';
-
-const BOOKING_CONFIG = {
-  availableDays: [1, 2, 3, 4, 5], // Mon-Fri (0=Sun, 6=Sat)
-  startHour: 12, // noon
-  endHour: 18,   // 6pm
-  durationMinutes: 90,
-};
-
-function getAvailableTimeSlots(date: string, existingJobs: Job[], estimator: string): { time: string; label: string; booked: boolean }[] {
-  if (!date) return [];
-  const d = new Date(date + 'T12:00:00'); // noon to avoid DST edge
-  const dayOfWeek = d.getDay();
-  if (!BOOKING_CONFIG.availableDays.includes(dayOfWeek)) return [];
-
-  const slots: { time: string; label: string; booked: boolean }[] = [];
-  let current = BOOKING_CONFIG.startHour * 60;
-  const endMinutes = BOOKING_CONFIG.endHour * 60;
-
-  while (current + BOOKING_CONFIG.durationMinutes <= endMinutes) {
-    const h = Math.floor(current / 60);
-    const m = current % 60;
-    const time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-    const hour12 = h > 12 ? h - 12 : h;
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const label = `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
-
-    // Check if booked by any estimator (if estimator selected, only check that estimator)
-    const isBooked = existingJobs.some(j => {
-      if (!j.scheduledDate) return false;
-      if (!j.scheduledDate.startsWith(date)) return false;
-      if (estimator && j.assignedCrewOrSubcontractor !== estimator) return false;
-      const jDate = new Date(j.scheduledDate);
-      const jMins = jDate.getHours() * 60 + jDate.getMinutes();
-      return jMins === current;
-    });
-
-    slots.push({ time, label, booked: isBooked });
-    current += BOOKING_CONFIG.durationMinutes;
-  }
-  return slots;
-}
+import { loadBookingConfig, getAvailableTimeSlots } from '../utils/bookingConfig';
 
 interface NewJobIntakeViewProps {
   onSave: (job: Job) => void;
@@ -61,6 +21,7 @@ const LEAD_STAGES = new Set([
 const ESTIMATORS = APP_USERS.filter(u => u.role === Role.ESTIMATOR || u.role === Role.ADMIN);
 
 const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, initialStage = PipelineStage.LEAD_IN, initialDate, allJobs = [] }) => {
+  const bookingConfig = loadBookingConfig();
   const isLeadMode = LEAD_STAGES.has(initialStage);
   const isEstimateMode = initialStage === PipelineStage.EST_UNSCHEDULED;
   const useSimpleForm = isLeadMode || isEstimateMode;
@@ -271,7 +232,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     {!apptDate ? (
                       <p className="text-xs text-gray-500 italic px-1">Select a date first to see available slots.</p>
                     ) : (() => {
-                      const slots = getAvailableTimeSlots(apptDate, allJobs, apptEstimator);
+                      const slots = getAvailableTimeSlots(apptDate, bookingConfig, allJobs, apptEstimator);
                       if (slots.length === 0) {
                         return <p className="text-xs text-amber-400 italic px-1">No available slots on this day (Mon-Fri only, 12pm-6pm).</p>;
                       }
