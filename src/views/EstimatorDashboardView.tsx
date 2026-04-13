@@ -24,22 +24,24 @@ const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = ({ jobs, o
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('active');
   
+  // Only show jobs that are in active estimate stages. Lead/contact stages
+  // (LEAD_IN, FIRST_CONTACT, SECOND_CONTACT, THIRD_CONTACT) are CRM territory
+  // and must not appear here. Post-sale production stages are also excluded.
   const estimatorJobs = jobs.filter(job => {
-    const estimateStages = [
-      PipelineStage.LEAD_IN,
-      PipelineStage.FIRST_CONTACT,
-      PipelineStage.SECOND_CONTACT,
-      PipelineStage.THIRD_CONTACT,
+    const estimateStages: PipelineStage[] = [
       PipelineStage.EST_UNSCHEDULED,
       PipelineStage.EST_SCHEDULED,
       PipelineStage.EST_IN_PROGRESS,
       PipelineStage.EST_COMPLETED,
       PipelineStage.EST_SENT,
-      // Legacy
+      PipelineStage.EST_ON_HOLD,
+      PipelineStage.EST_APPROVED,
+      PipelineStage.EST_REJECTED,
+      // Legacy pre-sale stages retained for backward compatibility
       PipelineStage.SITE_VISIT_SCHEDULED,
       PipelineStage.ESTIMATE_IN_PROGRESS,
       PipelineStage.ESTIMATE_SENT,
-      PipelineStage.FOLLOW_UP
+      PipelineStage.FOLLOW_UP,
     ];
     return estimateStages.includes(job.pipelineStage);
   });

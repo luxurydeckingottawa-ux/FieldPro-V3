@@ -9,7 +9,15 @@ interface NewJobIntakeViewProps {
   initialStage?: PipelineStage;
 }
 
+const LEAD_STAGES = new Set([
+  PipelineStage.LEAD_IN,
+  PipelineStage.FIRST_CONTACT,
+  PipelineStage.SECOND_CONTACT,
+]);
+
 const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, initialStage = PipelineStage.LEAD_IN }) => {
+  const isLeadMode = LEAD_STAGES.has(initialStage);
+
   const [formData, setFormData] = useState({
     jobNumber: `LD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
     clientName: '',
@@ -18,6 +26,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
     projectAddress: '',
     projectType: '',
     scopeSummary: '',
+    leadSource: '',
     plannedStartDate: '',
     plannedDurationDays: 5,
     assignedCrewOrSubcontractor: '',
@@ -62,6 +71,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
       officialScheduleStatus: ScheduleStatus.ON_SCHEDULE,
       buildDetails: buildDetails,
       customerPortalToken: crypto.randomUUID(),
+      leadSource: formData.leadSource || undefined,
     };
 
     onSave(newJob);
@@ -99,7 +109,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
               <ArrowLeft className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors" />
             </button>
             <div>
-              <h1 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">New Job Intake</h1>
+              <h1 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">{isLeadMode ? 'New Lead' : 'New Job Intake'}</h1>
               <p className="text-[10px] text-[var(--brand-gold)] font-black uppercase tracking-[0.2em]">{formData.jobNumber}</p>
             </div>
           </div>
@@ -121,7 +131,85 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
         </div>
       </header>
 
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-12 flex flex-col md:flex-row gap-12">
+      {/* LEAD MODE: simplified form */}
+      {isLeadMode && (
+        <div className="flex-1 max-w-2xl mx-auto w-full px-6 py-12">
+          <div className="bg-[var(--bg-secondary)] rounded-[2.5rem] shadow-2xl border border-[var(--border-color)] p-10 space-y-8">
+            <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic flex items-center gap-3">
+              <Info className="w-5 h-5 text-[var(--brand-gold)]" />
+              New Lead
+            </h2>
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500">
+                <AlertCircle className="w-5 h-5" />
+                <p className="text-[10px] font-black uppercase tracking-widest">{error}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Client Name *</label>
+                <input type="text" value={formData.clientName} onChange={e => setFormData({...formData, clientName: e.target.value})}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
+                  placeholder="e.g. John Smith" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Phone</label>
+                <input type="text" value={formData.clientPhone} onChange={e => setFormData({...formData, clientPhone: e.target.value})}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
+                  placeholder="613-555-0100" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Email</label>
+                <input type="email" value={formData.clientEmail} onChange={e => setFormData({...formData, clientEmail: e.target.value})}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
+                  placeholder="client@email.com" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Lead Source</label>
+                <select value={formData.leadSource} onChange={e => setFormData({...formData, leadSource: e.target.value})}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all appearance-none">
+                  <option value="">Select Source...</option>
+                  <option value="Google Search">Google Search</option>
+                  <option value="Google Maps">Google Maps</option>
+                  <option value="Facebook">Facebook</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="Referral">Referral</option>
+                  <option value="Kijiji">Kijiji</option>
+                  <option value="Yard Sign">Yard Sign</option>
+                  <option value="Walk-in">Walk-in</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="col-span-1 md:col-span-2 space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Project Address *</label>
+                <input type="text" value={formData.projectAddress} onChange={e => setFormData({...formData, projectAddress: e.target.value})}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30"
+                  placeholder="Street, City, Postal Code" />
+              </div>
+              <div className="col-span-1 md:col-span-2 space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Notes / Description</label>
+                <textarea value={formData.scopeSummary} onChange={e => setFormData({...formData, scopeSummary: e.target.value})}
+                  rows={4}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-medium text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all placeholder:text-[var(--text-secondary)]/30 leading-relaxed"
+                  placeholder="What did they describe? Any specific requests or notes..." />
+              </div>
+            </div>
+            <div className="flex justify-end gap-4 pt-4 border-t border-[var(--border-color)]">
+              <button onClick={onCancel} className="text-[10px] font-black text-[var(--text-secondary)] hover:text-[var(--text-primary)] uppercase tracking-[0.2em] transition-colors px-6 py-3">
+                Cancel
+              </button>
+              <button onClick={handleSave}
+                className="flex items-center gap-3 bg-[var(--brand-gold)] text-black px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:opacity-90 transition-all active:scale-95">
+                <Save className="w-4 h-4" />
+                Save Lead
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FULL FORM: estimates and jobs */}
+      {!isLeadMode && <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-12 flex flex-col md:flex-row gap-12">
         {/* Sidebar Nav */}
         <aside className="w-full md:w-72 flex-shrink-0">
           <nav className="space-y-2 sticky top-32">
@@ -790,7 +878,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
             </button>
           </div>
         </main>
-      </div>
+      </div>}
     </div>
   );
 };

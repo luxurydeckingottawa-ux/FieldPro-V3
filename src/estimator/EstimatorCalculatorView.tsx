@@ -1761,6 +1761,7 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
         pricingSummary,
         activePackage,
       });
+      setEstimateNumber(prev => prev + 1);
     } else {
       // Fallback: print PDF if no callback
       setDocMode('estimate');

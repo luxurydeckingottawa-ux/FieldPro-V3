@@ -12,7 +12,7 @@ import {
   ScheduleStatus,
   CustomerLifecycle
 } from '../types';
-import { PIPELINE_STAGES, APP_USERS, PAGE_TITLES } from '../constants';
+import { PIPELINE_STAGES, APP_USERS, PAGE_TITLES, createDefaultBuildDetails } from '../constants';
 import ProjectLocationMap from '../components/ProjectLocationMap';
 import JobSummaryCard from '../components/JobSummaryCard';
 import PortalSharingCard from '../components/PortalSharingCard';
@@ -45,19 +45,20 @@ import {
   Calendar,
   Clock,
   ChevronRight,
-  AlertCircle,
+  ChevronDown,
+
   Hammer,
   Zap,
   Info,
   Phone,
   Construction,
   Layers,
-  CalendarCheck,
-  CalendarClock,
+
   X,
   Activity,
   BarChart3,
-  MapPin
+  MapPin,
+  Check
 } from 'lucide-react';
 import { OfficeAIAssistant } from '../components/OfficeAIAssistant';
 import { AIOfficeInsights } from '../components/AIOfficeInsights';
@@ -94,6 +95,10 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [editFormData, setEditFormData] = useState<any>(null);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageType, setMessageType] = useState<'sms' | 'email'>('sms');
+  const [customerInfoCollapsed, setCustomerInfoCollapsed] = useState(false);
+  const [officeNotesCollapsed, setOfficeNotesCollapsed] = useState(false);
+  const [siteNotesCollapsed, setSiteNotesCollapsed] = useState(false);
+  const [assignmentExpanded, setAssignmentExpanded] = useState(false);
 
   const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === job.pipelineStage);
   const currentStageInfo = stageIndex !== -1 ? PIPELINE_STAGES[stageIndex] : null;
@@ -266,10 +271,6 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 </button>
               </>
             )}
-            <div className="h-8 w-px bg-white/10 mx-2 hidden md:block" />
-            <div className={`px-3 py-1.5 rounded-lg border font-black text-[9px] uppercase tracking-widest ${getStatusColor(job.completionReadinessStatus || '')}`}>
-              {job.completionReadinessStatus?.replace('_', ' ')}
-            </div>
             {onDeleteJob && (
               <button
                 onClick={() => {
@@ -365,50 +366,9 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               </section>
             )}
             
-            {/* Needs Attention Summary */}
-            {issues.length > 0 && (
-              <section 
-                
-                
-                
-                className="bg-rose-500/5 border border-rose-500/20 rounded-[2rem] p-6 shadow-xl relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="h-10 w-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-                    <AlertCircle className="h-5 w-5 text-rose-500" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-black text-white uppercase tracking-tight italic">Needs Attention</h2>
-                    <p className="text-[10px] text-rose-500/70 font-black uppercase tracking-widest">{issues.length} Issues Identified</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {issues.map((issue, idx) => (
-                    <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/5 group hover:bg-white/10 transition-all">
-                      <div className={`mt-1 h-1.5 w-1.5 rounded-full shrink-0 ${
-                        issue.type === 'error' ? 'bg-rose-500' : 
-                        issue.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
-                      }`} />
-                      <div>
-                        <p className={`text-[10px] font-black uppercase tracking-widest ${
-                          issue.type === 'error' ? 'text-rose-400' : 
-                          issue.type === 'warning' ? 'text-amber-400' : 'text-blue-400'
-                        }`}>
-                          {issue.label}
-                        </p>
-                        {issue.description && (
-                          <p className="text-[11px] text-gray-400 font-medium mt-0.5 leading-relaxed">{issue.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
-            {/* Proposal Engagement Tracking */}
-            {job.portalEngagement && (
+            {/* Proposal Engagement Tracking - Only shown during estimate/pre-sale stages */}
+            {isEstimateStage && job.portalEngagement && (
               <section 
                 
                 
@@ -700,146 +660,36 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             )}
 
             {/* Job Summary Card */}
-            <JobSummaryCard 
-              job={job}
-              onOpenMessageModal={(type) => {
-                setMessageType(type);
-                setIsMessageModalOpen(true);
-              }}
-            />
-
-            {/* Completion & Closeout Visibility Layer (Stage 3) */}
-            {(job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
-              <section 
-                
-                
-                
-                className="bg-[var(--card-bg)] rounded-[2rem] p-8 shadow-2xl border border-[var(--brand-gold)]/20 ring-1 ring-[var(--brand-gold)]/10"
-              >
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h3 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1 flex items-center gap-2">
-                      <ClipboardCheck size={14} /> Completion & Closeout Layer
-                    </h3>
-                    <h2 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-tight">Field-to-Office Visibility</h2>
-                  </div>
-                  <div className={`px-4 py-2 rounded-xl border font-black text-[10px] uppercase tracking-widest ${getStatusColor(job.completionReadinessStatus || '')}`}>
-                    {job.completionReadinessStatus?.replace('_', ' ')}
-                  </div>
+            <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2rem] shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-8 py-5">
+                <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                  <Info size={14} className="text-[var(--brand-gold)]" /> Client Info
+                  <span className="ml-2 text-white font-bold normal-case tracking-normal">{job.clientName}</span>
                 </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
-                  {/* Field Status */}
-                  <div className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)]">
-                    <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-widest mb-2">Field Status</p>
-                    <select 
-                      value={job.fieldStatus}
-                      onChange={(e) => onUpdateJob(job.id, { fieldStatus: e.target.value as FieldStatus })}
-                      className="w-full bg-transparent text-xs font-bold text-[var(--text-primary)] uppercase focus:outline-none"
-                    >
-                      {Object.values(FieldStatus).map(s => (
-                        <option key={s} value={s} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{s}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Sign-off */}
-                  <div className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)]">
-                    <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-widest mb-2">Client Sign-off</p>
-                    <select 
-                      value={job.signoffStatus}
-                      onChange={(e) => onUpdateJob(job.id, { signoffStatus: e.target.value as any })}
-                      className="w-full bg-transparent text-xs font-bold text-[var(--text-primary)] uppercase focus:outline-none"
-                    >
-                      <option value="pending" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Pending</option>
-                      <option value="signed" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Signed</option>
-                    </select>
-                  </div>
-
-                  {/* Completion Package */}
-                  <div className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)]">
-                    <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-widest mb-2">Completion Pkg</p>
-                    <select 
-                      value={job.completionPackageStatus}
-                      onChange={(e) => onUpdateJob(job.id, { completionPackageStatus: e.target.value as CompletionPackageStatus })}
-                      className="w-full bg-transparent text-xs font-bold text-[var(--text-primary)] uppercase focus:outline-none"
-                    >
-                      {Object.values(CompletionPackageStatus).map(s => (
-                        <option key={s} value={s} className="bg-black text-white">{s.replace('_', ' ')}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Photo Confirmation */}
-                  <div className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)]">
-                    <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-widest mb-2">Photo Confirmation</p>
-                    <select 
-                      value={job.photoCompletionStatus}
-                      onChange={(e) => onUpdateJob(job.id, { photoCompletionStatus: e.target.value as PhotoCompletionStatus })}
-                      className="w-full bg-transparent text-xs font-bold text-[var(--text-primary)] uppercase focus:outline-none"
-                    >
-                      {Object.values(PhotoCompletionStatus).map(s => (
-                        <option key={s} value={s} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{s.replace('_', ' ')}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Invoice Support */}
-                  <div className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)]">
-                    <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-widest mb-2">Invoice Support</p>
-                    <select 
-                      value={job.invoiceSupportStatus}
-                      onChange={(e) => onUpdateJob(job.id, { invoiceSupportStatus: e.target.value as any })}
-                      className="w-full bg-transparent text-xs font-bold text-[var(--text-primary)] uppercase focus:outline-none"
-                    >
-                      <option value="pending" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Pending</option>
-                      <option value="submitted" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Submitted</option>
-                      <option value="not_required" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Not Required</option>
-                    </select>
-                  </div>
-
-                  {/* Office Review */}
-                  <div className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)]">
-                    <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-widest mb-2">Office Review</p>
-                    <select 
-                      value={job.officeReviewStatus}
-                      onChange={(e) => onUpdateJob(job.id, { officeReviewStatus: e.target.value as OfficeReviewStatus })}
-                      className="w-full bg-transparent text-xs font-bold text-[var(--text-primary)] uppercase focus:outline-none"
-                    >
-                      {Object.values(OfficeReviewStatus).map(s => (
-                        <option key={s} value={s} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{s.replace('_', ' ')}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Readiness Status */}
-                  <div className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)] col-span-2 md:col-span-3">
-                    <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-widest mb-2">Overall Readiness</p>
-                    <select 
-                      value={job.completionReadinessStatus}
-                      onChange={(e) => onUpdateJob(job.id, { completionReadinessStatus: e.target.value as CompletionReadinessStatus })}
-                      className="w-full bg-transparent text-xs font-black text-[var(--text-primary)] uppercase focus:outline-none"
-                    >
-                      {Object.values(CompletionReadinessStatus).map(s => (
-                        <option key={s} value={s} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{s.replace('_', ' ')}</option>
-                      ))}
-                    </select>
-                  </div>
+                <button
+                  onClick={() => setCustomerInfoCollapsed(prev => !prev)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all"
+                >
+                  {customerInfoCollapsed ? (
+                    <><ChevronDown size={12} className="rotate-[-90deg]" /> Show details</>
+                  ) : (
+                    <><ChevronDown size={12} /> Hide details</>
+                  )}
+                </button>
+              </div>
+              {!customerInfoCollapsed && (
+                <div className="border-t border-white/5">
+                  <JobSummaryCard
+                    job={job}
+                    onOpenMessageModal={(type) => {
+                      setMessageType(type);
+                      setIsMessageModalOpen(true);
+                    }}
+                  />
                 </div>
+              )}
+            </div>
 
-                {job.completionReadinessStatus === CompletionReadinessStatus.NEEDS_ATTENTION && (
-                  <div className="mt-6 p-4 bg-rose-50 rounded-2xl border border-rose-100 flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-black text-rose-700 uppercase tracking-widest mb-1">Needs Attention</p>
-                      <p className="text-[11px] font-medium text-rose-600 leading-relaxed">
-                        One or more completion requirements have not been met. Review field status and photo confirmation before proceeding.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </section>
-            )}
 
             {/* Stage Checklist */}
             <section 
@@ -907,9 +757,30 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                         {item.label}
                       </span>
                       
+                      {/* Material Delivery Auto-Text */}
+                      {item.label.toLowerCase().includes('arrange delivery') && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!job.clientPhone) { alert('No phone number on file for this customer.'); return; }
+                            const firstName = job.clientName?.split(' ')[0] || 'there';
+                            const msg = `Hi ${firstName}, your materials for your Luxury Decking project are scheduled for delivery and will be placed on your driveway. Please let us know if you have specific placement instructions. Thank you!`;
+                            const secret = (import.meta as any).env?.VITE_INTERNAL_API_SECRET;
+                            fetch('/.netlify/functions/send-sms', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', ...(secret ? { 'X-Internal-Secret': secret } : {}) },
+                              body: JSON.stringify({ to: job.clientPhone, message: msg }),
+                            }).then(() => alert('Material delivery text sent!')).catch(() => alert('Failed to send text.'));
+                          }}
+                          className="ml-auto flex items-center gap-1 px-2.5 py-1.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-lg hover:bg-[var(--brand-gold)] hover:text-black transition-all text-[9px] font-black uppercase tracking-widest"
+                          title="Auto-text homeowner: materials on the way"
+                        >
+                          <MessageSquare size={11} /> Text
+                        </button>
+                      )}
                       {/* Communication Hook */}
-                      {(item.label.toLowerCase().includes('notify') || 
-                        item.label.toLowerCase().includes('send') || 
+                      {!item.label.toLowerCase().includes('arrange delivery') && (item.label.toLowerCase().includes('notify') ||
+                        item.label.toLowerCase().includes('send') ||
                         item.label.toLowerCase().includes('request')) && (
                         <button
                           onClick={(e) => {
@@ -952,95 +823,6 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 </div>
               )}
             </section>
-
-            {/* Financial Performance Overview - Hidden during estimate stages */}
-            {!isEstimateStage && (
-            <section 
-              
-              
-              
-              className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
-              <div className="flex items-center justify-between mb-8 relative z-10">
-                <div>
-                  <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
-                    <Activity size={14} /> Financial Performance
-                  </h3>
-                  <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Job Financial Overview</h2>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="flex flex-col items-end">
-                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Gross Profit (Est.)</p>
-                    <p className={`text-2xl font-black italic tracking-tight ${((job.totalAmount || 0) - (job.materialCost || 0) - (job.labourCost || labourSummary.estimatedCost || 0)) >= 0 ? 'text-[var(--brand-gold)]' : 'text-rose-500'}`}>
-                      ${((job.totalAmount || 0) - (job.materialCost || 0) - (job.labourCost || labourSummary.estimatedCost || 0)).toLocaleString()}
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      setEditFormData({
-                        clientName: job.clientName,
-                        clientPhone: job.clientPhone || '',
-                        projectAddress: job.projectAddress,
-                        projectType: job.projectType,
-                        totalAmount: job.totalAmount || 0,
-                        paidAmount: job.paidAmount || 0,
-                        materialCost: job.materialCost || 0,
-                        labourCost: job.labourCost || labourSummary.estimatedCost || 0,
-                        assignedUsers: job.assignedUsers || [],
-                        assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor || '',
-                        plannedStartDate: job.plannedStartDate || '',
-                        plannedDurationDays: job.plannedDurationDays || 0,
-                        scopeSummary: job.scopeSummary || '',
-                        buildDetails: job.buildDetails || createDefaultBuildDetails()
-                      });
-                      setEditingSection('jobInfo');
-                    }}
-                    className="p-3 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-xl hover:bg-[var(--brand-gold)] hover:text-black transition-all"
-                  >
-                    <Settings size={16} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
-                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Total Revenue</p>
-                  <p className="text-xl font-black text-white tracking-tight">${(job.totalAmount || 0).toLocaleString()}</p>
-                  <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-[var(--brand-gold)] w-full"></div>
-                  </div>
-                </div>
-
-                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Paid Amount</p>
-                  <p className="text-xl font-black text-[var(--brand-gold-light)] tracking-tight">${(job.paidAmount || 0).toLocaleString()}</p>
-                  <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-[var(--brand-gold)]" style={{ width: `${Math.min(100, ((job.paidAmount || 0) / (job.totalAmount || 1)) * 100)}%` }}></div>
-                  </div>
-                </div>
-
-                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Material Costs</p>
-                  <p className="text-xl font-black text-white tracking-tight">${(job.materialCost || 0).toLocaleString()}</p>
-                  <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500" style={{ width: `${Math.min(100, ((job.materialCost || 0) / (job.totalAmount || 1)) * 100)}%` }}></div>
-                  </div>
-                </div>
-
-                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Labour Costs (Est.)</p>
-                  <p className="text-xl font-black text-white tracking-tight">${(job.labourCost || labourSummary.estimatedCost || 0).toLocaleString()}</p>
-                  <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500" style={{ width: `${Math.min(100, ((job.labourCost || labourSummary.estimatedCost || 0) / (job.totalAmount || 1)) * 100)}%` }}></div>
-                  </div>
-                  <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mt-2">
-                    {labourSummary.totalHours} Total Hours
-                  </p>
-                </div>
-              </div>
-            </section>
-            )}
 
             {/* Build Specifications / Digital Work Order */}
             {job.buildDetails && (
@@ -1249,11 +1031,99 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               </section>
             )}
 
+            {/* Estimator Field Notes */}
+            {job.estimatorIntake && (
+              <div className="rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden">
+                <div className="px-6 py-4 border-b border-white/5">
+                  <h3 className="text-xs font-black text-white uppercase tracking-widest">Estimator Field Notes</h3>
+                </div>
+                <div className="p-6 space-y-6">
+                  {/* Site Checklist */}
+                  <div>
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Checklist</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        ['elevationConfirmed', 'Elevation Confirmed'],
+                        ['accessConfirmed', 'Site Access Confirmed'],
+                        ['removalRequired', 'Removal/Disposal Required'],
+                        ['helicalPileAccess', 'Helical Pile Access'],
+                        ['obstaclesIdentified', 'Obstacles Identified'],
+                        ['permitRequired', 'Permit Required'],
+                      ] as [string, string][]).map(([key, label]) => {
+                        const val = (job.estimatorIntake!.checklist as any)[key];
+                        return (
+                          <div key={key} className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${val ? 'bg-[var(--brand-gold)]' : 'bg-white/5 border border-white/10'}`}>
+                              {val && <Check className="w-2.5 h-2.5 text-black" />}
+                            </div>
+                            <span className="text-xs text-gray-400">{label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {job.estimatorIntake.checklist.elevationMeasurement && (
+                      <p className="mt-2 text-xs text-gray-400">Elevation: <span className="text-white">{job.estimatorIntake.checklist.elevationMeasurement}</span></p>
+                    )}
+                    {job.estimatorIntake.checklist.gateOpeningMeasurement && (
+                      <p className="text-xs text-gray-400">Gate Opening: <span className="text-white">{job.estimatorIntake.checklist.gateOpeningMeasurement}</span></p>
+                    )}
+                  </div>
+
+                  {/* Site Photos */}
+                  {job.estimatorIntake.photos && job.estimatorIntake.photos.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Photos ({job.estimatorIntake.photos.length})</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {job.estimatorIntake.photos.map(photo => (
+                          <a key={photo.id} href={photo.url} target="_blank" rel="noopener noreferrer">
+                            <img src={photo.url} alt={photo.category} className="w-full h-24 object-cover rounded-lg border border-white/5 hover:opacity-80 transition-opacity" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Site Sketch */}
+                  {job.estimatorIntake.sketch && job.estimatorIntake.sketch.strokes && job.estimatorIntake.sketch.strokes.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Sketch</p>
+                      <div className="bg-white rounded-xl overflow-hidden">
+                        <svg viewBox="0 0 400 300" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+                          {job.estimatorIntake.sketch.strokes.map((stroke, i) => {
+                            const pts: string[] = [];
+                            for (let j = 0; j < stroke.points.length; j += 2) {
+                              pts.push(`${stroke.points[j]},${stroke.points[j + 1]}`);
+                            }
+                            return (
+                              <polyline key={i} points={pts.join(' ')} fill="none"
+                                stroke={stroke.color || '#000'} strokeWidth={stroke.width || 2}
+                                strokeLinecap="round" strokeLinejoin="round" />
+                            );
+                          })}
+                          {job.estimatorIntake.sketch.labels?.map(label => (
+                            <text key={label.id} x={label.x} y={label.y} fontSize="12" fill="#333">{label.text}</text>
+                          ))}
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Field Notes */}
+                  {job.estimatorIntake.notes && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Field Notes</p>
+                      <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{job.estimatorIntake.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Scope Summary */}
-            <section 
-              
-              
-              
+            <section
+
+
+
               className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md"
             >
               <div className="flex items-center justify-between mb-6">
@@ -1275,265 +1145,130 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               </div>
             </section>
 
-            {/* Office Notes */}
-            <section 
-              
-              
-              
-              className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md"
-            >
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                  <MessageSquare size={14} className="text-[var(--brand-gold)]" /> Office Notes
-                </h3>
-                <button className="px-4 py-2 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--brand-gold)]/20 transition-all active:scale-95 border border-[var(--brand-gold)]/20">
-                  Add Note
-                </button>
-              </div>
-              <div className="space-y-4">
-                {job.officeNotes && job.officeNotes.length > 0 ? (
-                  job.officeNotes.map(note => (
-                    <div key={note.id} className="bg-white/5 rounded-[1.5rem] p-6 border border-white/10 hover:border-white/20 transition-all group">
-                      <div className="flex justify-between items-center mb-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-[var(--brand-gold)]/20 flex items-center justify-center text-[10px] font-black text-[var(--brand-gold)]">
-                            {note.author.charAt(0)}
-                          </div>
-                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{note.author}</span>
-                        </div>
-                        <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{new Date(note.timestamp).toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-sm text-gray-300 font-medium leading-relaxed">{note.text}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-8 rounded-2xl border border-dashed border-white/5 flex flex-col items-center justify-center text-center">
-                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">No office notes yet.</p>
+            {/* Scheduling — Compact card, visible for Ready to Start only (In Field/Completion handled in right column) */}
+            {job.pipelineStage === PipelineStage.READY_TO_START && (
+              <section className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2rem] overflow-hidden shadow-2xl backdrop-blur-md">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[var(--brand-gold)]" />
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Project Schedule</h3>
                   </div>
-                )}
-              </div>
-            </section>
-
-            {/* Site Notes (from Field) */}
-            <section 
-              
-              
-              
-              className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-md"
-            >
-              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-                <History size={14} className="text-[var(--brand-gold)]" /> Site Notes (Field Logs)
-              </h3>
-              <div className="space-y-4">
-                {job.siteNotes && job.siteNotes.length > 0 ? (
-                  job.siteNotes.map(note => (
-                    <div key={note.id} className="bg-[var(--brand-gold)]/5 rounded-[1.5rem] p-6 border border-[var(--brand-gold)]/10 hover:border-[var(--brand-gold)]/20 transition-all">
-                      <div className="flex justify-between items-center mb-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-[var(--brand-gold)]/20 flex items-center justify-center text-[10px] font-black text-[var(--brand-gold)]">
-                            {note.author.charAt(0)}
-                          </div>
-                          <span className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest">{note.author}</span>
-                        </div>
-                        <span className="text-[9px] font-black text-[var(--brand-gold)]/40 uppercase tracking-widest">{new Date(note.timestamp).toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-sm text-gray-300 font-medium leading-relaxed italic">"{note.text}"</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-8 rounded-2xl border border-dashed border-white/5 flex flex-col items-center justify-center text-center">
-                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">No site notes received from the field yet.</p>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Scheduling & Timeline Section (Visible for Ready to Start, In Field, Completion) */}
-            {(job.pipelineStage === PipelineStage.READY_TO_START || 
-              job.pipelineStage === PipelineStage.IN_FIELD || 
-              job.pipelineStage === PipelineStage.COMPLETION) && (
-              <section 
-                
-                
-                
-                className="bg-white/[0.03] border border-[var(--border-color)] rounded-[2.5rem] overflow-hidden shadow-2xl backdrop-blur-md"
-              >
-                <div className="p-8 border-b border-white/10 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-[var(--brand-gold)]/10 rounded-xl border border-[var(--brand-gold)]/20">
-                      <Calendar className="w-5 h-5 text-[var(--brand-gold)]" />
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-black text-white uppercase tracking-[0.3em]">Scheduling & Timeline</h3>
-                      <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">Office Control & Field Forecast</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => {
-                        setEditFormData({
-                          plannedStartDate: job.plannedStartDate,
-                          plannedDurationDays: job.plannedDurationDays,
-                          plannedFinishDate: job.plannedFinishDate,
-                          officialScheduleStatus: job.officialScheduleStatus,
-                          assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
-                          assignedUsers: job.assignedUsers
-                        });
-                        setEditingSection('schedule');
-                      }}
-                      className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all flex items-center gap-2"
-                    >
-                      <Edit2 size={12} /> Edit Schedule
-                    </button>
-                    {hasScheduleDiscrepancy && (
-                      <div className="flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full">
-                        <AlertCircle className="w-3 h-3 text-amber-500" />
-                        <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Review Required</span>
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => {
+                      setEditFormData({
+                        plannedStartDate: job.plannedStartDate,
+                        plannedDurationDays: job.plannedDurationDays,
+                        plannedFinishDate: job.plannedFinishDate,
+                        officialScheduleStatus: job.officialScheduleStatus,
+                        assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
+                        assignedUsers: job.assignedUsers
+                      });
+                      setEditingSection('schedule');
+                    }}
+                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all flex items-center gap-1.5"
+                  >
+                    <Edit2 size={11} /> Edit
+                  </button>
                 </div>
-
-                <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
-                  {/* Official Office Schedule Summary */}
-                  <div className="space-y-8">
-                    <div className="flex items-center gap-2">
-                      <CalendarCheck className="w-4 h-4 text-[var(--brand-gold)]" />
-                      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Official Office Schedule</h4>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Start Date</p>
-                        <p className="text-sm font-bold text-white">{job.plannedStartDate || 'TBD'}</p>
-                      </div>
-                      <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Duration</p>
-                        <p className="text-sm font-bold text-white">{job.plannedDurationDays || 0} Working Days</p>
-                      </div>
-                      <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Finish Date</p>
-                        <p className="text-sm font-bold text-white">{job.plannedFinishDate || 'TBD'}</p>
-                      </div>
-                      <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Official Status</p>
-                        <div className={`inline-flex px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${getScheduleStatusColor(job.officialScheduleStatus)}`}>
-                          {job.officialScheduleStatus?.replace('_', ' ') || 'ON SCHEDULE'}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Assigned Crew / Sub</p>
-                        <Users className="w-3 h-3 text-gray-600" />
-                      </div>
-                      <p className="text-sm font-bold text-white">{job.assignedCrewOrSubcontractor || 'Unassigned'}</p>
-                      <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-1">
-                        Lead: {APP_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'None'}
-                      </p>
-                    </div>
+                <div className="p-5 grid grid-cols-3 gap-3">
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Start</p>
+                    <p className="text-sm font-bold text-white">{job.plannedStartDate || 'TBD'}</p>
                   </div>
-
-                  {/* Latest Field Forecast */}
-                  <div className="space-y-8">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CalendarClock className="w-4 h-4 text-amber-500" />
-                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Latest Field Forecast</h4>
-                      </div>
-                      {job.fieldForecast && (
-                        <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">
-                          Updated: {new Date(job.fieldForecast.updatedAt).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-
-                    {job.fieldForecast ? (
-                      <div className="bg-amber-500/[0.03] border border-amber-500/20 rounded-[2rem] p-8 relative overflow-hidden">
-                        {/* Discrepancy Indicator */}
-                        {hasScheduleDiscrepancy && (
-                          <div className="absolute top-0 right-0 w-20 h-20">
-                            <div className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 rotate-45 bg-amber-500 w-32 h-10 flex items-center justify-center shadow-lg">
-                              <span className="text-[9px] font-black text-black uppercase tracking-widest">New Info</span>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-8 mb-8">
-                          <div>
-                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3">Field Status</p>
-                            <div className={`inline-flex px-3 py-1 rounded-lg border text-[10px] font-black uppercase tracking-widest ${getScheduleStatusColor(job.fieldForecast.status)}`}>
-                              {job.fieldForecast.status.replace('_', ' ')}
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3">Est. Remaining</p>
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-3xl font-black text-white">{job.fieldForecast.estimatedDaysRemaining}</span>
-                              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Days</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {job.fieldForecast.delayReason && (
-                          <div className="mb-8 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl">
-                            <div className="flex items-center gap-2 mb-2">
-                              <AlertTriangle className="w-3 h-3 text-rose-500" />
-                              <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Delay Reason</p>
-                            </div>
-                            <p className="text-sm font-bold text-rose-200">{job.fieldForecast.delayReason}</p>
-                          </div>
-                        )}
-
-                        {job.fieldForecast.note && (
-                          <div className="mb-8">
-                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Field Note</p>
-                            <p className="text-xs text-gray-300 italic font-medium leading-relaxed">"{job.fieldForecast.note}"</p>
-                          </div>
-                        )}
-
-                        <button 
-                          onClick={() => {
-                            if (job.fieldForecast) {
-                              const newFinish = new Date();
-                              newFinish.setDate(newFinish.getDate() + job.fieldForecast.estimatedDaysRemaining);
-                              const finishStr = newFinish.toISOString().split('T')[0];
-                              
-                              let newDuration = job.plannedDurationDays;
-                              if (job.plannedStartDate) {
-                                const start = new Date(job.plannedStartDate);
-                                newDuration = Math.ceil((newFinish.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                              }
-
-                              onUpdateSchedule?.(job.id, {
-                                officialScheduleStatus: job.fieldForecast.status,
-                                plannedFinishDate: finishStr,
-                                plannedDurationDays: newDuration,
-                                fieldForecast: undefined
-                              });
-                            }
-                          }}
-                          className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-2xl transition-all flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(245,158,11,0.2)] active:scale-[0.98]"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          Apply Forecast to Official Schedule
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="bg-white/[0.02] border border-dashed border-white/10 rounded-[2rem] p-16 text-center flex flex-col items-center justify-center h-full min-h-[300px]">
-                        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                          <Clock className="w-8 h-8 text-gray-700" />
-                        </div>
-                        <p className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Awaiting Field Forecast</p>
-                        <p className="text-[10px] text-gray-700 font-bold uppercase tracking-widest max-w-[200px] leading-relaxed">
-                          Field updates will appear here once submitted by the crew.
-                        </p>
-                      </div>
-                    )}
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Duration</p>
+                    <p className="text-sm font-bold text-white">{job.plannedDurationDays || 0}d</p>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Finish</p>
+                    <p className="text-sm font-bold text-white">{job.plannedFinishDate || 'TBD'}</p>
                   </div>
                 </div>
               </section>
+            )}
+
+            {/* Financial Performance Overview - Bottom of page, hidden during estimate stages */}
+            {!isEstimateStage && (
+            <section className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+              <div className="flex items-center justify-between mb-8 relative z-10">
+                <div>
+                  <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                    <Activity size={14} /> Financial Performance
+                  </h3>
+                  <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Job Financial Overview</h2>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="flex flex-col items-end">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Gross Profit (Est.)</p>
+                    <p className={`text-2xl font-black italic tracking-tight ${((job.totalAmount || 0) - (job.materialCost || 0) - (job.labourCost || labourSummary.estimatedCost || 0)) >= 0 ? 'text-[var(--brand-gold)]' : 'text-rose-500'}`}>
+                      ${((job.totalAmount || 0) - (job.materialCost || 0) - (job.labourCost || labourSummary.estimatedCost || 0)).toLocaleString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditFormData({
+                        clientName: job.clientName,
+                        clientPhone: job.clientPhone || '',
+                        projectAddress: job.projectAddress,
+                        projectType: job.projectType,
+                        totalAmount: job.totalAmount || 0,
+                        paidAmount: job.paidAmount || 0,
+                        materialCost: job.materialCost || 0,
+                        labourCost: job.labourCost || labourSummary.estimatedCost || 0,
+                        assignedUsers: job.assignedUsers || [],
+                        assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor || '',
+                        plannedStartDate: job.plannedStartDate || '',
+                        plannedDurationDays: job.plannedDurationDays || 0,
+                        scopeSummary: job.scopeSummary || '',
+                        buildDetails: job.buildDetails || createDefaultBuildDetails()
+                      });
+                      setEditingSection('jobInfo');
+                    }}
+                    className="p-3 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-xl hover:bg-[var(--brand-gold)] hover:text-black transition-all"
+                  >
+                    <Settings size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Total Revenue</p>
+                  <p className="text-xl font-black text-white tracking-tight">${(job.totalAmount || 0).toLocaleString()}</p>
+                  <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-[var(--brand-gold)] w-full"></div>
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Paid Amount</p>
+                  <p className="text-xl font-black text-[var(--brand-gold-light)] tracking-tight">${(job.paidAmount || 0).toLocaleString()}</p>
+                  <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-[var(--brand-gold)]" style={{ width: `${Math.min(100, ((job.paidAmount || 0) / (job.totalAmount || 1)) * 100)}%` }}></div>
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Material Costs</p>
+                  <p className="text-xl font-black text-white tracking-tight">${(job.materialCost || 0).toLocaleString()}</p>
+                  <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500" style={{ width: `${Math.min(100, ((job.materialCost || 0) / (job.totalAmount || 1)) * 100)}%` }}></div>
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Labour Costs (Est.)</p>
+                  <p className="text-xl font-black text-white tracking-tight">${(job.labourCost || labourSummary.estimatedCost || 0).toLocaleString()}</p>
+                  <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500" style={{ width: `${Math.min(100, ((job.labourCost || labourSummary.estimatedCost || 0) / (job.totalAmount || 1)) * 100)}%` }}></div>
+                  </div>
+                  <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mt-2">
+                    {labourSummary.totalHours} Total Hours
+                  </p>
+                </div>
+              </div>
+            </section>
             )}
           </div>
 
@@ -1545,90 +1280,112 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               <OfficeAIAssistant job={job} onUpdateJob={onUpdateJob} />
             )}
 
-            {/* Field Execution Visibility Hub - Hidden during estimate stages */}
-            {!isEstimateStage && (
-            <section 
-              
-              
-              
-              className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
-            >
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
-                    <Play size={14} className="fill-current" /> Field Execution Hub
-                  </h3>
-                  <h2 className="text-lg font-black text-white uppercase tracking-tight">Real-Time Status</h2>
+            {/* Field Execution + Scheduling — Combined box, IN_FIELD / COMPLETION / PAID_CLOSED only */}
+            {(job.pipelineStage === PipelineStage.IN_FIELD || job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
+            <section className="bg-white/[0.03] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  <Play size={13} className="fill-current text-[var(--brand-gold)]" />
+                  <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em]">Field Status & Timeline</h3>
                 </div>
                 {job.pipelineStage === PipelineStage.IN_FIELD && (
-                  <div className="flex items-center gap-1.5 px-3 py-1 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[8px] font-black uppercase tracking-widest rounded-full border border-[var(--brand-gold)]/20">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[8px] font-black uppercase tracking-widest rounded-full border border-[var(--brand-gold)]/20">
                     <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] animate-pulse" />
                     Live
                   </div>
                 )}
               </div>
 
-              <div className="space-y-4">
+              <div className="p-5 space-y-4">
                 {/* Stage Progress */}
-                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 group hover:border-[var(--brand-gold)]/30 transition-all">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Field Stage</span>
-                      <span className="text-sm font-bold text-white">Stage {job.currentStage} of 5</span>
-                    </div>
-                    <div className="h-12 w-12 rounded-2xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center">
-                      <span className="text-xs font-black text-[var(--brand-gold)]">{Math.round((job.currentStage / 5) * 100)}%</span>
-                    </div>
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Progress — Stage {job.currentStage} of 5</span>
+                    <span className="text-xs font-black text-[var(--brand-gold)]">{Math.round((job.currentStage / 5) * 100)}%</span>
                   </div>
                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-[var(--brand-gold)] transition-all duration-500" 
-                      style={{ width: `${(job.currentStage / 5) * 100}%` }}
-                    />
+                    <div className="h-full bg-[var(--brand-gold)] transition-all duration-500" style={{ width: `${(job.currentStage / 5) * 100}%` }} />
                   </div>
                 </div>
 
-                {/* Timeline Forecast */}
+                {/* Schedule info */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Start</p>
+                    <p className="text-xs font-bold text-white">{job.plannedStartDate || 'TBD'}</p>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Duration</p>
+                    <p className="text-xs font-bold text-white">{job.plannedDurationDays || 0}d</p>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Finish</p>
+                    <p className="text-xs font-bold text-white">{job.plannedFinishDate || 'TBD'}</p>
+                  </div>
+                </div>
+
+                {/* Field Forecast */}
                 {job.fieldForecast ? (
-                  <div className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em]">Timeline Forecast</span>
-                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded border ${
-                        job.fieldForecast.status === 'on_schedule' ? 'text-[var(--brand-gold)] bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'
-                      }`}>
+                  <div className="p-4 rounded-2xl bg-amber-500/[0.05] border border-amber-500/20">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Field Forecast</span>
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${getScheduleStatusColor(job.fieldForecast.status)}`}>
                         {job.fieldForecast.status.replace('_', ' ')}
                       </span>
                     </div>
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="text-2xl font-black text-white italic tracking-tighter">{job.fieldForecast.estimatedDaysRemaining} Days</p>
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Estimated Remaining</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">Last Update</p>
-                        <p className="text-[10px] font-bold text-gray-400">{new Date(job.fieldForecast.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                      </div>
+                    <div className="flex items-baseline gap-1.5 mb-3">
+                      <span className="text-2xl font-black text-white">{job.fieldForecast.estimatedDaysRemaining}</span>
+                      <span className="text-[9px] font-black text-gray-500 uppercase">Days Remaining</span>
                     </div>
                     {job.fieldForecast.note && (
-                      <div className="mt-4 p-3 bg-white/5 rounded-xl border border-white/5">
-                        <p className="text-[10px] text-gray-500 italic leading-relaxed">"{job.fieldForecast.note}"</p>
+                      <p className="text-[10px] text-gray-500 italic mb-3">"{job.fieldForecast.note}"</p>
+                    )}
+                    {job.fieldForecast.delayReason && (
+                      <div className="mb-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-2">
+                        <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
+                        <p className="text-[10px] font-bold text-rose-300">{job.fieldForecast.delayReason}</p>
                       </div>
                     )}
+                    <button
+                      onClick={() => {
+                        if (job.fieldForecast) {
+                          const newFinish = new Date();
+                          newFinish.setDate(newFinish.getDate() + job.fieldForecast.estimatedDaysRemaining);
+                          const finishStr = newFinish.toISOString().split('T')[0];
+                          let newDuration = job.plannedDurationDays;
+                          if (job.plannedStartDate) {
+                            const start = new Date(job.plannedStartDate);
+                            newDuration = Math.ceil((newFinish.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                          }
+                          onUpdateSchedule?.(job.id, {
+                            officialScheduleStatus: job.fieldForecast.status,
+                            plannedFinishDate: finishStr,
+                            plannedDurationDays: newDuration,
+                            fieldForecast: undefined
+                          });
+                        }
+                      }}
+                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-xl transition-all flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Apply to Official Schedule
+                    </button>
                   </div>
                 ) : (
-                  <div className="p-6 rounded-2xl border border-dashed border-white/5 text-center">
-                    <Clock className="w-5 h-5 text-gray-700 mx-auto mb-2" />
-                    <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">No field forecast received</p>
+                  <div className="p-4 rounded-2xl border border-dashed border-white/5 text-center">
+                    <Clock className="w-4 h-4 text-gray-700 mx-auto mb-2" />
+                    <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Awaiting field forecast</p>
                   </div>
                 )}
 
                 {/* Flagged Issues */}
                 {job.flaggedIssues && job.flaggedIssues.length > 0 && (
-                  <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 animate-pulse">
+                  <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-rose-500" />
-                        <span className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em]">Flagged Issues</span>
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                        <span className="text-[9px] font-black text-rose-500 uppercase tracking-[0.2em]">Flagged Issues</span>
                       </div>
                       <span className="text-sm font-black text-rose-500">{job.flaggedIssues.length}</span>
                     </div>
@@ -1651,65 +1408,140 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               onPreviewPortal={onPreviewPortal}
             />
 
-            {/* Assignment & Handoff Summary */}
-            <section 
-              
-              
-              
-              className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl"
-            >
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                  <Users size={14} className="text-[var(--brand-gold)]" /> Assignment & Handoff
-                </h3>
-                <button 
-                  onClick={() => {
-                    setEditFormData({
-                      assignedUsers: job.assignedUsers,
-                      assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
-                      plannedStartDate: job.plannedStartDate,
-                      plannedDurationDays: job.plannedDurationDays
-                    });
-                    setEditingSection('schedule'); // Re-use schedule edit for assignment
-                  }}
-                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all flex items-center gap-2"
+            {/* Assignment & Handoff - Inline row */}
+            <div className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <Users size={14} className="text-[var(--brand-gold)] shrink-0" />
+                  <div>
+                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Assigned To</p>
+                    <p className="text-sm font-bold text-white">
+                      {APP_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'Unassigned'}
+                      {job.assignedCrewOrSubcontractor ? (
+                        <span className="text-[10px] font-bold text-gray-400 ml-2">/ {job.assignedCrewOrSubcontractor}</span>
+                      ) : null}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setAssignmentExpanded(prev => !prev)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all"
                 >
-                  <Edit2 size={12} /> Edit
+                  <Edit2 size={12} />
+                  {assignmentExpanded ? 'Close' : 'Edit'}
                 </button>
               </div>
-              
-              <div className="space-y-6">
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                  <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Assigned Field Lead</p>
-                  <p className="text-sm font-bold text-white">
-                    {APP_USERS.find(u => u.id === job.assignedUsers?.[0])?.name || 'Unassigned'}
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                  <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Crew / Subcontractor</p>
-                  <p className="text-sm font-bold text-white">{job.assignedCrewOrSubcontractor || 'None'}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                    <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Start Date</p>
-                    <p className="text-sm font-bold text-white">{job.plannedStartDate || 'TBD'}</p>
+              {assignmentExpanded && (
+                <div className="border-t border-white/5 px-6 py-5 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                      <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Start Date</p>
+                      <p className="text-xs font-bold text-white">{job.plannedStartDate || 'TBD'}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                      <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Duration</p>
+                      <p className="text-xs font-bold text-white">{job.plannedDurationDays || 0} Days</p>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => {
+                      setEditFormData({
+                        assignedUsers: job.assignedUsers,
+                        assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
+                        plannedStartDate: job.plannedStartDate,
+                        plannedDurationDays: job.plannedDurationDays
+                      });
+                      setEditingSection('schedule');
+                      setAssignmentExpanded(false);
+                    }}
+                    className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all flex items-center justify-center gap-2"
+                  >
+                    <Edit2 size={12} /> Edit Full Schedule & Assignment
+                  </button>
+                </div>
+              )}
+            </div>
 
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                    <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Duration</p>
-                    <p className="text-sm font-bold text-white">{job.plannedDurationDays || 0} Days</p>
-                  </div>
+            {/* Office Notes — Side Box */}
+            <div className="bg-white/[0.03] border border-[var(--border-color)] rounded-[1.5rem] shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4">
+                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <MessageSquare size={13} className="text-[var(--brand-gold)]" /> Office Notes
+                  {job.officeNotes && job.officeNotes.length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-white/10 text-white text-[9px] font-black rounded">{job.officeNotes.length}</span>
+                  )}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button className="px-3 py-1.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[var(--brand-gold)]/20 transition-all border border-[var(--brand-gold)]/20">
+                    Add
+                  </button>
+                  <button
+                    onClick={() => setOfficeNotesCollapsed(prev => !prev)}
+                    className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-gray-400 hover:text-white transition-all"
+                  >
+                    <ChevronDown size={12} className={officeNotesCollapsed ? 'rotate-[-90deg]' : ''} />
+                  </button>
                 </div>
               </div>
-            </section>
+              {!officeNotesCollapsed && (
+                <div className="px-5 pb-5 border-t border-white/5 pt-4 space-y-3">
+                  {job.officeNotes && job.officeNotes.length > 0 ? (
+                    job.officeNotes.map(note => (
+                      <div key={note.id} className="bg-white/5 rounded-xl p-4 border border-white/10">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{note.author}</span>
+                          <span className="text-[9px] font-black text-gray-600">{new Date(note.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-xs text-gray-300 font-medium leading-relaxed">{note.text}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest text-center py-3">No office notes yet.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Site Notes — Side Box */}
+            <div className="bg-white/[0.03] border border-[var(--border-color)] rounded-[1.5rem] shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4">
+                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <History size={13} className="text-[var(--brand-gold)]" /> Site Notes
+                  {job.siteNotes && job.siteNotes.length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[9px] font-black rounded">{job.siteNotes.length}</span>
+                  )}
+                </h3>
+                <button
+                  onClick={() => setSiteNotesCollapsed(prev => !prev)}
+                  className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-gray-400 hover:text-white transition-all"
+                >
+                  <ChevronDown size={12} className={siteNotesCollapsed ? 'rotate-[-90deg]' : ''} />
+                </button>
+              </div>
+              {!siteNotesCollapsed && (
+                <div className="px-5 pb-5 border-t border-white/5 pt-4 space-y-3">
+                  {job.siteNotes && job.siteNotes.length > 0 ? (
+                    job.siteNotes.map(note => (
+                      <div key={note.id} className="bg-[var(--brand-gold)]/5 rounded-xl p-4 border border-[var(--brand-gold)]/10">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest">{note.author}</span>
+                          <span className="text-[9px] font-black text-[var(--brand-gold)]/40">{new Date(note.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-xs text-gray-300 font-medium leading-relaxed italic">"{note.text}"</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest text-center py-3">No field notes yet.</p>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Job Files & Documents Package */}
-            <section 
-              
-              
-              
+            <section
+
+
+
               className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 blur-[60px] -mr-24 -mt-24 pointer-events-none" />

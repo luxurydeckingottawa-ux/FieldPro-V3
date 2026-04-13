@@ -546,7 +546,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   </div>
 
                   <a 
-                    href="https://g.page/r/your-google-review-link/review" 
+                    href={import.meta.env.VITE_GOOGLE_REVIEW_URL || 'https://g.page/r/luxury-decking/review'}
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-4 px-10 py-5 bg-[#1A1A1A] text-white rounded-2xl font-bold text-sm shadow-2xl hover:bg-[var(--brand-gold)] transition-all active:scale-95 group/btn"

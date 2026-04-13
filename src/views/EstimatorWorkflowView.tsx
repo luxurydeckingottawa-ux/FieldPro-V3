@@ -25,7 +25,6 @@ import {
 import EstimatorSiteIntake from '../components/EstimatorSiteIntake';
 import EstimatorMeasureSheet from '../components/EstimatorMeasureSheet';
 import EstimatorSketchPad from '../components/EstimatorSketchPad';
-import EstimatorAiAssist from '../components/EstimatorAiAssist';
 import { safeSetItem, safeRemoveItem } from '../utils/storage';
 import { validateIntakeCompleteness, generateHandoffSummary as generateRuleHandoffSummary } from '../utils/intakeValidation';
 
@@ -37,7 +36,7 @@ interface EstimatorWorkflowViewProps {
 }
 
 const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBack, onSave, onPushToEstimating }) => {
-  const [activeTab, setActiveTab] = useState<'info' | 'intake' | 'measures' | 'sketch' | 'photos' | 'notes' | 'ai' | 'summary'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'intake' | 'measures' | 'sketch' | 'photos' | 'notes' | 'summary'>('info');
   const [status, setStatus] = useState<'scheduled' | 'on_way' | 'in_progress' | 'completed'>('scheduled');
   const [isGeneratingHandoff, setIsGeneratingHandoff] = useState(false);
   
@@ -301,8 +300,24 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
         {/* Appointment Status Bar */}
         <div className="flex gap-2">
           {status === 'scheduled' && (
-            <button 
-              onClick={() => handleStatusChange('on_way')}
+            <button
+              onClick={() => {
+                handleStatusChange('on_way');
+                if (job?.clientPhone) {
+                  const secret = (import.meta as any).env?.VITE_INTERNAL_API_SECRET;
+                  fetch('/.netlify/functions/send-sms', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      ...(secret ? { 'X-Internal-Secret': secret } : {}),
+                    },
+                    body: JSON.stringify({
+                      to: job.clientPhone,
+                      message: `Hi ${job.clientName?.split(' ')[0] || 'there'}, your estimator from Luxury Decking is on their way! See you shortly.`,
+                    }),
+                  }).catch(() => {/* non-blocking */});
+                }
+              }}
               className="flex-1 bg-[var(--brand-gold)] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-[var(--brand-gold)]/20 active:scale-[0.98]"
             >
               <Navigation className="w-5 h-5" />
@@ -363,7 +378,6 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
             { id: 'sketch', label: 'Sketch', icon: PenTool },
             { id: 'photos', label: 'Photos', icon: Camera },
             { id: 'notes', label: 'Notes', icon: FileText },
-            { id: 'ai', label: 'AI Assist', icon: Sparkles },
             { id: 'summary', label: 'Summary', icon: CheckCircle2 },
           ].map((tab) => (
             <button
@@ -518,20 +532,6 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                 onChange={(e) => setIntake(prev => ({ ...prev, notes: e.target.value }))}
                 placeholder="Enter additional site notes, client preferences, or special instructions..."
                 className="w-full h-64 p-4 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)] transition-all text-[var(--text-primary)]"
-              />
-            </div>
-          )}
-
-          {activeTab === 'ai' && (
-            <div
-              key="ai"
-              
-              
-              
-            >
-              <EstimatorAiAssist 
-                intake={intake}
-                onUpdateAiInsights={handleUpdateAiInsights}
               />
             </div>
           )}

@@ -705,6 +705,20 @@ const App: React.FC = () => {
       updates.status = JobStatus.IN_PROGRESS;
     }
     handleUpdateJob(jobId, updates);
+
+    // Auto-send Google review request when job moves to Paid & Closed
+    if (newStage === PipelineStage.PAID_CLOSED && job) {
+      const reviewUrl = import.meta.env.VITE_GOOGLE_REVIEW_URL || 'https://g.page/r/luxury-decking/review';
+      const firstName = job.clientName?.split(' ')[0] || 'there';
+      const reviewMsg = `Hi ${firstName}, thank you for choosing Luxury Decking! We'd love it if you could take a moment to leave us a Google review: ${reviewUrl} — Your feedback means the world to us!`;
+      if (job.clientPhone) {
+        fetch('/.netlify/functions/send-sms', {
+          method: 'POST',
+          headers: internalHeaders(),
+          body: JSON.stringify({ to: job.clientPhone, message: reviewMsg }),
+        }).catch(err => console.warn('[review-sms] failed:', err));
+      }
+    }
   }, [jobs, selectedJob, handleUpdateJob]);
 
   const handleUpdateOfficeChecklist = useCallback((jobId: string, stage: PipelineStage, itemId: string, completed: boolean, isNA: boolean = false) => {
@@ -1316,6 +1330,21 @@ const App: React.FC = () => {
         // Upload failed — fall back to blob: URLs (works in current session only)
       }
 
+      // Auto-check "Signed contract confirmed" and "Send deposit invoice" in JOB_SOLD checklist
+      const autoCheckedChecklists = (job.officeChecklists || createDefaultOfficeChecklists()).map(cl => {
+        if (cl.stage === PipelineStage.JOB_SOLD) {
+          return {
+            ...cl,
+            items: cl.items.map(item =>
+              (item.id === 'office-JOB_SOLD-0' || item.id === 'office-JOB_SOLD-1')
+                ? { ...item, completed: true }
+                : item
+            )
+          };
+        }
+        return cl;
+      });
+
       handleUpdateJob(jobId, {
         pipelineStage: PipelineStage.JOB_SOLD,
         lifecycleStage: CustomerLifecycle.WON_SOLD,
@@ -1329,6 +1358,7 @@ const App: React.FC = () => {
         contractSignedDate: now,
         acceptedDate: now,
         updatedAt: now,
+        officeChecklists: autoCheckedChecklists,
         files: [
           ...(job.files || []),
           {
@@ -1668,6 +1698,16 @@ const App: React.FC = () => {
     }
     navigateTo('estimate-detail', targetJobId);
   }, [calculatorSourceJobId, handleUpdateJob, jobs]);
+
+  useEffect(() => {
+    if (selectedJob && !selectedJob.estimatorIntake) {
+      dataService.loadEstimatorIntake(selectedJob.id).then(intake => {
+        if (intake) {
+          setSelectedJob(prev => prev ? { ...prev, estimatorIntake: intake } : prev);
+        }
+      });
+    }
+  }, [selectedJob?.id]);
 
   if (view === 'login') {
     return <LoginView onLogin={handleLogin} />;
