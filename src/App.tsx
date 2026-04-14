@@ -1287,8 +1287,133 @@ const App: React.FC = () => {
         console.warn("Netlify form submission failed, but local state is updated:", e);
       }
 
-      // sendEmailIntent removed — mailto click was causing about:blank#blocked navigation on devices
-      // without a default email client. Submission is already complete via Supabase + Netlify form.
+      // ── Google Review Request Email ──────────────────────────────────────────
+      // Fire after submission — client is in peak happiness right after completion.
+      const completedJob = jobs.find(j => j.id === workflowState.jobId);
+      const clientEmail = completedJob?.clientEmail;
+      const clientFirstName = completedJob?.clientName?.split(' ')[0] || 'there';
+      if (clientEmail) {
+        const GOOGLE_REVIEW_URL = 'https://g.page/r/CexyItAnWVxTEAI/review';
+        const reviewHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  @keyframes starPop {
+    0%   { transform: scale(1) rotate(-8deg); }
+    30%  { transform: scale(1.35) rotate(4deg); }
+    60%  { transform: scale(0.9) rotate(-3deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  .star { display:inline-block; animation: starPop 1.4s ease infinite; }
+  .s1 { animation-delay: 0s; }
+  .s2 { animation-delay: 0.18s; }
+  .s3 { animation-delay: 0.36s; }
+  .s4 { animation-delay: 0.54s; }
+  .s5 { animation-delay: 0.72s; }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#0d0d0d;font-family:'Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0d0d;padding:40px 0;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#111111;border-radius:20px;overflow:hidden;border:1px solid #222;">
+
+      <!-- Logo -->
+      <tr><td align="center" style="padding:40px 40px 0;">
+        <img src="https://fieldprov3.netlify.app/assets/logo-white.png"
+             alt="Luxury Decking" width="160"
+             style="display:block;width:160px;height:auto;" />
+      </td></tr>
+
+      <!-- Gold divider -->
+      <tr><td align="center" style="padding:24px 40px 0;">
+        <div style="height:2px;background:linear-gradient(90deg,transparent,#D4AF37,transparent);width:100%;"></div>
+      </td></tr>
+
+      <!-- Stars -->
+      <tr><td align="center" style="padding:36px 40px 0;">
+        <span class="star s1" style="font-size:42px;">⭐</span>
+        <span class="star s2" style="font-size:42px;">⭐</span>
+        <span class="star s3" style="font-size:42px;">⭐</span>
+        <span class="star s4" style="font-size:42px;">⭐</span>
+        <span class="star s5" style="font-size:42px;">⭐</span>
+      </td></tr>
+
+      <!-- Headline -->
+      <tr><td align="center" style="padding:28px 48px 0;">
+        <h1 style="margin:0;font-size:28px;font-weight:900;color:#ffffff;line-height:1.2;letter-spacing:-0.5px;">
+          How does your new deck look, ${clientFirstName}?
+        </h1>
+      </td></tr>
+
+      <!-- Body copy -->
+      <tr><td align="center" style="padding:20px 52px 0;">
+        <p style="margin:0;font-size:15px;color:#aaaaaa;line-height:1.7;text-align:center;">
+          The crew just wrapped up your project and we couldn't be prouder of the result.
+          Your feedback means everything — not just to us, but to every homeowner who's
+          trying to decide if Luxury Decking is the right team for them.
+        </p>
+      </td></tr>
+
+      <tr><td align="center" style="padding:12px 52px 0;">
+        <p style="margin:0;font-size:15px;color:#aaaaaa;line-height:1.7;text-align:center;">
+          If you love your new deck, <strong style="color:#D4AF37;">30 seconds and 5 stars</strong>
+          would mean the world to our team.
+        </p>
+      </td></tr>
+
+      <!-- CTA Button -->
+      <tr><td align="center" style="padding:36px 40px 0;">
+        <a href="${GOOGLE_REVIEW_URL}" target="_blank"
+           style="display:inline-flex;align-items:center;gap:14px;background:#ffffff;color:#111111;
+                  text-decoration:none;padding:18px 36px;border-radius:50px;
+                  font-size:16px;font-weight:900;letter-spacing:0.3px;
+                  box-shadow:0 4px 24px rgba(212,175,55,0.25);">
+          <img src="https://www.google.com/favicon.ico" width="22" height="22"
+               alt="G" style="border-radius:4px;" />
+          Leave a Google 5-Star Review
+        </a>
+      </td></tr>
+
+      <!-- Subtext -->
+      <tr><td align="center" style="padding:20px 40px 0;">
+        <p style="margin:0;font-size:11px;color:#555555;letter-spacing:2px;text-transform:uppercase;font-weight:700;">
+          It only takes 30 seconds to support our team
+        </p>
+      </td></tr>
+
+      <!-- Gold divider -->
+      <tr><td align="center" style="padding:32px 40px 0;">
+        <div style="height:1px;background:linear-gradient(90deg,transparent,#333,transparent);width:100%;"></div>
+      </td></tr>
+
+      <!-- Footer -->
+      <tr><td align="center" style="padding:24px 40px 40px;">
+        <p style="margin:0 0 6px;font-size:12px;font-weight:900;color:#D4AF37;letter-spacing:3px;text-transform:uppercase;">
+          The Luxury Decking Team
+        </p>
+        <p style="margin:0;font-size:11px;color:#444444;">
+          Ottawa, ON &nbsp;·&nbsp; 613-707-3060 &nbsp;·&nbsp; luxurydeckingottawa.com
+        </p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`;
+
+        fetch('/.netlify/functions/send-email', {
+          method: 'POST',
+          headers: internalHeaders(),
+          body: JSON.stringify({
+            to: clientEmail,
+            subject: `The crew just packed up — how does your new deck look? ⭐⭐⭐⭐⭐`,
+            htmlBody: reviewHtml,
+          }),
+        }).catch(err => console.warn('[review-email] failed to send:', err));
+      }
 
     } catch (error) {
       console.error("Submission pipeline failed:", error);
