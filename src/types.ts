@@ -460,6 +460,28 @@ export interface Job {
     fastenerType?: string;
     materialDeliveryDate?: string;
     deliveryNotes?: string;
+    // Structure details (added in expanded form)
+    deckType?: string;
+    footingsCount?: string;
+    deckHeight?: string;
+    framingMaterial?: string;
+    joistSize?: string;
+    joistSpacing?: string;
+    joistProtection?: boolean;
+    deckingBrand?: string;
+    deckingColor?: string;
+    pictureFrame?: boolean;
+    pictureFrameColor?: string;
+    railingIncluded?: boolean;
+    railingBrand?: string;
+    railingLF?: string;
+    stairsIncluded?: boolean;
+    stairCount?: string;
+    skirtingIncluded?: boolean;
+    skirtingType?: string;
+    skirtingGate?: boolean;
+    lightingIncluded?: boolean;
+    lightingType?: string;
     completedAt?: string;
   };
 

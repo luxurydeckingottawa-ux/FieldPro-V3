@@ -450,7 +450,21 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     .map((file: any) => (
                       <div
                         key={file.id}
-                        onClick={() => file.url && window.open(file.url, '_blank')}
+                        onClick={() => {
+                          if (!file.url) return;
+                          if (file.url.startsWith('data:text/html')) {
+                            const [, base64] = file.url.split(',');
+                            try {
+                              const html = atob(base64);
+                              const blob = new Blob([html], { type: 'text/html' });
+                              const blobUrl = URL.createObjectURL(blob);
+                              window.open(blobUrl, '_blank');
+                              setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                            } catch { window.open(file.url, '_blank'); }
+                          } else {
+                            window.open(file.url, '_blank');
+                          }
+                        }}
                         className={`flex items-center gap-4 p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] transition-all group ${file.url ? 'cursor-pointer hover:border-[var(--brand-gold)]/40 hover:bg-[var(--bg-tertiary)]' : 'opacity-50 cursor-default'}`}
                       >
                         <div className="w-9 h-9 rounded-lg bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center shrink-0">

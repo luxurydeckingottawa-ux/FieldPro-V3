@@ -2119,7 +2119,18 @@ Ottawa's Premium Deck Builders`;
                               <div
                                 key={file.id}
                                 onClick={() => {
-                                  if (file.url) {
+                                  if (!file.url) return;
+                                  if (file.url.startsWith('data:text/html')) {
+                                    // Chrome blocks opening data:text/html URIs in new tabs
+                                    const [, base64] = file.url.split(',');
+                                    try {
+                                      const html = atob(base64);
+                                      const blob = new Blob([html], { type: 'text/html' });
+                                      const blobUrl = URL.createObjectURL(blob);
+                                      window.open(blobUrl, '_blank');
+                                      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                                    } catch { window.open(file.url, '_blank'); }
+                                  } else {
                                     window.open(file.url, '_blank');
                                   }
                                 }}

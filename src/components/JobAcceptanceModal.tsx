@@ -131,6 +131,8 @@ const Step1ContractSummary: React.FC<Step1Props> = ({ job, onContinue, onSkip })
   const summary = job.acceptedBuildSummary;
   const totalPrice = summary?.totalPrice ?? job.totalAmount ?? 0;
   const deposit = Math.round(totalPrice * 0.3);
+  const materialDelivery = Math.round(totalPrice * 0.3);
+  const finalBalance = totalPrice - deposit - materialDelivery;
   const isDiamond =
     (job.acceptedOptionName?.toLowerCase().includes('diamond') ||
       summary?.optionName?.toLowerCase().includes('diamond')) ??
@@ -203,8 +205,12 @@ const Step1ContractSummary: React.FC<Step1Props> = ({ job, onContinue, onSkip })
             <span className="font-bold text-[var(--text-primary)]">{formatCurrency(deposit)}</span>
           </div>
           <div className="flex justify-between items-center text-sm">
-            <span className="text-[var(--text-secondary)]">Balance on Completion</span>
-            <span className="font-bold text-[var(--text-primary)]">{formatCurrency(totalPrice - deposit)}</span>
+            <span className="text-[var(--text-secondary)]">Upon Material Delivery (30%)</span>
+            <span className="font-bold text-[var(--text-primary)]">{formatCurrency(materialDelivery)}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-[var(--text-secondary)]">Final Balance on Completion (40%)</span>
+            <span className="font-bold text-[var(--text-primary)]">{formatCurrency(finalBalance)}</span>
           </div>
         </div>
 
@@ -263,35 +269,55 @@ const Step1ContractSummary: React.FC<Step1Props> = ({ job, onContinue, onSkip })
 // ---------------------------------------------------------------------------
 
 interface FormState {
-  // Section A
+  // A — Client & Site
   clientName: string;
   clientPhone: string;
   clientEmail: string;
   projectAddress: string;
   siteAccessNotes: string;
   parkingNotes: string;
-  // Section B
+  // B — Project Scope (core)
   packageTier: string;
   totalPrice: number;
   deckSqFt: string;
-  deckingMaterial: string;
-  railingType: string;
-  footingType: string;
-  stairs: string;
   addOns: string[];
   scopeNotes: string;
-  // Section C
+  // B1 — Site & Footings
+  deckType: string;
+  footingType: string;
+  footingsCount: string;
+  deckHeight: string;
+  // B2 — Framing
+  framingMaterial: string;
+  joistSize: string;
+  joistSpacing: string;
+  joistProtection: boolean;
+  // B3 — Decking
+  deckingMaterial: string;
+  deckingBrand: string;
+  deckingColor: string;
+  pictureFrame: boolean;
+  pictureFrameColor: string;
+  // B4 — Railing
+  railingIncluded: boolean;
+  railingType: string;
+  railingBrand: string;
+  railingLF: string;
+  // B5 — Stairs & Skirting
+  stairsIncluded: boolean;
+  stairCount: string;
+  skirtingIncluded: boolean;
+  skirtingType: string;
+  skirtingGate: boolean;
+  // B6 — Electrical
+  lightingIncluded: boolean;
+  lightingType: string;
+  // C — Schedule & Assignment
   estimatedStartDate: string;
   estimatedDuration: number;
   assignedTo: string;
   permitRequired: boolean;
   permitNumber: string;
-  // Section D
-  railingSystem: string;
-  footingSystem: string;
-  fastenerType: string;
-  materialDeliveryDate: string;
-  deliveryNotes: string;
 }
 
 interface Step2Props {
@@ -304,32 +330,60 @@ const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
   const summary = job.acceptedBuildSummary;
 
 
+  const sel = job.calculatorSelections as any;
+  const dim = job.calculatorDimensions as any;
+  const bd  = job.buildDetails;
+
   const [form, setForm] = useState<FormState>({
+    // A — Client & Site
     clientName: job.clientName || '',
     clientPhone: job.clientPhone || '',
     clientEmail: job.clientEmail || '',
     projectAddress: job.projectAddress || '',
-    siteAccessNotes: '',
+    siteAccessNotes: (job as any).estimatorIntake?.siteAccessNotes ?? '',
     parkingNotes: '',
+    // B — Project Scope (core)
     packageTier: job.acceptedOptionName || summary?.optionName || '',
     totalPrice: summary?.totalPrice ?? job.totalAmount ?? 0,
-    deckSqFt: job.calculatorDimensions?.['deckSqft']?.toString() ?? '',
-    deckingMaterial: job.calculatorSelections?.['deckingMaterial'] ?? job.buildDetails?.decking?.type ?? '',
-    railingType: job.calculatorSelections?.['railingType'] ?? job.buildDetails?.railing?.type ?? '',
-    footingType: job.calculatorSelections?.['footingType'] ?? job.buildDetails?.footings?.type ?? '',
-    stairs: job.calculatorDimensions?.['stairLinearFt']?.toString() ?? '0',
+    deckSqFt: dim?.sqft?.toString() ?? dim?.deckSqft?.toString() ?? '',
     addOns: summary?.addOns?.map((a) => a.name) ?? [],
     scopeNotes: '',
+    // B1 — Site & Footings
+    deckType: bd?.footings?.attachedToHouse ? 'Attached' : bd?.footings?.floating ? 'Floating' : '',
+    footingType: sel?.foundation?.name ?? bd?.footings?.type ?? '',
+    footingsCount: dim?.footingsCount?.toString() ?? '',
+    deckHeight: '',
+    // B2 — Framing
+    framingMaterial: bd?.framing?.type ?? 'Pressure Treated',
+    joistSize: bd?.framing?.joistSize ?? '2x8',
+    joistSpacing: bd?.framing?.joistSpacing ?? '16" OC',
+    joistProtection: bd?.framing?.joistProtection ?? false,
+    // B3 — Decking
+    deckingMaterial: sel?.decking?.name ?? bd?.decking?.type ?? '',
+    deckingBrand: bd?.decking?.brand ?? '',
+    deckingColor: bd?.decking?.color ?? '',
+    pictureFrame: !!(dim?.borderLF > 0),
+    pictureFrameColor: bd?.decking?.accentNote ?? '',
+    // B4 — Railing
+    railingIncluded: bd?.railing?.included ?? !!(sel?.railing),
+    railingType: sel?.railing?.name ?? bd?.railing?.type ?? '',
+    railingBrand: '',
+    railingLF: dim?.railingLF?.toString() ?? '',
+    // B5 — Stairs & Skirting
+    stairsIncluded: bd?.stairs?.included ?? !!(dim?.steps > 0),
+    stairCount: dim?.steps?.toString() ?? '',
+    skirtingIncluded: bd?.skirting?.included ?? !!(dim?.skirtingSqFt > 0),
+    skirtingType: bd?.skirting?.type ?? '',
+    skirtingGate: false,
+    // B6 — Electrical
+    lightingIncluded: bd?.electrical?.lightingIncluded ?? !!(dim?.lightsCount > 0),
+    lightingType: bd?.electrical?.lightingType ?? '',
+    // C — Schedule & Assignment
     estimatedStartDate: '',
     estimatedDuration: 5,
     assignedTo: '',
-    permitRequired: false,
+    permitRequired: bd?.sitePrep?.permitsRequired ?? false,
     permitNumber: '',
-    railingSystem: job.calculatorSelections?.['railingSystem'] ?? job.buildDetails?.railing?.type ?? '',
-    footingSystem: job.calculatorSelections?.['footingSystem'] ?? job.buildDetails?.footings?.type ?? '',
-    fastenerType: 'Cortex Hidden Fasteners',
-    materialDeliveryDate: '',
-    deliveryNotes: '',
   });
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -347,176 +401,294 @@ const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 space-y-8">
-        {/* Section A */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 space-y-6">
+
+        {/* Section A — Client & Site */}
         <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-6">
           <SectionHeader title="A — Client & Site" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Client Name">
-              <input
-                className={fieldClass}
-                value={form.clientName}
-                onChange={(e) => set('clientName', e.target.value)}
-              />
+              <input className={fieldClass} value={form.clientName} onChange={(e) => set('clientName', e.target.value)} />
             </Field>
             <Field label="Client Phone">
-              <input
-                className={fieldClass}
-                value={form.clientPhone}
-                onChange={(e) => set('clientPhone', e.target.value)}
-              />
+              <input className={fieldClass} value={form.clientPhone} onChange={(e) => set('clientPhone', e.target.value)} />
             </Field>
             <Field label="Client Email">
-              <input
-                type="email"
-                className={fieldClass}
-                value={form.clientEmail}
-                onChange={(e) => set('clientEmail', e.target.value)}
-              />
+              <input type="email" className={fieldClass} value={form.clientEmail} onChange={(e) => set('clientEmail', e.target.value)} />
             </Field>
             <Field label="Project Address">
-              <input
-                className={fieldClass}
-                value={form.projectAddress}
-                onChange={(e) => set('projectAddress', e.target.value)}
-              />
+              <input className={fieldClass} value={form.projectAddress} onChange={(e) => set('projectAddress', e.target.value)} />
             </Field>
             <Field label="Site Access Notes">
-              <textarea
-                rows={2}
-                className={fieldClass}
-                placeholder="Gate code, access restrictions..."
-                value={form.siteAccessNotes}
-                onChange={(e) => set('siteAccessNotes', e.target.value)}
-              />
+              <textarea rows={2} className={fieldClass} placeholder="Gate code, access restrictions..." value={form.siteAccessNotes} onChange={(e) => set('siteAccessNotes', e.target.value)} />
             </Field>
             <Field label="Parking / Staging Area">
-              <input
-                className={fieldClass}
-                placeholder="Driveway, street, side yard..."
-                value={form.parkingNotes}
-                onChange={(e) => set('parkingNotes', e.target.value)}
-              />
+              <input className={fieldClass} placeholder="Driveway, street, side yard..." value={form.parkingNotes} onChange={(e) => set('parkingNotes', e.target.value)} />
             </Field>
           </div>
         </div>
 
-        {/* Section B */}
-        <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-6">
+        {/* Section B — Project Scope */}
+        <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-6 space-y-6">
           <SectionHeader title="B — Project Scope" />
+
+          {/* Core */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Package Tier">
-              <input
-                className={fieldClass}
-                value={form.packageTier}
-                onChange={(e) => set('packageTier', e.target.value)}
-              />
+              <input className={fieldClass} value={form.packageTier} onChange={(e) => set('packageTier', e.target.value)} />
             </Field>
             <Field label="Total Project Price">
-              <input
-                type="number"
-                className={fieldClass}
-                value={form.totalPrice}
-                onChange={(e) => set('totalPrice', Number(e.target.value))}
-              />
+              <input type="number" className={fieldClass} value={form.totalPrice} onChange={(e) => set('totalPrice', Number(e.target.value))} />
             </Field>
-            <Field label="Deck Size / Sq Ft">
-              <input
-                className={fieldClass}
-                placeholder="e.g. 280"
-                value={form.deckSqFt}
-                onChange={(e) => set('deckSqFt', e.target.value)}
-              />
+            <Field label="Deck Square Footage">
+              <input className={fieldClass} placeholder="e.g. 280" value={form.deckSqFt} onChange={(e) => set('deckSqFt', e.target.value)} />
             </Field>
-            <Field label="Decking Material">
-              <input
-                className={fieldClass}
-                placeholder="e.g. Trex Transcend"
-                value={form.deckingMaterial}
-                onChange={(e) => set('deckingMaterial', e.target.value)}
-              />
-            </Field>
-            <Field label="Railing Type">
-              <input
-                className={fieldClass}
-                placeholder="e.g. Aluminium Picket"
-                value={form.railingType}
-                onChange={(e) => set('railingType', e.target.value)}
-              />
-            </Field>
-            <Field label="Footing Type">
-              <input
-                className={fieldClass}
-                placeholder="e.g. Helical Piles"
-                value={form.footingType}
-                onChange={(e) => set('footingType', e.target.value)}
-              />
-            </Field>
-            <Field label="Steps / Stairs">
-              <input
-                className={fieldClass}
-                placeholder="0"
-                value={form.stairs}
-                onChange={(e) => set('stairs', e.target.value)}
-              />
-            </Field>
-            <div className="sm:col-span-2">
-              <Field label="Special Scope Notes">
-                <textarea
-                  rows={2}
-                  className={fieldClass}
-                  placeholder="Any special scope items or client requests..."
-                  value={form.scopeNotes}
-                  onChange={(e) => set('scopeNotes', e.target.value)}
-                />
-              </Field>
-            </div>
-            {form.addOns.length > 0 && (
-              <div className="sm:col-span-2">
-                <p className={labelClass}>Add-Ons Selected</p>
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {form.addOns.map((a) => (
-                    <span
-                      key={a}
-                      className="px-2.5 py-1 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-wider"
-                    >
-                      {a}
-                    </span>
+          </div>
+
+          {/* B1 — Site & Footings */}
+          <div>
+            <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3 border-b border-[var(--border-color)] pb-2">Site & Footings</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className={labelClass}>Deck Type</p>
+                <div className="flex gap-2">
+                  {(['Attached', 'Floating'] as const).map((opt) => (
+                    <button key={opt} type="button" onClick={() => set('deckType', opt)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${form.deckType === opt ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                      {opt}
+                    </button>
                   ))}
                 </div>
               </div>
-            )}
+              <Field label="Footing Type">
+                <input className={fieldClass} placeholder="e.g. Helical Piles, Concrete" value={form.footingType} onChange={(e) => set('footingType', e.target.value)} />
+              </Field>
+              <Field label="Number of Footings">
+                <input className={fieldClass} placeholder="e.g. 8" value={form.footingsCount} onChange={(e) => set('footingsCount', e.target.value)} />
+              </Field>
+              <Field label="Deck Height / Elevation">
+                <input className={fieldClass} placeholder="e.g. Ground level, 3ft, 8ft" value={form.deckHeight} onChange={(e) => set('deckHeight', e.target.value)} />
+              </Field>
+            </div>
           </div>
+
+          {/* B2 — Framing */}
+          <div>
+            <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3 border-b border-[var(--border-color)] pb-2">Framing</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className={labelClass}>Lumber Type</p>
+                <div className="flex gap-2">
+                  {(['Pressure Treated', 'Steel Frame', 'LVL'] as const).map((opt) => (
+                    <button key={opt} type="button" onClick={() => set('framingMaterial', opt)}
+                      className={`flex-1 py-2 rounded-xl text-[10px] font-black border transition-all ${form.framingMaterial === opt ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className={labelClass}>Joist Size</p>
+                <div className="flex gap-2">
+                  {(['2x8', '2x10', '2x12'] as const).map((opt) => (
+                    <button key={opt} type="button" onClick={() => set('joistSize', opt)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${form.joistSize === opt ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className={labelClass}>Joist Spacing</p>
+                <div className="flex gap-2">
+                  {(['12" OC', '16" OC', '24" OC'] as const).map((opt) => (
+                    <button key={opt} type="button" onClick={() => set('joistSpacing', opt)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${form.joistSpacing === opt ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className={labelClass}>Joist Protection?</p>
+                <div className="flex gap-2">
+                  {(['Yes', 'No'] as const).map((opt) => (
+                    <button key={opt} type="button" onClick={() => set('joistProtection', opt === 'Yes')}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${(opt === 'Yes') === form.joistProtection ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* B3 — Decking */}
+          <div>
+            <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3 border-b border-[var(--border-color)] pb-2">Decking</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Material Type">
+                <input className={fieldClass} placeholder="e.g. Trex Transcend, PT Wood" value={form.deckingMaterial} onChange={(e) => set('deckingMaterial', e.target.value)} />
+              </Field>
+              <Field label="Brand">
+                <input className={fieldClass} placeholder="e.g. Trex, Fiberon, TimberTech" value={form.deckingBrand} onChange={(e) => set('deckingBrand', e.target.value)} />
+              </Field>
+              <Field label="Color">
+                <input className={fieldClass} placeholder="e.g. Tiki Torch, Gravel Path" value={form.deckingColor} onChange={(e) => set('deckingColor', e.target.value)} />
+              </Field>
+              <div>
+                <p className={labelClass}>Picture Frame / Border?</p>
+                <div className="flex gap-2">
+                  {(['Yes', 'No'] as const).map((opt) => (
+                    <button key={opt} type="button" onClick={() => set('pictureFrame', opt === 'Yes')}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${(opt === 'Yes') === form.pictureFrame ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {form.pictureFrame && (
+                <Field label="Border / Accent Color">
+                  <input className={fieldClass} placeholder="e.g. Vintage Lantern" value={form.pictureFrameColor} onChange={(e) => set('pictureFrameColor', e.target.value)} />
+                </Field>
+              )}
+            </div>
+          </div>
+
+          {/* B4 — Railing */}
+          <div>
+            <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3 border-b border-[var(--border-color)] pb-2">Railing</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className={labelClass}>Railing Included?</p>
+                <div className="flex gap-2">
+                  {(['Yes', 'No'] as const).map((opt) => (
+                    <button key={opt} type="button" onClick={() => set('railingIncluded', opt === 'Yes')}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${(opt === 'Yes') === form.railingIncluded ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {form.railingIncluded && (
+                <>
+                  <Field label="Railing Type">
+                    <input className={fieldClass} placeholder="e.g. Aluminum, Glass, Wood" value={form.railingType} onChange={(e) => set('railingType', e.target.value)} />
+                  </Field>
+                  <Field label="Brand / System">
+                    <input className={fieldClass} placeholder="e.g. Fortress Fe26, AL13" value={form.railingBrand} onChange={(e) => set('railingBrand', e.target.value)} />
+                  </Field>
+                  <Field label="Linear Feet">
+                    <input className={fieldClass} placeholder="e.g. 48" value={form.railingLF} onChange={(e) => set('railingLF', e.target.value)} />
+                  </Field>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* B5 — Stairs & Skirting */}
+          <div>
+            <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3 border-b border-[var(--border-color)] pb-2">Stairs & Skirting</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className={labelClass}>Stairs Included?</p>
+                <div className="flex gap-2">
+                  {(['Yes', 'No'] as const).map((opt) => (
+                    <button key={opt} type="button" onClick={() => set('stairsIncluded', opt === 'Yes')}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${(opt === 'Yes') === form.stairsIncluded ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {form.stairsIncluded && (
+                <Field label="Stair Count / Linear Feet">
+                  <input className={fieldClass} placeholder="e.g. 3 steps / 8 LF" value={form.stairCount} onChange={(e) => set('stairCount', e.target.value)} />
+                </Field>
+              )}
+              <div>
+                <p className={labelClass}>Skirting?</p>
+                <div className="flex gap-2">
+                  {(['Yes', 'No'] as const).map((opt) => (
+                    <button key={opt} type="button" onClick={() => set('skirtingIncluded', opt === 'Yes')}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${(opt === 'Yes') === form.skirtingIncluded ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {form.skirtingIncluded && (
+                <>
+                  <Field label="Skirting Type">
+                    <input className={fieldClass} placeholder="e.g. Composite, Lattice, Cedar" value={form.skirtingType} onChange={(e) => set('skirtingType', e.target.value)} />
+                  </Field>
+                  <div>
+                    <p className={labelClass}>Gate in Skirting?</p>
+                    <div className="flex gap-2">
+                      {(['Yes', 'No'] as const).map((opt) => (
+                        <button key={opt} type="button" onClick={() => set('skirtingGate', opt === 'Yes')}
+                          className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${(opt === 'Yes') === form.skirtingGate ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* B6 — Electrical */}
+          <div>
+            <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3 border-b border-[var(--border-color)] pb-2">Electrical</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className={labelClass}>Lighting Included?</p>
+                <div className="flex gap-2">
+                  {(['Yes', 'No'] as const).map((opt) => (
+                    <button key={opt} type="button" onClick={() => set('lightingIncluded', opt === 'Yes')}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${(opt === 'Yes') === form.lightingIncluded ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {form.lightingIncluded && (
+                <Field label="Lighting Type">
+                  <input className={fieldClass} placeholder="e.g. Post caps, Step lights" value={form.lightingType} onChange={(e) => set('lightingType', e.target.value)} />
+                </Field>
+              )}
+            </div>
+          </div>
+
+          {/* Add-Ons + Scope Notes */}
+          {form.addOns.length > 0 && (
+            <div>
+              <p className={labelClass}>Add-Ons Selected</p>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {form.addOns.map((a) => (
+                  <span key={a} className="px-2.5 py-1 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-wider">{a}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          <Field label="Special Scope Notes">
+            <textarea rows={2} className={fieldClass} placeholder="Any special scope items or client requests..." value={form.scopeNotes} onChange={(e) => set('scopeNotes', e.target.value)} />
+          </Field>
         </div>
 
-        {/* Section C */}
+        {/* Section C — Schedule & Assignment */}
         <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-6">
           <SectionHeader title="C — Schedule & Assignment" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Estimated Start Date">
-              <input
-                type="date"
-                className={fieldClass}
-                value={form.estimatedStartDate}
-                onChange={(e) => set('estimatedStartDate', e.target.value)}
-              />
+              <input type="date" className={fieldClass} value={form.estimatedStartDate} onChange={(e) => set('estimatedStartDate', e.target.value)} />
             </Field>
             <Field label="Estimated Duration (days)">
-              <input
-                type="number"
-                min={1}
-                className={fieldClass}
-                value={form.estimatedDuration}
-                onChange={(e) => set('estimatedDuration', Number(e.target.value))}
-              />
+              <input type="number" min={1} className={fieldClass} value={form.estimatedDuration} onChange={(e) => set('estimatedDuration', Number(e.target.value))} />
             </Field>
             <Field label="Assigned To">
-              <input
-                className={fieldClass}
-                placeholder="Crew lead or sub name"
-                value={form.assignedTo}
-                onChange={(e) => set('assignedTo', e.target.value)}
-              />
+              <input className={fieldClass} placeholder="Crew lead or sub name" value={form.assignedTo} onChange={(e) => set('assignedTo', e.target.value)} />
             </Field>
             <div>
               <p className={labelClass}>Permit Required?</p>
@@ -524,16 +696,8 @@ const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
                 {(['Yes', 'No'] as const).map((opt) => {
                   const active = (opt === 'Yes') === form.permitRequired;
                   return (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => set('permitRequired', opt === 'Yes')}
-                      className={`flex-1 py-3 rounded-xl text-sm font-black transition-all border ${
-                        active
-                          ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black'
-                          : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'
-                      }`}
-                    >
+                    <button key={opt} type="button" onClick={() => set('permitRequired', opt === 'Yes')}
+                      className={`flex-1 py-3 rounded-xl text-sm font-black transition-all border ${active ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black' : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40'}`}>
                       {opt}
                     </button>
                   );
@@ -542,71 +706,9 @@ const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
             </div>
             {form.permitRequired && (
               <Field label="Permit Number">
-                <input
-                  className={fieldClass}
-                  placeholder="Permit application #"
-                  value={form.permitNumber}
-                  onChange={(e) => set('permitNumber', e.target.value)}
-                />
+                <input className={fieldClass} placeholder="Permit application #" value={form.permitNumber} onChange={(e) => set('permitNumber', e.target.value)} />
               </Field>
             )}
-          </div>
-        </div>
-
-        {/* Section D */}
-        <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-6">
-          <SectionHeader title="D — Materials & Delivery" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Primary Decking Material">
-              <input
-                className={fieldClass}
-                placeholder="e.g. Trex Transcend Tiki Torch"
-                value={form.deckingMaterial}
-                onChange={(e) => set('deckingMaterial', e.target.value)}
-              />
-            </Field>
-            <Field label="Railing System">
-              <input
-                className={fieldClass}
-                placeholder="e.g. Fortress Fe26 Black"
-                value={form.railingSystem}
-                onChange={(e) => set('railingSystem', e.target.value)}
-              />
-            </Field>
-            <Field label="Footing System">
-              <input
-                className={fieldClass}
-                placeholder="e.g. Postech Helical"
-                value={form.footingSystem}
-                onChange={(e) => set('footingSystem', e.target.value)}
-              />
-            </Field>
-            <Field label="Fastener Type">
-              <input
-                className={fieldClass}
-                value={form.fastenerType}
-                onChange={(e) => set('fastenerType', e.target.value)}
-              />
-            </Field>
-            <Field label="Material Delivery Date">
-              <input
-                type="date"
-                className={fieldClass}
-                value={form.materialDeliveryDate}
-                onChange={(e) => set('materialDeliveryDate', e.target.value)}
-              />
-            </Field>
-            <div className="sm:col-span-2">
-              <Field label="Delivery Notes">
-                <textarea
-                  rows={2}
-                  className={fieldClass}
-                  placeholder="Placement instructions, access details..."
-                  value={form.deliveryNotes}
-                  onChange={(e) => set('deliveryNotes', e.target.value)}
-                />
-              </Field>
-            </div>
           </div>
         </div>
       </div>
@@ -720,19 +822,41 @@ const JobAcceptanceModal: React.FC<JobAcceptanceModalProps> = ({ job, onComplete
       deckingMaterial: form.deckingMaterial,
       railingType: form.railingType,
       footingType: form.footingType,
-      stairs: form.stairs,
       addOns: form.addOns,
       scopeNotes: form.scopeNotes,
+      // Site & footings
+      deckType: form.deckType,
+      footingsCount: form.footingsCount,
+      deckHeight: form.deckHeight,
+      // Framing
+      framingMaterial: form.framingMaterial,
+      joistSize: form.joistSize,
+      joistSpacing: form.joistSpacing,
+      joistProtection: form.joistProtection,
+      // Decking details
+      deckingBrand: form.deckingBrand,
+      deckingColor: form.deckingColor,
+      pictureFrame: form.pictureFrame,
+      pictureFrameColor: form.pictureFrameColor,
+      // Railing
+      railingIncluded: form.railingIncluded,
+      railingBrand: form.railingBrand,
+      railingLF: form.railingLF,
+      // Stairs & skirting
+      stairsIncluded: form.stairsIncluded,
+      stairCount: form.stairCount,
+      skirtingIncluded: form.skirtingIncluded,
+      skirtingType: form.skirtingType,
+      skirtingGate: form.skirtingGate,
+      // Electrical
+      lightingIncluded: form.lightingIncluded,
+      lightingType: form.lightingType,
+      // Schedule
       estimatedStartDate: form.estimatedStartDate,
       estimatedDuration: form.estimatedDuration,
       assignedTo: form.assignedTo,
       permitRequired: form.permitRequired,
       permitNumber: form.permitNumber,
-      railingSystem: form.railingSystem,
-      footingSystem: form.footingSystem,
-      fastenerType: form.fastenerType,
-      materialDeliveryDate: form.materialDeliveryDate,
-      deliveryNotes: form.deliveryNotes,
       completedAt: now,
     };
     setPendingUpdates((prev) => ({ ...prev, digitalWorkOrder }));
