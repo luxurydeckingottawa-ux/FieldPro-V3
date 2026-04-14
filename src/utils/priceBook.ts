@@ -29,19 +29,60 @@ export interface PriceBookItem {
 // ── Persistence ───────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'fieldpro_price_book';
+const IMG_PREFIX = 'fieldpro_pb_img_'; // one key per item, e.g. fieldpro_pb_img_item_012
+
+/**
+ * Save a single item's image immediately to its own localStorage key.
+ * Keeps it out of the main price book blob so quota issues never block it.
+ */
+export function saveItemImage(itemId: string, dataUrl: string): void {
+  safeSetItem(`${IMG_PREFIX}${itemId}`, dataUrl);
+}
+
+/**
+ * Remove a single item's image from localStorage.
+ */
+export function deleteItemImage(itemId: string): void {
+  try { localStorage.removeItem(`${IMG_PREFIX}${itemId}`); } catch { /* ignore */ }
+}
+
+/** Load all separately-stored item images. */
+function loadItemImages(): Record<string, string> {
+  const map: Record<string, string> = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(IMG_PREFIX)) {
+        const val = localStorage.getItem(key);
+        if (val) map[key.slice(IMG_PREFIX.length)] = val;
+      }
+    }
+  } catch { /* ignore */ }
+  return map;
+}
 
 export function loadPriceBook(): { categories: PriceBookCategory[]; items: PriceBookItem[] } {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    const base: { categories: PriceBookCategory[]; items: PriceBookItem[] } =
+      raw ? JSON.parse(raw) : { categories: DEFAULT_CATEGORIES, items: DEFAULT_ITEMS };
+    // Merge separately-stored images back in
+    const images = loadItemImages();
+    return {
+      categories: base.categories,
+      items: base.items.map(item =>
+        images[item.id] ? { ...item, imageUrl: images[item.id] } : item
+      ),
+    };
   } catch {
-    // fall through to defaults
+    return { categories: DEFAULT_CATEGORIES, items: DEFAULT_ITEMS };
   }
-  return { categories: DEFAULT_CATEGORIES, items: DEFAULT_ITEMS };
 }
 
 export function savePriceBook(cats: PriceBookCategory[], items: PriceBookItem[]): void {
-  safeSetItem(STORAGE_KEY, JSON.stringify({ categories: cats, items }));
+  // Strip imageUrls from items — images live in their own keys, not the main blob
+  const stripped = items.map(({ imageUrl: _img, ...rest }) => rest as PriceBookItem);
+  safeSetItem(STORAGE_KEY, JSON.stringify({ categories: cats, items: stripped }));
 }
 
 // ── Default Data ──────────────────────────────────────────────────────────────

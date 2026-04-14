@@ -9,6 +9,7 @@ import {
 import {
   PriceBookCategory, PriceBookItem,
   loadPriceBook, savePriceBook,
+  saveItemImage, deleteItemImage,
 } from '../utils/priceBook';
 
 export type { PriceBookCategory, PriceBookItem };
@@ -459,11 +460,8 @@ function ItemEditView({ item, categoryId, onSave, onDelete, onBack }: ItemEditVi
   const handleCropSave = (cropped: string) => {
     set('imageUrl', cropped);
     setCropSrc(null);
-    // Auto-save immediately so the image persists without a separate Save click
-    if (form.name.trim()) {
-      const finalUnit = useCustomUnit ? customUnit.trim() || 'Each' : form.unit;
-      onSave({ ...form, imageUrl: cropped, unit: finalUnit });
-    }
+    // Persist the image to its own localStorage key immediately — no Save click needed
+    saveItemImage(form.id, cropped);
   };
 
   const handleSave = () => {
@@ -655,7 +653,7 @@ function ItemEditView({ item, categoryId, onSave, onDelete, onBack }: ItemEditVi
           {form.imageUrl ? (
             <div className="flex items-center gap-4 mt-2">
               <img src={form.imageUrl} alt="" className="w-20 h-20 rounded-xl object-cover border border-white/10" />
-              <button onClick={() => set('imageUrl', undefined)} className="text-xs text-rose-400 hover:text-rose-300 font-bold transition-colors">
+              <button onClick={() => { set('imageUrl', undefined); deleteItemImage(form.id); }} className="text-xs text-rose-400 hover:text-rose-300 font-bold transition-colors">
                 Remove image
               </button>
             </div>
