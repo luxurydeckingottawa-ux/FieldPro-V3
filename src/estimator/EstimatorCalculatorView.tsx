@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { generateGoodBetterBest, type EstimateOption, type GBBDimensions } from '../utils/goodBetterBest';
-import { loadPriceBook } from '../views/PriceBookView';
+import { loadPriceBook } from '../utils/priceBook';
 
 // Maps estimator tier IDs → price book item IDs so uploaded photos show on cards
 const TIER_TO_ITEM_ID: Record<string, string> = {
