@@ -174,6 +174,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
   const currentChecklist = job.officeChecklists?.find(cl => cl.stage === job.pipelineStage);
   const isStageComplete = currentChecklist?.items?.every(item => item.completed) ?? false;
+  const leadUser = APP_USERS.find(u => u.id === job.assignedUsers?.[0]);
 
   const issues = useMemo(() => getJobIssues(job), [job]);
 
