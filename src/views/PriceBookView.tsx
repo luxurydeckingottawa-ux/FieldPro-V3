@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   ArrowLeft, Plus, Search, Pencil, Trash2, X, Check, BookOpen,
   Ruler, Anchor, LayoutGrid, Leaf, Layers, Frame, TrendingUp,
@@ -454,6 +454,171 @@ function CategoryModal({ initial, itemCount, onSave, onDelete, onClose }: Catego
   );
 }
 
+// ── Sub-component: ImageCropModal ────────────────────────────────────────────
+
+const DISPLAY = 280; // px — size of the crop preview box
+
+interface ImageCropModalProps {
+  src: string;
+  onSave: (croppedDataUrl: string) => void;
+  onClose: () => void;
+}
+
+function ImageCropModal({ src, onSave, onClose }: ImageCropModalProps) {
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [scale, setScale] = useState(1);
+  const [natW, setNatW] = useState(0);
+  const [natH, setNatH] = useState(0);
+  const dragging = useRef(false);
+  const startPos = useRef({ x: 0, y: 0 });
+  const startOff = useRef({ x: 0, y: 0 });
+
+  const dispW = natW * scale;
+  const dispH = natH * scale;
+
+  const clampOffset = useCallback((ox: number, oy: number, dw: number, dh: number) => ({
+    x: Math.min(0, Math.max(DISPLAY - dw, ox)),
+    y: Math.min(0, Math.max(DISPLAY - dh, oy)),
+  }), []);
+
+  const handleImgLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    setNatW(nw);
+    setNatH(nh);
+    const s = Math.max(DISPLAY / nw, DISPLAY / nh);
+    setScale(s);
+    const dw = nw * s;
+    const dh = nh * s;
+    setOffset({ x: -(dw - DISPLAY) / 2, y: -(dh - DISPLAY) / 2 });
+  };
+
+  const handleScaleChange = (newScale: number) => {
+    setScale(newScale);
+    const dw = natW * newScale;
+    const dh = natH * newScale;
+    setOffset(prev => clampOffset(prev.x, prev.y, dw, dh));
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    dragging.current = true;
+    startPos.current = { x: e.clientX, y: e.clientY };
+    startOff.current = { ...offset };
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!dragging.current) return;
+    const dx = e.clientX - startPos.current.x;
+    const dy = e.clientY - startPos.current.y;
+    setOffset(clampOffset(startOff.current.x + dx, startOff.current.y + dy, dispW, dispH));
+  };
+  const onMouseUp = () => { dragging.current = false; };
+
+  // Touch support for mobile
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    dragging.current = true;
+    startPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    startOff.current = { ...offset };
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!dragging.current || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - startPos.current.x;
+    const dy = e.touches[0].clientY - startPos.current.y;
+    setOffset(clampOffset(startOff.current.x + dx, startOff.current.y + dy, dispW, dispH));
+  };
+  const onTouchEnd = () => { dragging.current = false; };
+
+  const handleCrop = () => {
+    if (!natW || !natH) return;
+    // Map the visible crop box back to natural image coordinates
+    const cropX = (-offset.x) / scale;
+    const cropY = (-offset.y) / scale;
+    const cropW = DISPLAY / scale;
+    const cropH = DISPLAY / scale;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 300;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, 300, 300);
+      onSave(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.src = src;
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-6 w-full max-w-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Crop Image</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/5 transition-all">
+            <X className="w-4 h-4 text-[var(--muted-text)]" />
+          </button>
+        </div>
+        <p className="text-[10px] text-[var(--muted-text)] mb-4">Drag to reposition. Use the slider to zoom.</p>
+
+        {/* Crop preview box */}
+        <div
+          className="mx-auto rounded-xl overflow-hidden border-2 border-[var(--brand-gold)] select-none touch-none"
+          style={{ width: DISPLAY, height: DISPLAY, position: 'relative', cursor: 'grab' }}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <img
+            src={src}
+            onLoad={handleImgLoad}
+            draggable={false}
+            style={{
+              position: 'absolute',
+              left: offset.x,
+              top: offset.y,
+              width: dispW || 'auto',
+              height: dispH || 'auto',
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}
+          />
+        </div>
+
+        {/* Zoom slider */}
+        {natW > 0 && (
+          <div className="flex items-center gap-3 mt-4">
+            <span className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-widest w-8">Zoom</span>
+            <input
+              type="range"
+              min={Math.max(DISPLAY / natW, DISPLAY / natH)}
+              max={Math.max(DISPLAY / natW, DISPLAY / natH) * 4}
+              step={0.01}
+              value={scale}
+              onChange={e => handleScaleChange(parseFloat(e.target.value))}
+              className="flex-1 accent-[#B8892A]"
+            />
+          </div>
+        )}
+
+        <div className="flex gap-3 mt-5">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-[var(--text-secondary)] hover:bg-white/10 transition-all">
+            Cancel
+          </button>
+          <button onClick={handleCrop} className="flex-1 py-2.5 rounded-xl bg-[var(--brand-gold)] text-black text-xs font-black uppercase tracking-wider hover:bg-[var(--brand-gold-light)] transition-all">
+            Crop & Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Sub-component: ItemEditView ───────────────────────────────────────────────
 
 interface ItemEditViewProps {
@@ -481,6 +646,7 @@ function ItemEditView({ item, categoryId, onSave, onDelete, onBack }: ItemEditVi
   const [customUnit, setCustomUnit] = useState('');
   const [useCustomUnit, setUseCustomUnit] = useState(item ? !UNIT_OPTIONS.slice(0, -1).includes(item.unit) : false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const isNew = !item;
 
@@ -491,8 +657,15 @@ function ItemEditView({ item, categoryId, onSave, onDelete, onBack }: ItemEditVi
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Reset input so same file can be re-selected
+    e.target.value = '';
     const dataUrl = await readFileAsDataUrl(file);
-    set('imageUrl', dataUrl);
+    setCropSrc(dataUrl);
+  };
+
+  const handleCropSave = (cropped: string) => {
+    set('imageUrl', cropped);
+    setCropSrc(null);
   };
 
   const handleSave = () => {
@@ -693,13 +866,21 @@ function ItemEditView({ item, categoryId, onSave, onDelete, onBack }: ItemEditVi
               onClick={() => fileRef.current?.click()}
               className="mt-2 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-[var(--text-secondary)] hover:border-white/20 hover:text-[var(--text-primary)] transition-all"
             >
-              <Upload className="w-3.5 h-3.5" /> Upload image
+              <Upload className="w-3.5 h-3.5" /> Upload &amp; Crop Image
             </button>
           )}
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
         </div>
 
       </div>
+
+      {cropSrc && (
+        <ImageCropModal
+          src={cropSrc}
+          onSave={handleCropSave}
+          onClose={() => setCropSrc(null)}
+        />
+      )}
     </div>
   );
 }

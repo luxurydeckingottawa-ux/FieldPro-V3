@@ -1,5 +1,53 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { generateGoodBetterBest, type EstimateOption, type GBBDimensions } from '../utils/goodBetterBest';
+import { loadPriceBook } from '../views/PriceBookView';
+
+// Maps estimator tier IDs → price book item IDs so uploaded photos show on cards
+const TIER_TO_ITEM_ID: Record<string, string> = {
+  // Design
+  '3d_design': 'item_001', 'arch_drawings': 'item_002', 'eng_stamp': 'item_003',
+  'ottawa_permit_fee': 'item_004', 'helical_report': 'item_005',
+  // Footings
+  'sonotube': 'item_011', 'helical': 'item_012',
+  // Framing
+  'upgrade_2x8_12': 'item_021', 'upgrade_2x10_16': 'item_022',
+  'upgrade_2x10_12': 'item_023', 'fiberglass_framing': 'item_024',
+  // Decking
+  'pt_wood_decking': 'item_040', 'cedar_decking': 'item_041',
+  'fiberon_goodlife_weekender': 'item_042', 'fiberon_goodlife_escapes': 'item_043',
+  'fiberon_sanctuary': 'item_044', 'fiberon_concordia': 'item_045',
+  'fiberon_paramount': 'item_046', 'fiberon_promenade': 'item_047',
+  // Picture frame
+  'single_border': 'item_050', 'double_border': 'item_051',
+  // Lighting (accessories)
+  'light_pkg_8': 'item_080', 'light_pkg_16': 'item_081',
+  'inlite_smart_hub': 'item_082', 'inlite_smart_hub_prot': 'item_083',
+  'inlite_smart_move': 'item_084', 'inlite_move': 'item_085',
+  'inlite_hub_50': 'item_086', 'inlite_hub_100': 'item_087',
+  'inlite_hub_prot': 'item_088', 'inlite_hyve_22': 'item_089',
+  'inlite_cubid': 'item_090', 'inlite_ace': 'item_091',
+  'inlite_wedge_slim': 'item_092', 'inlite_puck_22': 'item_093',
+  'inlite_mini_wedge': 'item_094', 'inlite_liv_low': 'item_095',
+  'inlite_sway': 'item_096', 'inlite_6_pkg': 'item_097',
+  // Railings
+  'pt_wood_railing': 'item_100', 'wood_metal_railing': 'item_101',
+  'fortress_al13_pkg': 'item_102', 'alum_glass': 'item_104',
+  'frameless_glass': 'item_106',
+  // Skirting
+  'skirt_wood': 'item_110', 'skirt_pvc': 'item_111',
+  'skirt_fiberon_gl': 'item_112', 'skirt_fiberon_sanctuary': 'item_114',
+  'skirt_fiberon_concordia': 'item_115',
+  // Privacy
+  'privacy_wood': 'item_120', 'privacy_pvc': 'item_121',
+  'privacy_sunbelly_combined': 'item_123',
+  // Extras / add-ons
+  'removal_disposal': 'item_130', 'joist_guard': 'item_131',
+  'fabric_stone': 'item_030', 'river_wash': 'item_031',
+  'mulch_extra': 'item_032', 'stepping_stones_extra': 'item_033',
+  // Pergolas
+  'pt_pergola_10': 'item_140', 'pt_pergola_12': 'item_141',
+  'cedar_pergola_10': 'item_142', 'bio_10x10_manual': 'item_145',
+};
 
 // --- Shared Types & Interfaces ---
 
@@ -1177,7 +1225,12 @@ const CustomEstimator: React.FC<CustomEstimatorProps> = ({ dimensions, setDimens
 
               return (
                 <div key={opt.id} className={`option-card ${isSelected ? 'selected' : ''}`} onClick={() => handleOptionClick(activeCategory, opt)}>
-                  <div className="card-visual" style={{background: opt.imageColor, position: 'relative'}}>
+                  <div className="card-visual" style={{
+                    background: priceBookImages.has(opt.id)
+                      ? `url(${priceBookImages.get(opt.id)}) center/cover no-repeat`
+                      : opt.imageColor,
+                    position: 'relative'
+                  }}>
                     {(activeCategory === 'accessories' || opt.calculationType === 'quantity') && (
                       <div style={{ 
                         position: 'absolute', 
@@ -1542,6 +1595,17 @@ export interface EstimatorCalculatorProps {
 }
 
 const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, onEstimateAccepted, onEstimateSaved, onExit }) => {
+  // Price book images — keyed by tier ID, populated from uploaded photos in Settings > Price Book
+  const priceBookImages = useMemo(() => {
+    const book = loadPriceBook();
+    const map = new Map<string, string>();
+    for (const [tierId, itemId] of Object.entries(TIER_TO_ITEM_ID)) {
+      const pbItem = book.items.find(i => i.id === itemId);
+      if (pbItem?.imageUrl) map.set(tierId, pbItem.imageUrl);
+    }
+    return map;
+  }, []);
+
   const [view, setView] = useState<'calculator' | 'packages' | 'materialMatrix' | 'gbb'>('calculator');
   const [calcDimensions, setCalcDimensions] = useState<Dimensions>(() => ({
     ...INITIAL_DIMENSIONS,
