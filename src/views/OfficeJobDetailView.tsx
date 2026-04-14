@@ -312,11 +312,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   <button
                     onClick={() => onUpdatePipelineStage(job.id, stage.id)}
                     className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                      isCurrent 
-                        ? 'bg-white text-black shadow-lg' 
-                        : isPast 
-                          ? 'text-[var(--brand-gold)] hover:text-[var(--brand-gold-light)]' 
-                          : 'text-gray-600 hover:text-gray-400'
+                      isCurrent
+                        ? 'bg-[var(--brand-gold)] text-black shadow-sm'
+                        : isPast
+                          ? 'text-[var(--brand-gold)] hover:text-[var(--brand-gold-light)]'
+                          : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                     }`}
                   >
                     {stage.label}
@@ -373,6 +373,29 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
           {/* LEFT SIDEBAR: utility/reference boxes — sticky */}
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto no-scrollbar">
 
+            {/* Job Summary Card — top of sidebar */}
+            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] overflow-hidden">
+              <JobSummaryCard
+                job={job}
+                onOpenMessageModal={(type) => {
+                  setMessageType(type);
+                  setIsMessageModalOpen(true);
+                }}
+                onEditAssignment={() => {
+                  setEditFormData({
+                    assignedUsers: job.assignedUsers,
+                    assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
+                    plannedStartDate: job.plannedStartDate,
+                    plannedDurationDays: job.plannedDurationDays,
+                    plannedFinishDate: job.plannedFinishDate,
+                    officialScheduleStatus: job.officialScheduleStatus
+                  });
+                  setEditingSection('schedule');
+                }}
+                onUpdateJob={onUpdateJob}
+              />
+            </section>
+
             {/* AI Assistant Section */}
             {isEstimateStage && (
               <OfficeAIAssistant job={job} onUpdateJob={onUpdateJob} />
@@ -380,7 +403,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
             {/* Field Execution + Scheduling */}
             {(job.pipelineStage === PipelineStage.IN_FIELD || job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
-            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden shadow-md">
+            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-color)]">
                 <div className="flex items-center gap-2">
@@ -508,7 +531,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
             {/* Stripe Deposit */}
             {job.pipelineStage === PipelineStage.PRE_PRODUCTION && (
-              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] p-5 shadow-md">
+              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <CreditCard size={13} className="text-[var(--brand-gold)]" />
                   <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Deposit Collection</span>
@@ -537,7 +560,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             )}
 
             {/* Office Notes */}
-            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] shadow-md overflow-hidden">
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4">
                 <h3 className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] flex items-center gap-2">
                   <MessageSquare size={13} className="text-[var(--brand-gold)]" /> Office Notes
@@ -577,7 +600,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             </div>
 
             {/* Site Notes */}
-            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] shadow-md overflow-hidden">
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4">
                 <h3 className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] flex items-center gap-2">
                   <History size={13} className="text-[var(--brand-gold)]" /> Site Notes
@@ -612,7 +635,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             </div>
 
             {/* Job Files & Documents Package */}
-            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] p-8 shadow-md relative overflow-hidden">
+            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] p-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 blur-[60px] -mr-24 -mt-24 pointer-events-none" />
 
               <div className="flex items-center justify-between mb-8 relative z-10">
@@ -726,7 +749,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               job.pipelineStage === PipelineStage.COMPLETION ||
               job.pipelineStage === PipelineStage.PAID_CLOSED) && (
               <section
-                className="bg-[var(--brand-gold)]/10 border-2 border-[var(--brand-gold)]/30 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
+                className="bg-[var(--brand-gold)]/10 border-2 border-[var(--brand-gold)]/30 rounded-[2rem] p-8 relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-3xl -mr-32 -mt-32 pointer-events-none" />
                 <div className="flex items-center justify-between mb-8 relative z-10">
@@ -839,7 +862,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 
                 
                 
-                className={`border rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group ${
+                className={`border rounded-[2.5rem] p-8 relative overflow-hidden group ${
                   engagementHeat === 'hot' ? 'bg-orange-500/5 border-orange-500/20' :
                   engagementHeat === 'warm' ? 'bg-amber-500/5 border-amber-500/20' :
                   'bg-blue-500/5 border-blue-500/20'
@@ -953,7 +976,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
             {/* Lead Campaign Queue — intentionally hidden on Job Sold view; only relevant during estimate/lead stages */}
             {false && job.dripCampaign?.campaignType === 'LEAD_FOLLOW_UP' && leadCampaignTouches.length > 0 && (
-              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden shadow-md">
+              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-color)]">
                   <div className="flex items-center gap-2">
                     <MessageSquare size={13} className="text-[var(--brand-gold)]" />
@@ -1076,7 +1099,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 
                 
                 
-                className="bg-blue-500/5 border border-blue-500/20 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group"
+                className="bg-blue-500/5 border border-blue-500/20 rounded-[2.5rem] p-8 relative overflow-hidden group"
               >
                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 blur-[100px] -mr-48 -mt-48 pointer-events-none" />
                 
@@ -1338,31 +1361,8 @@ Ottawa's Premium Deck Builders`;
               </section>
             )}
 
-            {/* Job Summary Card */}
-            <section className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2rem] shadow-md overflow-hidden">
-              <JobSummaryCard
-                job={job}
-                onOpenMessageModal={(type) => {
-                  setMessageType(type);
-                  setIsMessageModalOpen(true);
-                }}
-                onEditAssignment={() => {
-                  setEditFormData({
-                    assignedUsers: job.assignedUsers,
-                    assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
-                    plannedStartDate: job.plannedStartDate,
-                    plannedDurationDays: job.plannedDurationDays,
-                    plannedFinishDate: job.plannedFinishDate,
-                    officialScheduleStatus: job.officialScheduleStatus
-                  });
-                  setEditingSection('schedule');
-                }}
-                onUpdateJob={onUpdateJob}
-              />
-            </section>
-
             {/* Stage Checklist */}
-            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-md backdrop-blur-md min-h-[300px] relative overflow-hidden">
+            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2.5rem] p-8 min-h-[300px] relative overflow-hidden">
               {/* Gold progress bar at top */}
               {currentChecklist && currentChecklist.items && currentChecklist.items.length > 0 && (
                 <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-[2.5rem] bg-[var(--bg-tertiary)] overflow-hidden">
@@ -1507,7 +1507,7 @@ Ottawa's Premium Deck Builders`;
 
             {/* Accepted Scope of Work */}
             {!isEstimateStage && (job.acceptedBuildSummary || job.estimateAmount) && (
-              <section className="bg-[var(--card-bg)] border border-[var(--brand-gold)]/20 rounded-[2rem] overflow-hidden shadow-md relative">
+              <section className="bg-[var(--card-bg)] border border-[var(--brand-gold)]/20 rounded-[2rem] overflow-hidden relative">
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-[var(--brand-gold)]/30" />
                 <div className="px-6 py-5 border-b border-[var(--border-color)] flex items-center justify-between">
                   <div>
@@ -1580,7 +1580,7 @@ Ottawa's Premium Deck Builders`;
             {/* Build Specifications / Digital Work Order */}
             {job.buildDetails && (
               <section
-                className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-md relative overflow-hidden"
+                className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2.5rem] p-8 relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
 
@@ -1968,7 +1968,7 @@ Ottawa's Premium Deck Builders`;
 
             {/* Digital Work Order — from Job Acceptance Wizard */}
             {job.digitalWorkOrder && (
-              <section className="bg-[var(--card-bg)] border border-[var(--brand-gold)]/30 rounded-[2.5rem] p-8 shadow-md relative overflow-hidden">
+              <section className="bg-[var(--card-bg)] border border-[var(--brand-gold)]/30 rounded-[2.5rem] p-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
                 <div className="flex items-center justify-between mb-8 relative z-10">
                   <div>
@@ -2050,7 +2050,7 @@ Ottawa's Premium Deck Builders`;
 
             {/* Prominent amber banner when setup was deferred ("Fill Later") */}
             {job.needsJobSetup && !job.digitalWorkOrder && onOpenJobSetup && (
-              <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-3xl p-6 flex items-center justify-between gap-4 shadow-md">
+              <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-3xl p-6 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
                     <span className="text-amber-500 text-lg font-black">!</span>
@@ -2085,30 +2085,9 @@ Ottawa's Premium Deck Builders`;
               </div>
             )}
 
-            {/* Scope Summary */}
-            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-md backdrop-blur-md">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] flex items-center gap-2">
-                  <FileText size={14} className="text-[var(--brand-gold)]" /> Scope Summary
-                </h3>
-                <button
-                  onClick={() => {
-                    setEditFormData({ scopeSummary: job.scopeSummary });
-                    setEditingSection('scopeSummary');
-                  }}
-                  className="px-3 py-1.5 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all flex items-center gap-2"
-                >
-                  <Edit2 size={12} /> Edit Scope
-                </button>
-              </div>
-              <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-[1.5rem] p-6 text-[var(--text-secondary)] leading-relaxed font-medium min-h-[120px]">
-                {job.scopeSummary || <span className="text-[var(--text-tertiary)] italic">No scope summary provided.</span>}
-              </div>
-            </section>
-
             {/* Scheduling — Compact card */}
             {job.pipelineStage === PipelineStage.READY_TO_START && (
-              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden shadow-md backdrop-blur-md">
+              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-[var(--brand-gold)]" />
@@ -2150,7 +2129,7 @@ Ottawa's Premium Deck Builders`;
 
             {/* Financial Performance Overview */}
             {!isEstimateStage && (
-            <section className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+            <section className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-[2rem] p-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
               <div className="flex items-center justify-between mb-8 relative z-10">
                 <div>
