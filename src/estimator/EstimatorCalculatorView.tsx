@@ -1581,6 +1581,8 @@ export interface EstimatorCalculatorProps {
   initialDimensions?: Partial<Dimensions>;
   /** Pre-fill client info from the job record */
   initialClientInfo?: { name: string; address: string };
+  /** Restore previously saved selections (material/option choices) when reopening an estimate */
+  initialSelections?: ReturnType<typeof getInitialSelections>;
   /** Called when a quote is accepted - passes all estimate data back to Field Pro */
   onEstimateAccepted?: (data: {
     clientName: string;
@@ -1605,13 +1607,13 @@ export interface EstimatorCalculatorProps {
   onExit?: () => void;
 }
 
-const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, onEstimateAccepted, onEstimateSaved, onExit }) => {
+const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, initialSelections, onEstimateAccepted, onEstimateSaved, onExit }) => {
   const [view, setView] = useState<'calculator' | 'packages' | 'materialMatrix' | 'gbb'>('calculator');
   const [calcDimensions, setCalcDimensions] = useState<Dimensions>(() => ({
     ...INITIAL_DIMENSIONS,
     ...(initialDimensions || {})
   }));
-  const [calcSelections, setCalcSelections] = useState(getInitialSelections());
+  const [calcSelections, setCalcSelections] = useState(() => initialSelections ? { ...getInitialSelections(), ...initialSelections } : getInitialSelections());
   const [lightingQuantities, setLightingQuantities] = useState<Record<string, number>>({});
   const [clientInfo, setClientInfo] = useState(initialClientInfo || {name:'', address:''});
   const [calcActiveCategory, setCalcActiveCategory] = useState<string>('decking');

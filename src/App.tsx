@@ -1733,6 +1733,7 @@ const App: React.FC = () => {
   // --- Estimator Calculator Integration ---
   const [calculatorInitialDimensions, setCalculatorInitialDimensions] = useState<any>(undefined);
   const [calculatorInitialClientInfo, setCalculatorInitialClientInfo] = useState<{ name: string; address: string } | undefined>(undefined);
+  const [calculatorInitialSelections, setCalculatorInitialSelections] = useState<any>(undefined);
   const [calculatorSourceJobId, setCalculatorSourceJobId] = useState<string | null>(null);
   const [showCalculatorAcceptance, setShowCalculatorAcceptance] = useState(false);
   const [calculatorAcceptanceJob, setCalculatorAcceptanceJob] = useState<Job | null>(null);
@@ -1742,6 +1743,7 @@ const App: React.FC = () => {
   const handleOpenNewEstimate = useCallback(() => {
     setCalculatorInitialDimensions(undefined);
     setCalculatorInitialClientInfo(undefined);
+    setCalculatorInitialSelections(undefined);
     setCalculatorSourceJobId(null);
     navigateTo('estimator-calculator');
   }, []);
@@ -1766,20 +1768,32 @@ const App: React.FC = () => {
 
   /** Open the calculator pre-filled from an existing job (e.g. from OfficeJobDetail) */
   const handleOpenEstimateForJob = useCallback(async (job: Job) => {
-    // Try loading from Supabase first (cross-device), then localStorage
-    const intake = await dataService.loadEstimatorIntake(job.id);
-    if (intake?.measureSheet) {
-      const dims = measureSheetToCalculatorDimensions(intake.measureSheet);
-      setCalculatorInitialDimensions(dims);
+    // 1. Restore dimensions — prefer saved calculatorDimensions, fall back to measureSheet
+    if (job.calculatorDimensions && Object.keys(job.calculatorDimensions).length > 0) {
+      setCalculatorInitialDimensions(job.calculatorDimensions);
     } else {
-      // Sync fallback for local-only data
-      const localSheet = loadEstimatorIntake(job.id);
-      if (localSheet) {
-        setCalculatorInitialDimensions(measureSheetToCalculatorDimensions(localSheet));
+      // Try loading from Supabase first (cross-device), then localStorage
+      const intake = await dataService.loadEstimatorIntake(job.id);
+      if (intake?.measureSheet) {
+        setCalculatorInitialDimensions(measureSheetToCalculatorDimensions(intake.measureSheet));
       } else {
-        setCalculatorInitialDimensions(undefined);
+        const localSheet = loadEstimatorIntake(job.id);
+        if (localSheet) {
+          setCalculatorInitialDimensions(measureSheetToCalculatorDimensions(localSheet));
+        } else {
+          setCalculatorInitialDimensions(undefined);
+        }
       }
     }
+
+    // 2. Restore saved material/option selections from the last time this estimate was built
+    if (job.calculatorSelections && Object.keys(job.calculatorSelections).length > 0) {
+      setCalculatorInitialSelections(job.calculatorSelections);
+    } else {
+      setCalculatorInitialSelections(undefined);
+    }
+
+    // 3. Client info + source job
     setCalculatorInitialClientInfo(jobToCalculatorClientInfo(job));
     setCalculatorSourceJobId(job.id);
     setSelectedJob(job);
@@ -2190,6 +2204,7 @@ const App: React.FC = () => {
         <EstimatorCalculatorView
           initialDimensions={calculatorInitialDimensions}
           initialClientInfo={calculatorInitialClientInfo}
+          initialSelections={calculatorInitialSelections}
           onEstimateAccepted={handleEstimateAccepted}
           onEstimateSaved={handleEstimateSaved}
           onExit={() => navigateTo(currentUser?.role === Role.ADMIN ? 'office-pipeline' : 'estimator-dashboard')}
