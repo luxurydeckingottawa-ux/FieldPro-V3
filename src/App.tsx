@@ -10,6 +10,7 @@ import StatsView from './views/StatsView';
 import WorkflowContainer from './views/WorkflowContainer';
 import FieldResourcesView from './views/FieldResourcesView';
 import { generateCloseoutPDF, generateInvoicePDF } from './utils/pdfGenerator';
+import { generateEstimatePDF } from './utils/estimatePdf';
 import { safeSetItem } from './utils/storage';
 import SchedulingCalendarView from './views/SchedulingCalendarView';
 import OfficeJobDetailView from './views/OfficeJobDetailView';
@@ -1893,6 +1894,42 @@ const App: React.FC = () => {
       mailLink.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;
       mailLink.click();
     }
+
+    // Generate itemized estimate PDF and attach to job files (async, non-blocking)
+    const jobNumberForPdf = createdNewJob?.jobNumber
+      ?? jobs.find(j => j.id === targetJobId)?.jobNumber
+      ?? `EST-${new Date().getFullYear()}-${String(data.estimateNumber).padStart(3, '0')}`;
+    const existingFilesForPdf = createdNewJob?.files
+      ?? jobs.find(j => j.id === targetJobId)?.files
+      ?? [];
+    ;(async () => {
+      try {
+        const pdfDataUri = await generateEstimatePDF({
+          jobNumber: jobNumberForPdf,
+          clientName: data.clientName,
+          clientAddress: data.clientAddress,
+          estimateDate: now,
+          lineItems: data.pricingSummary.impacts ?? [],
+          subTotal: data.pricingSummary.subTotal,
+          hst: data.pricingSummary.hst,
+          total: data.pricingSummary.finalTotal,
+          monthly: data.pricingSummary.monthly,
+        });
+        const pdfFile = {
+          id: `estimate-pdf-${Date.now()}`,
+          name: `Estimate-${jobNumberForPdf}.pdf`,
+          url: pdfDataUri,
+          type: 'estimate' as const,
+          uploadedAt: now,
+          uploadedBy: 'system',
+        };
+        // Replace any existing estimate PDF, then append new one
+        const filteredFiles = existingFilesForPdf.filter((f: { type: string }) => f.type !== 'estimate');
+        handleUpdateJob(targetJobId!, { files: [...filteredFiles, pdfFile] });
+      } catch (pdfErr) {
+        console.warn('[estimate-pdf] generation failed:', pdfErr);
+      }
+    })();
 
     // Navigate to estimate detail — use createdNewJob for fresh jobs (jobs state is stale for new records)
     const updatedJob = createdNewJob ?? jobs.find(j => j.id === targetJobId);

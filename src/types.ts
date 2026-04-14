@@ -25,7 +25,7 @@ export interface JobFile {
   id: string;
   name: string;
   url: string;
-  type: 'drawing' | 'permit' | 'photo' | 'closeout' | 'contract' | 'other';
+  type: 'estimate' | 'drawing' | 'permit' | 'photo' | 'closeout' | 'contract' | 'other';
   uploadedAt: string;
   uploadedBy?: string;
 }

@@ -2097,6 +2097,7 @@ Ottawa's Premium Deck Builders`;
                   <>
                     {/* Grouped by Type */}
                     {[
+                      { type: 'estimate', label: 'Itemized Estimate', icon: ClipboardList, color: 'text-[var(--brand-gold)]' },
                       { type: 'contract', label: 'Signed Contract', icon: FileText, color: 'text-[var(--brand-gold)]' },
                       { type: 'drawing', label: 'Technical Drawings & Plans', icon: Ruler, color: 'text-[var(--brand-gold)]' },
                       { type: 'permit', label: 'Permits & Legal', icon: ShieldCheck, color: 'text-blue-400' },

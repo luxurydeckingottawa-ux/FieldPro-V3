@@ -436,6 +436,40 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               </div>
             </div>
 
+            {/* Estimate Documents */}
+            {job.files?.some((f: any) => f.type === 'estimate' || f.type === 'contract') && (
+              <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[var(--border-color)]">
+                  <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5 text-[var(--brand-gold)]" /> Estimate Documents
+                  </h2>
+                </div>
+                <div className="p-4 space-y-2">
+                  {job.files
+                    .filter((f: any) => f.type === 'estimate' || f.type === 'contract')
+                    .map((file: any) => (
+                      <div
+                        key={file.id}
+                        onClick={() => file.url && window.open(file.url, '_blank')}
+                        className={`flex items-center gap-4 p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] transition-all group ${file.url ? 'cursor-pointer hover:border-[var(--brand-gold)]/40 hover:bg-[var(--bg-tertiary)]' : 'opacity-50 cursor-default'}`}
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center shrink-0">
+                          <FileText className="w-4 h-4 text-[var(--brand-gold)]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--brand-gold)] transition-colors">{file.name}</p>
+                          <p className="text-[9px] text-[var(--text-secondary)] uppercase font-black tracking-widest mt-0.5">
+                            {file.type === 'estimate' ? 'Itemized Estimate PDF' : 'Signed Contract'}
+                            {!file.url && ' · Pending'}
+                          </p>
+                        </div>
+                        {file.url && <ExternalLink className="w-3.5 h-3.5 text-[var(--text-secondary)] group-hover:text-[var(--brand-gold)] transition-colors shrink-0" />}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
             {/* Site Assessment Photos */}
             <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-color)]">
