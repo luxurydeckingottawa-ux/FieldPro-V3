@@ -1084,15 +1084,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     <CheckCircle2 className="w-4 h-4" /> Signed & Accepted
                   </div>
                 )}
-                {amount > 0 && !job.customerSignature && job.clientEmail && (
-                  <button onClick={() => {
-                    sharePortalLink('email');
-                    onUpdatePipelineStage(job.id, PipelineStage.EST_SENT);
-                  }}
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--brand-gold)] text-white rounded-lg text-sm font-bold hover:opacity-90 transition-all">
-                    <Send className="w-4 h-4" /> Send Estimate to Client
-                  </button>
-                )}
+                {/* "Send Estimate to Client" removed — use Re-send Estimate below */}
                 <button onClick={() => onPreviewPortal(job)}
                   className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-sm font-bold text-[var(--text-primary)] hover:border-[var(--brand-gold)]/30 transition-all">
                   <ExternalLink className="w-4 h-4" /> Preview Portal

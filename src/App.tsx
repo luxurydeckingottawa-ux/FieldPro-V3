@@ -1954,7 +1954,7 @@ const App: React.FC = () => {
     // Navigate to estimate detail — use createdNewJob for fresh jobs (jobs state is stale for new records)
     const updatedJob = createdNewJob ?? jobs.find(j => j.id === targetJobId);
     if (updatedJob) {
-      setSelectedJob({ ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, pipelineStage: PipelineStage.EST_SENT });
+      setSelectedJob({ ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, liveEstimate, pipelineStage: PipelineStage.EST_SENT });
     }
     navigateTo('estimate-detail', targetJobId);
   }, [calculatorSourceJobId, handleUpdateJob, jobs]);

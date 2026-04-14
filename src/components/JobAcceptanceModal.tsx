@@ -786,24 +786,8 @@ const JobAcceptanceModal: React.FC<JobAcceptanceModalProps> = ({ job, onComplete
   const [pendingUpdates, setPendingUpdates] = useState<Partial<Job>>({});
 
   const handleContractContinue = () => {
-    // Only create a placeholder contract entry if one wasn't already attached
-    // by the on-site AcceptanceModal signing flow (which adds a real signed contract).
-    const alreadyHasContract = (job.files ?? []).some((f) => f.type === 'contract');
-    if (!alreadyHasContract) {
-      const now = new Date().toISOString();
-      const contractEntry = {
-        id: `contract-${Date.now()}`,
-        name: `Project Agreement — ${job.clientName || 'Client'}.pdf`,
-        url: '',
-        type: 'contract' as const,
-        uploadedAt: now,
-        uploadedBy: 'system',
-      };
-      setPendingUpdates((prev) => ({
-        ...prev,
-        files: [...(job.files ?? []), ...(prev.files ?? []), contractEntry],
-      }));
-    }
+    // The real signed contract is already attached by AcceptanceModal upstream.
+    // Do NOT create a placeholder here — it would overwrite the real contract file.
     setStep(2);
   };
 

@@ -603,8 +603,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               </section>
             )}
 
-            {/* Lead Campaign Queue */}
-            {job.dripCampaign?.campaignType === 'LEAD_FOLLOW_UP' && leadCampaignTouches.length > 0 && (
+            {/* Lead Campaign Queue — intentionally hidden on Job Sold view; only relevant during estimate/lead stages */}
+            {false && job.dripCampaign?.campaignType === 'LEAD_FOLLOW_UP' && leadCampaignTouches.length > 0 && (
               <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden shadow-md">
                 <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-color)]">
                   <div className="flex items-center gap-2">

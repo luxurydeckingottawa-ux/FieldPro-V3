@@ -47,31 +47,53 @@ function formatCurrency(n: number): string {
 }
 
 /**
- * Extract a quantity hint from labels like "Helical Piles (4x)" or "AL13 Rail (32 LF)".
+ * Extract a quantity hint from labels like:
+ *   "Helical Piles (4x)"  → quantity "4x"
+ *   "AL13 Rail (32 LF)"   → quantity "32 LF"
+ *   "3x IN-LITE Hyve 22"  → quantity "3x"
  * Returns { quantity, cleanLabel } — quantity is empty string if not found.
  */
 function parseLabel(label: string): { quantity: string; cleanLabel: string } {
-  const match = label.match(/\(([^)]+)\)\s*$/);
-  if (match) {
+  // Pattern 1 — parentheses at end: "Name (qty)"
+  const endMatch = label.match(/\(([^)]+)\)\s*$/);
+  if (endMatch) {
     return {
-      quantity: match[1],
+      quantity: endMatch[1],
       cleanLabel: label.replace(/\s*\([^)]+\)\s*$/, '').trim(),
+    };
+  }
+  // Pattern 2 — numeric prefix: "3x Name" or "12x Name"
+  const prefixMatch = label.match(/^(\d+x)\s+(.+)$/i);
+  if (prefixMatch) {
+    return {
+      quantity: prefixMatch[1],
+      cleanLabel: prefixMatch[2].trim(),
     };
   }
   return { quantity: '', cleanLabel: label };
 }
 
-async function fetchLogoBase64(src: string): Promise<string | null> {
+interface LogoResult { dataUrl: string; width: number; height: number }
+
+async function fetchLogoBase64(src: string): Promise<LogoResult | null> {
   try {
     const res = await fetch(src);
     if (!res.ok) return null;
     const blob = await res.blob();
-    return await new Promise<string>((resolve, reject) => {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
+    // Detect natural dimensions via Image element
+    const { w, h } = await new Promise<{ w: number; h: number }>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve({ w: 0, h: 0 });
+      img.src = dataUrl;
+    });
+    return { dataUrl, width: w || 200, height: h || 60 };
   } catch {
     return null;
   }
@@ -86,15 +108,22 @@ export async function generateEstimatePDF(data: EstimatePDFData): Promise<string
   const M  = 14;  // margin
   const CW = PW - M * 2;
 
-  // Try to load logo
-  const logoBase64 = await fetchLogoBase64('/assets/logo-black.png');
+  // Try to load logo (prefer white version on dark PDF, black on light)
+  const logoResult = await fetchLogoBase64('/assets/logo-black.png');
 
   let y = M;
 
   // ── HEADER ──────────────────────────────────────────────────────────────────
 
-  if (logoBase64) {
-    doc.addImage(logoBase64, 'PNG', M, y, 22, 22);
+  if (logoResult) {
+    // Scale logo to a fixed height of 16mm, preserving aspect ratio (max 50mm wide)
+    const maxH = 16;
+    const maxW = 50;
+    const aspect = logoResult.width / Math.max(logoResult.height, 1);
+    let logoW = maxH * aspect;
+    let logoH = maxH;
+    if (logoW > maxW) { logoW = maxW; logoH = maxW / aspect; }
+    doc.addImage(logoResult.dataUrl, 'PNG', M, y + (22 - logoH) / 2, logoW, logoH);
   } else {
     // Text fallback
     tc(doc, GOLD);

@@ -1678,7 +1678,8 @@ useEffect(() => {
           }
           
           if (calcSelections.railing.id !== BASE_RAILING_ID && railingTotal > 0) {
-              impacts.push({ label: `Railings: ${calcSelections.railing.name}`, value: railingTotal });
+              const railQty = calcDimensions.railingLF > 0 ? ` (${calcDimensions.railingLF} LF)` : '';
+              impacts.push({ label: `Railings: ${calcSelections.railing.name}${railQty}`, value: railingTotal });
           }
         } else if (baseRailPrice > 0) {
           railingTotal = calcDimensions.railingLF * baseRailPrice;
@@ -1696,13 +1697,16 @@ useEffect(() => {
     const foundationOpt = calcSelections.foundation;
     if (foundationOpt) {
       let foundationImpact = foundationOpt.priceDelta * calcDimensions.footingsCount;
-      let label = foundationOpt.name;
-      
+      const pileCount = calcDimensions.footingsCount > 0 ? `${calcDimensions.footingsCount}x` : '';
+      let label = pileCount ? `${foundationOpt.name} (${pileCount})` : foundationOpt.name;
+
       // Traditional footings require ledger prep unless Namifix is used
       if (calcDimensions.namiFixCount === 0 && ['sonotube', 'helical', 'pylex_screws'].includes(foundationOpt.id)) {
         const ledgerCost = calcDimensions.ledgerLF * COSTS.ledgerPerLF;
         foundationImpact += ledgerCost;
-        label = `${foundationOpt.name} (incl. Ledger Prep)`;
+        label = pileCount
+          ? `${foundationOpt.name} (${pileCount}, incl. Ledger Prep)`
+          : `${foundationOpt.name} (incl. Ledger Prep)`;
       }
       
       if (foundationImpact > 0) {
@@ -1722,11 +1726,11 @@ useEffect(() => {
     const framingTotal = calcDimensions.sqft * framingPrice;
     if (framingTotal > 0) {
         subTotal += framingTotal;
-        impacts.push({ label: `Framing Upgrade`, value: framingTotal });
+        impacts.push({ label: `Framing Upgrade (${calcDimensions.sqft} sqft)`, value: framingTotal });
     }
 
     const skirtingTotal = calcDimensions.skirtingSqFt * (calcSelections.skirting?.priceDelta || 0);
-    if (skirtingTotal > 0) { subTotal += skirtingTotal; impacts.push({ label: `Skirting`, value: skirtingTotal }); }
+    if (skirtingTotal > 0) { subTotal += skirtingTotal; impacts.push({ label: `Skirting (${calcDimensions.skirtingSqFt} sqft)`, value: skirtingTotal }); }
 
     calcSelections.privacy.forEach((p: any) => {
       let pTotal = 0;
