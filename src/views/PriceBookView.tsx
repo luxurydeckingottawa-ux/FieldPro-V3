@@ -459,6 +459,11 @@ function ItemEditView({ item, categoryId, onSave, onDelete, onBack }: ItemEditVi
   const handleCropSave = (cropped: string) => {
     set('imageUrl', cropped);
     setCropSrc(null);
+    // Auto-save immediately so the image persists without a separate Save click
+    if (form.name.trim()) {
+      const finalUnit = useCustomUnit ? customUnit.trim() || 'Each' : form.unit;
+      onSave({ ...form, imageUrl: cropped, unit: finalUnit });
+    }
   };
 
   const handleSave = () => {

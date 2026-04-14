@@ -2,6 +2,7 @@
  * Price Book utilities — shared between PriceBookView and EstimatorCalculatorView.
  * No React imports — pure data and localStorage helpers.
  */
+import { safeSetItem } from './storage';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,7 +41,7 @@ export function loadPriceBook(): { categories: PriceBookCategory[]; items: Price
 }
 
 export function savePriceBook(cats: PriceBookCategory[], items: PriceBookItem[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ categories: cats, items }));
+  safeSetItem(STORAGE_KEY, JSON.stringify({ categories: cats, items }));
 }
 
 // ── Default Data ──────────────────────────────────────────────────────────────
