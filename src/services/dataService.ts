@@ -418,15 +418,42 @@ export const dataService = {
           .from('jobs')
           .update(row)
           .eq('id', jobId);
-        
+
         if (error) {
           console.error('Failed to update job:', error);
+          throw new Error(`Supabase update failed: ${error.message}`);
         }
       }
       return;
     }
     
     // localStorage: handled by the caller saving the full jobs array
+  },
+
+  /**
+   * Upsert files into the job_files table.
+   * Safe to call with an empty array (no-op).
+   * Skips files whose URL is a raw data URI (too large for DB — must be a Cloudinary URL).
+   */
+  async saveFiles(jobId: string, files: { id: string; name: string; url: string; type: string; uploadedAt?: string }[]): Promise<void> {
+    if (!isSupabaseConfigured()) return;
+    const validFiles = files.filter(f => f.url && !f.url.startsWith('data:'));
+    if (!validFiles.length) return;
+    const rows = validFiles.map(f => ({
+      id: f.id,
+      job_id: jobId,
+      org_id: LUXURY_DECKING_ORG_ID,
+      name: f.name,
+      url: f.url,
+      file_type: f.type,
+      uploaded_at: f.uploadedAt || new Date().toISOString(),
+    }));
+    const { error } = await supabase!
+      .from('job_files')
+      .upsert(rows, { onConflict: 'id' });
+    if (error) {
+      console.error('Failed to save files:', error);
+    }
   },
 
   // ----- ESTIMATOR INTAKES -----

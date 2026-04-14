@@ -557,33 +557,40 @@ const App: React.FC = () => {
         
         if (!stageChanged && !forecastChanged && !progressChanged) return prevJobs;
         
-        return prevJobs.map(job => 
-          job.id === workflowState.jobId 
-            ? { 
-                ...job, 
-                currentStage: stageToSync, 
+        return prevJobs.map(job =>
+          job.id === workflowState.jobId
+            ? {
+                ...job,
+                currentStage: stageToSync,
                 fieldForecast: workflowState.fieldForecast,
-                fieldProgress: workflowState.pages 
-              } 
+                fieldProgress: workflowState.pages
+              }
             : job
         );
       });
-      
+
       // Also update selectedJob if it's the one being worked on
       if (selectedJob && selectedJob.id === workflowState.jobId) {
         const stageChanged = selectedJob.currentStage !== stageToSync;
         const forecastChanged = JSON.stringify(selectedJob.fieldForecast) !== JSON.stringify(workflowState.fieldForecast);
         const progressChanged = JSON.stringify(selectedJob.fieldProgress) !== JSON.stringify(workflowState.pages);
-        
+
         if (stageChanged || forecastChanged || progressChanged) {
-          setSelectedJob(prev => prev ? { 
-            ...prev, 
-            currentStage: stageToSync, 
+          setSelectedJob(prev => prev ? {
+            ...prev,
+            currentStage: stageToSync,
             fieldForecast: workflowState.fieldForecast,
             fieldProgress: workflowState.pages
           } : null);
         }
       }
+
+      // Auto-save progress to Supabase so work isn't lost if the page reloads mid-job
+      dataService.updateJob(workflowState.jobId, {
+        currentStage: stageToSync,
+        fieldProgress: workflowState.pages,
+        ...(workflowState.fieldForecast ? { fieldForecast: workflowState.fieldForecast } : {}),
+      }).catch(err => console.warn('[progress-autosave] Supabase sync failed:', err));
     }
   }, [workflowState.currentPage, workflowState.jobId, workflowState.fieldForecast, workflowState.pages, selectedJob]); 
 
@@ -1068,8 +1075,11 @@ const App: React.FC = () => {
       try {
         verifiedBuildPassportUrl = await uploadFileToCloudinary(closeoutDataUri, `Passport_${workflowState.jobInfo.jobName}_${Date.now()}`);
       } catch (pdfUploadErr) {
-        console.warn('Closeout PDF upload to Cloudinary failed, using local URI:', pdfUploadErr);
-        verifiedBuildPassportUrl = closeoutDataUri;
+        // Do NOT fall back to the raw data URI — it's too large for Supabase and will
+        // silently drop the entire job update. Leave the URL empty; the passport can be
+        // regenerated from the office side via the Build Passport button.
+        console.warn('Closeout PDF upload to Cloudinary failed — passport URL will be empty:', pdfUploadErr);
+        verifiedBuildPassportUrl = '';
       }
 
       let subcontractorInvoiceUrl = '';
@@ -1198,22 +1208,51 @@ const App: React.FC = () => {
         }
       }
 
-      // Persist completion to Supabase — await so a failure surfaces to the crew (not silent)
+      // Persist completion to Supabase — surfaces errors to the crew (no silent failures)
       if (workflowState.jobId) {
-        await dataService.updateJob(workflowState.jobId, {
-          status: JobStatus.COMPLETED,
-          currentStage: 5,
-          pipelineStage: PipelineStage.COMPLETION,
-          signoffStatus: 'signed' as const,
-          finalSubmissionStatus: 'submitted' as const,
-          invoiceSupportStatus: workflowState.userRole === UserRole.SUBCONTRACTOR ? 'submitted' as const : 'not_required' as const,
-          officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
-          verifiedBuildPassportUrl,
-          subcontractorInvoiceUrl,
-          ...(workflowState.userRole === UserRole.SUBCONTRACTOR ? { labourCost: subInvoiceTotal } : {}),
-          ...(workflowState.fieldForecast ? { fieldForecast: workflowState.fieldForecast } : {}),
-          updatedAt: new Date().toISOString()
-        });
+        try {
+          await dataService.updateJob(workflowState.jobId, {
+            status: JobStatus.COMPLETED,
+            currentStage: 5,
+            pipelineStage: PipelineStage.COMPLETION,
+            signoffStatus: 'signed' as const,
+            finalSubmissionStatus: 'submitted' as const,
+            invoiceSupportStatus: workflowState.userRole === UserRole.SUBCONTRACTOR ? 'submitted' as const : 'not_required' as const,
+            officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
+            verifiedBuildPassportUrl: verifiedBuildPassportUrl || undefined,
+            subcontractorInvoiceUrl: subcontractorInvoiceUrl || undefined,
+            fieldProgress: workflowState.pages, // persist checklist state
+            ...(workflowState.userRole === UserRole.SUBCONTRACTOR ? { labourCost: subInvoiceTotal } : {}),
+            ...(workflowState.fieldForecast ? { fieldForecast: workflowState.fieldForecast } : {}),
+          });
+        } catch (supabaseErr) {
+          console.error('Supabase job update failed:', supabaseErr);
+          setSubmissionError('Job submitted locally but cloud sync failed. Please notify the office manually.');
+          // Don't throw — local state is already updated (isJobSubmitted = true)
+        }
+
+        // Persist build passport file to job_files table
+        const filesToSave = [
+          ...(verifiedBuildPassportUrl ? [{
+            id: `f-passport-${workflowState.jobId}`,
+            name: `Luxury Decking Verified Build Passport - ${workflowState.jobInfo.jobName}.pdf`,
+            url: verifiedBuildPassportUrl,
+            type: 'closeout',
+            uploadedAt: new Date().toISOString(),
+          }] : []),
+          ...(subcontractorInvoiceUrl ? [{
+            id: `f-invoice-${workflowState.jobId}`,
+            name: `Subcontractor Invoice Package - ${workflowState.jobInfo.jobName}.pdf`,
+            url: subcontractorInvoiceUrl,
+            type: 'closeout',
+            uploadedAt: new Date().toISOString(),
+          }] : []),
+        ];
+        if (filesToSave.length) {
+          dataService.saveFiles(workflowState.jobId, filesToSave).catch(err =>
+            console.warn('Failed to persist files to job_files:', err)
+          );
+        }
       }
 
       // Netlify form submission (non-blocking for UI)
