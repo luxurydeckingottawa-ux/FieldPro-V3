@@ -45,6 +45,7 @@ import {
   Clock,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
 
   Hammer,
   Zap,
@@ -64,6 +65,8 @@ import {
 } from 'lucide-react';
 import { OfficeAIAssistant } from '../components/OfficeAIAssistant';
 import { AIOfficeInsights } from '../components/AIOfficeInsights';
+import { getCampaignTouches } from '../utils/dripCampaign';
+import { calculateEngagementTier } from '../utils/engagementScoring';
 
 interface OfficeJobDetailViewProps {
   job: Job;
@@ -100,6 +103,9 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [customerInfoCollapsed, setCustomerInfoCollapsed] = useState(false);
   const [officeNotesCollapsed, setOfficeNotesCollapsed] = useState(false);
   const [siteNotesCollapsed, setSiteNotesCollapsed] = useState(false);
+  const [sendingLeadTouchId, setSendingLeadTouchId] = useState<string | null>(null);
+  const [expandedLeadTouchId, setExpandedLeadTouchId] = useState<string | null>(null);
+  const [leadTouchSentFeedback, setLeadTouchSentFeedback] = useState<string | null>(null);
 
   const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === job.pipelineStage);
   const currentStageInfo = stageIndex !== -1 ? PIPELINE_STAGES[stageIndex] : null;
@@ -133,6 +139,49 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const issues = useMemo(() => getJobIssues(job), [job]);
 
   const labourSummary = useMemo(() => timeClockService.getLabourSummary(job.id), [job.id]);
+
+  const leadCampaignTouches = useMemo(() => {
+    if (!job.dripCampaign || job.dripCampaign.campaignType !== 'LEAD_FOLLOW_UP') return [];
+    return getCampaignTouches('LEAD_FOLLOW_UP', job, job.portalEngagement);
+  }, [job]);
+
+  const handleSendLeadTouch = async (touchId: string, channel: 'sms' | 'email' | 'sms+email', smsBody: string, emailBody: string, subject?: string) => {
+    if (!job.clientPhone && !job.clientEmail) return;
+    setSendingLeadTouchId(touchId);
+    try {
+      const sends: Promise<any>[] = [];
+      if ((channel === 'sms' || channel === 'sms+email') && job.clientPhone) {
+        sends.push(fetch('/.netlify/functions/send-sms', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: job.clientPhone, message: smsBody }),
+        }));
+      }
+      if ((channel === 'email' || channel === 'sms+email') && job.clientEmail) {
+        const htmlBody = emailBody.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>').replace(/^/, '<p>').replace(/$/, '</p>');
+        sends.push(fetch('/.netlify/functions/send-email', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: job.clientEmail, subject: subject || 'Luxury Decking Follow-Up', htmlBody }),
+        }));
+      }
+      await Promise.all(sends);
+      const tier = calculateEngagementTier(job.portalEngagement).tier;
+      const updatedCampaign = {
+        ...job.dripCampaign!,
+        completedTouches: [...(job.dripCampaign!.completedTouches || []), touchId],
+        sentMessages: [...(job.dripCampaign!.sentMessages || []), {
+          touchId,
+          channel: (channel === 'sms+email' ? 'sms' : channel) as 'sms' | 'email',
+          sentAt: new Date().toISOString(),
+          engagementTier: tier,
+        }],
+      };
+      onUpdateJob(job.id, { dripCampaign: updatedCampaign });
+      setLeadTouchSentFeedback(touchId);
+      setTimeout(() => setLeadTouchSentFeedback(null), 3000);
+    } catch (err) { console.error('Failed to send lead touch:', err); }
+    finally { setSendingLeadTouchId(null); }
+  };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -475,6 +524,121 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       ))}
                     </div>
                   </div>
+                </div>
+              </section>
+            )}
+
+            {/* Lead Campaign Queue */}
+            {job.dripCampaign?.campaignType === 'LEAD_FOLLOW_UP' && leadCampaignTouches.length > 0 && (
+              <section className="bg-white/[0.03] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare size={13} className="text-[var(--brand-gold)]" />
+                    <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em]">Lead Follow-Up Campaign</h3>
+                  </div>
+                  {(() => {
+                    const tier = calculateEngagementTier(job.portalEngagement).tier;
+                    const tierColors: Record<string, string> = {
+                      HOT: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                      WARM: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                      COOL: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
+                      COLD: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+                    };
+                    return (
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${tierColors[tier] || tierColors.COLD}`}>
+                        {tier} Engagement
+                      </span>
+                    );
+                  })()}
+                </div>
+                <div className="p-4 space-y-2">
+                  {leadCampaignTouches.map((touch) => {
+                    const completedIds = new Set(job.dripCampaign?.completedTouches || []);
+                    const isDone = completedIds.has(touch.id);
+                    const isExpanded = expandedLeadTouchId === touch.id;
+                    const isSending = sendingLeadTouchId === touch.id;
+                    const justSent = leadTouchSentFeedback === touch.id;
+                    const delayLabel = touch.delayDays === 0
+                      ? (touch.delayMinutes ? `${touch.delayMinutes}m after` : 'Instant')
+                      : `Day ${touch.delayDays}`;
+                    const channelLabel = touch.channel === 'sms+email' ? 'SMS + Email' : touch.channel.toUpperCase();
+                    return (
+                      <div
+                        key={touch.id}
+                        className={`rounded-xl border transition-all ${
+                          isDone
+                            ? 'border-[var(--brand-gold)]/20 bg-[var(--brand-gold)]/5'
+                            : 'border-white/5 bg-white/[0.02] hover:border-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 px-4 py-3">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${
+                            isDone ? 'bg-[var(--brand-gold)] text-black' : 'bg-white/5 text-gray-500 border border-white/10'
+                          }`}>
+                            {isDone ? <Check size={10} /> : touch.touchNumber}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[10px] font-black text-white uppercase tracking-wide">{delayLabel}</span>
+                              <span className="text-[8px] font-bold text-gray-500 bg-white/5 px-1.5 py-0.5 rounded uppercase tracking-wider">{channelLabel}</span>
+                              {touch.subject && (
+                                <span className="text-[9px] text-gray-500 truncate max-w-[180px]">{touch.subject}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {(touch.emailTemplate || touch.smsTemplate) && (
+                              <button
+                                onClick={() => setExpandedLeadTouchId(isExpanded ? null : touch.id)}
+                                className="p-1.5 text-gray-600 hover:text-gray-300 transition-colors"
+                              >
+                                {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                              </button>
+                            )}
+                            {isDone ? (
+                              <span className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-widest">Sent</span>
+                            ) : justSent ? (
+                              <span className="text-[8px] font-black text-green-400 uppercase tracking-widest flex items-center gap-1">
+                                <Check size={10} /> Sent!
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleSendLeadTouch(touch.id, touch.channel, touch.smsTemplate, touch.emailTemplate, touch.subject)}
+                                disabled={isSending}
+                                className="px-3 py-1.5 bg-[var(--brand-gold)] text-black text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-[var(--brand-gold-light)] transition-all disabled:opacity-50 flex items-center gap-1"
+                              >
+                                {isSending ? <Loader2 size={10} className="animate-spin" /> : <MessageSquare size={10} />}
+                                Send
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        {isExpanded && (
+                          <div className="px-4 pb-4 space-y-2 border-t border-white/5 pt-3">
+                            {touch.emailTemplate && (
+                              <div className="p-3 bg-white/5 rounded-xl">
+                                <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                  <Mail size={9} /> Email
+                                  {touch.subject && <span className="text-gray-500 normal-case font-normal ml-1">— {touch.subject}</span>}
+                                </p>
+                                <p className="text-[10px] text-gray-400 leading-relaxed whitespace-pre-wrap">
+                                  {touch.emailTemplate.length > 250 ? touch.emailTemplate.slice(0, 250) + '…' : touch.emailTemplate}
+                                </p>
+                              </div>
+                            )}
+                            {touch.smsTemplate && (
+                              <div className="p-3 bg-white/5 rounded-xl">
+                                <p className="text-[8px] font-black text-green-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                  <MessageSquare size={9} /> SMS
+                                </p>
+                                <p className="text-[10px] text-gray-400 leading-relaxed">{touch.smsTemplate}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}
