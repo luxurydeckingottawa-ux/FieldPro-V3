@@ -542,6 +542,27 @@ const App: React.FC = () => {
     navigateTo('office-pipeline');
   }, []);
 
+  /**
+   * Strip raw camera photo data URIs from fieldProgress before saving to Supabase.
+   * Keeps cloudinary https:// URLs, drops data: URIs that would exceed DB payload limits.
+   */
+  const stripPhotoDataUris = (pages: any): any => {
+    if (!pages || typeof pages !== 'object') return pages;
+    const result: any = {};
+    for (const [pageNum, page] of Object.entries(pages)) {
+      const p = page as any;
+      result[pageNum] = {
+        ...p,
+        photos: (p.photos || []).map((photo: any) => ({
+          ...photo,
+          // Keep only cloud URLs; drop raw data URIs (they belong in local state only)
+          url: photo.cloudinaryUrl || (typeof photo.url === 'string' && photo.url.startsWith('http') ? photo.url : ''),
+        })),
+      };
+    }
+    return result;
+  };
+
   // Sync workflow progress back to the jobs list
   useEffect(() => {
     if (workflowState.jobId) {
@@ -585,10 +606,10 @@ const App: React.FC = () => {
         }
       }
 
-      // Auto-save progress to Supabase so work isn't lost if the page reloads mid-job
+      // Auto-save progress to Supabase (strip photo data URIs — keep only cloud URLs)
       dataService.updateJob(workflowState.jobId, {
         currentStage: stageToSync,
-        fieldProgress: workflowState.pages,
+        fieldProgress: stripPhotoDataUris(workflowState.pages),
         ...(workflowState.fieldForecast ? { fieldForecast: workflowState.fieldForecast } : {}),
       }).catch(err => console.warn('[progress-autosave] Supabase sync failed:', err));
     }
@@ -1221,7 +1242,7 @@ const App: React.FC = () => {
             officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
             verifiedBuildPassportUrl: verifiedBuildPassportUrl || undefined,
             subcontractorInvoiceUrl: subcontractorInvoiceUrl || undefined,
-            fieldProgress: workflowState.pages, // persist checklist state
+            fieldProgress: stripPhotoDataUris(updatedPages), // checklist + cloudinary URLs only
             ...(workflowState.userRole === UserRole.SUBCONTRACTOR ? { labourCost: subInvoiceTotal } : {}),
             ...(workflowState.fieldForecast ? { fieldForecast: workflowState.fieldForecast } : {}),
           });
