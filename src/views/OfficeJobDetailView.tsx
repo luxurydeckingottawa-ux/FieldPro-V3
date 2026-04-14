@@ -1560,6 +1560,24 @@ Ottawa's Premium Deck Builders`;
                       </div>
                     ))}
                   </div>
+                  {/* Last update timestamp */}
+                  {(() => {
+                    const ts = job.fieldForecast?.updatedAt || job.lastScheduleUpdateAt || job.updatedAt;
+                    if (!ts) return null;
+                    const d = new Date(ts);
+                    const dateStr = d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+                    const timeStr = d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true });
+                    const by = job.fieldForecast?.updatedBy || job.lastScheduleUpdatedBy;
+                    return (
+                      <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-[var(--border-color)]">
+                        <Clock size={9} className="text-[var(--text-tertiary)] shrink-0" />
+                        <span className="text-[9px] text-[var(--text-tertiary)]">
+                          Last update: <span className="font-bold text-[var(--text-secondary)]">{dateStr} at {timeStr}</span>
+                          {by && <span className="text-[var(--text-tertiary)]"> — {by}</span>}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Schedule grid */}
