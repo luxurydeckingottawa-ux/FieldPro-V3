@@ -95,6 +95,7 @@ function jobToRow(job: Job): Record<string, any> {
     nurture_step: job.nurtureStep || null,
     nurture_status: job.nurtureStatus || null,
     post_project_status: job.postProjectStatus || null,
+    drip_campaign: job.dripCampaign || null,
   };
 }
 
@@ -175,6 +176,7 @@ export function rowToJob(row: Record<string, any>): Job {
     nurtureStep: row.nurture_step,
     nurtureStatus: row.nurture_status,
     postProjectStatus: row.post_project_status,
+    dripCampaign: row.drip_campaign || undefined,
     officeNotes: [], // loaded separately from job_notes table
     siteNotes: [],
     files: [], // loaded separately from job_files table
@@ -401,6 +403,7 @@ export const dataService = {
         selectedAddOnIds: 'selected_add_on_ids', flaggedIssues: 'flagged_issues',
         nurtureSequence: 'nurture_sequence', nurtureStep: 'nurture_step',
         nurtureStatus: 'nurture_status', postProjectStatus: 'post_project_status',
+        dripCampaign: 'drip_campaign',
       };
 
       for (const [camelKey, value] of Object.entries(updates)) {
