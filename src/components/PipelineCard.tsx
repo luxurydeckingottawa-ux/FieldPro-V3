@@ -125,7 +125,7 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
         <div className={`mt-3 px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-2 ${
           campaignStatus.overdue
             ? 'bg-rose-500/10 border border-rose-500/20'
-            : 'bg-white/[0.03] border border-white/5'
+            : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'
         }`}>
           <div className="flex items-center gap-1.5 min-w-0">
             <Mail size={9} className={campaignStatus.overdue ? 'text-rose-400 shrink-0' : 'text-[var(--brand-gold)] shrink-0'} />
