@@ -1604,8 +1604,29 @@ Ottawa's Premium Deck Builders`;
               </section>
             )}
 
+            {/* Prominent amber banner when setup was deferred ("Fill Later") */}
+            {job.needsJobSetup && !job.digitalWorkOrder && onOpenJobSetup && (
+              <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-3xl p-6 flex items-center justify-between gap-4 shadow-md">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
+                    <span className="text-amber-500 text-lg font-black">!</span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-0.5">Job Setup Pending</p>
+                    <p className="text-sm text-[var(--text-secondary)]">The job details form was skipped on-site. Complete it now to populate the Digital Work Order.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={onOpenJobSetup}
+                  className="flex items-center gap-2 px-5 py-3 bg-amber-500 text-black rounded-xl text-sm font-black hover:bg-amber-400 transition-all whitespace-nowrap shadow-lg shadow-amber-500/20"
+                >
+                  Complete Now <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+
             {/* Prompt to complete job setup when neither buildDetails nor digitalWorkOrder is set */}
-            {!job.buildDetails && !job.digitalWorkOrder && onOpenJobSetup && (
+            {!job.needsJobSetup && !job.buildDetails && !job.digitalWorkOrder && onOpenJobSetup && (
               <div className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-3xl p-8 flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1">Digital Work Order</p>

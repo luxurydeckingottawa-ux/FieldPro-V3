@@ -144,16 +144,9 @@ const NavBar: React.FC<NavBarProps> = ({
           {currentUser.role === Role.ADMIN && (
             <div className="flex items-center gap-1">
               <button
-                onClick={() => onNavigate('user-management')}
-                className={navButtonClass('user-management')}
-              >
-                <UserIcon className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">Users</span>
-              </button>
-              <button
                 onClick={() => onNavigate('booking-settings')}
                 className={navButtonClass('booking-settings')}
-                title="Booking Settings"
+                title="Settings"
               >
                 <Settings className="w-3.5 h-3.5" />
                 <span className="hidden lg:inline">Settings</span>

@@ -6,6 +6,7 @@ import {
   ClipboardList,
   ChevronRight,
   X,
+  Clock,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -16,6 +17,7 @@ interface JobAcceptanceModalProps {
   job: Job;
   onComplete: (updates: Partial<Job>) => void;
   onSkip: () => void;
+  onFillLater: () => void;
 }
 
 type Step = 1 | 2 | 3;
@@ -135,7 +137,7 @@ const Step1ContractSummary: React.FC<Step1Props> = ({ job, onContinue, onSkip })
     false;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-0 h-full">
       <div className="flex items-center gap-3 px-8 pb-4">
         <div className="w-10 h-10 rounded-xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center">
           <FileText className="w-5 h-5 text-[var(--brand-gold)]" />
@@ -148,7 +150,7 @@ const Step1ContractSummary: React.FC<Step1Props> = ({ job, onContinue, onSkip })
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 pb-4 space-y-5">
+      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 space-y-5">
         {/* Client & Project */}
         <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-5 grid grid-cols-2 gap-x-6 gap-y-4">
           <div>
@@ -291,6 +293,7 @@ interface Step2Props {
 const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
   const summary = job.acceptedBuildSummary;
 
+
   const [form, setForm] = useState<FormState>({
     clientName: job.clientName || '',
     clientPhone: job.clientPhone || '',
@@ -323,7 +326,7 @@ const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
     setForm((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-0 h-full">
       <div className="flex items-center gap-3 px-8 pb-4">
         <div className="w-10 h-10 rounded-xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center">
           <ClipboardList className="w-5 h-5 text-[var(--brand-gold)]" />
@@ -334,7 +337,7 @@ const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 pb-4 space-y-8">
+      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 space-y-8">
         {/* Section A */}
         <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-6">
           <SectionHeader title="A — Client & Site" />
@@ -666,7 +669,7 @@ const Step3Confirmation: React.FC<Step3Props> = ({ onOpen }) => (
 // Main modal
 // ---------------------------------------------------------------------------
 
-const JobAcceptanceModal: React.FC<JobAcceptanceModalProps> = ({ job, onComplete, onSkip }) => {
+const JobAcceptanceModal: React.FC<JobAcceptanceModalProps> = ({ job, onComplete, onSkip, onFillLater }) => {
   const [step, setStep] = useState<Step>(1);
   const [pendingUpdates, setPendingUpdates] = useState<Partial<Job>>({});
 
@@ -733,17 +736,28 @@ const JobAcceptanceModal: React.FC<JobAcceptanceModalProps> = ({ job, onComplete
           <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em]">
             Job Setup Wizard
           </p>
-          <button
-            onClick={onSkip}
-            className="p-1.5 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onFillLater}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-amber-500 hover:border-amber-500/30 hover:bg-amber-500/5 text-[10px] font-black uppercase tracking-wider transition-all"
+              title="Save the job and fill in this form later from the office"
+            >
+              <Clock className="w-3 h-3" />
+              Fill Later
+            </button>
+            <button
+              onClick={onSkip}
+              className="p-1.5 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+              title="Skip setup entirely"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <StepIndicator current={step} />
 
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           {step === 1 && (
             <Step1ContractSummary
               job={job}

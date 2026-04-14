@@ -166,7 +166,7 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
   return (
     <div className="flex h-[calc(100vh-80px)] bg-[var(--bg-secondary)] overflow-hidden">
       {/* Sidebar */}
-      <div className="w-36 bg-[var(--bg-primary)] border-r border-[var(--border-color)] flex flex-col shrink-0">
+      <div className="w-52 bg-[var(--bg-primary)] border-r border-[var(--border-color)] flex flex-col shrink-0">
         <div className="p-4 border-b border-[var(--border-color)]">
           <h2 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Pipeline</h2>
         </div>

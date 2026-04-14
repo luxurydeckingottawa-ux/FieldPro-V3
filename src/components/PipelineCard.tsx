@@ -78,6 +78,11 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
               <Hourglass size={10} /> Stuck ({agingDays}d)
             </span>
           )}
+          {job.needsJobSetup && !job.digitalWorkOrder && (
+            <span className="text-[8px] font-black text-black uppercase tracking-widest bg-amber-400 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+              <Clock size={10} /> Setup Pending
+            </span>
+          )}
           {job.portalStatus === 'viewed' && (
             <span className="text-[8px] font-black text-white uppercase tracking-widest bg-[var(--brand-gold)] px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
               <Globe size={10} /> Portal Viewed

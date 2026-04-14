@@ -2388,6 +2388,12 @@ const App: React.FC = () => {
             setPendingJobAcceptance(null);
             navigateTo('office-job-detail', jobId);
           }}
+          onFillLater={() => {
+            const jobId = pendingJobAcceptance.id;
+            handleUpdateJob(jobId, { needsJobSetup: true });
+            setPendingJobAcceptance(null);
+            navigateTo('office-job-detail', jobId);
+          }}
         />
       )}
     </div>

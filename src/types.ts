@@ -462,6 +462,9 @@ export interface Job {
     deliveryNotes?: string;
     completedAt?: string;
   };
+
+  // Flag: job setup wizard was deferred ("Fill Later" was pressed)
+  needsJobSetup?: boolean;
 }
 
 export interface EstimateOption {
