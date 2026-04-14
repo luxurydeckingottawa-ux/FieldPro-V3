@@ -116,7 +116,26 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
     setIsGeneratingPassport(true);
     try {
       const dataUri = await generateBuildPassport(job);
-      window.open(dataUri);
+      // window.open(dataUri) is blocked by modern browsers — convert to Blob URL instead
+      const [header, base64] = dataUri.split(',');
+      const mime = (header.match(/:(.*?);/) ?? [])[1] ?? 'application/pdf';
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      const win = window.open(blobUrl, '_blank');
+      if (!win) {
+        // Popup blocked — fall back to direct download
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `Luxury-Decking-Build-Passport-${job.jobNumber ?? job.id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      // Release blob URL after 30s (enough time for browser to load it)
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
     } finally {
       setIsGeneratingPassport(false);
     }
@@ -377,54 +396,51 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-                  {/* Generate Build Passport button — always visible in this section */}
-                  <button
-                    onClick={handleGenerateBuildPassport}
-                    disabled={isGeneratingPassport}
-                    className="flex items-center justify-between p-6 rounded-2xl bg-[var(--brand-gold)] border border-[var(--brand-gold)] hover:brightness-110 active:scale-95 transition-all group shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-xl bg-black/20 flex items-center justify-center text-black shadow-inner">
-                        {isGeneratingPassport
-                          ? <Loader2 size={28} className="animate-spin" />
-                          : <Sparkles size={28} />
-                        }
-                      </div>
-                      <div className="text-left">
-                        <p className="text-base font-black text-black uppercase tracking-tight italic">
-                          {isGeneratingPassport ? 'Generating...' : 'Generate Build Passport'}
-                        </p>
-                        <p className="text-[10px] font-bold text-black/60 uppercase tracking-widest">
-                          Premium PDF with Warranty Certificate
-                        </p>
-                      </div>
-                    </div>
-                    {!isGeneratingPassport && (
-                      <ExternalLink size={20} className="text-black/70 shrink-0" />
-                    )}
-                  </button>
-
-                  {job.verifiedBuildPassportUrl && (
+                  {/* Primary passport action — download if submitted, generate if not */}
+                  {job.verifiedBuildPassportUrl ? (
                     <a
                       href={job.verifiedBuildPassportUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-6 rounded-2xl bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/30 hover:bg-[var(--brand-gold)]/30 transition-all group shadow-lg"
+                      className="flex items-center justify-between p-6 rounded-2xl bg-[var(--brand-gold)] border border-[var(--brand-gold)] hover:brightness-110 transition-all group shadow-lg"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-xl bg-[var(--brand-gold)] flex items-center justify-center text-black shadow-lg shadow-[var(--brand-gold)]/30">
+                        <div className="w-14 h-14 rounded-xl bg-black/20 flex items-center justify-center text-black shadow-inner">
                           <ClipboardCheck size={28} />
                         </div>
-                        <div>
-                          <p className="text-base font-black text-[var(--text-primary)] uppercase tracking-tight italic">Luxury Decking Verified Build Passport</p>
-                          <p className="text-[10px] font-bold text-[var(--brand-gold-light)] uppercase tracking-widest">Includes 5-Year Warranty</p>
+                        <div className="text-left">
+                          <p className="text-base font-black text-black uppercase tracking-tight italic">Luxury Decking Build Passport</p>
+                          <p className="text-[10px] font-bold text-black/60 uppercase tracking-widest">Field-Submitted · Includes Warranty</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Download size={20} className="text-[var(--brand-gold-light)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <ExternalLink size={20} className="text-[var(--brand-gold-light)]" />
-                      </div>
+                      <ExternalLink size={20} className="text-black/70 shrink-0" />
                     </a>
+                  ) : (
+                    <button
+                      onClick={handleGenerateBuildPassport}
+                      disabled={isGeneratingPassport}
+                      className="flex items-center justify-between p-6 rounded-2xl bg-[var(--brand-gold)] border border-[var(--brand-gold)] hover:brightness-110 active:scale-95 transition-all group shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-xl bg-black/20 flex items-center justify-center text-black shadow-inner">
+                          {isGeneratingPassport
+                            ? <Loader2 size={28} className="animate-spin" />
+                            : <Sparkles size={28} />
+                          }
+                        </div>
+                        <div className="text-left">
+                          <p className="text-base font-black text-black uppercase tracking-tight italic">
+                            {isGeneratingPassport ? 'Generating...' : 'Generate Build Passport'}
+                          </p>
+                          <p className="text-[10px] font-bold text-black/60 uppercase tracking-widest">
+                            Premium PDF with Warranty Certificate
+                          </p>
+                        </div>
+                      </div>
+                      {!isGeneratingPassport && (
+                        <ExternalLink size={20} className="text-black/70 shrink-0" />
+                      )}
+                    </button>
                   )}
 
                   {job.subcontractorInvoiceUrl && (
@@ -448,6 +464,20 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                         <ExternalLink size={20} className="text-blue-400" />
                       </div>
                     </a>
+                  )}
+
+                  {/* When a field-submitted version exists, allow regenerating from current data */}
+                  {job.verifiedBuildPassportUrl && (
+                    <button
+                      onClick={handleGenerateBuildPassport}
+                      disabled={isGeneratingPassport}
+                      className="md:col-span-2 flex items-center justify-center gap-2 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--brand-gold)] transition-colors disabled:opacity-40"
+                    >
+                      {isGeneratingPassport
+                        ? <><Loader2 size={11} className="animate-spin" /> Regenerating...</>
+                        : <><Sparkles size={11} /> Regenerate from current job data</>
+                      }
+                    </button>
                   )}
                 </div>
               </section>
