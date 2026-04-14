@@ -1227,7 +1227,8 @@ const App: React.FC = () => {
         console.warn("Netlify form submission failed, but local state is updated:", e);
       }
 
-      sendEmailIntent(verifiedBuildPassportUrl, subcontractorInvoiceUrl);
+      // sendEmailIntent removed — mailto click was causing about:blank#blocked navigation on devices
+      // without a default email client. Submission is already complete via Supabase + Netlify form.
 
     } catch (error) {
       console.error("Submission pipeline failed:", error);
