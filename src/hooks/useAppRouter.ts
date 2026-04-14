@@ -31,6 +31,7 @@ const VIEW_TO_PATH: Record<string, string> = {
   'booking-settings': '/settings/booking',
   'automation-settings': '/settings/automations',
   'business-info': '/settings/business',
+  'price-book': '/settings/price-book',
   'detail': '/field/jobs', // field job detail view
   'jobs': '/field/jobs',
   'workflow': '/field/workflow', // needs /:id appended
@@ -55,6 +56,7 @@ const PATH_TO_VIEW: Record<string, string> = {
   '/settings/booking': 'booking-settings',
   '/settings/automations': 'automation-settings',
   '/settings/business': 'business-info',
+  '/settings/price-book': 'price-book',
   '/field/jobs': 'jobs',
 };
 
