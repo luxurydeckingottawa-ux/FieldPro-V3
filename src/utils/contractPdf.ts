@@ -51,16 +51,16 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
     max-width: 800px;
     margin: 0 auto;
   }
-  .header { 
-    text-align: center; 
-    padding-bottom: 24px; 
-    border-bottom: 3px solid #059669; 
+  .header {
+    text-align: center;
+    padding-bottom: 24px;
+    border-bottom: 3px solid #D4AF37;
     margin-bottom: 32px;
   }
-  .header h1 { 
-    font-size: 28px; 
-    font-weight: 800; 
-    color: #059669; 
+  .header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1a1a1a;
     letter-spacing: 2px;
     text-transform: uppercase;
   }
@@ -78,7 +78,7 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
   .section-title { 
     font-size: 11px; 
     font-weight: 700; 
-    color: #059669; 
+    color: #D4AF37; 
     text-transform: uppercase; 
     letter-spacing: 2px;
     margin-bottom: 12px;
@@ -96,7 +96,7 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
     margin-bottom: 2px;
   }
   .info-item span { font-size: 14px; font-weight: 600; }
-  .amount { color: #059669; font-size: 22px !important; font-weight: 800 !important; }
+  .amount { color: #D4AF37; font-size: 22px !important; font-weight: 800 !important; }
   .payment-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
   .payment-table th { 
     text-align: left; 
@@ -115,7 +115,7 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
   }
   .payment-table .total td { 
     font-weight: 700; 
-    border-top: 2px solid #059669; 
+    border-top: 2px solid #D4AF37; 
     border-bottom: none;
     padding-top: 12px;
   }
@@ -239,7 +239,7 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
         <tr class="total">
           <td>Total</td>
           <td></td>
-          <td style="text-align: right; color: #059669;">$${totalAmount.toLocaleString()}</td>
+          <td style="text-align: right; color: #D4AF37;">$${totalAmount.toLocaleString()}</td>
         </tr>
       </tbody>
     </table>
@@ -288,30 +288,16 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
 </body>
 </html>`;
 
-  // Create a blob URL from the HTML for storage/viewing
-  const blob = new Blob([html], { type: 'text/html' });
-  const contractUrl = URL.createObjectURL(blob);
-  
-  // Store the HTML in localStorage for later PDF generation/download
-  try {
-    const contractKey = `contract_${jobNumber}_${Date.now()}`;
-    localStorage.setItem(contractKey, html);
-  } catch (e) {
-    console.warn('Could not cache contract HTML:', e);
-  }
-
-  return contractUrl;
+  // Return a persistent data URI so the URL survives page reloads.
+  // Blob URLs (URL.createObjectURL) die when the tab closes — data URIs are permanent.
+  // We base64-encode the HTML to handle the full unicode character set safely.
+  const base64 = btoa(unescape(encodeURIComponent(html)));
+  return `data:text/html;charset=utf-8;base64,${base64}`;
 }
 
 /**
- * Open a contract for printing/saving as PDF.
- * Opens the contract HTML in a new window where the user can print to PDF.
+ * Open a contract data URI in a new tab where the user can view / print to PDF.
  */
 export function printContract(contractUrl: string) {
-  const win = window.open(contractUrl, '_blank');
-  if (win) {
-    win.onload = () => {
-      setTimeout(() => win.print(), 500);
-    };
-  }
+  window.open(contractUrl, '_blank');
 }

@@ -2097,6 +2097,7 @@ Ottawa's Premium Deck Builders`;
                   <>
                     {/* Grouped by Type */}
                     {[
+                      { type: 'contract', label: 'Signed Contract', icon: FileText, color: 'text-[var(--brand-gold)]' },
                       { type: 'drawing', label: 'Technical Drawings & Plans', icon: Ruler, color: 'text-[var(--brand-gold)]' },
                       { type: 'permit', label: 'Permits & Legal', icon: ShieldCheck, color: 'text-blue-400' },
                       { type: 'closeout', label: 'Closeout & Warranty Packages', icon: ClipboardCheck, color: 'text-amber-400' },
@@ -2116,7 +2117,12 @@ Ottawa's Premium Deck Builders`;
                             {groupFiles.map(file => (
                               <div
                                 key={file.id}
-                                className="flex items-center p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--brand-gold)]/30 transition-all group cursor-pointer"
+                                onClick={() => {
+                                  if (file.url) {
+                                    window.open(file.url, '_blank');
+                                  }
+                                }}
+                                className={`flex items-center p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--brand-gold)]/30 transition-all group ${file.url ? 'cursor-pointer' : 'cursor-default opacity-60'}`}
                               >
                                 <div className="h-10 w-10 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-center mr-4 group-hover:border-[var(--brand-gold)]/30 transition-all">
                                   <group.icon className={`h-4 w-4 ${group.color}`} />
@@ -2125,9 +2131,10 @@ Ottawa's Premium Deck Builders`;
                                   <p className="text-xs font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--brand-gold)] transition-colors">{file.name}</p>
                                   <p className="text-[8px] text-gray-600 uppercase font-black tracking-[0.2em] mt-0.5">
                                     {new Date(file.uploadedAt).toLocaleDateString()}
+                                    {!file.url && ' · Pending attachment'}
                                   </p>
                                 </div>
-                                <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)] transition-all" />
+                                {file.url && <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)] transition-all" />}
                               </div>
                             ))}
                           </div>

@@ -135,6 +135,7 @@ const Step1ContractSummary: React.FC<Step1Props> = ({ job, onContinue, onSkip })
     (job.acceptedOptionName?.toLowerCase().includes('diamond') ||
       summary?.optionName?.toLowerCase().includes('diamond')) ??
     false;
+  const contractAlreadySigned = (job.files ?? []).some((f) => f.type === 'contract' && f.url);
 
   return (
     <div className="flex flex-col min-h-0 h-full">
@@ -219,11 +220,20 @@ const Step1ContractSummary: React.FC<Step1Props> = ({ job, onContinue, onSkip })
         </div>
 
         {/* Confirmation note */}
-        <div className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-2xl p-4">
-          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-            By proceeding, you confirm this project has been accepted by the client and a contract
-            record will be auto-attached to the job file.
-          </p>
+        <div className={`rounded-2xl p-4 ${contractAlreadySigned ? 'bg-emerald-500/5 border border-emerald-500/20' : 'bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20'}`}>
+          {contractAlreadySigned ? (
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                Signed contract is already attached to the job file. Continue to fill in the job details.
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              By proceeding, you confirm this project has been accepted by the client and a contract
+              record will be attached to the job file.
+            </p>
+          )}
         </div>
       </div>
 
@@ -240,7 +250,7 @@ const Step1ContractSummary: React.FC<Step1Props> = ({ job, onContinue, onSkip })
           className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-[var(--brand-gold)] text-black rounded-xl font-black text-sm hover:opacity-90 transition-all shadow-lg shadow-[var(--brand-gold)]/20"
         >
           <FileText className="w-4 h-4" />
-          Attach Contract &amp; Continue
+          {contractAlreadySigned ? 'Continue to Job Details' : 'Attach Contract \u0026 Continue'}
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -674,19 +684,24 @@ const JobAcceptanceModal: React.FC<JobAcceptanceModalProps> = ({ job, onComplete
   const [pendingUpdates, setPendingUpdates] = useState<Partial<Job>>({});
 
   const handleContractContinue = () => {
-    const now = new Date().toISOString();
-    const contractEntry = {
-      id: `contract-${Date.now()}`,
-      name: `Project Agreement — ${job.clientName || 'Client'}.pdf`,
-      url: '',
-      type: 'contract' as const,
-      uploadedAt: now,
-      uploadedBy: 'system',
-    };
-    setPendingUpdates((prev) => ({
-      ...prev,
-      files: [...(job.files ?? []), ...(prev.files ?? []), contractEntry],
-    }));
+    // Only create a placeholder contract entry if one wasn't already attached
+    // by the on-site AcceptanceModal signing flow (which adds a real signed contract).
+    const alreadyHasContract = (job.files ?? []).some((f) => f.type === 'contract');
+    if (!alreadyHasContract) {
+      const now = new Date().toISOString();
+      const contractEntry = {
+        id: `contract-${Date.now()}`,
+        name: `Project Agreement — ${job.clientName || 'Client'}.pdf`,
+        url: '',
+        type: 'contract' as const,
+        uploadedAt: now,
+        uploadedBy: 'system',
+      };
+      setPendingUpdates((prev) => ({
+        ...prev,
+        files: [...(job.files ?? []), ...(prev.files ?? []), contractEntry],
+      }));
+    }
     setStep(2);
   };
 
