@@ -12,7 +12,7 @@ interface AIOfficeInsightsProps {
 
 export const AIOfficeInsights: React.FC<AIOfficeInsightsProps> = ({ job, onUpdateJob }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const generateHistorySummary = useCallback(async () => {
     setIsLoading(true);

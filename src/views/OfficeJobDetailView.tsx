@@ -106,8 +106,10 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageType, setMessageType] = useState<'sms' | 'email'>('sms');
   const [customerInfoCollapsed, setCustomerInfoCollapsed] = useState(false);
-  const [officeNotesCollapsed, setOfficeNotesCollapsed] = useState(false);
-  const [siteNotesCollapsed, setSiteNotesCollapsed] = useState(false);
+  const [officeNotesCollapsed, setOfficeNotesCollapsed] = useState(true);
+  const [siteNotesCollapsed, setSiteNotesCollapsed] = useState(true);
+  const [fieldAssignmentExpanded, setFieldAssignmentExpanded] = useState(false);
+  const [paymentScheduleExpanded, setPaymentScheduleExpanded] = useState(false);
   const [sendingLeadTouchId, setSendingLeadTouchId] = useState<string | null>(null);
   const [expandedLeadTouchId, setExpandedLeadTouchId] = useState<string | null>(null);
   const [leadTouchSentFeedback, setLeadTouchSentFeedback] = useState<string | null>(null);
@@ -410,29 +412,36 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             {/* Field Assignment */}
             {!isEstimateStage && (
               <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-color)]">
-                  <div className="flex items-center gap-2">
-                    <Users size={12} className="text-[var(--brand-gold)]" />
-                    <h3 className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Field Assignment</h3>
-                  </div>
+                <div className="flex items-center justify-between px-5 py-4">
                   <button
-                    onClick={() => {
-                      setEditFormData({
-                        assignedUsers: job.assignedUsers,
-                        assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
-                        plannedStartDate: job.plannedStartDate,
-                        plannedDurationDays: job.plannedDurationDays,
-                        plannedFinishDate: job.plannedFinishDate,
-                        officialScheduleStatus: job.officialScheduleStatus
-                      });
-                      setEditingSection('schedule');
-                    }}
-                    className="text-[9px] font-black text-[var(--brand-gold)] hover:opacity-70 uppercase tracking-widest transition-opacity"
+                    onClick={() => setFieldAssignmentExpanded(prev => !prev)}
+                    className="flex items-center gap-2 flex-1 min-w-0"
                   >
-                    Edit
+                    <Users size={12} className="text-[var(--brand-gold)] shrink-0" />
+                    <h3 className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Field Assignment</h3>
+                    <ChevronDown size={12} className={`text-[var(--text-tertiary)] transition-transform ml-auto shrink-0 ${fieldAssignmentExpanded ? 'rotate-180' : ''}`} />
                   </button>
+                  {fieldAssignmentExpanded && (
+                    <button
+                      onClick={() => {
+                        setEditFormData({
+                          assignedUsers: job.assignedUsers,
+                          assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
+                          plannedStartDate: job.plannedStartDate,
+                          plannedDurationDays: job.plannedDurationDays,
+                          plannedFinishDate: job.plannedFinishDate,
+                          officialScheduleStatus: job.officialScheduleStatus
+                        });
+                        setEditingSection('schedule');
+                      }}
+                      className="text-[9px] font-black text-[var(--brand-gold)] hover:opacity-70 uppercase tracking-widest transition-opacity ml-3 shrink-0"
+                    >
+                      Edit
+                    </button>
+                  )}
                 </div>
-                <div className="px-5 py-4 space-y-3">
+                {fieldAssignmentExpanded && (
+                <div className="px-5 pb-4 space-y-3 border-t border-[var(--border-color)] pt-4">
                   {/* Crew */}
                   <div>
                     <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Crew / Subcontractor</p>
@@ -464,6 +473,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     </div>
                   )}
                 </div>
+                )}
               </section>
             )}
 
@@ -478,11 +488,17 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
             {/* Payment Schedule */}
             {!isEstimateStage && (
               <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] overflow-hidden">
-                <div className="flex items-center gap-2 px-5 py-4 border-b border-[var(--border-color)]">
-                  <CreditCard size={12} className="text-[var(--brand-gold)]" />
-                  <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Payment Schedule</span>
-                </div>
-                {(() => {
+                <button
+                  onClick={() => setPaymentScheduleExpanded(prev => !prev)}
+                  className="w-full flex items-center justify-between px-5 py-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <CreditCard size={12} className="text-[var(--brand-gold)]" />
+                    <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Payment Schedule</span>
+                  </div>
+                  <ChevronDown size={12} className={`text-[var(--text-tertiary)] transition-transform ${paymentScheduleExpanded ? 'rotate-180' : ''}`} />
+                </button>
+                {paymentScheduleExpanded && (() => {
                   const base = job.estimateAmount || 0;
                   const depositPaid = !!(job.depositReceivedDate || job.depositStatus === DepositStatus.RECEIVED);
                   const materialPaid = [PipelineStage.IN_FIELD, PipelineStage.COMPLETION, PipelineStage.PAID_CLOSED].includes(job.pipelineStage);
