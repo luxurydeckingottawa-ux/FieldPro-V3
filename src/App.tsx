@@ -36,6 +36,7 @@ import { supabase } from './lib/supabase';
 import EstimatorCalculatorView from './estimator/EstimatorCalculatorView';
 import { measureSheetToCalculatorDimensions, jobToCalculatorClientInfo, loadEstimatorIntake } from './estimator/dataBridge';
 import { dataService } from './services/dataService';
+import { processAllCampaigns } from './utils/dripCampaignProcessor';
 
 const INTERNAL_SECRET = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
 const internalHeaders = (extra: Record<string, string> = {}) => ({
@@ -622,6 +623,24 @@ const App: React.FC = () => {
     safeSetItem(JOBS_STORAGE_KEY, JSON.stringify(jobs));
   }, [jobs]);
 
+  // ── Drip Campaign Auto-Processor ─────────────────────────────────────────
+  // Runs on load and every 30 minutes. Fires any overdue touches automatically.
+  useEffect(() => {
+    const run = async () => {
+      const updates = await processAllCampaigns(jobs);
+      if (updates.length > 0) {
+        updates.forEach(({ jobId, updates: jobUpdates }) => {
+          handleUpdateJob(jobId, jobUpdates);
+        });
+      }
+    };
+
+    run();
+    const interval = setInterval(run, 30 * 60 * 1000); // every 30 minutes
+    return () => clearInterval(interval);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // ─────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     safeSetItem(THEME_KEY, theme);
     if (theme === 'dark') {
@@ -925,10 +944,11 @@ const App: React.FC = () => {
       dripCampaign: {
         campaignType: 'LEAD_FOLLOW_UP' as const,
         startedAt: now,
-        currentTouch: 0,
-        completedTouches: [],
+        currentTouch: 1,
+        // T1 (instant SMS) fires below — pre-mark so auto-processor doesn't re-fire it
+        completedTouches: ['lead-t1-sms'],
         status: 'active' as const,
-        sentMessages: [],
+        sentMessages: [{ touchId: 'lead-t1-sms', channel: 'sms' as const, sentAt: now, engagementTier: 'COLD' as const }],
       }
     } : newJob;
 

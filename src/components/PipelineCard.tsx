@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { Job, ForecastReviewStatus, PipelineStage } from '../types';
-import { MapPin, User as UserIcon, Calendar, AlertCircle, Clock, CheckCircle2, ShieldCheck, RefreshCw, Hourglass, Globe } from 'lucide-react';
+import { MapPin, User as UserIcon, Calendar, AlertCircle, Clock, CheckCircle2, ShieldCheck, RefreshCw, Hourglass, Globe, Mail } from 'lucide-react';
 import { getJobIssues } from '../utils/issueLogic';
+import { getCampaignStatusSummary } from '../utils/dripCampaignProcessor';
 
 interface PipelineCardProps {
   job: Job;
@@ -13,6 +14,8 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
   const hasError = issues.some(i => i.type === 'error');
   const hasWarning = issues.some(i => i.type === 'warning');
   const hasInfo = issues.some(i => i.type === 'info');
+
+  const campaignStatus = useMemo(() => getCampaignStatusSummary(job), [job]);
 
   const agingDays = useMemo(() => {
     if (!job.stageUpdatedAt) return 0;
@@ -117,6 +120,30 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
           </span>
         </div>
       </div>
+
+      {campaignStatus && (
+        <div className={`mt-3 px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-2 ${
+          campaignStatus.overdue
+            ? 'bg-rose-500/10 border border-rose-500/20'
+            : 'bg-white/[0.03] border border-white/5'
+        }`}>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Mail size={9} className={campaignStatus.overdue ? 'text-rose-400 shrink-0' : 'text-[var(--brand-gold)] shrink-0'} />
+            <span className={`text-[8px] font-black uppercase tracking-widest truncate ${
+              campaignStatus.overdue ? 'text-rose-400' : 'text-gray-500'
+            }`}>
+              {campaignStatus.label}
+            </span>
+          </div>
+          {campaignStatus.nextLabel && (
+            <span className={`text-[8px] font-bold shrink-0 ${
+              campaignStatus.overdue ? 'text-rose-400' : 'text-[var(--brand-gold)]'
+            }`}>
+              {campaignStatus.nextLabel}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="mt-4 pt-4 border-t border-[var(--border-color)] flex items-center justify-between">
         <div className="flex flex-col">
