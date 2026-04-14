@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { Job, PipelineStage, CustomerLifecycle } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Job, PipelineStage, CustomerLifecycle, LiveEstimateItem, LiveEstimate } from '../types';
 import {
   ArrowLeft, User, MapPin, Phone, Mail, Calendar,
   DollarSign, FileText, MessageSquare, ExternalLink,
   Copy, Check, Edit2, Save, X, ChevronRight,
   ClipboardList, Send, Clock, AlertCircle, CheckCircle2,
-  Zap, Camera, Info, BarChart3, Users, PenTool, CalendarPlus, ChevronDown, ChevronUp
+  Zap, Camera, Info, BarChart3, Users, PenTool, CalendarPlus, ChevronDown, ChevronUp,
+  Plus, Trash2
 } from 'lucide-react';
 import AcceptanceModal from '../components/AcceptanceModal';
 import { calculateEngagementTier } from '../utils/engagementScoring';
@@ -39,6 +40,25 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
   const [sendingTouchId, setSendingTouchId] = useState<string | null>(null);
   const [expandedTouchId, setExpandedTouchId] = useState<string | null>(null);
   const [touchSentFeedback, setTouchSentFeedback] = useState<string | null>(null);
+
+  // Live Itemized Estimate state
+  const [editingEstimate, setEditingEstimate] = useState(false);
+  const [liveItems, setLiveItems] = useState<LiveEstimateItem[]>(
+    () => job.liveEstimate?.items ?? []
+  );
+  const [liveDiscount, setLiveDiscount] = useState<number>(
+    () => job.liveEstimate?.discount ?? 0
+  );
+  const [discountNote, setDiscountNote] = useState<string>(
+    () => job.liveEstimate?.discountNote ?? ''
+  );
+
+  // Sync live estimate state when job prop changes
+  useEffect(() => {
+    setLiveItems(job.liveEstimate?.items ?? []);
+    setLiveDiscount(job.liveEstimate?.discount ?? 0);
+    setDiscountNote(job.liveEstimate?.discountNote ?? '');
+  }, [job.id, job.liveEstimate]);
 
   // Campaign queue: get engagement-adapted touches for this job
   const campaignTouches = useMemo(() => {
@@ -169,6 +189,25 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
   };
 
   const amount = job.totalAmount || job.estimateAmount || 0;
+
+  const liveSubtotal = liveItems.reduce((sum, item) => sum + item.value, 0) - liveDiscount;
+  const liveHst = Math.round(liveSubtotal * 0.13);
+  const liveTotal = liveSubtotal + liveHst;
+
+  const handleSaveLiveEstimate = () => {
+    const updated: LiveEstimate = {
+      items: liveItems,
+      discount: liveDiscount,
+      discountNote,
+      lastUpdated: new Date().toISOString(),
+    };
+    onUpdateJob(job.id, {
+      liveEstimate: updated,
+      estimateAmount: liveSubtotal,
+      totalAmount: liveTotal,
+    });
+    setEditingEstimate(false);
+  };
 
   return (
     <div className="min-h-full bg-[var(--bg-secondary)]">
@@ -436,6 +475,163 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               </div>
             </div>
 
+            {/* ── LIVE ITEMIZED ESTIMATE ────────────────────────────────────── */}
+            {(job.liveEstimate || (job.acceptedBuildSummary?.addOns && job.acceptedBuildSummary.addOns.length > 0)) && (
+              <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-color)]">
+                  <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                    <DollarSign className="w-3.5 h-3.5 text-[var(--brand-gold)]" /> Itemized Estimate
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    {!editingEstimate ? (
+                      <button
+                        onClick={() => setEditingEstimate(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:border-[var(--brand-gold)]/40 transition-all text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest"
+                      >
+                        <Edit2 className="w-3 h-3" /> Edit
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => { setEditingEstimate(false); setLiveItems(job.liveEstimate?.items ?? []); setLiveDiscount(job.liveEstimate?.discount ?? 0); setDiscountNote(job.liveEstimate?.discountNote ?? ''); }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:border-red-500/40 transition-all text-[10px] font-bold text-red-400 uppercase tracking-widest"
+                        >
+                          <X className="w-3 h-3" /> Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveLiveEstimate}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--brand-gold)] hover:opacity-90 transition-all text-[10px] font-bold text-black uppercase tracking-widest"
+                        >
+                          <Save className="w-3 h-3" /> Save
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  {/* Table header */}
+                  <div className="grid grid-cols-[1fr_80px_100px_32px] gap-2 mb-2 px-2">
+                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Description</p>
+                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Qty</p>
+                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest text-right">Amount</p>
+                    <div />
+                  </div>
+
+                  {/* Line items */}
+                  <div className="space-y-1">
+                    {liveItems.map((item, idx) => (
+                      <div key={item.id} className={`grid grid-cols-[1fr_80px_100px_32px] gap-2 px-2 py-2 rounded-lg ${idx % 2 === 0 ? 'bg-[var(--bg-secondary)]' : ''}`}>
+                        {editingEstimate ? (
+                          <>
+                            <input
+                              value={item.label}
+                              onChange={e => setLiveItems(prev => prev.map((it, i) => i === idx ? { ...it, label: e.target.value } : it))}
+                              className="text-xs text-[var(--text-primary)] bg-transparent border-b border-[var(--brand-gold)]/30 focus:outline-none focus:border-[var(--brand-gold)] px-1"
+                            />
+                            <input
+                              value={item.quantity}
+                              onChange={e => setLiveItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: e.target.value } : it))}
+                              className="text-xs text-[var(--text-secondary)] bg-transparent border-b border-[var(--brand-gold)]/30 focus:outline-none focus:border-[var(--brand-gold)] px-1"
+                              placeholder="--"
+                            />
+                            <input
+                              type="number"
+                              value={item.value}
+                              onChange={e => setLiveItems(prev => prev.map((it, i) => i === idx ? { ...it, value: Number(e.target.value) } : it))}
+                              className="text-xs font-bold text-[var(--text-primary)] bg-transparent border-b border-[var(--brand-gold)]/30 focus:outline-none focus:border-[var(--brand-gold)] text-right px-1"
+                            />
+                            <button onClick={() => setLiveItems(prev => prev.filter((_, i) => i !== idx))} className="flex items-center justify-center text-red-400/60 hover:text-red-400 transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs text-[var(--text-primary)]">{item.label}</p>
+                            <p className="text-xs text-[var(--text-secondary)]">{item.quantity || '--'}</p>
+                            <p className="text-xs font-bold text-[var(--text-primary)] text-right">
+                              {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0 }).format(item.value)}
+                            </p>
+                            <div />
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add row button (edit mode only) */}
+                  {editingEstimate && (
+                    <button
+                      onClick={() => setLiveItems(prev => [...prev, { id: `item-${Date.now()}`, label: '', quantity: '', value: 0 }])}
+                      className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-[var(--brand-gold)]/30 hover:border-[var(--brand-gold)]/60 transition-all text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest w-full justify-center"
+                    >
+                      <Plus className="w-3 h-3" /> Add Line Item
+                    </button>
+                  )}
+
+                  {/* Discount row */}
+                  {(editingEstimate || liveDiscount > 0) && (
+                    <div className="mt-3 grid grid-cols-[1fr_80px_100px_32px] gap-2 px-2 py-2 rounded-lg border border-dashed border-[var(--brand-gold)]/20">
+                      {editingEstimate ? (
+                        <>
+                          <input
+                            value={discountNote}
+                            onChange={e => setDiscountNote(e.target.value)}
+                            placeholder="Discount note (optional)"
+                            className="text-xs text-[var(--brand-gold)] bg-transparent border-b border-[var(--brand-gold)]/30 focus:outline-none focus:border-[var(--brand-gold)] px-1"
+                          />
+                          <p className="text-xs text-[var(--text-secondary)]">Discount</p>
+                          <input
+                            type="number"
+                            value={liveDiscount}
+                            onChange={e => setLiveDiscount(Number(e.target.value))}
+                            className="text-xs font-bold text-[var(--brand-gold)] bg-transparent border-b border-[var(--brand-gold)]/30 focus:outline-none focus:border-[var(--brand-gold)] text-right px-1"
+                            min={0}
+                          />
+                          <div />
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs text-[var(--brand-gold)]">{discountNote || 'Discount'}</p>
+                          <div /><div /><div />
+                          <p className="text-xs font-bold text-[var(--brand-gold)] text-right col-start-3">
+                            -{new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0 }).format(liveDiscount)}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Totals */}
+                  <div className="mt-4 border-t border-[var(--border-color)] pt-4 space-y-2">
+                    <div className="flex justify-between px-2">
+                      <span className="text-xs text-[var(--text-secondary)]">Subtotal</span>
+                      <span className="text-xs font-bold text-[var(--text-primary)]">
+                        {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0 }).format(liveSubtotal)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between px-2">
+                      <span className="text-xs text-[var(--text-secondary)]">HST (13%)</span>
+                      <span className="text-xs font-bold text-[var(--text-primary)]">
+                        {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0 }).format(liveHst)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between px-2 pt-2 border-t border-[var(--border-color)]">
+                      <span className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Total</span>
+                      <span className="text-sm font-black text-[var(--brand-gold)]">
+                        {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0 }).format(liveTotal)}
+                      </span>
+                    </div>
+                    {job.liveEstimate?.lastUpdated && !editingEstimate && (
+                      <p className="text-[9px] text-[var(--text-secondary)] text-right px-2 pt-1">
+                        Last updated {new Date(job.liveEstimate.lastUpdated).toLocaleDateString('en-CA')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Estimate Documents */}
             {job.files?.some((f: any) => f.type === 'estimate' || f.type === 'contract') && (
               <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
@@ -457,6 +653,19 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                             try {
                               const html = atob(base64);
                               const blob = new Blob([html], { type: 'text/html' });
+                              const blobUrl = URL.createObjectURL(blob);
+                              window.open(blobUrl, '_blank');
+                              setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                            } catch { window.open(file.url, '_blank'); }
+                          } else if (file.url.startsWith('data:application/pdf') || file.url.startsWith('data:')) {
+                            try {
+                              const [, base64] = file.url.split(',');
+                              const binary = atob(base64);
+                              const bytes = new Uint8Array(binary.length);
+                              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                              const mimeMatch = file.url.match(/^data:([^;]+)/);
+                              const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+                              const blob = new Blob([bytes], { type: mime });
                               const blobUrl = URL.createObjectURL(blob);
                               window.open(blobUrl, '_blank');
                               setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
@@ -655,6 +864,191 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                       <p className="text-sm font-bold text-[var(--text-primary)]">{job.estimateSentDate ? new Date(job.estimateSentDate).toLocaleDateString('en-CA') : 'Not sent'}</p>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Estimator Field Notes */}
+            {job.estimatorIntake && (
+              <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[var(--border-color)]">
+                  <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Estimator Field Notes</h2>
+                </div>
+                <div className="p-5 space-y-6">
+                  {/* Site Checklist */}
+                  <div>
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Checklist</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        ['elevationConfirmed', 'Elevation Confirmed'],
+                        ['accessConfirmed', 'Site Access Confirmed'],
+                        ['removalRequired', 'Removal/Disposal Required'],
+                        ['helicalPileAccess', 'Helical Pile Access'],
+                        ['obstaclesIdentified', 'Obstacles Identified'],
+                        ['permitRequired', 'Permit Required'],
+                      ] as [string, string][]).map(([key, label]) => {
+                        const val = (job.estimatorIntake!.checklist as any)[key];
+                        return (
+                          <div key={key} className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${val ? 'bg-[var(--brand-gold)]' : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'}`}>
+                              {val && <Check className="w-2.5 h-2.5 text-black" />}
+                            </div>
+                            <span className="text-xs text-gray-400">{label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {job.estimatorIntake.checklist.elevationMeasurement && (
+                      <p className="mt-2 text-xs text-gray-400">Elevation: <span className="text-[var(--text-primary)]">{job.estimatorIntake.checklist.elevationMeasurement}</span></p>
+                    )}
+                    {job.estimatorIntake.checklist.gateOpeningMeasurement && (
+                      <p className="text-xs text-gray-400">Gate Opening: <span className="text-[var(--text-primary)]">{job.estimatorIntake.checklist.gateOpeningMeasurement}</span></p>
+                    )}
+                  </div>
+
+                  {/* Site Measurements */}
+                  {job.estimatorIntake.measureSheet && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Measurements</p>
+                      <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] overflow-hidden divide-y divide-[var(--border-color)]">
+                        {/* Deck Structure */}
+                        {(job.estimatorIntake.measureSheet.deckSqft > 0 || job.estimatorIntake.measureSheet.fasciaLf > 0 || job.estimatorIntake.measureSheet.joistProtection) && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Deck Structure</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              {job.estimatorIntake.measureSheet.deckSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Deck Area</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.deckSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.fasciaLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Fascia</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fasciaLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.pictureFrameLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Picture Frame</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.pictureFrameLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.joistProtection && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Joist Protection</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes</span></div>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Footings */}
+                        {job.estimatorIntake.measureSheet.footingCount > 0 && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Footings</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              <div className="flex justify-between"><span className="text-[10px] text-gray-500">Type</span><span className="text-[10px] font-semibold text-[var(--text-primary)] capitalize">{job.estimatorIntake.measureSheet.footingType}</span></div>
+                              <div className="flex justify-between"><span className="text-[10px] text-gray-500">Count</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.footingCount} pcs</span></div>
+                              {job.estimatorIntake.measureSheet.namiFixCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Namifix Brackets</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.namiFixCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.ledgerLength > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Ledger</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.ledgerLength} lf</span></div>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Stairs & Railing */}
+                        {(job.estimatorIntake.measureSheet.stairLf > 0 || job.estimatorIntake.measureSheet.woodRailingLf > 0 || job.estimatorIntake.measureSheet.aluminumPostCount > 0 || job.estimatorIntake.measureSheet.glassSection6Count > 0 || job.estimatorIntake.measureSheet.framelessSectionCount > 0) && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Stairs & Railing</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              {job.estimatorIntake.measureSheet.stairLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Stairs</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.stairLf} steps</span></div>}
+                              {job.estimatorIntake.measureSheet.woodRailingLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Wood Railing</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.woodRailingLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.drinkRailLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Drink Rail</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.drinkRailLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminumPostCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum Posts</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminumPostCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminum6ftSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum 6ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminum6ftSections} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminum8ftSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum 8ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminum8ftSections} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminumStairSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum Stair Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminumStairSections} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.glassSection6Count > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Glass 6ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.glassSection6Count} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.glassPanelsLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Glass Panels</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.glassPanelsLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.framelessSectionCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Frameless Glass</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.framelessSectionCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.framelessLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Frameless LF</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.framelessLf} lf</span></div>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Skirting & Privacy */}
+                        {(job.estimatorIntake.measureSheet.skirtingSqft > 0 || job.estimatorIntake.measureSheet.privacyWallLf > 0) && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Skirting & Privacy</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              {job.estimatorIntake.measureSheet.skirtingSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Skirting</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.skirtingSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.privacyWallLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Privacy Wall</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyWallLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.privacyPostCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Privacy Posts</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyPostCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.privacyScreenCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Privacy Screens</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyScreenCount} pcs</span></div>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Site Prep & Landscaping */}
+                        {(job.estimatorIntake.measureSheet.removeDispose || job.estimatorIntake.measureSheet.fabricStoneSqft > 0 || job.estimatorIntake.measureSheet.riverWashSqft > 0 || job.estimatorIntake.measureSheet.mulchSqft > 0 || job.estimatorIntake.measureSheet.steppingStonesCount > 0) && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Site Prep & Landscaping</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              {job.estimatorIntake.measureSheet.removeDispose && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Demo/Removal</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes{job.estimatorIntake.measureSheet.demoSqft > 0 ? ` (${job.estimatorIntake.measureSheet.demoSqft} sqft)` : ''}</span></div>}
+                              {job.estimatorIntake.measureSheet.fabricStoneSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Fabric Stone</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fabricStoneSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.riverWashSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">River Wash</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.riverWashSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.mulchSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Mulch</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.mulchSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.steppingStonesCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Stepping Stones</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.steppingStonesCount} pcs</span></div>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Extras & Flags */}
+                        {(job.estimatorIntake.measureSheet.lightingFixtures > 0 || job.estimatorIntake.measureSheet.pergolaRequired || job.estimatorIntake.measureSheet.permitRequired || job.estimatorIntake.measureSheet.elevationNote) && (
+                          <div className="px-4 py-3">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Extras & Flags</p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                              {job.estimatorIntake.measureSheet.lightingFixtures > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Lighting</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.lightingFixtures} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.pergolaRequired && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Pergola</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes{job.estimatorIntake.measureSheet.pergolaSize ? ` (${job.estimatorIntake.measureSheet.pergolaSize})` : ''}</span></div>}
+                              {job.estimatorIntake.measureSheet.permitRequired && <div className="flex justify-between col-span-2"><span className="text-[10px] text-gray-500">Permit Required</span><span className="text-[10px] font-semibold text-amber-400">Yes -- Flag for scheduling</span></div>}
+                            </div>
+                            {job.estimatorIntake.measureSheet.elevationNote && <p className="mt-2 text-xs text-gray-400">Elevation Note: <span className="text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.elevationNote}</span></p>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Marketing Source */}
+                  {job.estimatorIntake.checklist.marketingSource && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Lead Source (confirmed on site)</p>
+                      <p className="text-sm text-gray-300 capitalize">{job.estimatorIntake.checklist.marketingSource}{job.estimatorIntake.checklist.marketingDetail ? ` -- ${job.estimatorIntake.checklist.marketingDetail}` : ''}</p>
+                    </div>
+                  )}
+
+                  {/* Site Photos */}
+                  {job.estimatorIntake.photos && job.estimatorIntake.photos.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Photos ({job.estimatorIntake.photos.length})</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {job.estimatorIntake.photos.map(photo => (
+                          <a key={photo.id} href={photo.url} target="_blank" rel="noopener noreferrer">
+                            <img src={photo.url} alt={photo.category} className="w-full h-24 object-cover rounded-lg border border-[var(--border-color)] hover:opacity-80 transition-opacity" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Site Sketch */}
+                  {job.estimatorIntake.sketch && job.estimatorIntake.sketch.strokes && job.estimatorIntake.sketch.strokes.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Sketch</p>
+                      <div className="bg-white rounded-xl overflow-hidden">
+                        <svg viewBox="0 0 400 300" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+                          {job.estimatorIntake.sketch.strokes.map((stroke, i) => {
+                            const pts: string[] = [];
+                            for (let j = 0; j < stroke.points.length; j += 2) {
+                              pts.push(`${stroke.points[j]},${stroke.points[j + 1]}`);
+                            }
+                            return (
+                              <polyline key={i} points={pts.join(' ')} fill="none"
+                                stroke={stroke.color || '#000'} strokeWidth={stroke.width || 2}
+                                strokeLinecap="round" strokeLinejoin="round" />
+                            );
+                          })}
+                          {job.estimatorIntake.sketch.labels?.map(label => (
+                            <text key={label.id} x={label.x} y={label.y} fontSize="12" fill="#333">{label.text}</text>
+                          ))}
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Field Notes */}
+                  {job.estimatorIntake.notes && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Field Notes</p>
+                      <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{job.estimatorIntake.notes}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

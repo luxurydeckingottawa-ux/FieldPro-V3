@@ -2130,6 +2130,19 @@ Ottawa's Premium Deck Builders`;
                                       window.open(blobUrl, '_blank');
                                       setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
                                     } catch { window.open(file.url, '_blank'); }
+                                  } else if (file.url.startsWith('data:application/pdf') || file.url.startsWith('data:')) {
+                                    try {
+                                      const [, base64] = file.url.split(',');
+                                      const binary = atob(base64);
+                                      const bytes = new Uint8Array(binary.length);
+                                      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                                      const mimeMatch = file.url.match(/^data:([^;]+)/);
+                                      const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+                                      const blob = new Blob([bytes], { type: mime });
+                                      const blobUrl = URL.createObjectURL(blob);
+                                      window.open(blobUrl, '_blank');
+                                      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                                    } catch { window.open(file.url, '_blank'); }
                                   } else {
                                     window.open(file.url, '_blank');
                                   }

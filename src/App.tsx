@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence, EstimateOption, EstimateData, ScheduleStatus } from './types';
+import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence, EstimateOption, EstimateData, ScheduleStatus, LiveEstimate, LiveEstimateItem } from './types';
 import { useAppRouter, pathToView } from './hooks/useAppRouter';
 import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES, ESTIMATE_STAGES, RATES } from './constants';
 import LoginView from './views/LoginView';
@@ -1725,6 +1725,24 @@ const App: React.FC = () => {
         .join(', ')
     };
 
+    // Build liveEstimate from impacts
+    const liveEstimate: LiveEstimate = {
+      items: (data.pricingSummary.impacts ?? [])
+        .filter((imp: any) => Math.round(imp.value) !== 0)
+        .map((imp: any, idx: number) => {
+          const match = imp.label.match(/\(([^)]+)\)\s*$/);
+          return {
+            id: `item-${Date.now()}-${idx}`,
+            label: match ? imp.label.replace(/\s*\([^)]+\)\s*$/, '').trim() : imp.label,
+            quantity: match ? match[1] : '',
+            value: Math.round(imp.value),
+          } as LiveEstimateItem;
+        }),
+      discount: 0,
+      discountNote: '',
+      lastUpdated: now,
+    };
+
     let targetJobId = calculatorSourceJobId;
     let portalToken = '';
     let createdNewJob: Job | null = null;
@@ -1739,6 +1757,7 @@ const App: React.FC = () => {
         totalAmount,
         estimateAmount,
         acceptedBuildSummary,
+        liveEstimate,
         calculatorSelections: data.selections,
         calculatorDimensions: data.dimensions,
         pipelineStage: PipelineStage.EST_SENT,
@@ -1795,6 +1814,7 @@ const App: React.FC = () => {
         totalAmount,
         estimateAmount,
         acceptedBuildSummary,
+        liveEstimate,
         estimateStatus: 'sent' as any,
         estimateSentDate: now,
         portalStatus: 'ready',

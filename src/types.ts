@@ -266,6 +266,20 @@ export interface WeatherDay {
   lowTemp?: number;
 }
 
+export interface LiveEstimateItem {
+  id: string;
+  label: string;
+  quantity: string;   // e.g. "4x", "32 LF", "" if none
+  value: number;      // dollar amount (integer)
+}
+
+export interface LiveEstimate {
+  items: LiveEstimateItem[];
+  discount: number;        // discount amount in dollars (0 = no discount)
+  discountNote: string;    // e.g. "Loyalty discount"
+  lastUpdated: string;     // ISO string
+}
+
 export interface Job {
   id: string;
   jobNumber: string;
@@ -487,6 +501,9 @@ export interface Job {
 
   // Flag: job setup wizard was deferred ("Fill Later" was pressed)
   needsJobSetup?: boolean;
+
+  // Module: Live Itemized Estimate (editable post-estimator breakdown)
+  liveEstimate?: LiveEstimate;
 }
 
 export interface EstimateOption {
