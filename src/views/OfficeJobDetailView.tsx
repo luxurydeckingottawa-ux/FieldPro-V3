@@ -405,119 +405,64 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               <OfficeAIAssistant job={job} onUpdateJob={onUpdateJob} />
             )}
 
-            {/* Field Execution + Scheduling */}
-            {(job.pipelineStage === PipelineStage.IN_FIELD || job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
-            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden">
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-color)]">
-                <div className="flex items-center gap-2">
-                  <Play size={13} className="fill-current text-[var(--brand-gold)]" />
-                  <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em]">Field Status & Timeline</h3>
+            {/* Field Assignment */}
+            {!isEstimateStage && (
+              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-color)]">
+                  <div className="flex items-center gap-2">
+                    <Users size={12} className="text-[var(--brand-gold)]" />
+                    <h3 className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Field Assignment</h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditFormData({
+                        assignedUsers: job.assignedUsers,
+                        assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
+                        plannedStartDate: job.plannedStartDate,
+                        plannedDurationDays: job.plannedDurationDays,
+                        plannedFinishDate: job.plannedFinishDate,
+                        officialScheduleStatus: job.officialScheduleStatus
+                      });
+                      setEditingSection('schedule');
+                    }}
+                    className="text-[9px] font-black text-[var(--brand-gold)] hover:opacity-70 uppercase tracking-widest transition-opacity"
+                  >
+                    Edit
+                  </button>
                 </div>
-                {job.pipelineStage === PipelineStage.IN_FIELD && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[8px] font-black uppercase tracking-widest rounded-full border border-[var(--brand-gold)]/20">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] animate-pulse" />
-                    Live
+                <div className="px-5 py-4 space-y-3">
+                  {/* Crew */}
+                  <div>
+                    <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Crew / Subcontractor</p>
+                    <p className="text-sm font-bold text-[var(--text-primary)]">
+                      {job.assignedCrewOrSubcontractor || leadUser?.name || <span className="text-[var(--text-tertiary)] italic font-normal text-xs">Unassigned</span>}
+                    </p>
                   </div>
-                )}
-              </div>
-
-              <div className="p-5 space-y-4">
-                {/* Stage Progress */}
-                <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)]">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Progress — Stage {job.currentStage} of 5</span>
-                    <span className="text-xs font-black text-[var(--brand-gold)]">{Math.round((job.currentStage / 5) * 100)}%</span>
+                  {/* Schedule row */}
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-2.5">
+                      <p className="text-[8px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Start</p>
+                      <p className="text-[11px] font-bold text-[var(--text-primary)]">{job.plannedStartDate || <span className="text-[var(--text-tertiary)]">TBD</span>}</p>
+                    </div>
+                    <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-2.5">
+                      <p className="text-[8px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Days</p>
+                      <p className="text-[11px] font-bold text-[var(--text-primary)]">{job.plannedDurationDays ? `${job.plannedDurationDays}d` : <span className="text-[var(--text-tertiary)]">—</span>}</p>
+                    </div>
+                    <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-2.5">
+                      <p className="text-[8px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Finish</p>
+                      <p className="text-[11px] font-bold text-[var(--text-primary)]">{job.plannedFinishDate || <span className="text-[var(--text-tertiary)]">TBD</span>}</p>
+                    </div>
                   </div>
-                  <div className="h-1.5 w-full bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                    <div className="h-full bg-[var(--brand-gold)] transition-all duration-500" style={{ width: `${(job.currentStage / 5) * 100}%` }} />
-                  </div>
-                </div>
-
-                {/* Schedule info */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-xl">
-                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Start</p>
-                    <p className="text-xs font-bold text-[var(--text-primary)]">{job.plannedStartDate || 'TBD'}</p>
-                  </div>
-                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-xl">
-                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Duration</p>
-                    <p className="text-xs font-bold text-[var(--text-primary)]">{job.plannedDurationDays || 0}d</p>
-                  </div>
-                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-xl">
-                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Finish</p>
-                    <p className="text-xs font-bold text-[var(--text-primary)]">{job.plannedFinishDate || 'TBD'}</p>
-                  </div>
-                </div>
-
-                {/* Field Forecast */}
-                {job.fieldForecast ? (
-                  <div className="p-4 rounded-2xl bg-amber-500/[0.05] border border-amber-500/20">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em]">Field Forecast</span>
-                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${getScheduleStatusColor(job.fieldForecast.status)}`}>
-                        {job.fieldForecast.status.replace('_', ' ')}
+                  {/* Schedule status badge */}
+                  {job.officialScheduleStatus && (
+                    <div className="pt-1">
+                      <span className={`inline-flex text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${getScheduleStatusColor(job.officialScheduleStatus)}`}>
+                        {job.officialScheduleStatus.replace(/_/g, ' ')}
                       </span>
                     </div>
-                    <div className="flex items-baseline gap-1.5 mb-3">
-                      <span className="text-2xl font-black text-[var(--text-primary)]">{job.fieldForecast.estimatedDaysRemaining}</span>
-                      <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase">Days Remaining</span>
-                    </div>
-                    {job.fieldForecast.note && (
-                      <p className="text-[10px] text-[var(--text-tertiary)] italic mb-3">"{job.fieldForecast.note}"</p>
-                    )}
-                    {job.fieldForecast.delayReason && (
-                      <div className="mb-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-2">
-                        <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
-                        <p className="text-[10px] font-bold text-rose-500">{job.fieldForecast.delayReason}</p>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => {
-                        if (job.fieldForecast) {
-                          const newFinish = new Date();
-                          newFinish.setDate(newFinish.getDate() + job.fieldForecast.estimatedDaysRemaining);
-                          const finishStr = newFinish.toISOString().split('T')[0];
-                          let newDuration = job.plannedDurationDays;
-                          if (job.plannedStartDate) {
-                            const start = new Date(job.plannedStartDate);
-                            newDuration = Math.ceil((newFinish.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                          }
-                          onUpdateSchedule?.(job.id, {
-                            officialScheduleStatus: job.fieldForecast.status,
-                            plannedFinishDate: finishStr,
-                            plannedDurationDays: newDuration,
-                            fieldForecast: undefined
-                          });
-                        }
-                      }}
-                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-xl transition-all flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Apply to Official Schedule
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-2xl border border-dashed border-[var(--border-color)] text-center">
-                    <Clock className="w-4 h-4 text-[var(--text-tertiary)] mx-auto mb-2" />
-                    <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Awaiting field forecast</p>
-                  </div>
-                )}
-
-                {/* Flagged Issues */}
-                {job.flaggedIssues && job.flaggedIssues.length > 0 && (
-                  <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-                        <span className="text-[9px] font-black text-rose-500 uppercase tracking-[0.2em]">Flagged Issues</span>
-                      </div>
-                      <span className="text-sm font-black text-rose-500">{job.flaggedIssues.length}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
+                  )}
+                </div>
+              </section>
             )}
 
             {/* Customer Experience Portal Sharing */}
@@ -1561,6 +1506,151 @@ Ottawa's Premium Deck Builders`;
                     </div>
                   )}
                 </div>
+              </section>
+            )}
+
+            {/* ── FIELD STATUS TIMELINE (IN_FIELD / COMPLETION / PAID) ── */}
+            {(job.pipelineStage === PipelineStage.IN_FIELD || job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
+              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2.5rem] overflow-hidden relative">
+                {/* Top accent line */}
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-[var(--brand-gold)]/40" />
+
+                {/* Header */}
+                <div className="px-8 pt-7 pb-5 flex items-start justify-between">
+                  <div>
+                    <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em] mb-1 flex items-center gap-1.5">
+                      <Play size={10} className="fill-current" /> Field Execution
+                    </p>
+                    <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">Live Field Status</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {job.pipelineStage === PipelineStage.IN_FIELD && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[8px] font-black uppercase tracking-widest rounded-full border border-[var(--brand-gold)]/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] animate-pulse" />
+                        Live
+                      </div>
+                    )}
+                    {job.officialScheduleStatus && (
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${getScheduleStatusColor(job.officialScheduleStatus)}`}>
+                        {job.officialScheduleStatus.replace(/_/g, ' ')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Overall progress bar */}
+                <div className="px-8 pb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Overall Progress — Stage {job.currentStage} of 5</span>
+                    <span className="text-sm font-black text-[var(--brand-gold)]">{Math.round((job.currentStage / 5) * 100)}%</span>
+                  </div>
+                  <div className="h-2 w-full bg-[var(--bg-secondary)] rounded-full overflow-hidden border border-[var(--border-color)]">
+                    <div
+                      className="h-full bg-[var(--brand-gold)] transition-all duration-700 rounded-full"
+                      style={{ width: `${(job.currentStage / 5) * 100}%` }}
+                    />
+                  </div>
+                  {/* Stage dots */}
+                  <div className="flex justify-between mt-2 px-0.5">
+                    {[1,2,3,4,5].map(s => (
+                      <div key={s} className="flex flex-col items-center gap-1">
+                        <div className={`w-2 h-2 rounded-full border ${s <= job.currentStage ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)]' : 'bg-[var(--bg-secondary)] border-[var(--border-color)]'}`} />
+                        <span className="text-[7px] font-black text-[var(--text-tertiary)] uppercase">{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Schedule grid */}
+                <div className="grid grid-cols-3 gap-4 px-8 pb-6">
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-4">
+                    <p className="text-[8px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1.5 flex items-center gap-1"><Calendar size={9} /> Start Date</p>
+                    <p className="text-base font-black text-[var(--text-primary)]">{job.plannedStartDate || <span className="text-[var(--text-tertiary)] text-sm font-normal italic">TBD</span>}</p>
+                  </div>
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-4">
+                    <p className="text-[8px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1.5 flex items-center gap-1"><Clock size={9} /> Duration</p>
+                    <p className="text-base font-black text-[var(--text-primary)]">{job.plannedDurationDays ? `${job.plannedDurationDays} days` : <span className="text-[var(--text-tertiary)] text-sm font-normal italic">—</span>}</p>
+                  </div>
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-4">
+                    <p className="text-[8px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1.5 flex items-center gap-1"><Calendar size={9} /> Est. Finish</p>
+                    <p className="text-base font-black text-[var(--text-primary)]">{job.plannedFinishDate || <span className="text-[var(--text-tertiary)] text-sm font-normal italic">TBD</span>}</p>
+                  </div>
+                </div>
+
+                {/* Field Forecast from installer */}
+                {job.fieldForecast ? (
+                  <div className="mx-8 mb-8 p-6 rounded-2xl bg-amber-500/[0.06] border border-amber-500/25">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-[9px] font-black text-amber-500 uppercase tracking-[0.2em] mb-0.5">Field Forecast — From Installer</p>
+                        <p className="text-[10px] text-[var(--text-tertiary)]">Submitted by field crew</p>
+                      </div>
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${getScheduleStatusColor(job.fieldForecast.status)}`}>
+                        {job.fieldForecast.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-2 mb-4">
+                      <span className="text-4xl font-black text-[var(--text-primary)]">{job.fieldForecast.estimatedDaysRemaining}</span>
+                      <span className="text-sm font-black text-[var(--text-secondary)] uppercase tracking-widest">Days Remaining</span>
+                    </div>
+                    {job.fieldForecast.note && (
+                      <p className="text-sm text-[var(--text-secondary)] italic mb-4 leading-relaxed">"{job.fieldForecast.note}"</p>
+                    )}
+                    {job.fieldForecast.delayReason && (
+                      <div className="mb-4 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-3">
+                        <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                        <p className="text-sm font-bold text-rose-500">{job.fieldForecast.delayReason}</p>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (job.fieldForecast) {
+                          const newFinish = new Date();
+                          newFinish.setDate(newFinish.getDate() + job.fieldForecast.estimatedDaysRemaining);
+                          const finishStr = newFinish.toISOString().split('T')[0];
+                          let newDuration = job.plannedDurationDays;
+                          if (job.plannedStartDate) {
+                            const start = new Date(job.plannedStartDate);
+                            newDuration = Math.ceil((newFinish.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                          }
+                          onUpdateSchedule?.(job.id, {
+                            officialScheduleStatus: job.fieldForecast.status,
+                            plannedFinishDate: finishStr,
+                            plannedDurationDays: newDuration,
+                            fieldForecast: undefined
+                          });
+                        }
+                      }}
+                      className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-xl transition-all flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Accept Forecast — Update Official Schedule
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mx-8 mb-8 p-6 rounded-2xl border border-dashed border-[var(--border-color)] flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
+                      <Clock className="w-5 h-5 text-[var(--text-tertiary)]" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-[var(--text-secondary)] uppercase tracking-widest">Awaiting Field Forecast</p>
+                      <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">Installer will submit a progress update from the job site</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Flagged Issues */}
+                {job.flaggedIssues && job.flaggedIssues.length > 0 && (
+                  <div className="mx-8 mb-8 p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
+                      <div>
+                        <p className="text-xs font-black text-rose-500 uppercase tracking-[0.15em]">Flagged Issues</p>
+                        <p className="text-[10px] text-rose-400/70 mt-0.5">Reported from field — requires office review</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl font-black text-rose-500">{job.flaggedIssues.length}</span>
+                  </div>
+                )}
               </section>
             )}
 
