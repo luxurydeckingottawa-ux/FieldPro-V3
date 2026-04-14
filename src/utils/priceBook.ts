@@ -34,9 +34,10 @@ const IMG_PREFIX = 'fieldpro_pb_img_'; // one key per item, e.g. fieldpro_pb_img
 /**
  * Save a single item's image immediately to its own localStorage key.
  * Keeps it out of the main price book blob so quota issues never block it.
+ * Returns true if the save succeeded, false if storage was full.
  */
-export function saveItemImage(itemId: string, dataUrl: string): void {
-  safeSetItem(`${IMG_PREFIX}${itemId}`, dataUrl);
+export function saveItemImage(itemId: string, dataUrl: string): boolean {
+  return safeSetItem(`${IMG_PREFIX}${itemId}`, dataUrl) === true;
 }
 
 /**

@@ -332,15 +332,15 @@ function ImageCropModal({ src, onSave, onClose }: ImageCropModalProps) {
     const cropH = DISPLAY / scale;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 300;
-    canvas.height = 300;
+    canvas.width = 200;
+    canvas.height = 200;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const img = new Image();
     img.onload = () => {
-      ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, 300, 300);
-      onSave(canvas.toDataURL('image/jpeg', 0.82));
+      ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, 200, 200);
+      onSave(canvas.toDataURL('image/jpeg', 0.65));
     };
     img.src = src;
   };
@@ -441,6 +441,7 @@ function ItemEditView({ item, categoryId, onSave, onDelete, onBack }: ItemEditVi
   const [useCustomUnit, setUseCustomUnit] = useState(item ? !UNIT_OPTIONS.slice(0, -1).includes(item.unit) : false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [imgSaveErr, setImgSaveErr] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const isNew = !item;
 
@@ -461,7 +462,8 @@ function ItemEditView({ item, categoryId, onSave, onDelete, onBack }: ItemEditVi
     set('imageUrl', cropped);
     setCropSrc(null);
     // Persist the image to its own localStorage key immediately — no Save click needed
-    saveItemImage(form.id, cropped);
+    const ok = saveItemImage(form.id, cropped);
+    setImgSaveErr(!ok);
   };
 
   const handleSave = () => {
@@ -653,7 +655,7 @@ function ItemEditView({ item, categoryId, onSave, onDelete, onBack }: ItemEditVi
           {form.imageUrl ? (
             <div className="flex items-center gap-4 mt-2">
               <img src={form.imageUrl} alt="" className="w-20 h-20 rounded-xl object-cover border border-white/10" />
-              <button onClick={() => { set('imageUrl', undefined); deleteItemImage(form.id); }} className="text-xs text-rose-400 hover:text-rose-300 font-bold transition-colors">
+              <button onClick={() => { set('imageUrl', undefined); deleteItemImage(form.id); setImgSaveErr(false); }} className="text-xs text-rose-400 hover:text-rose-300 font-bold transition-colors">
                 Remove image
               </button>
             </div>
@@ -664,6 +666,11 @@ function ItemEditView({ item, categoryId, onSave, onDelete, onBack }: ItemEditVi
             >
               <Upload className="w-3.5 h-3.5" /> Upload &amp; Crop Image
             </button>
+          )}
+          {imgSaveErr && (
+            <p className="mt-2 text-xs text-rose-400 font-bold">
+              ⚠ Image could not be saved — your browser storage is full. Try clearing old data in Settings &gt; Storage, then re-upload.
+            </p>
           )}
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
         </div>
