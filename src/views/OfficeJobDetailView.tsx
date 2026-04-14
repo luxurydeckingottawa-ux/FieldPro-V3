@@ -111,6 +111,9 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [expandedLeadTouchId, setExpandedLeadTouchId] = useState<string | null>(null);
   const [leadTouchSentFeedback, setLeadTouchSentFeedback] = useState<string | null>(null);
   const [isGeneratingPassport, setIsGeneratingPassport] = useState(false);
+  const [fieldNoteMeasurementsOpen, setFieldNoteMeasurementsOpen] = useState(false);
+  const [fieldNotePhotosOpen, setFieldNotePhotosOpen] = useState(false);
+  const [fieldNoteSketchOpen, setFieldNoteSketchOpen] = useState(false);
 
   const handleGenerateBuildPassport = async (): Promise<void> => {
     if (isGeneratingPassport) return;
@@ -371,7 +374,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
         <div className="max-w-[1600px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
 
           {/* LEFT SIDEBAR: utility/reference boxes — sticky */}
-          <div className="space-y-4 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto no-scrollbar">
+          <div className="space-y-4">
 
             {/* Job Summary Card — top of sidebar */}
             <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] overflow-hidden">
@@ -633,6 +636,130 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 </div>
               )}
             </div>
+
+
+            {/* Estimator Field Notes — sidebar card */}
+            {job.estimatorIntake && (
+              <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] overflow-hidden">
+                {/* Header */}
+                <div className="px-5 py-4 border-b border-[var(--border-color)] flex items-center gap-2">
+                  <ClipboardCheck size={13} className="text-[var(--brand-gold)]" />
+                  <h3 className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Estimator Field Notes</h3>
+                </div>
+
+                {/* Site Checklist — always visible */}
+                <div className="px-5 py-4 space-y-2">
+                  {([
+                    ['elevationConfirmed', 'Elevation Confirmed'],
+                    ['accessConfirmed', 'Site Access Confirmed'],
+                    ['removalRequired', 'Removal/Disposal Required'],
+                    ['helicalPileAccess', 'Helical Pile Access'],
+                    ['obstaclesIdentified', 'Obstacles Identified'],
+                    ['permitRequired', 'Permit Required'],
+                  ] as [string, string][]).map(([key, label]) => {
+                    const val = (job.estimatorIntake!.checklist as any)[key];
+                    return (
+                      <div key={key} className="flex items-center gap-2">
+                        <div className={`w-3.5 h-3.5 rounded flex items-center justify-center flex-shrink-0 ${val ? 'bg-[var(--brand-gold)]' : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'}`}>
+                          {val && <Check className="w-2 h-2 text-black" />}
+                        </div>
+                        <span className="text-[10px] text-[var(--text-secondary)]">{label}</span>
+                      </div>
+                    );
+                  })}
+                  {job.estimatorIntake.checklist.elevationMeasurement && (
+                    <p className="text-[10px] text-[var(--text-tertiary)] pt-1">Elevation: <span className="text-[var(--text-primary)]">{job.estimatorIntake.checklist.elevationMeasurement}</span></p>
+                  )}
+                  {job.estimatorIntake.notes && (
+                    <p className="text-[10px] text-[var(--text-tertiary)] italic leading-relaxed pt-1 border-t border-[var(--border-color)] mt-2">"{job.estimatorIntake.notes}"</p>
+                  )}
+                </div>
+
+                {/* Site Measurements — collapsible */}
+                {job.estimatorIntake.measureSheet && (
+                  <div className="border-t border-[var(--border-color)]">
+                    <button
+                      onClick={() => setFieldNoteMeasurementsOpen(prev => !prev)}
+                      className="w-full flex items-center justify-between px-5 py-3 hover:bg-[var(--bg-secondary)] transition-colors"
+                    >
+                      <span className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Site Measurements</span>
+                      <ChevronDown size={12} className={`text-[var(--text-tertiary)] transition-transform ${fieldNoteMeasurementsOpen ? '' : '-rotate-90'}`} />
+                    </button>
+                    {fieldNoteMeasurementsOpen && (
+                      <div className="px-5 pb-4 space-y-1">
+                        {job.estimatorIntake.measureSheet.deckSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Deck Area</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.deckSqft} sqft</span></div>}
+                        {job.estimatorIntake.measureSheet.footingCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Footings ({job.estimatorIntake.measureSheet.footingType})</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.footingCount} pcs</span></div>}
+                        {job.estimatorIntake.measureSheet.fasciaLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Fascia</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fasciaLf} lf</span></div>}
+                        {job.estimatorIntake.measureSheet.woodRailingLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Railing</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.woodRailingLf} lf</span></div>}
+                        {job.estimatorIntake.measureSheet.stairLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Stairs</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.stairLf} steps</span></div>}
+                        {job.estimatorIntake.measureSheet.skirtingSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Skirting</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.skirtingSqft} sqft</span></div>}
+                        {job.estimatorIntake.measureSheet.privacyWallLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Privacy Wall</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyWallLf} lf</span></div>}
+                        {job.estimatorIntake.measureSheet.lightingFixtures > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Lighting</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.lightingFixtures} pcs</span></div>}
+                        {job.estimatorIntake.measureSheet.removeDispose && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Demo/Removal</span><span className="text-[10px] font-semibold text-amber-400">Yes{job.estimatorIntake.measureSheet.demoSqft > 0 ? ` (${job.estimatorIntake.measureSheet.demoSqft} sqft)` : ''}</span></div>}
+                        {job.estimatorIntake.measureSheet.permitRequired && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Permit</span><span className="text-[10px] font-semibold text-amber-400">Required</span></div>}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Site Photos — collapsible */}
+                {job.estimatorIntake.photos && job.estimatorIntake.photos.length > 0 && (
+                  <div className="border-t border-[var(--border-color)]">
+                    <button
+                      onClick={() => setFieldNotePhotosOpen(prev => !prev)}
+                      className="w-full flex items-center justify-between px-5 py-3 hover:bg-[var(--bg-secondary)] transition-colors"
+                    >
+                      <span className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Site Photos ({job.estimatorIntake.photos.length})</span>
+                      <ChevronDown size={12} className={`text-[var(--text-tertiary)] transition-transform ${fieldNotePhotosOpen ? '' : '-rotate-90'}`} />
+                    </button>
+                    {fieldNotePhotosOpen && (
+                      <div className="px-5 pb-4 grid grid-cols-2 gap-2">
+                        {job.estimatorIntake.photos.map(photo => (
+                          <a key={photo.id} href={photo.url} target="_blank" rel="noopener noreferrer">
+                            <img src={photo.url} alt={photo.category} className="w-full h-20 object-cover rounded-lg border border-[var(--border-color)] hover:opacity-80 transition-opacity" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Site Sketch — collapsible */}
+                {job.estimatorIntake.sketch && job.estimatorIntake.sketch.strokes && job.estimatorIntake.sketch.strokes.length > 0 && (
+                  <div className="border-t border-[var(--border-color)]">
+                    <button
+                      onClick={() => setFieldNoteSketchOpen(prev => !prev)}
+                      className="w-full flex items-center justify-between px-5 py-3 hover:bg-[var(--bg-secondary)] transition-colors"
+                    >
+                      <span className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Site Sketch</span>
+                      <ChevronDown size={12} className={`text-[var(--text-tertiary)] transition-transform ${fieldNoteSketchOpen ? '' : '-rotate-90'}`} />
+                    </button>
+                    {fieldNoteSketchOpen && (
+                      <div className="px-5 pb-4">
+                        <div className="bg-white rounded-xl overflow-hidden">
+                          <svg viewBox="0 0 400 300" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+                            {job.estimatorIntake.sketch.strokes.map((stroke, i) => {
+                              const pts: string[] = [];
+                              for (let j = 0; j < stroke.points.length; j += 2) {
+                                pts.push(`${stroke.points[j]},${stroke.points[j + 1]}`);
+                              }
+                              return (
+                                <polyline key={i} points={pts.join(' ')} fill="none"
+                                  stroke={stroke.color || '#000'} strokeWidth={stroke.width || 2}
+                                  strokeLinecap="round" strokeLinejoin="round" />
+                              );
+                            })}
+                            {job.estimatorIntake.sketch.labels?.map(label => (
+                              <text key={label.id} x={label.x} y={label.y} fontSize="12" fill="#333">{label.text}</text>
+                            ))}
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Job Files & Documents Package */}
             <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] p-8 relative overflow-hidden">
@@ -1520,20 +1647,6 @@ Ottawa's Premium Deck Builders`;
                     <span className="text-[8px] font-black bg-[var(--brand-gold)] text-black px-2.5 py-1 rounded uppercase tracking-widest">
                       Accepted
                     </span>
-                    {job.clientEmail && job.estimateAmount && (
-                      <button
-                        onClick={() => {
-                          const firstName = job.clientName?.split(' ')[0] || 'there';
-                          const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
-                          const subject = `Your Luxury Decking Estimate ${job.jobNumber ? `#${job.jobNumber}` : ''} — ${job.clientName}`;
-                          const body = `Hi ${firstName},\n\nThank you for choosing Luxury Decking!\n\nEstimate: $${(job.estimateAmount || 0).toLocaleString()}\n\nView your portal: ${portalUrl}\n\n- The Luxury Decking Team`;
-                          window.location.href = `mailto:${job.clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-                      >
-                        <Mail size={11} /> Email
-                      </button>
-                    )}
                   </div>
                 </div>
 
@@ -1549,12 +1662,37 @@ Ottawa's Premium Deck Builders`;
                         </div>
                       ) : null;
                     })()}
-                    {(job.acceptedBuildSummary.addOns || []).map((addon, i) => (
-                      <div key={i} className="flex items-center justify-between px-6 py-3">
-                        <span className="text-sm text-[var(--text-secondary)]">{addon.name}</span>
-                        <span className="text-sm font-semibold text-[var(--text-primary)] font-mono">${addon.price.toLocaleString()}</span>
-                      </div>
-                    ))}
+                    {(job.acceptedBuildSummary.addOns || []).map((addon, i) => {
+                      const ms = job.estimatorIntake?.measureSheet;
+                      const n = addon.name.toLowerCase();
+                      let qty = '';
+                      if (ms) {
+                        if ((n.includes('deck') || n.includes('decking')) && ms.deckSqft > 0) qty = `${ms.deckSqft} sqft`;
+                        else if ((n.includes('helical') || n.includes('footing') || n.includes('pile')) && ms.footingCount > 0) qty = `${ms.footingCount} ${ms.footingType || 'piles'}`;
+                        else if (n.includes('fascia') && ms.fasciaLf > 0) qty = `${ms.fasciaLf} lf`;
+                        else if (n.includes('railing') && ms.woodRailingLf > 0) qty = `${ms.woodRailingLf} lf`;
+                        else if (n.includes('skirting') && ms.skirtingSqft > 0) qty = `${ms.skirtingSqft} sqft`;
+                        else if (n.includes('privacy') && ms.privacyWallLf > 0) qty = `${ms.privacyWallLf} lf`;
+                        else if ((n.includes('stair') || n.includes('step')) && ms.stairLf > 0) qty = `${ms.stairLf} steps`;
+                        else if (n.includes('removal') || n.includes('demo')) qty = ms.removeDispose ? (ms.demoSqft > 0 ? `${ms.demoSqft} sqft` : 'Yes') : '';
+                        else if (n.includes('permit')) qty = ms.permitRequired ? 'Required' : '';
+                        else if (n.includes('lighting')) qty = ms.lightingFixtures > 0 ? `${ms.lightingFixtures} pcs` : '';
+                        else if (n.includes('pergola')) qty = ms.pergolaRequired ? (ms.pergolaSize || 'Yes') : '';
+                        else if (n.includes('glass') && ms.glassSection6Count > 0) qty = `${ms.glassSection6Count} pcs`;
+                        else if (n.includes('aluminum') && ms.aluminumPostCount > 0) qty = `${ms.aluminumPostCount} posts`;
+                      }
+                      return (
+                        <div key={i} className="flex items-center justify-between px-6 py-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="text-sm text-[var(--text-secondary)]">{addon.name}</span>
+                            {qty && (
+                              <span className="shrink-0 text-[9px] font-black text-[var(--brand-gold)]/70 bg-[var(--brand-gold)]/8 border border-[var(--brand-gold)]/15 px-2 py-0.5 rounded-full uppercase tracking-widest">{qty}</span>
+                            )}
+                          </div>
+                          <span className="text-sm font-semibold text-[var(--text-primary)] font-mono shrink-0 ml-3">${addon.price.toLocaleString()}</span>
+                        </div>
+                      );
+                    })}
                     <div className="flex items-center justify-between px-6 py-3 bg-[var(--bg-secondary)]">
                       <span className="text-xs text-[var(--text-secondary)]">Subtotal</span>
                       <span className="text-xs text-[var(--text-secondary)] font-mono">${(job.acceptedBuildSummary.basePrice || job.estimateAmount || 0).toLocaleString()}</span>
@@ -1779,191 +1917,6 @@ Ottawa's Premium Deck Builders`;
                   </div>
                 )}
               </section>
-            )}
-
-            {/* Estimator Field Notes */}
-            {job.estimatorIntake && (
-              <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)] overflow-hidden">
-                <div className="px-6 py-4 border-b border-[var(--border-color)]">
-                  <h3 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Estimator Field Notes</h3>
-                </div>
-                <div className="p-6 space-y-6">
-                  {/* Site Checklist */}
-                  <div>
-                    <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-3">Site Checklist</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {([
-                        ['elevationConfirmed', 'Elevation Confirmed'],
-                        ['accessConfirmed', 'Site Access Confirmed'],
-                        ['removalRequired', 'Removal/Disposal Required'],
-                        ['helicalPileAccess', 'Helical Pile Access'],
-                        ['obstaclesIdentified', 'Obstacles Identified'],
-                        ['permitRequired', 'Permit Required'],
-                      ] as [string, string][]).map(([key, label]) => {
-                        const val = (job.estimatorIntake!.checklist as any)[key];
-                        return (
-                          <div key={key} className="flex items-center gap-2">
-                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${val ? 'bg-[var(--brand-gold)]' : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'}`}>
-                              {val && <Check className="w-2.5 h-2.5 text-black" />}
-                            </div>
-                            <span className="text-xs text-[var(--text-secondary)]">{label}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {job.estimatorIntake.checklist.elevationMeasurement && (
-                      <p className="mt-2 text-xs text-[var(--text-secondary)]">Elevation: <span className="text-[var(--text-primary)]">{job.estimatorIntake.checklist.elevationMeasurement}</span></p>
-                    )}
-                    {job.estimatorIntake.checklist.gateOpeningMeasurement && (
-                      <p className="text-xs text-[var(--text-secondary)]">Gate Opening: <span className="text-[var(--text-primary)]">{job.estimatorIntake.checklist.gateOpeningMeasurement}</span></p>
-                    )}
-                  </div>
-
-                  {/* Site Measurements */}
-                  {job.estimatorIntake.measureSheet && (
-                    <div>
-                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-3">Site Measurements</p>
-                      <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] overflow-hidden divide-y divide-[var(--border-color)]">
-                        {/* Deck Structure */}
-                        {(job.estimatorIntake.measureSheet.deckSqft > 0 || job.estimatorIntake.measureSheet.fasciaLf > 0 || job.estimatorIntake.measureSheet.joistProtection) && (
-                          <div className="px-4 py-3">
-                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Deck Structure</p>
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              {job.estimatorIntake.measureSheet.deckSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Deck Area</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.deckSqft} sqft</span></div>}
-                              {job.estimatorIntake.measureSheet.fasciaLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Fascia</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fasciaLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.pictureFrameLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Picture Frame</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.pictureFrameLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.joistProtection && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Joist Protection</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes</span></div>}
-                            </div>
-                          </div>
-                        )}
-                        {/* Footings */}
-                        {job.estimatorIntake.measureSheet.footingCount > 0 && (
-                          <div className="px-4 py-3">
-                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Footings</p>
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Type</span><span className="text-[10px] font-semibold text-[var(--text-primary)] capitalize">{job.estimatorIntake.measureSheet.footingType}</span></div>
-                              <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Count</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.footingCount} pcs</span></div>
-                              {job.estimatorIntake.measureSheet.namiFixCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Namifix Brackets</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.namiFixCount} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.ledgerLength > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Ledger</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.ledgerLength} lf</span></div>}
-                            </div>
-                          </div>
-                        )}
-                        {/* Stairs & Railing */}
-                        {(job.estimatorIntake.measureSheet.stairLf > 0 || job.estimatorIntake.measureSheet.woodRailingLf > 0 || job.estimatorIntake.measureSheet.aluminumPostCount > 0 || job.estimatorIntake.measureSheet.glassSection6Count > 0 || job.estimatorIntake.measureSheet.framelessSectionCount > 0) && (
-                          <div className="px-4 py-3">
-                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Stairs & Railing</p>
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              {job.estimatorIntake.measureSheet.stairLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Stairs</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.stairLf} steps</span></div>}
-                              {job.estimatorIntake.measureSheet.woodRailingLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Wood Railing</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.woodRailingLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.drinkRailLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Drink Rail</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.drinkRailLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.aluminumPostCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Alum Posts</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminumPostCount} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.aluminum6ftSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Alum 6ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminum6ftSections} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.aluminum8ftSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Alum 8ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminum8ftSections} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.aluminumStairSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Alum Stair Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminumStairSections} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.glassSection6Count > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Glass 6ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.glassSection6Count} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.glassPanelsLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Glass Panels</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.glassPanelsLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.framelessSectionCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Frameless Glass</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.framelessSectionCount} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.framelessLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Frameless LF</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.framelessLf} lf</span></div>}
-                            </div>
-                          </div>
-                        )}
-                        {/* Skirting & Privacy */}
-                        {(job.estimatorIntake.measureSheet.skirtingSqft > 0 || job.estimatorIntake.measureSheet.privacyWallLf > 0) && (
-                          <div className="px-4 py-3">
-                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Skirting & Privacy</p>
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              {job.estimatorIntake.measureSheet.skirtingSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Skirting</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.skirtingSqft} sqft</span></div>}
-                              {job.estimatorIntake.measureSheet.privacyWallLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Privacy Wall</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyWallLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.privacyPostCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Privacy Posts</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyPostCount} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.privacyScreenCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Privacy Screens</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyScreenCount} pcs</span></div>}
-                            </div>
-                          </div>
-                        )}
-                        {/* Site Prep & Landscaping */}
-                        {(job.estimatorIntake.measureSheet.removeDispose || job.estimatorIntake.measureSheet.fabricStoneSqft > 0 || job.estimatorIntake.measureSheet.riverWashSqft > 0 || job.estimatorIntake.measureSheet.mulchSqft > 0 || job.estimatorIntake.measureSheet.steppingStonesCount > 0) && (
-                          <div className="px-4 py-3">
-                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Site Prep & Landscaping</p>
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              {job.estimatorIntake.measureSheet.removeDispose && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Demo/Removal</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes{job.estimatorIntake.measureSheet.demoSqft > 0 ? ` (${job.estimatorIntake.measureSheet.demoSqft} sqft)` : ''}</span></div>}
-                              {job.estimatorIntake.measureSheet.fabricStoneSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Fabric Stone</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fabricStoneSqft} sqft</span></div>}
-                              {job.estimatorIntake.measureSheet.riverWashSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">River Wash</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.riverWashSqft} sqft</span></div>}
-                              {job.estimatorIntake.measureSheet.mulchSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Mulch</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.mulchSqft} sqft</span></div>}
-                              {job.estimatorIntake.measureSheet.steppingStonesCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Stepping Stones</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.steppingStonesCount} pcs</span></div>}
-                            </div>
-                          </div>
-                        )}
-                        {/* Extras & Flags */}
-                        {(job.estimatorIntake.measureSheet.lightingFixtures > 0 || job.estimatorIntake.measureSheet.pergolaRequired || job.estimatorIntake.measureSheet.permitRequired || job.estimatorIntake.measureSheet.elevationNote) && (
-                          <div className="px-4 py-3">
-                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Extras & Flags</p>
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              {job.estimatorIntake.measureSheet.lightingFixtures > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Lighting</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.lightingFixtures} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.pergolaRequired && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Pergola</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes{job.estimatorIntake.measureSheet.pergolaSize ? ` (${job.estimatorIntake.measureSheet.pergolaSize})` : ''}</span></div>}
-                              {job.estimatorIntake.measureSheet.permitRequired && <div className="flex justify-between col-span-2"><span className="text-[10px] text-[var(--text-tertiary)]">Permit Required</span><span className="text-[10px] font-semibold text-amber-400">Yes — Flag for scheduling</span></div>}
-                            </div>
-                            {job.estimatorIntake.measureSheet.elevationNote && <p className="mt-2 text-xs text-[var(--text-secondary)]">Elevation Note: <span className="text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.elevationNote}</span></p>}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Marketing Source */}
-                  {job.estimatorIntake.checklist.marketingSource && (
-                    <div>
-                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-2">Lead Source (confirmed on site)</p>
-                      <p className="text-sm text-[var(--text-secondary)] capitalize">{job.estimatorIntake.checklist.marketingSource}{job.estimatorIntake.checklist.marketingDetail ? ` — ${job.estimatorIntake.checklist.marketingDetail}` : ''}</p>
-                    </div>
-                  )}
-
-                  {/* Site Photos */}
-                  {job.estimatorIntake.photos && job.estimatorIntake.photos.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-3">Site Photos ({job.estimatorIntake.photos.length})</p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {job.estimatorIntake.photos.map(photo => (
-                          <a key={photo.id} href={photo.url} target="_blank" rel="noopener noreferrer">
-                            <img src={photo.url} alt={photo.category} className="w-full h-24 object-cover rounded-lg border border-[var(--border-color)] hover:opacity-80 transition-opacity" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Site Sketch */}
-                  {job.estimatorIntake.sketch && job.estimatorIntake.sketch.strokes && job.estimatorIntake.sketch.strokes.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-3">Site Sketch</p>
-                      <div className="bg-white rounded-xl overflow-hidden">
-                        <svg viewBox="0 0 400 300" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
-                          {job.estimatorIntake.sketch.strokes.map((stroke, i) => {
-                            const pts: string[] = [];
-                            for (let j = 0; j < stroke.points.length; j += 2) {
-                              pts.push(`${stroke.points[j]},${stroke.points[j + 1]}`);
-                            }
-                            return (
-                              <polyline key={i} points={pts.join(' ')} fill="none"
-                                stroke={stroke.color || '#000'} strokeWidth={stroke.width || 2}
-                                strokeLinecap="round" strokeLinejoin="round" />
-                            );
-                          })}
-                          {job.estimatorIntake.sketch.labels?.map(label => (
-                            <text key={label.id} x={label.x} y={label.y} fontSize="12" fill="#333">{label.text}</text>
-                          ))}
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Field Notes */}
-                  {job.estimatorIntake.notes && (
-                    <div>
-                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-2">Field Notes</p>
-                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">{job.estimatorIntake.notes}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
             )}
 
             {/* Digital Work Order — from Job Acceptance Wizard */}
