@@ -432,6 +432,36 @@ export interface Job {
     clientReplied?: boolean;
     paused?: boolean;
   };
+
+  // Module: Job Acceptance — Digital Work Order
+  digitalWorkOrder?: {
+    clientName?: string;
+    clientPhone?: string;
+    clientEmail?: string;
+    projectAddress?: string;
+    siteAccessNotes?: string;
+    parkingNotes?: string;
+    packageTier?: string;
+    totalPrice?: number;
+    deckSqFt?: string;
+    deckingMaterial?: string;
+    railingType?: string;
+    footingType?: string;
+    stairs?: string;
+    addOns?: string[];
+    scopeNotes?: string;
+    estimatedStartDate?: string;
+    estimatedDuration?: number;
+    assignedTo?: string;
+    permitRequired?: boolean;
+    permitNumber?: string;
+    railingSystem?: string;
+    footingSystem?: string;
+    fastenerType?: string;
+    materialDeliveryDate?: string;
+    deliveryNotes?: string;
+    completedAt?: string;
+  };
 }
 
 export interface EstimateOption {

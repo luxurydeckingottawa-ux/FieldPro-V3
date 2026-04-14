@@ -25,6 +25,7 @@ import BusinessInfoView from './views/BusinessInfoView';
 import EstimateDetailView from './views/EstimateDetailView';
 import NavBar from './components/NavBar';
 import AcceptanceModal from './components/AcceptanceModal';
+import JobAcceptanceModal from './components/JobAcceptanceModal';
 import { EstimatorCalendar } from './components/EstimatorCalendar';
 import ChatView from './components/ChatView';
 import UserManagementView from './views/UserManagementView';
@@ -1547,6 +1548,7 @@ const App: React.FC = () => {
   const [calculatorSourceJobId, setCalculatorSourceJobId] = useState<string | null>(null);
   const [showCalculatorAcceptance, setShowCalculatorAcceptance] = useState(false);
   const [calculatorAcceptanceJob, setCalculatorAcceptanceJob] = useState<Job | null>(null);
+  const [pendingJobAcceptance, setPendingJobAcceptance] = useState<Job | null>(null);
 
   /** Open the calculator fresh (New Estimate from office) */
   const handleOpenNewEstimate = useCallback(() => {
@@ -1959,8 +1961,13 @@ const App: React.FC = () => {
                 handleUpdatePipelineStage(jobId, updates.pipelineStage);
               }
               setShowCalculatorAcceptance(false);
-              // Job is now at JOB_SOLD, navigate to the job detail page
-              navigateTo('office-job-detail', selectedJob?.id);
+              // Show the job setup wizard before opening the job file
+              const jobForSetup = jobs.find(j => j.id === jobId) ?? calculatorAcceptanceJob;
+              if (jobForSetup) {
+                setPendingJobAcceptance({ ...jobForSetup, ...updates });
+              } else {
+                navigateTo('office-job-detail', jobId);
+              }
             }}
           />
         )}
@@ -2149,7 +2156,7 @@ const App: React.FC = () => {
           />
         )}
         {view === 'office-job-detail' && selectedJob && currentUser && (
-          <OfficeJobDetailView 
+          <OfficeJobDetailView
             job={selectedJob}
             allJobs={jobs}
             onBack={() => navigateTo('office-pipeline')}
@@ -2168,6 +2175,7 @@ const App: React.FC = () => {
               navigateTo('customer-portal', selectedJob?.customerPortalToken || selectedJob?.id);
             }}
             onDeleteJob={handleDeleteJob}
+            onOpenJobSetup={() => setPendingJobAcceptance(selectedJob)}
           />
         )}
         {view === 'estimate-detail' && selectedJob && currentUser && (
@@ -2175,7 +2183,16 @@ const App: React.FC = () => {
             job={selectedJob}
             onBack={() => navigateTo('office-pipeline')}
             onUpdateJob={handleUpdateJob}
-            onUpdatePipelineStage={handleUpdatePipelineStage}
+            onUpdatePipelineStage={(jobId, newStage) => {
+              handleUpdatePipelineStage(jobId, newStage);
+              if (newStage === PipelineStage.JOB_SOLD) {
+                // Intercept: show setup wizard before opening job file
+                const jobForSetup = jobs.find(j => j.id === jobId) ?? selectedJob;
+                if (jobForSetup) {
+                  setPendingJobAcceptance({ ...jobForSetup, pipelineStage: newStage });
+                }
+              }
+            }}
             onOpenEstimator={(job) => {
               setSelectedJob(job);
               handleOpenEstimateForJob(job);
@@ -2185,7 +2202,15 @@ const App: React.FC = () => {
               navigateTo('customer-portal', selectedJob?.customerPortalToken || selectedJob?.id);
             }}
             onDeleteJob={handleDeleteJob}
-            onJobAccepted={() => navigateTo('office-job-detail', selectedJob?.id)}
+            onJobAccepted={(jobId) => {
+              // Intercept: show setup wizard before opening job file
+              const jobForSetup = jobs.find(j => j.id === jobId) ?? selectedJob;
+              if (jobForSetup) {
+                setPendingJobAcceptance(jobForSetup);
+              } else {
+                navigateTo('office-job-detail', jobId);
+              }
+            }}
             onBookAppointment={(job) => {
               setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
               setNewJobPrefilledContact({
@@ -2346,6 +2371,25 @@ const App: React.FC = () => {
         )}
         </ErrorBoundary>
       </main>
+
+      {/* Job Acceptance Wizard — intercepts JOB_SOLD transition */}
+      {pendingJobAcceptance && (
+        <JobAcceptanceModal
+          key={pendingJobAcceptance.id}
+          job={pendingJobAcceptance}
+          onComplete={(updates) => {
+            const jobId = pendingJobAcceptance.id;
+            handleUpdateJob(jobId, updates);
+            setPendingJobAcceptance(null);
+            navigateTo('office-job-detail', jobId);
+          }}
+          onSkip={() => {
+            const jobId = pendingJobAcceptance.id;
+            setPendingJobAcceptance(null);
+            navigateTo('office-job-detail', jobId);
+          }}
+        />
+      )}
     </div>
   );
 };

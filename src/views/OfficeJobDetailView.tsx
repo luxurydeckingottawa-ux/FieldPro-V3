@@ -81,12 +81,13 @@ interface OfficeJobDetailViewProps {
   onSendMessage: (sessionId: string, text: string) => void;
   onPreviewPortal: (job: Job) => void;
   onDeleteJob?: (jobId: string) => void;
+  onOpenJobSetup?: () => void;
 }
 
-const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({ 
-  job, 
+const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
+  job,
   allJobs = [],
-  onBack, 
+  onBack,
   onUpdatePipelineStage,
   onUpdateOfficeChecklist,
   onUpdateJob,
@@ -94,7 +95,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   onOpenFieldWorkflow,
   onSendMessage,
   onPreviewPortal,
-  onDeleteJob
+  onDeleteJob,
+  onOpenJobSetup,
 }) => {
   const [showLiveStatusReport, setShowLiveStatusReport] = useState(false);
   const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -1517,6 +1519,104 @@ Ottawa's Premium Deck Builders`;
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Digital Work Order — from Job Acceptance Wizard */}
+            {job.digitalWorkOrder && (
+              <section className="bg-[var(--card-bg)] border border-[var(--brand-gold)]/30 rounded-[2.5rem] p-8 shadow-md relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+                <div className="flex items-center justify-between mb-8 relative z-10">
+                  <div>
+                    <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                      <ClipboardCheck size={14} /> Job Setup
+                    </h3>
+                    <h2 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">Digital Work Order Summary</h2>
+                  </div>
+                  {job.digitalWorkOrder.completedAt && (
+                    <div className="px-4 py-2 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-xl">
+                      <span className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest">Setup Complete</span>
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 relative z-10">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-3">
+                      <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Client & Site</h4>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {job.digitalWorkOrder.clientName && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Client</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.clientName}</p></div>}
+                      {job.digitalWorkOrder.clientPhone && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Phone</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.clientPhone}</p></div>}
+                      {job.digitalWorkOrder.projectAddress && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Address</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.projectAddress}</p></div>}
+                      {job.digitalWorkOrder.siteAccessNotes && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Site Access</p><p className="text-sm text-[var(--text-secondary)]">{job.digitalWorkOrder.siteAccessNotes}</p></div>}
+                      {job.digitalWorkOrder.parkingNotes && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Parking / Staging</p><p className="text-sm text-[var(--text-secondary)]">{job.digitalWorkOrder.parkingNotes}</p></div>}
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-3">
+                      <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Project Scope</h4>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {job.digitalWorkOrder.packageTier && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Package</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.packageTier}</p></div>}
+                      {job.digitalWorkOrder.totalPrice != null && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Total Price</p><p className="text-sm font-bold text-[var(--brand-gold)]">{new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(job.digitalWorkOrder.totalPrice)}</p></div>}
+                      {job.digitalWorkOrder.deckSqFt && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Deck Size</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.deckSqFt} sqft</p></div>}
+                      {job.digitalWorkOrder.deckingMaterial && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Decking Material</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.deckingMaterial}</p></div>}
+                      {job.digitalWorkOrder.railingType && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Railing Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.railingType}</p></div>}
+                      {job.digitalWorkOrder.footingType && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Footing Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.footingType}</p></div>}
+                      {job.digitalWorkOrder.stairs && job.digitalWorkOrder.stairs !== '0' && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Stairs</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.stairs}</p></div>}
+                    </div>
+                    {job.digitalWorkOrder.addOns && job.digitalWorkOrder.addOns.length > 0 && (
+                      <div>
+                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Add-Ons</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {job.digitalWorkOrder.addOns.map(a => (
+                            <span key={a} className="px-2.5 py-1 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-wider">{a}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-3">
+                      <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Schedule & Assignment</h4>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {job.digitalWorkOrder.estimatedStartDate && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Start Date</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.estimatedStartDate}</p></div>}
+                      {job.digitalWorkOrder.estimatedDuration != null && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Duration</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.estimatedDuration} days</p></div>}
+                      {job.digitalWorkOrder.assignedTo && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Assigned To</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.assignedTo}</p></div>}
+                      <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Permit Required</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.permitRequired ? 'Yes' : 'No'}</p></div>
+                      {job.digitalWorkOrder.permitRequired && job.digitalWorkOrder.permitNumber && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Permit #</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.permitNumber}</p></div>}
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-3">
+                      <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Materials & Delivery</h4>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {job.digitalWorkOrder.railingSystem && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Railing System</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.railingSystem}</p></div>}
+                      {job.digitalWorkOrder.footingSystem && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Footing System</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.footingSystem}</p></div>}
+                      {job.digitalWorkOrder.fastenerType && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Fastener Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.fastenerType}</p></div>}
+                      {job.digitalWorkOrder.materialDeliveryDate && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Delivery Date</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.materialDeliveryDate}</p></div>}
+                      {job.digitalWorkOrder.deliveryNotes && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Delivery Notes</p><p className="text-sm text-[var(--text-secondary)]">{job.digitalWorkOrder.deliveryNotes}</p></div>}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Prompt to complete job setup when neither buildDetails nor digitalWorkOrder is set */}
+            {!job.buildDetails && !job.digitalWorkOrder && onOpenJobSetup && (
+              <div className="bg-[var(--brand-gold)]/5 border border-[var(--brand-gold)]/20 rounded-3xl p-8 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1">Digital Work Order</p>
+                  <p className="text-sm text-[var(--text-secondary)]">Complete job setup to populate the work order and attach the signed contract.</p>
+                </div>
+                <button
+                  onClick={onOpenJobSetup}
+                  className="flex items-center gap-2 px-5 py-3 bg-[var(--brand-gold)] text-black rounded-xl text-sm font-black hover:opacity-90 transition-all whitespace-nowrap"
+                >
+                  Complete Job Setup <ChevronRight size={14} />
+                </button>
               </div>
             )}
 
