@@ -295,7 +295,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
+              <p className="text-[10px] text-[var(--text-tertiary)] font-black uppercase tracking-widest">
                 {job.projectType}
               </p>
             </div>
@@ -368,11 +368,359 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto bg-[var(--bg-primary)]">
-        <div className="max-w-[1600px] mx-auto p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Left Column: Primary Controls & Info */}
-          <div className="lg:col-span-8 space-y-8">
-            
+        <div className="max-w-[1600px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+
+          {/* LEFT SIDEBAR: utility/reference boxes — sticky */}
+          <div className="space-y-4 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto no-scrollbar">
+
+            {/* AI Assistant Section */}
+            {isEstimateStage && (
+              <OfficeAIAssistant job={job} onUpdateJob={onUpdateJob} />
+            )}
+
+            {/* Field Execution + Scheduling */}
+            {(job.pipelineStage === PipelineStage.IN_FIELD || job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
+            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden shadow-md">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-color)]">
+                <div className="flex items-center gap-2">
+                  <Play size={13} className="fill-current text-[var(--brand-gold)]" />
+                  <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em]">Field Status & Timeline</h3>
+                </div>
+                {job.pipelineStage === PipelineStage.IN_FIELD && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[8px] font-black uppercase tracking-widest rounded-full border border-[var(--brand-gold)]/20">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] animate-pulse" />
+                    Live
+                  </div>
+                )}
+              </div>
+
+              <div className="p-5 space-y-4">
+                {/* Stage Progress */}
+                <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Progress — Stage {job.currentStage} of 5</span>
+                    <span className="text-xs font-black text-[var(--brand-gold)]">{Math.round((job.currentStage / 5) * 100)}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
+                    <div className="h-full bg-[var(--brand-gold)] transition-all duration-500" style={{ width: `${(job.currentStage / 5) * 100}%` }} />
+                  </div>
+                </div>
+
+                {/* Schedule info */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-xl">
+                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Start</p>
+                    <p className="text-xs font-bold text-[var(--text-primary)]">{job.plannedStartDate || 'TBD'}</p>
+                  </div>
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-xl">
+                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Duration</p>
+                    <p className="text-xs font-bold text-[var(--text-primary)]">{job.plannedDurationDays || 0}d</p>
+                  </div>
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-xl">
+                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Finish</p>
+                    <p className="text-xs font-bold text-[var(--text-primary)]">{job.plannedFinishDate || 'TBD'}</p>
+                  </div>
+                </div>
+
+                {/* Field Forecast */}
+                {job.fieldForecast ? (
+                  <div className="p-4 rounded-2xl bg-amber-500/[0.05] border border-amber-500/20">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em]">Field Forecast</span>
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${getScheduleStatusColor(job.fieldForecast.status)}`}>
+                        {job.fieldForecast.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-1.5 mb-3">
+                      <span className="text-2xl font-black text-[var(--text-primary)]">{job.fieldForecast.estimatedDaysRemaining}</span>
+                      <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase">Days Remaining</span>
+                    </div>
+                    {job.fieldForecast.note && (
+                      <p className="text-[10px] text-[var(--text-tertiary)] italic mb-3">"{job.fieldForecast.note}"</p>
+                    )}
+                    {job.fieldForecast.delayReason && (
+                      <div className="mb-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-2">
+                        <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
+                        <p className="text-[10px] font-bold text-rose-500">{job.fieldForecast.delayReason}</p>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (job.fieldForecast) {
+                          const newFinish = new Date();
+                          newFinish.setDate(newFinish.getDate() + job.fieldForecast.estimatedDaysRemaining);
+                          const finishStr = newFinish.toISOString().split('T')[0];
+                          let newDuration = job.plannedDurationDays;
+                          if (job.plannedStartDate) {
+                            const start = new Date(job.plannedStartDate);
+                            newDuration = Math.ceil((newFinish.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                          }
+                          onUpdateSchedule?.(job.id, {
+                            officialScheduleStatus: job.fieldForecast.status,
+                            plannedFinishDate: finishStr,
+                            plannedDurationDays: newDuration,
+                            fieldForecast: undefined
+                          });
+                        }
+                      }}
+                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-xl transition-all flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Apply to Official Schedule
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl border border-dashed border-[var(--border-color)] text-center">
+                    <Clock className="w-4 h-4 text-[var(--text-tertiary)] mx-auto mb-2" />
+                    <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Awaiting field forecast</p>
+                  </div>
+                )}
+
+                {/* Flagged Issues */}
+                {job.flaggedIssues && job.flaggedIssues.length > 0 && (
+                  <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                        <span className="text-[9px] font-black text-rose-500 uppercase tracking-[0.2em]">Flagged Issues</span>
+                      </div>
+                      <span className="text-sm font-black text-rose-500">{job.flaggedIssues.length}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+            )}
+
+            {/* AI Office Insights */}
+            {!isEstimateStage && (
+              <AIOfficeInsights job={job} onUpdateJob={onUpdateJob} />
+            )}
+
+            {/* Customer Experience Portal Sharing */}
+            <PortalSharingCard
+              job={job}
+              allJobs={allJobs}
+              isEstimateStage={isEstimateStage}
+              onPreviewPortal={onPreviewPortal}
+            />
+
+            {/* Stripe Deposit */}
+            {job.pipelineStage === PipelineStage.PRE_PRODUCTION && (
+              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] p-5 shadow-md">
+                <div className="flex items-center gap-2 mb-3">
+                  <CreditCard size={13} className="text-[var(--brand-gold)]" />
+                  <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Deposit Collection</span>
+                </div>
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center justify-between p-2.5 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+                    <span className="text-[10px] text-[var(--text-secondary)]">Deposit (25%)</span>
+                    <span className="text-sm font-black text-[var(--text-primary)]">${Math.round((job.estimateAmount || 0) * 0.25).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+                    <span className="text-[10px] text-[var(--text-secondary)]">Remaining Balance</span>
+                    <span className="text-sm font-black text-[var(--text-secondary)]">${Math.round((job.estimateAmount || 0) * 0.75).toLocaleString()}</span>
+                  </div>
+                </div>
+                <button
+                  disabled
+                  className="w-full py-3 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-[var(--brand-gold)]/50 cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <CreditCard size={12} /> Send Deposit Request via Stripe
+                </button>
+                <div className="flex items-center gap-2 mt-2 p-2.5 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                  <p className="text-[9px] text-[var(--text-tertiary)]">Connect Stripe in Settings to enable online deposits. Once connected, clients receive a secure payment link via SMS.</p>
+                </div>
+              </section>
+            )}
+
+            {/* Office Notes */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] shadow-md overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4">
+                <h3 className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] flex items-center gap-2">
+                  <MessageSquare size={13} className="text-[var(--brand-gold)]" /> Office Notes
+                  {job.officeNotes && job.officeNotes.length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[9px] font-black rounded border border-[var(--border-color)]">{job.officeNotes.length}</span>
+                  )}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button className="px-3 py-1.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[var(--brand-gold)]/20 transition-all border border-[var(--brand-gold)]/20">
+                    Add
+                  </button>
+                  <button
+                    onClick={() => setOfficeNotesCollapsed(prev => !prev)}
+                    className="p-1.5 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+                  >
+                    <ChevronDown size={12} className={officeNotesCollapsed ? 'rotate-[-90deg]' : ''} />
+                  </button>
+                </div>
+              </div>
+              {!officeNotesCollapsed && (
+                <div className="px-5 pb-5 border-t border-[var(--border-color)] pt-4 space-y-3">
+                  {job.officeNotes && job.officeNotes.length > 0 ? (
+                    job.officeNotes.map(note => (
+                      <div key={note.id} className="bg-[var(--bg-secondary)] rounded-xl p-4 border border-[var(--border-color)]">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">{note.author}</span>
+                          <span className="text-[9px] font-black text-[var(--muted-text)]">{new Date(note.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed">{note.text}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-widest text-center py-3">No office notes yet.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Site Notes */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] shadow-md overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4">
+                <h3 className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] flex items-center gap-2">
+                  <History size={13} className="text-[var(--brand-gold)]" /> Site Notes
+                  {job.siteNotes && job.siteNotes.length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[9px] font-black rounded">{job.siteNotes.length}</span>
+                  )}
+                </h3>
+                <button
+                  onClick={() => setSiteNotesCollapsed(prev => !prev)}
+                  className="p-1.5 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+                >
+                  <ChevronDown size={12} className={siteNotesCollapsed ? 'rotate-[-90deg]' : ''} />
+                </button>
+              </div>
+              {!siteNotesCollapsed && (
+                <div className="px-5 pb-5 border-t border-[var(--border-color)] pt-4 space-y-3">
+                  {job.siteNotes && job.siteNotes.length > 0 ? (
+                    job.siteNotes.map(note => (
+                      <div key={note.id} className="bg-[var(--brand-gold)]/5 rounded-xl p-4 border border-[var(--brand-gold)]/10">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest">{note.author}</span>
+                          <span className="text-[9px] font-black text-[var(--brand-gold)]/40">{new Date(note.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed italic">"{note.text}"</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-widest text-center py-3">No field notes yet.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Job Files & Documents Package */}
+            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] p-8 shadow-md relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 blur-[60px] -mr-24 -mt-24 pointer-events-none" />
+
+              <div className="flex items-center justify-between mb-8 relative z-10">
+                <div>
+                  <h3 className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.3em] mb-1 flex items-center gap-2">
+                    <Paperclip size={14} className="text-[var(--brand-gold)]" /> Job Files & Documents
+                  </h3>
+                  <h2 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-tight italic">Construction Package</h2>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingSection('files');
+                  }}
+                  className="px-4 py-2 bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-color)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-all active:scale-95"
+                >
+                  Manage Files
+                </button>
+              </div>
+
+              <div className="space-y-6 relative z-10">
+                {job.files && job.files.length > 0 ? (
+                  <>
+                    {[
+                      { type: 'estimate', label: 'Itemized Estimate', icon: ClipboardList, color: 'text-[var(--brand-gold)]' },
+                      { type: 'contract', label: 'Signed Contract', icon: FileText, color: 'text-[var(--brand-gold)]' },
+                      { type: 'drawing', label: 'Technical Drawings & Plans', icon: Ruler, color: 'text-[var(--brand-gold)]' },
+                      { type: 'permit', label: 'Permits & Legal', icon: ShieldCheck, color: 'text-blue-400' },
+                      { type: 'closeout', label: 'Closeout & Warranty Packages', icon: ClipboardCheck, color: 'text-amber-400' },
+                      { type: 'photo', label: 'Site & Progress Photos', icon: Camera, color: 'text-purple-400' },
+                      { type: 'other', label: 'Other Documents', icon: FileText, color: 'text-[var(--text-tertiary)]' }
+                    ].map(group => {
+                      const groupFiles = job.files.filter(f => f.type === group.type);
+                      if (groupFiles.length === 0) return null;
+
+                      return (
+                        <div key={group.type} className="space-y-3">
+                          <div className="flex items-center gap-2 px-1">
+                            <group.icon className={`w-3.5 h-3.5 ${group.color}`} />
+                            <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">{group.label}</span>
+                          </div>
+                          <div className="grid grid-cols-1 gap-2">
+                            {groupFiles.map(file => (
+                              <div
+                                key={file.id}
+                                onClick={() => {
+                                  if (!file.url) return;
+                                  if (file.url.startsWith('data:text/html')) {
+                                    const [, base64] = file.url.split(',');
+                                    try {
+                                      const html = atob(base64);
+                                      const blob = new Blob([html], { type: 'text/html' });
+                                      const blobUrl = URL.createObjectURL(blob);
+                                      window.open(blobUrl, '_blank');
+                                      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                                    } catch { window.open(file.url, '_blank'); }
+                                  } else if (file.url.startsWith('data:application/pdf') || file.url.startsWith('data:')) {
+                                    try {
+                                      const [, base64] = file.url.split(',');
+                                      const binary = atob(base64);
+                                      const bytes = new Uint8Array(binary.length);
+                                      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                                      const mimeMatch = file.url.match(/^data:([^;]+)/);
+                                      const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+                                      const blob = new Blob([bytes], { type: mime });
+                                      const blobUrl = URL.createObjectURL(blob);
+                                      window.open(blobUrl, '_blank');
+                                      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                                    } catch { window.open(file.url, '_blank'); }
+                                  } else {
+                                    window.open(file.url, '_blank');
+                                  }
+                                }}
+                                className={`flex items-center p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--brand-gold)]/30 transition-all group ${file.url ? 'cursor-pointer' : 'cursor-default opacity-60'}`}
+                              >
+                                <div className="h-10 w-10 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-center mr-4 group-hover:border-[var(--brand-gold)]/30 transition-all">
+                                  <group.icon className={`h-4 w-4 ${group.color}`} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--brand-gold)] transition-colors">{file.name}</p>
+                                  <p className="text-[8px] text-[var(--muted-text)] uppercase font-black tracking-[0.2em] mt-0.5">
+                                    {new Date(file.uploadedAt).toLocaleDateString()}
+                                    {!file.url && ' · Pending attachment'}
+                                  </p>
+                                </div>
+                                {file.url && <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)] transition-all" />}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="p-12 rounded-[2rem] border border-dashed border-[var(--border-color)] flex flex-col items-center justify-center text-center bg-[var(--bg-secondary)]">
+                    <div className="w-12 h-12 rounded-2xl bg-[var(--bg-tertiary)] flex items-center justify-center mb-4">
+                      <Paperclip className="w-6 h-6 text-[var(--text-tertiary)]" />
+                    </div>
+                    <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">No files attached to this job package</p>
+                    <p className="text-[11px] text-[var(--text-tertiary)] mt-2 max-w-[200px]">Upload plans, permits, or site photos to build the work order.</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+
+          {/* RIGHT MAIN CONTENT: action/work area */}
+          <div className="space-y-6 min-w-0">
+
             {/* Final Closeout & Warranty */}
             {(job.verifiedBuildPassportUrl || job.subcontractorInvoiceUrl ||
               job.pipelineStage === PipelineStage.COMPLETION ||
@@ -665,7 +1013,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                             {(touch.emailTemplate || touch.smsTemplate) && (
                               <button
                                 onClick={() => setExpandedLeadTouchId(isExpanded ? null : touch.id)}
-                                className="p-1.5 text-gray-600 hover:text-gray-300 transition-colors"
+                                className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                               >
                                 {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                               </button>
@@ -853,11 +1201,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       {job.portalEngagement && (
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Portal Opens:</span>
+                            <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Portal Opens:</span>
                             <span className="text-[10px] font-black text-blue-500">{job.portalEngagement.totalOpens}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Last Viewed:</span>
+                            <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Last Viewed:</span>
                             <span className="text-[10px] font-black text-blue-500">{job.portalEngagement.lastOpenedAt?.split('T')[0] || 'N/A'}</span>
                           </div>
                         </div>
@@ -991,52 +1339,40 @@ Ottawa's Premium Deck Builders`;
             )}
 
             {/* Job Summary Card */}
-            <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2rem] shadow-md overflow-hidden">
-              <div className="flex items-center justify-between px-8 py-5">
-                <div className="flex items-center gap-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">
-                  <Info size={14} className="text-[var(--brand-gold)]" /> Client Info
-                  <span className="ml-2 text-[var(--text-tertiary)] font-bold normal-case tracking-normal text-[10px]">{job.projectAddress}</span>
-                </div>
-                <button
-                  onClick={() => setCustomerInfoCollapsed(prev => !prev)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-                >
-                  {customerInfoCollapsed ? (
-                    <><ChevronDown size={12} className="rotate-[-90deg]" /> Show details</>
-                  ) : (
-                    <><ChevronDown size={12} /> Hide details</>
-                  )}
-                </button>
-              </div>
-              {!customerInfoCollapsed && (
-                <div className="border-t border-[var(--border-color)]">
-                  <JobSummaryCard
-                    job={job}
-                    onOpenMessageModal={(type) => {
-                      setMessageType(type);
-                      setIsMessageModalOpen(true);
-                    }}
-                    onEditAssignment={() => {
-                      setEditFormData({
-                        assignedUsers: job.assignedUsers,
-                        assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
-                        plannedStartDate: job.plannedStartDate,
-                        plannedDurationDays: job.plannedDurationDays,
-                        plannedFinishDate: job.plannedFinishDate,
-                        officialScheduleStatus: job.officialScheduleStatus
-                      });
-                      setEditingSection('schedule');
-                    }}
-                    onUpdateJob={onUpdateJob}
+            <section className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2rem] shadow-md overflow-hidden">
+              <JobSummaryCard
+                job={job}
+                onOpenMessageModal={(type) => {
+                  setMessageType(type);
+                  setIsMessageModalOpen(true);
+                }}
+                onEditAssignment={() => {
+                  setEditFormData({
+                    assignedUsers: job.assignedUsers,
+                    assignedCrewOrSubcontractor: job.assignedCrewOrSubcontractor,
+                    plannedStartDate: job.plannedStartDate,
+                    plannedDurationDays: job.plannedDurationDays,
+                    plannedFinishDate: job.plannedFinishDate,
+                    officialScheduleStatus: job.officialScheduleStatus
+                  });
+                  setEditingSection('schedule');
+                }}
+                onUpdateJob={onUpdateJob}
+              />
+            </section>
+
+            {/* Stage Checklist */}
+            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-md backdrop-blur-md min-h-[300px] relative overflow-hidden">
+              {/* Gold progress bar at top */}
+              {currentChecklist && currentChecklist.items && currentChecklist.items.length > 0 && (
+                <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-[2.5rem] bg-[var(--bg-tertiary)] overflow-hidden">
+                  <div
+                    className="h-full bg-[var(--brand-gold)] transition-all duration-700"
+                    style={{ width: `${Math.round(((currentChecklist.items.filter(i => i.completed || i.isNA).length) / currentChecklist.items.length) * 100)}%` }}
                   />
                 </div>
               )}
-            </div>
-
-
-            {/* Stage Checklist */}
-            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-md backdrop-blur-md">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
                     <CheckSquare size={14} className="text-[var(--brand-gold)]" /> Stage Checklist
@@ -1044,17 +1380,24 @@ Ottawa's Premium Deck Builders`;
                   <h2 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-tight italic">{currentStageInfo?.label} Readiness</h2>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Progress</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-black text-[var(--brand-gold)]">
-                      {(currentChecklist?.items || []).filter(i => i.completed).length}
+                  <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] mb-1">Progress</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-lg font-black text-[var(--brand-gold)] font-mono">
+                      {(currentChecklist?.items || []).filter(i => i.completed || i.isNA).length}
                     </span>
-                    <span className="text-xs font-black text-gray-600">/</span>
-                    <span className="text-xs font-black text-gray-400">
+                    <span className="text-xs font-black text-[var(--muted-text)]">/</span>
+                    <span className="text-xs font-black text-[var(--text-tertiary)] font-mono">
                       {currentChecklist?.items?.length || 0}
                     </span>
                   </div>
                 </div>
+              </div>
+              {/* Full-width thin progress bar below header */}
+              <div className="mb-6 h-1 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[var(--brand-gold)] transition-all duration-500 rounded-full"
+                  style={{ width: `${currentChecklist?.items?.length ? Math.round((currentChecklist.items.filter(i => i.completed || i.isNA).length / currentChecklist.items.length) * 100) : 0}%` }}
+                />
               </div>
 
               <div className="space-y-3">
@@ -1162,12 +1505,81 @@ Ottawa's Premium Deck Builders`;
               )}
             </section>
 
+            {/* Accepted Scope of Work */}
+            {!isEstimateStage && (job.acceptedBuildSummary || job.estimateAmount) && (
+              <section className="bg-[var(--card-bg)] border border-[var(--brand-gold)]/20 rounded-[2rem] overflow-hidden shadow-md relative">
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-[var(--brand-gold)]/30" />
+                <div className="px-6 py-5 border-b border-[var(--border-color)] flex items-center justify-between">
+                  <div>
+                    <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em] mb-0.5">Accepted Quote</p>
+                    <h3 className="text-base font-black text-[var(--text-primary)] uppercase tracking-tight italic">
+                      {job.acceptedBuildSummary?.optionName || 'Scope of Work'}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[8px] font-black bg-[var(--brand-gold)] text-black px-2.5 py-1 rounded uppercase tracking-widest">
+                      Accepted
+                    </span>
+                    {job.clientEmail && job.estimateAmount && (
+                      <button
+                        onClick={() => {
+                          const firstName = job.clientName?.split(' ')[0] || 'there';
+                          const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
+                          const subject = `Your Luxury Decking Estimate ${job.jobNumber ? `#${job.jobNumber}` : ''} — ${job.clientName}`;
+                          const body = `Hi ${firstName},\n\nThank you for choosing Luxury Decking!\n\nEstimate: $${(job.estimateAmount || 0).toLocaleString()}\n\nView your portal: ${portalUrl}\n\n- The Luxury Decking Team`;
+                          window.location.href = `mailto:${job.clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+                      >
+                        <Mail size={11} /> Email
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {job.acceptedBuildSummary ? (
+                  <div className="divide-y divide-[var(--border-color)]">
+                    {(() => {
+                      const addOnsTotal = (job.acceptedBuildSummary!.addOns || []).reduce((s, a) => s + a.price, 0);
+                      const baseInstall = (job.acceptedBuildSummary!.basePrice || 0) - addOnsTotal;
+                      return baseInstall > 50 ? (
+                        <div className="flex items-center justify-between px-6 py-3">
+                          <span className="text-sm text-[var(--text-secondary)]">Base Deck Installation</span>
+                          <span className="text-sm font-semibold text-[var(--text-primary)] font-mono">${baseInstall.toLocaleString()}</span>
+                        </div>
+                      ) : null;
+                    })()}
+                    {(job.acceptedBuildSummary.addOns || []).map((addon, i) => (
+                      <div key={i} className="flex items-center justify-between px-6 py-3">
+                        <span className="text-sm text-[var(--text-secondary)]">{addon.name}</span>
+                        <span className="text-sm font-semibold text-[var(--text-primary)] font-mono">${addon.price.toLocaleString()}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between px-6 py-3 bg-[var(--bg-secondary)]">
+                      <span className="text-xs text-[var(--text-secondary)]">Subtotal</span>
+                      <span className="text-xs text-[var(--text-secondary)] font-mono">${(job.acceptedBuildSummary.basePrice || job.estimateAmount || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-6 py-3 bg-[var(--bg-secondary)]">
+                      <span className="text-xs text-[var(--text-secondary)]">HST (13%)</span>
+                      <span className="text-xs text-[var(--text-secondary)] font-mono">+${Math.round((job.acceptedBuildSummary.basePrice || job.estimateAmount || 0) * 0.13).toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-6 py-4 bg-[var(--brand-gold)]/5">
+                      <span className="text-sm font-black text-[var(--brand-gold)] uppercase tracking-wider">Contract Total</span>
+                      <span className="text-xl font-black text-[var(--brand-gold)] font-mono">${Math.round((job.acceptedBuildSummary.basePrice || job.estimateAmount || 0) * 1.13).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between px-6 py-4">
+                    <span className="text-sm text-[var(--text-secondary)]">Estimate Amount</span>
+                    <span className="text-xl font-black text-[var(--brand-gold)] font-mono">${(job.estimateAmount || 0).toLocaleString()}</span>
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* Build Specifications / Digital Work Order */}
             {job.buildDetails && (
               <section
-                
-                
-                
                 className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2.5rem] p-8 shadow-md relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
@@ -1207,11 +1619,11 @@ Ottawa's Premium Deck Builders`;
                     
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Footing Type</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Footing Type</p>
                         <p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.footings.type || 'N/A'}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Bracket System</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Bracket System</p>
                         <p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.footings.bracketType || 'N/A'}</p>
                       </div>
                     </div>
@@ -1250,11 +1662,11 @@ Ottawa's Premium Deck Builders`;
                     
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Lumber Type</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Lumber Type</p>
                         <p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.framing.type || 'N/A'}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Joist Spec</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Joist Spec</p>
                         <p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.framing.joistSize} @ {job.buildDetails.framing.joistSpacing}</p>
                       </div>
                     </div>
@@ -1285,20 +1697,20 @@ Ottawa's Premium Deck Builders`;
                     
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Decking Product</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Decking Product</p>
                         <p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.decking.brand} {job.buildDetails.decking.type}</p>
                         <p className="text-[10px] font-bold text-[var(--brand-gold)] uppercase tracking-widest">{job.buildDetails.decking.color}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Railing System</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Railing System</p>
                         <p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.railing.included ? job.buildDetails.railing.type : 'None'}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Stairs & Style</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Stairs & Style</p>
                         <p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.stairs.included ? `${job.buildDetails.stairs.style} (${job.buildDetails.stairs.type})` : 'None'}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Skirting</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Skirting</p>
                         <p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.skirting.included ? job.buildDetails.skirting.type : 'None'}</p>
                         {job.buildDetails.skirting.trapDoor && <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Incl. Trap Door</span>}
                       </div>
@@ -1307,7 +1719,7 @@ Ottawa's Premium Deck Builders`;
                     {job.buildDetails.decking.accentNote && (
                       <div className="p-3 bg-[var(--brand-gold)]/5 rounded-xl border border-[var(--brand-gold)]/10">
                         <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1">Inlay / Accent Details</p>
-                        <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{job.buildDetails.decking.accentNote}</p>
+                        <p className="text-[11px] text-[var(--text-secondary)] font-medium leading-relaxed">{job.buildDetails.decking.accentNote}</p>
                       </div>
                     )}
                   </div>
@@ -1323,11 +1735,11 @@ Ottawa's Premium Deck Builders`;
                     
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Lighting</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Lighting</p>
                         <p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.electrical.lightingIncluded ? job.buildDetails.electrical.lightingType : 'None'}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Landscaping Prep</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Landscaping Prep</p>
                         <p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.landscaping.prepType || 'None'}</p>
                       </div>
                     </div>
@@ -1344,7 +1756,7 @@ Ottawa's Premium Deck Builders`;
                     {job.buildDetails.electrical.roughInNotes && (
                       <div className="p-3 bg-amber-500/5 rounded-xl border border-amber-500/10">
                         <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Electrical Rough-In</p>
-                        <p className="text-[11px] text-gray-400 font-medium leading-relaxed">{job.buildDetails.electrical.roughInNotes}</p>
+                        <p className="text-[11px] text-[var(--text-secondary)] font-medium leading-relaxed">{job.buildDetails.electrical.roughInNotes}</p>
                       </div>
                     )}
                   </div>
@@ -1378,7 +1790,7 @@ Ottawa's Premium Deck Builders`;
                 <div className="p-6 space-y-6">
                   {/* Site Checklist */}
                   <div>
-                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Checklist</p>
+                    <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-3">Site Checklist</p>
                     <div className="grid grid-cols-2 gap-2">
                       {([
                         ['elevationConfirmed', 'Elevation Confirmed'],
@@ -1394,33 +1806,33 @@ Ottawa's Premium Deck Builders`;
                             <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${val ? 'bg-[var(--brand-gold)]' : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'}`}>
                               {val && <Check className="w-2.5 h-2.5 text-black" />}
                             </div>
-                            <span className="text-xs text-gray-400">{label}</span>
+                            <span className="text-xs text-[var(--text-secondary)]">{label}</span>
                           </div>
                         );
                       })}
                     </div>
                     {job.estimatorIntake.checklist.elevationMeasurement && (
-                      <p className="mt-2 text-xs text-gray-400">Elevation: <span className="text-[var(--text-primary)]">{job.estimatorIntake.checklist.elevationMeasurement}</span></p>
+                      <p className="mt-2 text-xs text-[var(--text-secondary)]">Elevation: <span className="text-[var(--text-primary)]">{job.estimatorIntake.checklist.elevationMeasurement}</span></p>
                     )}
                     {job.estimatorIntake.checklist.gateOpeningMeasurement && (
-                      <p className="text-xs text-gray-400">Gate Opening: <span className="text-[var(--text-primary)]">{job.estimatorIntake.checklist.gateOpeningMeasurement}</span></p>
+                      <p className="text-xs text-[var(--text-secondary)]">Gate Opening: <span className="text-[var(--text-primary)]">{job.estimatorIntake.checklist.gateOpeningMeasurement}</span></p>
                     )}
                   </div>
 
                   {/* Site Measurements */}
                   {job.estimatorIntake.measureSheet && (
                     <div>
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Measurements</p>
+                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-3">Site Measurements</p>
                       <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] overflow-hidden divide-y divide-[var(--border-color)]">
                         {/* Deck Structure */}
                         {(job.estimatorIntake.measureSheet.deckSqft > 0 || job.estimatorIntake.measureSheet.fasciaLf > 0 || job.estimatorIntake.measureSheet.joistProtection) && (
                           <div className="px-4 py-3">
                             <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Deck Structure</p>
                             <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              {job.estimatorIntake.measureSheet.deckSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Deck Area</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.deckSqft} sqft</span></div>}
-                              {job.estimatorIntake.measureSheet.fasciaLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Fascia</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fasciaLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.pictureFrameLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Picture Frame</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.pictureFrameLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.joistProtection && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Joist Protection</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes</span></div>}
+                              {job.estimatorIntake.measureSheet.deckSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Deck Area</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.deckSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.fasciaLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Fascia</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fasciaLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.pictureFrameLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Picture Frame</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.pictureFrameLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.joistProtection && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Joist Protection</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes</span></div>}
                             </div>
                           </div>
                         )}
@@ -1429,10 +1841,10 @@ Ottawa's Premium Deck Builders`;
                           <div className="px-4 py-3">
                             <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Footings</p>
                             <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              <div className="flex justify-between"><span className="text-[10px] text-gray-500">Type</span><span className="text-[10px] font-semibold text-[var(--text-primary)] capitalize">{job.estimatorIntake.measureSheet.footingType}</span></div>
-                              <div className="flex justify-between"><span className="text-[10px] text-gray-500">Count</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.footingCount} pcs</span></div>
-                              {job.estimatorIntake.measureSheet.namiFixCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Namifix Brackets</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.namiFixCount} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.ledgerLength > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Ledger</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.ledgerLength} lf</span></div>}
+                              <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Type</span><span className="text-[10px] font-semibold text-[var(--text-primary)] capitalize">{job.estimatorIntake.measureSheet.footingType}</span></div>
+                              <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Count</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.footingCount} pcs</span></div>
+                              {job.estimatorIntake.measureSheet.namiFixCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Namifix Brackets</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.namiFixCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.ledgerLength > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Ledger</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.ledgerLength} lf</span></div>}
                             </div>
                           </div>
                         )}
@@ -1441,17 +1853,17 @@ Ottawa's Premium Deck Builders`;
                           <div className="px-4 py-3">
                             <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Stairs & Railing</p>
                             <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              {job.estimatorIntake.measureSheet.stairLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Stairs</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.stairLf} steps</span></div>}
-                              {job.estimatorIntake.measureSheet.woodRailingLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Wood Railing</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.woodRailingLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.drinkRailLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Drink Rail</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.drinkRailLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.aluminumPostCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum Posts</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminumPostCount} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.aluminum6ftSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum 6ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminum6ftSections} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.aluminum8ftSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum 8ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminum8ftSections} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.aluminumStairSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Alum Stair Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminumStairSections} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.glassSection6Count > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Glass 6ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.glassSection6Count} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.glassPanelsLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Glass Panels</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.glassPanelsLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.framelessSectionCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Frameless Glass</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.framelessSectionCount} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.framelessLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Frameless LF</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.framelessLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.stairLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Stairs</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.stairLf} steps</span></div>}
+                              {job.estimatorIntake.measureSheet.woodRailingLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Wood Railing</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.woodRailingLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.drinkRailLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Drink Rail</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.drinkRailLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminumPostCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Alum Posts</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminumPostCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminum6ftSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Alum 6ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminum6ftSections} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminum8ftSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Alum 8ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminum8ftSections} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.aluminumStairSections > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Alum Stair Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.aluminumStairSections} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.glassSection6Count > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Glass 6ft Sections</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.glassSection6Count} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.glassPanelsLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Glass Panels</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.glassPanelsLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.framelessSectionCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Frameless Glass</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.framelessSectionCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.framelessLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Frameless LF</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.framelessLf} lf</span></div>}
                             </div>
                           </div>
                         )}
@@ -1460,10 +1872,10 @@ Ottawa's Premium Deck Builders`;
                           <div className="px-4 py-3">
                             <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Skirting & Privacy</p>
                             <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              {job.estimatorIntake.measureSheet.skirtingSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Skirting</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.skirtingSqft} sqft</span></div>}
-                              {job.estimatorIntake.measureSheet.privacyWallLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Privacy Wall</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyWallLf} lf</span></div>}
-                              {job.estimatorIntake.measureSheet.privacyPostCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Privacy Posts</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyPostCount} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.privacyScreenCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Privacy Screens</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyScreenCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.skirtingSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Skirting</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.skirtingSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.privacyWallLf > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Privacy Wall</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyWallLf} lf</span></div>}
+                              {job.estimatorIntake.measureSheet.privacyPostCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Privacy Posts</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyPostCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.privacyScreenCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Privacy Screens</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.privacyScreenCount} pcs</span></div>}
                             </div>
                           </div>
                         )}
@@ -1472,11 +1884,11 @@ Ottawa's Premium Deck Builders`;
                           <div className="px-4 py-3">
                             <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Site Prep & Landscaping</p>
                             <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              {job.estimatorIntake.measureSheet.removeDispose && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Demo/Removal</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes{job.estimatorIntake.measureSheet.demoSqft > 0 ? ` (${job.estimatorIntake.measureSheet.demoSqft} sqft)` : ''}</span></div>}
-                              {job.estimatorIntake.measureSheet.fabricStoneSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Fabric Stone</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fabricStoneSqft} sqft</span></div>}
-                              {job.estimatorIntake.measureSheet.riverWashSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">River Wash</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.riverWashSqft} sqft</span></div>}
-                              {job.estimatorIntake.measureSheet.mulchSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Mulch</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.mulchSqft} sqft</span></div>}
-                              {job.estimatorIntake.measureSheet.steppingStonesCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Stepping Stones</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.steppingStonesCount} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.removeDispose && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Demo/Removal</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes{job.estimatorIntake.measureSheet.demoSqft > 0 ? ` (${job.estimatorIntake.measureSheet.demoSqft} sqft)` : ''}</span></div>}
+                              {job.estimatorIntake.measureSheet.fabricStoneSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Fabric Stone</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fabricStoneSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.riverWashSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">River Wash</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.riverWashSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.mulchSqft > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Mulch</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.mulchSqft} sqft</span></div>}
+                              {job.estimatorIntake.measureSheet.steppingStonesCount > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Stepping Stones</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.steppingStonesCount} pcs</span></div>}
                             </div>
                           </div>
                         )}
@@ -1485,11 +1897,11 @@ Ottawa's Premium Deck Builders`;
                           <div className="px-4 py-3">
                             <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Extras & Flags</p>
                             <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                              {job.estimatorIntake.measureSheet.lightingFixtures > 0 && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Lighting</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.lightingFixtures} pcs</span></div>}
-                              {job.estimatorIntake.measureSheet.pergolaRequired && <div className="flex justify-between"><span className="text-[10px] text-gray-500">Pergola</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes{job.estimatorIntake.measureSheet.pergolaSize ? ` (${job.estimatorIntake.measureSheet.pergolaSize})` : ''}</span></div>}
-                              {job.estimatorIntake.measureSheet.permitRequired && <div className="flex justify-between col-span-2"><span className="text-[10px] text-gray-500">Permit Required</span><span className="text-[10px] font-semibold text-amber-400">Yes — Flag for scheduling</span></div>}
+                              {job.estimatorIntake.measureSheet.lightingFixtures > 0 && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Lighting</span><span className="text-[10px] font-semibold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.lightingFixtures} pcs</span></div>}
+                              {job.estimatorIntake.measureSheet.pergolaRequired && <div className="flex justify-between"><span className="text-[10px] text-[var(--text-tertiary)]">Pergola</span><span className="text-[10px] font-semibold text-[var(--brand-gold)]">Yes{job.estimatorIntake.measureSheet.pergolaSize ? ` (${job.estimatorIntake.measureSheet.pergolaSize})` : ''}</span></div>}
+                              {job.estimatorIntake.measureSheet.permitRequired && <div className="flex justify-between col-span-2"><span className="text-[10px] text-[var(--text-tertiary)]">Permit Required</span><span className="text-[10px] font-semibold text-amber-400">Yes — Flag for scheduling</span></div>}
                             </div>
-                            {job.estimatorIntake.measureSheet.elevationNote && <p className="mt-2 text-xs text-gray-400">Elevation Note: <span className="text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.elevationNote}</span></p>}
+                            {job.estimatorIntake.measureSheet.elevationNote && <p className="mt-2 text-xs text-[var(--text-secondary)]">Elevation Note: <span className="text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.elevationNote}</span></p>}
                           </div>
                         )}
                       </div>
@@ -1499,15 +1911,15 @@ Ottawa's Premium Deck Builders`;
                   {/* Marketing Source */}
                   {job.estimatorIntake.checklist.marketingSource && (
                     <div>
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Lead Source (confirmed on site)</p>
-                      <p className="text-sm text-gray-300 capitalize">{job.estimatorIntake.checklist.marketingSource}{job.estimatorIntake.checklist.marketingDetail ? ` — ${job.estimatorIntake.checklist.marketingDetail}` : ''}</p>
+                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-2">Lead Source (confirmed on site)</p>
+                      <p className="text-sm text-[var(--text-secondary)] capitalize">{job.estimatorIntake.checklist.marketingSource}{job.estimatorIntake.checklist.marketingDetail ? ` — ${job.estimatorIntake.checklist.marketingDetail}` : ''}</p>
                     </div>
                   )}
 
                   {/* Site Photos */}
                   {job.estimatorIntake.photos && job.estimatorIntake.photos.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Photos ({job.estimatorIntake.photos.length})</p>
+                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-3">Site Photos ({job.estimatorIntake.photos.length})</p>
                       <div className="grid grid-cols-3 gap-2">
                         {job.estimatorIntake.photos.map(photo => (
                           <a key={photo.id} href={photo.url} target="_blank" rel="noopener noreferrer">
@@ -1521,7 +1933,7 @@ Ottawa's Premium Deck Builders`;
                   {/* Site Sketch */}
                   {job.estimatorIntake.sketch && job.estimatorIntake.sketch.strokes && job.estimatorIntake.sketch.strokes.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Site Sketch</p>
+                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-3">Site Sketch</p>
                       <div className="bg-white rounded-xl overflow-hidden">
                         <svg viewBox="0 0 400 300" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
                           {job.estimatorIntake.sketch.strokes.map((stroke, i) => {
@@ -1546,8 +1958,8 @@ Ottawa's Premium Deck Builders`;
                   {/* Field Notes */}
                   {job.estimatorIntake.notes && (
                     <div>
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Field Notes</p>
-                      <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{job.estimatorIntake.notes}</p>
+                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-2">Field Notes</p>
+                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">{job.estimatorIntake.notes}</p>
                     </div>
                   )}
                 </div>
@@ -1577,11 +1989,11 @@ Ottawa's Premium Deck Builders`;
                       <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Client & Site</h4>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      {job.digitalWorkOrder.clientName && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Client</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.clientName}</p></div>}
-                      {job.digitalWorkOrder.clientPhone && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Phone</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.clientPhone}</p></div>}
-                      {job.digitalWorkOrder.projectAddress && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Address</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.projectAddress}</p></div>}
-                      {job.digitalWorkOrder.siteAccessNotes && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Site Access</p><p className="text-sm text-[var(--text-secondary)]">{job.digitalWorkOrder.siteAccessNotes}</p></div>}
-                      {job.digitalWorkOrder.parkingNotes && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Parking / Staging</p><p className="text-sm text-[var(--text-secondary)]">{job.digitalWorkOrder.parkingNotes}</p></div>}
+                      {job.digitalWorkOrder.clientName && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Client</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.clientName}</p></div>}
+                      {job.digitalWorkOrder.clientPhone && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Phone</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.clientPhone}</p></div>}
+                      {job.digitalWorkOrder.projectAddress && <div className="col-span-2"><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Address</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.projectAddress}</p></div>}
+                      {job.digitalWorkOrder.siteAccessNotes && <div className="col-span-2"><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Site Access</p><p className="text-sm text-[var(--text-secondary)]">{job.digitalWorkOrder.siteAccessNotes}</p></div>}
+                      {job.digitalWorkOrder.parkingNotes && <div className="col-span-2"><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Parking / Staging</p><p className="text-sm text-[var(--text-secondary)]">{job.digitalWorkOrder.parkingNotes}</p></div>}
                     </div>
                   </div>
                   <div className="space-y-4">
@@ -1589,17 +2001,17 @@ Ottawa's Premium Deck Builders`;
                       <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Project Scope</h4>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      {job.digitalWorkOrder.packageTier && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Package</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.packageTier}</p></div>}
-                      {job.digitalWorkOrder.totalPrice != null && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Total Price</p><p className="text-sm font-bold text-[var(--brand-gold)]">{new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(job.digitalWorkOrder.totalPrice)}</p></div>}
-                      {job.digitalWorkOrder.deckSqFt && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Deck Size</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.deckSqFt} sqft</p></div>}
-                      {job.digitalWorkOrder.deckingMaterial && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Decking Material</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.deckingMaterial}</p></div>}
-                      {job.digitalWorkOrder.railingType && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Railing Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.railingType}</p></div>}
-                      {job.digitalWorkOrder.footingType && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Footing Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.footingType}</p></div>}
-                      {job.digitalWorkOrder.stairs && job.digitalWorkOrder.stairs !== '0' && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Stairs</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.stairs}</p></div>}
+                      {job.digitalWorkOrder.packageTier && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Package</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.packageTier}</p></div>}
+                      {job.digitalWorkOrder.totalPrice != null && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Total Price</p><p className="text-sm font-bold text-[var(--brand-gold)]">{new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(job.digitalWorkOrder.totalPrice)}</p></div>}
+                      {job.digitalWorkOrder.deckSqFt && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Deck Size</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.deckSqFt} sqft</p></div>}
+                      {job.digitalWorkOrder.deckingMaterial && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Decking Material</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.deckingMaterial}</p></div>}
+                      {job.digitalWorkOrder.railingType && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Railing Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.railingType}</p></div>}
+                      {job.digitalWorkOrder.footingType && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Footing Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.footingType}</p></div>}
+                      {job.digitalWorkOrder.stairs && job.digitalWorkOrder.stairs !== '0' && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Stairs</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.stairs}</p></div>}
                     </div>
                     {job.digitalWorkOrder.addOns && job.digitalWorkOrder.addOns.length > 0 && (
                       <div>
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Add-Ons</p>
+                        <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-2">Add-Ons</p>
                         <div className="flex flex-wrap gap-1.5">
                           {job.digitalWorkOrder.addOns.map(a => (
                             <span key={a} className="px-2.5 py-1 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-wider">{a}</span>
@@ -1613,11 +2025,11 @@ Ottawa's Premium Deck Builders`;
                       <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Schedule & Assignment</h4>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      {job.digitalWorkOrder.estimatedStartDate && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Start Date</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.estimatedStartDate}</p></div>}
-                      {job.digitalWorkOrder.estimatedDuration != null && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Duration</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.estimatedDuration} days</p></div>}
-                      {job.digitalWorkOrder.assignedTo && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Assigned To</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.assignedTo}</p></div>}
-                      <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Permit Required</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.permitRequired ? 'Yes' : 'No'}</p></div>
-                      {job.digitalWorkOrder.permitRequired && job.digitalWorkOrder.permitNumber && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Permit #</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.permitNumber}</p></div>}
+                      {job.digitalWorkOrder.estimatedStartDate && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Start Date</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.estimatedStartDate}</p></div>}
+                      {job.digitalWorkOrder.estimatedDuration != null && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Duration</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.estimatedDuration} days</p></div>}
+                      {job.digitalWorkOrder.assignedTo && <div className="col-span-2"><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Assigned To</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.assignedTo}</p></div>}
+                      <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Permit Required</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.permitRequired ? 'Yes' : 'No'}</p></div>
+                      {job.digitalWorkOrder.permitRequired && job.digitalWorkOrder.permitNumber && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Permit #</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.permitNumber}</p></div>}
                     </div>
                   </div>
                   <div className="space-y-4">
@@ -1625,11 +2037,11 @@ Ottawa's Premium Deck Builders`;
                       <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Materials & Delivery</h4>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      {job.digitalWorkOrder.railingSystem && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Railing System</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.railingSystem}</p></div>}
-                      {job.digitalWorkOrder.footingSystem && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Footing System</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.footingSystem}</p></div>}
-                      {job.digitalWorkOrder.fastenerType && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Fastener Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.fastenerType}</p></div>}
-                      {job.digitalWorkOrder.materialDeliveryDate && <div><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Delivery Date</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.materialDeliveryDate}</p></div>}
-                      {job.digitalWorkOrder.deliveryNotes && <div className="col-span-2"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Delivery Notes</p><p className="text-sm text-[var(--text-secondary)]">{job.digitalWorkOrder.deliveryNotes}</p></div>}
+                      {job.digitalWorkOrder.railingSystem && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Railing System</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.railingSystem}</p></div>}
+                      {job.digitalWorkOrder.footingSystem && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Footing System</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.footingSystem}</p></div>}
+                      {job.digitalWorkOrder.fastenerType && <div className="col-span-2"><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Fastener Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.fastenerType}</p></div>}
+                      {job.digitalWorkOrder.materialDeliveryDate && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Delivery Date</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.materialDeliveryDate}</p></div>}
+                      {job.digitalWorkOrder.deliveryNotes && <div className="col-span-2"><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Delivery Notes</p><p className="text-sm text-[var(--text-secondary)]">{job.digitalWorkOrder.deliveryNotes}</p></div>}
                     </div>
                   </div>
                 </div>
@@ -1749,7 +2161,7 @@ Ottawa's Premium Deck Builders`;
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col items-end">
-                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Gross Profit (Est.)</p>
+                    <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Gross Profit (Est.)</p>
                     <p className={`text-2xl font-black italic tracking-tight ${((job.totalAmount || 0) - (job.materialCost || 0) - (job.labourCost || labourSummary.estimatedCost || 0)) >= 0 ? 'text-[var(--brand-gold)]' : 'text-rose-500'}`}>
                       ${((job.totalAmount || 0) - (job.materialCost || 0) - (job.labourCost || labourSummary.estimatedCost || 0)).toLocaleString()}
                     </p>
@@ -1828,359 +2240,6 @@ Ottawa's Premium Deck Builders`;
             </section>
             )}
           </div>
-
-          {/* Right Column: Execution & Status */}
-          <div className="lg:col-span-4 space-y-8 lg:sticky lg:top-24 lg:self-start">
-            
-            {/* AI Assistant Section */}
-            {isEstimateStage && (
-              <OfficeAIAssistant job={job} onUpdateJob={onUpdateJob} />
-            )}
-
-            {/* Field Execution + Scheduling */}
-            {(job.pipelineStage === PipelineStage.IN_FIELD || job.pipelineStage === PipelineStage.COMPLETION || job.pipelineStage === PipelineStage.PAID_CLOSED) && (
-            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden shadow-md">
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-color)]">
-                <div className="flex items-center gap-2">
-                  <Play size={13} className="fill-current text-[var(--brand-gold)]" />
-                  <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em]">Field Status & Timeline</h3>
-                </div>
-                {job.pipelineStage === PipelineStage.IN_FIELD && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[8px] font-black uppercase tracking-widest rounded-full border border-[var(--brand-gold)]/20">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] animate-pulse" />
-                    Live
-                  </div>
-                )}
-              </div>
-
-              <div className="p-5 space-y-4">
-                {/* Stage Progress */}
-                <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)]">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Progress — Stage {job.currentStage} of 5</span>
-                    <span className="text-xs font-black text-[var(--brand-gold)]">{Math.round((job.currentStage / 5) * 100)}%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                    <div className="h-full bg-[var(--brand-gold)] transition-all duration-500" style={{ width: `${(job.currentStage / 5) * 100}%` }} />
-                  </div>
-                </div>
-
-                {/* Schedule info */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-xl">
-                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Start</p>
-                    <p className="text-xs font-bold text-[var(--text-primary)]">{job.plannedStartDate || 'TBD'}</p>
-                  </div>
-                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-xl">
-                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Duration</p>
-                    <p className="text-xs font-bold text-[var(--text-primary)]">{job.plannedDurationDays || 0}d</p>
-                  </div>
-                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-xl">
-                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Finish</p>
-                    <p className="text-xs font-bold text-[var(--text-primary)]">{job.plannedFinishDate || 'TBD'}</p>
-                  </div>
-                </div>
-
-                {/* Field Forecast */}
-                {job.fieldForecast ? (
-                  <div className="p-4 rounded-2xl bg-amber-500/[0.05] border border-amber-500/20">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Field Forecast</span>
-                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${getScheduleStatusColor(job.fieldForecast.status)}`}>
-                        {job.fieldForecast.status.replace('_', ' ')}
-                      </span>
-                    </div>
-                    <div className="flex items-baseline gap-1.5 mb-3">
-                      <span className="text-2xl font-black text-[var(--text-primary)]">{job.fieldForecast.estimatedDaysRemaining}</span>
-                      <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase">Days Remaining</span>
-                    </div>
-                    {job.fieldForecast.note && (
-                      <p className="text-[10px] text-gray-500 italic mb-3">"{job.fieldForecast.note}"</p>
-                    )}
-                    {job.fieldForecast.delayReason && (
-                      <div className="mb-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-2">
-                        <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
-                        <p className="text-[10px] font-bold text-rose-300">{job.fieldForecast.delayReason}</p>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => {
-                        if (job.fieldForecast) {
-                          const newFinish = new Date();
-                          newFinish.setDate(newFinish.getDate() + job.fieldForecast.estimatedDaysRemaining);
-                          const finishStr = newFinish.toISOString().split('T')[0];
-                          let newDuration = job.plannedDurationDays;
-                          if (job.plannedStartDate) {
-                            const start = new Date(job.plannedStartDate);
-                            newDuration = Math.ceil((newFinish.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                          }
-                          onUpdateSchedule?.(job.id, {
-                            officialScheduleStatus: job.fieldForecast.status,
-                            plannedFinishDate: finishStr,
-                            plannedDurationDays: newDuration,
-                            fieldForecast: undefined
-                          });
-                        }
-                      }}
-                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-xl transition-all flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Apply to Official Schedule
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-2xl border border-dashed border-[var(--border-color)] text-center">
-                    <Clock className="w-4 h-4 text-[var(--text-tertiary)] mx-auto mb-2" />
-                    <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Awaiting field forecast</p>
-                  </div>
-                )}
-
-                {/* Flagged Issues */}
-                {job.flaggedIssues && job.flaggedIssues.length > 0 && (
-                  <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-                        <span className="text-[9px] font-black text-rose-500 uppercase tracking-[0.2em]">Flagged Issues</span>
-                      </div>
-                      <span className="text-sm font-black text-rose-500">{job.flaggedIssues.length}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-            )}
-
-            {/* AI Office Insights */}
-            {!isEstimateStage && (
-              <AIOfficeInsights job={job} onUpdateJob={onUpdateJob} />
-            )}
-
-            {/* Customer Experience Portal Sharing */}
-            <PortalSharingCard
-              job={job}
-              allJobs={allJobs}
-              isEstimateStage={isEstimateStage}
-              onPreviewPortal={onPreviewPortal}
-            />
-
-
-            {/* Stripe Deposit */}
-            {job.pipelineStage === PipelineStage.PRE_PRODUCTION && (
-              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] p-5 shadow-md">
-                <div className="flex items-center gap-2 mb-3">
-                  <CreditCard size={13} className="text-[var(--brand-gold)]" />
-                  <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Deposit Collection</span>
-                </div>
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center justify-between p-2.5 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-                    <span className="text-[10px] text-[var(--text-secondary)]">Deposit (25%)</span>
-                    <span className="text-sm font-black text-[var(--text-primary)]">${Math.round((job.estimateAmount || 0) * 0.25).toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-2.5 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-                    <span className="text-[10px] text-[var(--text-secondary)]">Remaining Balance</span>
-                    <span className="text-sm font-black text-[var(--text-secondary)]">${Math.round((job.estimateAmount || 0) * 0.75).toLocaleString()}</span>
-                  </div>
-                </div>
-                <button
-                  disabled
-                  className="w-full py-3 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-[var(--brand-gold)]/50 cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <CreditCard size={12} /> Send Deposit Request via Stripe
-                </button>
-                <div className="flex items-center gap-2 mt-2 p-2.5 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
-                  <p className="text-[9px] text-[var(--text-tertiary)]">Connect Stripe in Settings to enable online deposits. Once connected, clients receive a secure payment link via SMS.</p>
-                </div>
-              </section>
-            )}
-
-            {/* Office Notes */}
-            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] shadow-md overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4">
-                <h3 className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] flex items-center gap-2">
-                  <MessageSquare size={13} className="text-[var(--brand-gold)]" /> Office Notes
-                  {job.officeNotes && job.officeNotes.length > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[9px] font-black rounded border border-[var(--border-color)]">{job.officeNotes.length}</span>
-                  )}
-                </h3>
-                <div className="flex items-center gap-2">
-                  <button className="px-3 py-1.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[var(--brand-gold)]/20 transition-all border border-[var(--brand-gold)]/20">
-                    Add
-                  </button>
-                  <button
-                    onClick={() => setOfficeNotesCollapsed(prev => !prev)}
-                    className="p-1.5 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-                  >
-                    <ChevronDown size={12} className={officeNotesCollapsed ? 'rotate-[-90deg]' : ''} />
-                  </button>
-                </div>
-              </div>
-              {!officeNotesCollapsed && (
-                <div className="px-5 pb-5 border-t border-[var(--border-color)] pt-4 space-y-3">
-                  {job.officeNotes && job.officeNotes.length > 0 ? (
-                    job.officeNotes.map(note => (
-                      <div key={note.id} className="bg-[var(--bg-secondary)] rounded-xl p-4 border border-[var(--border-color)]">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{note.author}</span>
-                          <span className="text-[9px] font-black text-gray-600">{new Date(note.timestamp).toLocaleDateString()}</span>
-                        </div>
-                        <p className="text-xs text-gray-300 font-medium leading-relaxed">{note.text}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest text-center py-3">No office notes yet.</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Site Notes */}
-            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] shadow-md overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4">
-                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                  <History size={13} className="text-[var(--brand-gold)]" /> Site Notes
-                  {job.siteNotes && job.siteNotes.length > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[9px] font-black rounded">{job.siteNotes.length}</span>
-                  )}
-                </h3>
-                <button
-                  onClick={() => setSiteNotesCollapsed(prev => !prev)}
-                  className="p-1.5 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-                >
-                  <ChevronDown size={12} className={siteNotesCollapsed ? 'rotate-[-90deg]' : ''} />
-                </button>
-              </div>
-              {!siteNotesCollapsed && (
-                <div className="px-5 pb-5 border-t border-[var(--border-color)] pt-4 space-y-3">
-                  {job.siteNotes && job.siteNotes.length > 0 ? (
-                    job.siteNotes.map(note => (
-                      <div key={note.id} className="bg-[var(--brand-gold)]/5 rounded-xl p-4 border border-[var(--brand-gold)]/10">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest">{note.author}</span>
-                          <span className="text-[9px] font-black text-[var(--brand-gold)]/40">{new Date(note.timestamp).toLocaleDateString()}</span>
-                        </div>
-                        <p className="text-xs text-gray-300 font-medium leading-relaxed italic">"{note.text}"</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest text-center py-3">No field notes yet.</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Job Files & Documents Package */}
-            <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[2rem] p-8 shadow-md relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 blur-[60px] -mr-24 -mt-24 pointer-events-none" />
-              
-              <div className="flex items-center justify-between mb-8 relative z-10">
-                <div>
-                  <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-1 flex items-center gap-2">
-                    <Paperclip size={14} className="text-[var(--brand-gold)]" /> Job Files & Documents
-                  </h3>
-                  <h2 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-tight italic">Construction Package</h2>
-                </div>
-                <button
-                  onClick={() => {
-                    // In a real app, this would open a file management modal
-                    // For now, we'll just show the upload button as "Manage Files"
-                    setEditingSection('files');
-                  }}
-                  className="px-4 py-2 bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-color)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-all active:scale-95"
-                >
-                  Manage Files
-                </button>
-              </div>
-
-              <div className="space-y-6 relative z-10">
-                {job.files && job.files.length > 0 ? (
-                  <>
-                    {/* Grouped by Type */}
-                    {[
-                      { type: 'estimate', label: 'Itemized Estimate', icon: ClipboardList, color: 'text-[var(--brand-gold)]' },
-                      { type: 'contract', label: 'Signed Contract', icon: FileText, color: 'text-[var(--brand-gold)]' },
-                      { type: 'drawing', label: 'Technical Drawings & Plans', icon: Ruler, color: 'text-[var(--brand-gold)]' },
-                      { type: 'permit', label: 'Permits & Legal', icon: ShieldCheck, color: 'text-blue-400' },
-                      { type: 'closeout', label: 'Closeout & Warranty Packages', icon: ClipboardCheck, color: 'text-amber-400' },
-                      { type: 'photo', label: 'Site & Progress Photos', icon: Camera, color: 'text-purple-400' },
-                      { type: 'other', label: 'Other Documents', icon: FileText, color: 'text-gray-400' }
-                    ].map(group => {
-                      const groupFiles = job.files.filter(f => f.type === group.type);
-                      if (groupFiles.length === 0) return null;
-
-                      return (
-                        <div key={group.type} className="space-y-3">
-                          <div className="flex items-center gap-2 px-1">
-                            <group.icon className={`w-3.5 h-3.5 ${group.color}`} />
-                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{group.label}</span>
-                          </div>
-                          <div className="grid grid-cols-1 gap-2">
-                            {groupFiles.map(file => (
-                              <div
-                                key={file.id}
-                                onClick={() => {
-                                  if (!file.url) return;
-                                  if (file.url.startsWith('data:text/html')) {
-                                    // Chrome blocks opening data:text/html URIs in new tabs
-                                    const [, base64] = file.url.split(',');
-                                    try {
-                                      const html = atob(base64);
-                                      const blob = new Blob([html], { type: 'text/html' });
-                                      const blobUrl = URL.createObjectURL(blob);
-                                      window.open(blobUrl, '_blank');
-                                      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
-                                    } catch { window.open(file.url, '_blank'); }
-                                  } else if (file.url.startsWith('data:application/pdf') || file.url.startsWith('data:')) {
-                                    try {
-                                      const [, base64] = file.url.split(',');
-                                      const binary = atob(base64);
-                                      const bytes = new Uint8Array(binary.length);
-                                      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                                      const mimeMatch = file.url.match(/^data:([^;]+)/);
-                                      const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
-                                      const blob = new Blob([bytes], { type: mime });
-                                      const blobUrl = URL.createObjectURL(blob);
-                                      window.open(blobUrl, '_blank');
-                                      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
-                                    } catch { window.open(file.url, '_blank'); }
-                                  } else {
-                                    window.open(file.url, '_blank');
-                                  }
-                                }}
-                                className={`flex items-center p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--brand-gold)]/30 transition-all group ${file.url ? 'cursor-pointer' : 'cursor-default opacity-60'}`}
-                              >
-                                <div className="h-10 w-10 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-center mr-4 group-hover:border-[var(--brand-gold)]/30 transition-all">
-                                  <group.icon className={`h-4 w-4 ${group.color}`} />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-xs font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--brand-gold)] transition-colors">{file.name}</p>
-                                  <p className="text-[8px] text-gray-600 uppercase font-black tracking-[0.2em] mt-0.5">
-                                    {new Date(file.uploadedAt).toLocaleDateString()}
-                                    {!file.url && ' · Pending attachment'}
-                                  </p>
-                                </div>
-                                {file.url && <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)] transition-all" />}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </>
-                ) : (
-                  <div className="p-12 rounded-[2rem] border border-dashed border-[var(--border-color)] flex flex-col items-center justify-center text-center bg-[var(--bg-secondary)]">
-                    <div className="w-12 h-12 rounded-2xl bg-[var(--bg-tertiary)] flex items-center justify-center mb-4">
-                      <Paperclip className="w-6 h-6 text-[var(--text-tertiary)]" />
-                    </div>
-                    <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">No files attached to this job package</p>
-                    <p className="text-[11px] text-[var(--text-tertiary)] mt-2 max-w-[200px]">Upload plans, permits, or site photos to build the work order.</p>
-                  </div>
-                )}
-              </div>
-            </section>
-          </div>
         </div>
       </div>
       {/* Edit Modals */}
@@ -2203,7 +2262,7 @@ Ottawa's Premium Deck Builders`;
                      editingSection === 'scopeSummary' ? 'Edit Scope Summary' :
                      editingSection === 'files' ? 'Manage Job Files' : 'Edit Section'}
                   </h2>
-                  <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Update project details for {job.jobNumber}</p>
+                  <p className="text-[10px] text-[var(--text-tertiary)] font-black uppercase tracking-widest">Update project details for {job.jobNumber}</p>
                 </div>
               </div>
               <button 
@@ -2219,7 +2278,7 @@ Ottawa's Premium Deck Builders`;
               {editingSection === 'jobInfo' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Client Name</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Client Name</label>
                     <input 
                       type="text"
                       value={editFormData.clientName}
@@ -2228,7 +2287,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Client Phone</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Client Phone</label>
                     <input 
                       type="text"
                       value={editFormData.clientPhone || ''}
@@ -2237,7 +2296,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Project Address</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Project Address</label>
                     <input 
                       type="text"
                       value={editFormData.projectAddress}
@@ -2246,7 +2305,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Project Type</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Project Type</label>
                     <input 
                       type="text"
                       value={editFormData.projectType}
@@ -2255,7 +2314,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Job Total Amount ($)</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Job Total Amount ($)</label>
                     <input 
                       type="number"
                       value={editFormData.totalAmount || ''}
@@ -2265,7 +2324,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Paid Amount ($)</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Paid Amount ($)</label>
                     <input 
                       type="number"
                       value={editFormData.paidAmount || ''}
@@ -2275,7 +2334,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Material Cost ($)</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Material Cost ($)</label>
                     <input 
                       type="number"
                       value={editFormData.materialCost || ''}
@@ -2285,7 +2344,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Labour Cost ($)</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Labour Cost ($)</label>
                     <input 
                       type="number"
                       value={editFormData.labourCost || ''}
@@ -2300,7 +2359,7 @@ Ottawa's Premium Deck Builders`;
               {editingSection === 'schedule' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Assigned Field Lead</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Assigned Field Lead</label>
                     <select 
                       value={editFormData.assignedUsers?.[0] || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, assignedUsers: [e.target.value] })}
@@ -2313,7 +2372,7 @@ Ottawa's Premium Deck Builders`;
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Crew / Subcontractor</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Crew / Subcontractor</label>
                     <input 
                       type="text"
                       value={editFormData.assignedCrewOrSubcontractor || ''}
@@ -2322,7 +2381,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Planned Start Date</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Planned Start Date</label>
                     <input 
                       type="date"
                       value={editFormData.plannedStartDate || ''}
@@ -2331,7 +2390,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Duration (Working Days)</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Duration (Working Days)</label>
                     <input 
                       type="number"
                       value={editFormData.plannedDurationDays || ''}
@@ -2340,7 +2399,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Planned Finish Date</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Planned Finish Date</label>
                     <input 
                       type="date"
                       value={editFormData.plannedFinishDate || ''}
@@ -2349,7 +2408,7 @@ Ottawa's Premium Deck Builders`;
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Official Schedule Status</label>
+                    <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Official Schedule Status</label>
                     <select 
                       value={editFormData.officialScheduleStatus || ScheduleStatus.ON_SCHEDULE}
                       onChange={(e) => setEditFormData({ ...editFormData, officialScheduleStatus: e.target.value as ScheduleStatus })}
@@ -2370,7 +2429,7 @@ Ottawa's Premium Deck Builders`;
                     <h4 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest border-b border-[var(--border-color)] pb-2">Site & Foundation</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Footing Type</label>
+                        <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Footing Type</label>
                         <input 
                           type="text"
                           value={editFormData.footings.type}
@@ -2379,7 +2438,7 @@ Ottawa's Premium Deck Builders`;
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Bracket System</label>
+                        <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Bracket System</label>
                         <input 
                           type="text"
                           value={editFormData.footings.bracketType}
@@ -2415,7 +2474,7 @@ Ottawa's Premium Deck Builders`;
                     <h4 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest border-b border-[var(--border-color)] pb-2">Framing Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Lumber Type</label>
+                        <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Lumber Type</label>
                         <input 
                           type="text"
                           value={editFormData.framing.type}
@@ -2425,7 +2484,7 @@ Ottawa's Premium Deck Builders`;
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Joist Size</label>
+                          <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Joist Size</label>
                           <input 
                             type="text"
                             value={editFormData.framing.joistSize}
@@ -2434,7 +2493,7 @@ Ottawa's Premium Deck Builders`;
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Joist Spacing</label>
+                          <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Joist Spacing</label>
                           <input 
                             type="text"
                             value={editFormData.framing.joistSpacing}
@@ -2451,7 +2510,7 @@ Ottawa's Premium Deck Builders`;
                     <h4 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest border-b border-[var(--border-color)] pb-2">Surface & Finish</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Decking Brand</label>
+                        <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Decking Brand</label>
                         <input 
                           type="text"
                           value={editFormData.decking.brand}
@@ -2460,7 +2519,7 @@ Ottawa's Premium Deck Builders`;
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Decking Type</label>
+                        <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Decking Type</label>
                         <input 
                           type="text"
                           value={editFormData.decking.type}
@@ -2469,7 +2528,7 @@ Ottawa's Premium Deck Builders`;
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Decking Color</label>
+                        <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Decking Color</label>
                         <input 
                           type="text"
                           value={editFormData.decking.color}
@@ -2485,7 +2544,7 @@ Ottawa's Premium Deck Builders`;
                     <h4 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest border-b border-[var(--border-color)] pb-2">Railing & Skirting</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Railing Type</label>
+                        <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Railing Type</label>
                         <input 
                           type="text"
                           value={editFormData.railing.type}
@@ -2495,7 +2554,7 @@ Ottawa's Premium Deck Builders`;
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Skirting Type</label>
+                        <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Skirting Type</label>
                         <input 
                           type="text"
                           value={editFormData.skirting.type}
@@ -2512,7 +2571,7 @@ Ottawa's Premium Deck Builders`;
                     <h4 className="text-xs font-black text-[var(--brand-gold)] uppercase tracking-widest border-b border-[var(--border-color)] pb-2">Electrical & Features</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Lighting Details</label>
+                        <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Lighting Details</label>
                         <input 
                           type="text"
                           value={editFormData.electrical.lightingType}
@@ -2522,7 +2581,7 @@ Ottawa's Premium Deck Builders`;
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Custom Features</label>
+                        <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Custom Features</label>
                         <input 
                           type="text"
                           value={editFormData.features.privacyWallType}
@@ -2538,7 +2597,7 @@ Ottawa's Premium Deck Builders`;
 
               {editingSection === 'scopeSummary' && (
                 <div className="space-y-4">
-                  <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Scope Summary Text</label>
+                  <label className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Scope Summary Text</label>
                   <textarea 
                     value={editFormData.scopeSummary}
                     onChange={(e) => setEditFormData({ ...editFormData, scopeSummary: e.target.value })}
@@ -2574,14 +2633,14 @@ Ottawa's Premium Deck Builders`;
                       <Plus className="w-8 h-8 text-[var(--brand-gold)]" />
                     </div>
                     <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2 italic">Upload New Documents</h3>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-6">Drag and drop or click to select files</p>
+                    <p className="text-[10px] text-[var(--text-tertiary)] font-black uppercase tracking-widest mb-6">Drag and drop or click to select files</p>
                     <div className="px-8 py-4 bg-[var(--brand-gold)] text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl group-hover:bg-[var(--brand-gold)] transition-all">
                       Select Files
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Current Files ({job.files?.length || 0})</h4>
+                    <h4 className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest ml-1">Current Files ({job.files?.length || 0})</h4>
                     <div className="grid grid-cols-1 gap-3">
                       {job.files?.map(file => (
                         <div key={file.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl group hover:bg-white/[0.08] transition-all">
@@ -2691,7 +2750,7 @@ Ottawa's Premium Deck Builders`;
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Live Field Status Report</h2>
-                  <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Real-time progress from {job.assignedCrewOrSubcontractor || 'Assigned Crew'}</p>
+                  <p className="text-[10px] text-[var(--text-tertiary)] font-black uppercase tracking-widest">Real-time progress from {job.assignedCrewOrSubcontractor || 'Assigned Crew'}</p>
                 </div>
               </div>
               <button 
@@ -2719,7 +2778,7 @@ Ottawa's Premium Deck Builders`;
                   {/* Progress Summary */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white/[0.03] border border-white/5 rounded-3xl p-6">
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Current Stage</p>
+                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-4">Current Stage</p>
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center">
                           <span className="text-lg font-black text-[var(--brand-gold)]">{job.currentStage + 1}</span>
@@ -2729,7 +2788,7 @@ Ottawa's Premium Deck Builders`;
                     </div>
                     
                     <div className="bg-white/[0.03] border border-white/5 rounded-3xl p-6">
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Checklist Items</p>
+                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-4">Checklist Items</p>
                       <div className="flex items-baseline gap-2">
                         <span className="text-4xl font-black text-white">
                           {Object.values(job.fieldProgress).reduce((acc, page) => acc + page.checklist.filter(i => i.completed || i.isNA).length, 0)}
@@ -2741,7 +2800,7 @@ Ottawa's Premium Deck Builders`;
                     </div>
 
                     <div className="bg-white/[0.03] border border-white/5 rounded-3xl p-6">
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Photos Uploaded</p>
+                      <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-4">Photos Uploaded</p>
                       <div className="flex items-baseline gap-2">
                         <span className="text-4xl font-black text-white">
                           {Object.values(job.fieldProgress).reduce((acc, page) => acc + page.photos.filter(p => p.url || p.cloudinaryUrl).length, 0)}
@@ -2774,7 +2833,7 @@ Ottawa's Premium Deck Builders`;
                                 <h4 className="text-sm font-black text-white uppercase tracking-widest italic">{PAGE_TITLES[stageNum]}</h4>
                               </div>
                               <div className="flex items-center gap-4">
-                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{completedItems} / {totalItems} Complete</span>
+                                <span className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">{completedItems} / {totalItems} Complete</span>
                                 <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden">
                                   <div 
                                     className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-[var(--brand-gold)]' : 'bg-amber-500'}`}
@@ -2789,7 +2848,7 @@ Ottawa's Premium Deck Builders`;
                               <div>
                                 <div className="flex items-center gap-2 mb-6">
                                   <CheckSquare className="w-4 h-4 text-[var(--brand-gold)]" />
-                                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Checklist Status</p>
+                                  <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Checklist Status</p>
                                 </div>
                                 <div className="space-y-3">
                                   {page.checklist.map(item => (
@@ -2826,7 +2885,7 @@ Ottawa's Premium Deck Builders`;
                               <div>
                                 <div className="flex items-center gap-2 mb-6">
                                   <Camera className="w-4 h-4 text-sky-500" />
-                                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Field Photos</p>
+                                  <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Field Photos</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                   {page.photos.map((photo, pIdx) => (
@@ -2867,7 +2926,7 @@ Ottawa's Premium Deck Builders`;
             <div className="p-8 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-[var(--brand-gold)] animate-pulse" />
-                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest italic">Live Connection Active</p>
+                <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest italic">Live Connection Active</p>
               </div>
               <button 
                 onClick={() => setShowLiveStatusReport(false)}
