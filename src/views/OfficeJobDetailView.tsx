@@ -1,16 +1,17 @@
 import React, { useMemo, useState } from 'react';
 
-import { 
-  Job, 
-  PipelineStage, 
-  Role, 
-  FieldStatus, 
-  CompletionPackageStatus, 
-  PhotoCompletionStatus, 
+import {
+  Job,
+  PipelineStage,
+  Role,
+  FieldStatus,
+  CompletionPackageStatus,
+  PhotoCompletionStatus,
   CompletionReadinessStatus,
   OfficeReviewStatus,
   ScheduleStatus,
-  CustomerLifecycle
+  CustomerLifecycle,
+  DepositStatus
 } from '../types';
 import { PIPELINE_STAGES, APP_USERS, PAGE_TITLES, createDefaultBuildDetails } from '../constants';
 import JobSummaryCard from '../components/JobSummaryCard';
@@ -474,33 +475,78 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               onPreviewPortal={onPreviewPortal}
             />
 
-            {/* Stripe Deposit */}
-            {job.pipelineStage === PipelineStage.PRE_PRODUCTION && (
-              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <CreditCard size={13} className="text-[var(--brand-gold)]" />
-                  <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Deposit Collection</span>
+            {/* Payment Schedule */}
+            {!isEstimateStage && (
+              <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[1.5rem] overflow-hidden">
+                <div className="flex items-center gap-2 px-5 py-4 border-b border-[var(--border-color)]">
+                  <CreditCard size={12} className="text-[var(--brand-gold)]" />
+                  <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Payment Schedule</span>
                 </div>
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center justify-between p-2.5 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-                    <span className="text-[10px] text-[var(--text-secondary)]">Deposit (25%)</span>
-                    <span className="text-sm font-black text-[var(--text-primary)]">${Math.round((job.estimateAmount || 0) * 0.25).toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-2.5 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-                    <span className="text-[10px] text-[var(--text-secondary)]">Remaining Balance</span>
-                    <span className="text-sm font-black text-[var(--text-secondary)]">${Math.round((job.estimateAmount || 0) * 0.75).toLocaleString()}</span>
-                  </div>
-                </div>
-                <button
-                  disabled
-                  className="w-full py-3 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-[var(--brand-gold)]/50 cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <CreditCard size={12} /> Send Deposit Request via Stripe
-                </button>
-                <div className="flex items-center gap-2 mt-2 p-2.5 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
-                  <p className="text-[9px] text-[var(--text-tertiary)]">Connect Stripe in Settings to enable online deposits. Once connected, clients receive a secure payment link via SMS.</p>
-                </div>
+                {(() => {
+                  const base = job.estimateAmount || 0;
+                  const depositPaid = !!(job.depositReceivedDate || job.depositStatus === DepositStatus.RECEIVED);
+                  const materialPaid = [PipelineStage.IN_FIELD, PipelineStage.COMPLETION, PipelineStage.PAID_CLOSED].includes(job.pipelineStage);
+                  const finalPaid = job.pipelineStage === PipelineStage.PAID_CLOSED;
+
+                  const milestones = [
+                    { label: 'Deposit', sub: 'Due on signing', pct: 0.30, paid: depositPaid },
+                    { label: 'Material Delivery', sub: 'Due on delivery', pct: 0.30, paid: materialPaid },
+                    { label: 'Full Completion', sub: 'Due on completion', pct: 0.40, paid: finalPaid },
+                  ];
+
+                  const totalPaid = milestones.filter(m => m.paid).reduce((s, m) => s + Math.round(base * m.pct), 0);
+                  const totalOutstanding = milestones.filter(m => !m.paid).reduce((s, m) => s + Math.round(base * m.pct), 0);
+
+                  return (
+                    <div>
+                      <div className="divide-y divide-[var(--border-color)]">
+                        {milestones.map((m, i) => (
+                          <div key={i} className={`flex items-center justify-between px-5 py-3 transition-colors ${m.paid ? 'bg-[var(--bg-secondary)]/50' : ''}`}>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${m.paid ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-[var(--bg-secondary)] border-[var(--border-color)]'}`}>
+                                {m.paid && <Check className="w-2.5 h-2.5 text-emerald-500" strokeWidth={3} />}
+                              </div>
+                              <div className="min-w-0">
+                                <p className={`text-[10px] font-black uppercase tracking-widest leading-none ${m.paid ? 'line-through text-[var(--text-tertiary)]' : 'text-[var(--text-primary)]'}`}>
+                                  {m.label} <span className="font-normal text-[var(--text-tertiary)]">({Math.round(m.pct * 100)}%)</span>
+                                </p>
+                                <p className="text-[8px] text-[var(--text-tertiary)] mt-0.5">{m.sub}</p>
+                              </div>
+                            </div>
+                            <span className={`text-sm font-black font-mono shrink-0 ml-2 ${m.paid ? 'line-through text-[var(--text-tertiary)]' : 'text-[var(--text-primary)]'}`}>
+                              ${Math.round(base * m.pct).toLocaleString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Summary footer */}
+                      <div className="px-5 py-3 bg-[var(--bg-secondary)] border-t border-[var(--border-color)] space-y-1.5">
+                        {totalPaid > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Collected</span>
+                            <span className="text-xs font-black text-emerald-500 font-mono">${totalPaid.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {totalOutstanding > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Outstanding</span>
+                            <span className="text-xs font-black text-[var(--text-primary)] font-mono">${totalOutstanding.toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Stripe CTA */}
+                      <div className="px-5 pb-4 pt-1">
+                        <button
+                          disabled
+                          className="w-full py-2.5 bg-[var(--brand-gold)]/8 border border-[var(--brand-gold)]/15 rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)]/40 cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          <CreditCard size={11} /> Send Payment Request via Stripe
+                        </button>
+                        <p className="text-[8px] text-[var(--text-tertiary)] text-center mt-2 leading-relaxed">Connect Stripe in Settings to send secure payment links via SMS</p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </section>
             )}
 
