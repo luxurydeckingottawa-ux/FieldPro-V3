@@ -847,6 +847,17 @@ const MaterialCard = ({ material, size, showRailings, railingCost, isSelected, o
 
 const CustomEstimator: React.FC<CustomEstimatorProps> = ({ dimensions, setDimensions, selections, setSelections, lightingQuantities, setLightingQuantities, clientInfo, setClientInfo, activeCategory, setActiveCategory, resetCalculator, onSave, onAccept, onGenerateGBB, pricingSummary, estimateNumber, activePackage, setActivePackage, savedOptions, optionName, setOptionName, onSaveOption, onRemoveOption }) => {
 
+  // Price book images — keyed by tier ID, populated from uploaded photos in Settings > Price Book
+  const priceBookImages = useMemo(() => {
+    const book = loadPriceBook();
+    const map = new Map<string, string>();
+    for (const [tierId, itemId] of Object.entries(TIER_TO_ITEM_ID)) {
+      const pbItem = book.items.find(i => i.id === itemId);
+      if (pbItem?.imageUrl) map.set(tierId, pbItem.imageUrl);
+    }
+    return map;
+  }, []);
+
   const updateDim = (key: keyof Dimensions, val: string) => {
     setDimensions(prev => ({ ...prev, [key]: parseInt(val) || 0 }));
   };
@@ -1595,17 +1606,6 @@ export interface EstimatorCalculatorProps {
 }
 
 const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, onEstimateAccepted, onEstimateSaved, onExit }) => {
-  // Price book images — keyed by tier ID, populated from uploaded photos in Settings > Price Book
-  const priceBookImages = useMemo(() => {
-    const book = loadPriceBook();
-    const map = new Map<string, string>();
-    for (const [tierId, itemId] of Object.entries(TIER_TO_ITEM_ID)) {
-      const pbItem = book.items.find(i => i.id === itemId);
-      if (pbItem?.imageUrl) map.set(tierId, pbItem.imageUrl);
-    }
-    return map;
-  }, []);
-
   const [view, setView] = useState<'calculator' | 'packages' | 'materialMatrix' | 'gbb'>('calculator');
   const [calcDimensions, setCalcDimensions] = useState<Dimensions>(() => ({
     ...INITIAL_DIMENSIONS,
