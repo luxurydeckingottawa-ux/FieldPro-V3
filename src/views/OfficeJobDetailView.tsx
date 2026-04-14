@@ -1027,6 +1027,7 @@ Ottawa's Premium Deck Builders`;
                       });
                       setEditingSection('schedule');
                     }}
+                    onUpdateJob={onUpdateJob}
                   />
                 </div>
               )}

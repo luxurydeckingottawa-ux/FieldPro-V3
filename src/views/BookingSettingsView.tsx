@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Link, ExternalLink, Check, Building2, Calendar, Users, Zap } from 'lucide-react';
+import { ArrowLeft, Link, ExternalLink, Check, Building2, Calendar, Users, Zap, BookOpen } from 'lucide-react';
 import { BookingConfig, loadBookingConfig, saveBookingConfig, getAvailableTimeSlots } from '../utils/bookingConfig';
 
 interface BookingSettingsViewProps {
@@ -118,6 +118,7 @@ const BookingSettingsView: React.FC<BookingSettingsViewProps> = ({ onBack, onNav
               { view: 'automation-settings', label: 'Automations', icon: <Zap className="w-3.5 h-3.5" /> },
               { view: 'user-management', label: 'Users', icon: <Users className="w-3.5 h-3.5" /> },
               { view: 'business-info', label: 'Business Info', icon: <Building2 className="w-3.5 h-3.5" /> },
+              { view: 'price-book', label: 'Price Book', icon: <BookOpen className="w-3.5 h-3.5" /> },
             ].map(item => (
               <button key={item.view}
                 onClick={() => onNavigate(item.view)}

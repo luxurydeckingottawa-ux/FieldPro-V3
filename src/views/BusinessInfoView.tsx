@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Upload, CheckCircle2, Building2, Phone, Globe, Mail, Palette, Image } from 'lucide-react';
+import { ArrowLeft, Upload, CheckCircle2, Building2, Phone, Globe, Mail, Palette, Image, Star } from 'lucide-react';
 
 // ── Persistence ──────────────────────────────────────────────────────────────
 
@@ -15,6 +15,7 @@ export interface BusinessInfo {
   logoDataUrl?: string;  // base64 data URL
   primaryColor: string;  // hex
   accentColor: string;   // hex
+  googleReviewLink?: string;
 }
 
 const DEFAULTS: BusinessInfo = {
@@ -247,6 +248,31 @@ const BusinessInfoView: React.FC<BusinessInfoViewProps> = ({ onBack }) => {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Google Review Link */}
+        <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <Star className="w-4 h-4 text-[var(--brand-gold)]" />
+            <h2 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Google Review Link</h2>
+          </div>
+          <p className="text-[10px] text-[var(--text-secondary)] mb-4">Paste your Google review URL here. It will be used automatically in review request emails and any widget that asks customers to leave a 5-star review.</p>
+          <input
+            value={info.googleReviewLink || ''}
+            onChange={e => handleChange('googleReviewLink', e.target.value)}
+            placeholder="https://g.page/r/..."
+            className="w-full px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)]/50"
+          />
+          {info.googleReviewLink && (
+            <a
+              href={info.googleReviewLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-2 text-[10px] text-[var(--brand-gold)] hover:underline"
+            >
+              Test link ↗
+            </a>
+          )}
         </div>
 
         {/* Save button (bottom) */}

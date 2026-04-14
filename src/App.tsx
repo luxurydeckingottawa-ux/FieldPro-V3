@@ -23,6 +23,7 @@ import BookingSettingsView from './views/BookingSettingsView';
 import PublicBookingView from './views/PublicBookingView';
 import AutomationSettingsView from './views/AutomationSettingsView';
 import BusinessInfoView from './views/BusinessInfoView';
+import PriceBookView from './views/PriceBookView';
 import EstimateDetailView from './views/EstimateDetailView';
 import NavBar from './components/NavBar';
 import AcceptanceModal from './components/AcceptanceModal';
@@ -2609,6 +2610,11 @@ const App: React.FC = () => {
         )}
         {view === 'business-info' && currentUser?.role === Role.ADMIN && (
           <BusinessInfoView
+            onBack={() => navigateTo('booking-settings')}
+          />
+        )}
+        {view === 'price-book' && currentUser?.role === Role.ADMIN && (
+          <PriceBookView
             onBack={() => navigateTo('booking-settings')}
           />
         )}
