@@ -871,6 +871,74 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
           {/* RIGHT MAIN CONTENT: action/work area */}
           <div className="space-y-6 min-w-0">
 
+            {/* ── ATTENTION BANNER ─────────────────────────────────── */}
+            {(() => {
+              const flags: { label: string; severity: 'red' | 'amber' }[] = [];
+
+              // Contact info
+              if (!job.clientPhone && !job.clientEmail) {
+                flags.push({ label: 'No contact info on file', severity: 'red' });
+              } else {
+                if (!job.clientPhone) flags.push({ label: 'Missing phone number', severity: 'amber' });
+                if (!job.clientEmail) flags.push({ label: 'Missing email', severity: 'amber' });
+              }
+
+              // Contract (non-estimate stages)
+              if (!isEstimateStage && !job.contractSignedDate && !job.contractPdfUrl && !job.customerSignature) {
+                flags.push({ label: 'Contract not signed', severity: 'red' });
+              }
+
+              // Deposit (pre-production only)
+              if (job.pipelineStage === PipelineStage.PRE_PRODUCTION && !job.depositReceivedDate) {
+                flags.push({ label: 'Deposit not collected', severity: 'red' });
+              }
+
+              // Start date
+              if ((job.pipelineStage === PipelineStage.PRE_PRODUCTION || job.pipelineStage === PipelineStage.IN_FIELD) && !job.plannedStartDate) {
+                flags.push({ label: 'No start date set', severity: 'amber' });
+              }
+
+              // Crew assignment
+              if ((job.pipelineStage === PipelineStage.PRE_PRODUCTION || job.pipelineStage === PipelineStage.IN_FIELD) && !job.assignedCrewOrSubcontractor && (!job.assignedUsers || job.assignedUsers.length === 0)) {
+                flags.push({ label: 'No crew assigned', severity: 'amber' });
+              }
+
+              // Permit required
+              if (!isEstimateStage && job.estimatorIntake?.measureSheet?.permitRequired) {
+                flags.push({ label: 'Permit required — confirm status', severity: 'amber' });
+              }
+
+              // Flagged issues
+              if (job.flaggedIssues && job.flaggedIssues.length > 0) {
+                flags.push({ label: `${job.flaggedIssues.length} flagged issue${job.flaggedIssues.length > 1 ? 's' : ''}`, severity: 'red' });
+              }
+
+              if (flags.length === 0) return null;
+              const hasRed = flags.some(f => f.severity === 'red');
+
+              return (
+                <div className={`rounded-2xl border px-5 py-4 flex flex-wrap items-center gap-3 ${hasRed ? 'bg-rose-500/[0.08] border-rose-500/25' : 'bg-amber-500/[0.08] border-amber-500/25'}`}>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <AlertTriangle size={14} className={hasRed ? 'text-rose-400' : 'text-amber-400'} />
+                    <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${hasRed ? 'text-rose-400' : 'text-amber-400'}`}>
+                      Needs Attention
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {flags.map((flag, i) => (
+                      <span key={i} className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                        flag.severity === 'red'
+                          ? 'bg-rose-500/15 border-rose-500/30 text-rose-400'
+                          : 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                      }`}>
+                        {flag.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Final Closeout & Warranty */}
             {(job.verifiedBuildPassportUrl || job.subcontractorInvoiceUrl ||
               job.pipelineStage === PipelineStage.COMPLETION ||

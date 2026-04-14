@@ -80,11 +80,48 @@ const pruneStorage = () => {
       stateKeys.push(key);
     }
   }
-  
+
   if (stateKeys.length > 0) {
     stateKeys.forEach(k => localStorage.removeItem(k));
     pruned = true;
   }
+
+  // 4. Prune price book images (keep at most 20, remove oldest)
+  const pbImgKeys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('fieldpro_pb_img_')) {
+      pbImgKeys.push(key);
+    }
+  }
+  if (pbImgKeys.length > 20) {
+    pbImgKeys.slice(0, pbImgKeys.length - 20).forEach(k => localStorage.removeItem(k));
+    pruned = true;
+  }
+
+  // 5. Strip photo data URIs from the main jobs array (keep metadata, drop base64 blobs)
+  try {
+    const jobsRaw = localStorage.getItem('luxury_decking_jobs_v5');
+    if (jobsRaw) {
+      const jobs = JSON.parse(jobsRaw);
+      let stripped = false;
+      for (const job of jobs) {
+        if (job.estimatorIntake?.photos) {
+          job.estimatorIntake.photos = job.estimatorIntake.photos.map((p: any) => {
+            if (p.url && p.url.startsWith('data:')) {
+              stripped = true;
+              return { ...p, url: '' };
+            }
+            return p;
+          });
+        }
+      }
+      if (stripped) {
+        localStorage.setItem('luxury_decking_jobs_v5', JSON.stringify(jobs));
+        pruned = true;
+      }
+    }
+  } catch (_) { /* ignore */ }
 
   return pruned;
 };
