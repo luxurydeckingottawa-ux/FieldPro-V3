@@ -67,6 +67,7 @@ import { OfficeAIAssistant } from '../components/OfficeAIAssistant';
 import { AIOfficeInsights } from '../components/AIOfficeInsights';
 import { getCampaignTouches } from '../utils/dripCampaign';
 import { calculateEngagementTier } from '../utils/engagementScoring';
+import { generateBuildPassport } from '../utils/buildPassportGenerator';
 
 interface OfficeJobDetailViewProps {
   job: Job;
@@ -106,6 +107,18 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [sendingLeadTouchId, setSendingLeadTouchId] = useState<string | null>(null);
   const [expandedLeadTouchId, setExpandedLeadTouchId] = useState<string | null>(null);
   const [leadTouchSentFeedback, setLeadTouchSentFeedback] = useState<string | null>(null);
+  const [isGeneratingPassport, setIsGeneratingPassport] = useState(false);
+
+  const handleGenerateBuildPassport = async (): Promise<void> => {
+    if (isGeneratingPassport) return;
+    setIsGeneratingPassport(true);
+    try {
+      const dataUri = await generateBuildPassport(job);
+      window.open(dataUri);
+    } finally {
+      setIsGeneratingPassport(false);
+    }
+  };
 
   const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === job.pipelineStage);
   const currentStageInfo = stageIndex !== -1 ? PIPELINE_STAGES[stageIndex] : null;
@@ -338,11 +351,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
           {/* Left Column: Primary Controls & Info */}
           <div className="lg:col-span-8 space-y-8">
             
-            {/* Generated Packages Review */}
-            {(job.verifiedBuildPassportUrl || job.subcontractorInvoiceUrl) && (
+            {/* Final Closeout & Warranty */}
+            {(job.verifiedBuildPassportUrl || job.subcontractorInvoiceUrl ||
+              job.pipelineStage === PipelineStage.COMPLETION ||
+              job.pipelineStage === PipelineStage.PAID_CLOSED) && (
               <section
-                
-                
                 className="bg-[var(--brand-gold)]/10 border-2 border-[var(--brand-gold)]/30 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/10 blur-3xl -mr-32 -mt-32 pointer-events-none" />
@@ -354,16 +367,45 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">Luxury Decking Verified Build Passport</h2>
                     <p className="text-[10px] text-[var(--brand-gold)]/60 font-black uppercase tracking-widest mt-1">Official Project Documentation Package</p>
                   </div>
-                  <div className="px-4 py-2 rounded-xl bg-[var(--brand-gold)] text-black font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-[var(--brand-gold)]/20">
-                    <CheckCircle2 size={14} /> Package Submitted
-                  </div>
+                  {(job.verifiedBuildPassportUrl || job.subcontractorInvoiceUrl) && (
+                    <div className="px-4 py-2 rounded-xl bg-[var(--brand-gold)] text-black font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-[var(--brand-gold)]/20">
+                      <CheckCircle2 size={14} /> Package Submitted
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                  {/* Generate Build Passport button — always visible in this section */}
+                  <button
+                    onClick={handleGenerateBuildPassport}
+                    disabled={isGeneratingPassport}
+                    className="flex items-center justify-between p-6 rounded-2xl bg-[var(--brand-gold)] border border-[var(--brand-gold)] hover:brightness-110 active:scale-95 transition-all group shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-black/20 flex items-center justify-center text-black shadow-inner">
+                        {isGeneratingPassport
+                          ? <Loader2 size={28} className="animate-spin" />
+                          : <Sparkles size={28} />
+                        }
+                      </div>
+                      <div className="text-left">
+                        <p className="text-base font-black text-black uppercase tracking-tight italic">
+                          {isGeneratingPassport ? 'Generating...' : 'Generate Build Passport'}
+                        </p>
+                        <p className="text-[10px] font-bold text-black/60 uppercase tracking-widest">
+                          Premium PDF with Warranty Certificate
+                        </p>
+                      </div>
+                    </div>
+                    {!isGeneratingPassport && (
+                      <ExternalLink size={20} className="text-black/70 shrink-0" />
+                    )}
+                  </button>
+
                   {job.verifiedBuildPassportUrl && (
-                    <a 
-                      href={job.verifiedBuildPassportUrl} 
-                      target="_blank" 
+                    <a
+                      href={job.verifiedBuildPassportUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-between p-6 rounded-2xl bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/30 hover:bg-[var(--brand-gold)]/30 transition-all group shadow-lg"
                     >
@@ -384,9 +426,9 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   )}
 
                   {job.subcontractorInvoiceUrl && (
-                    <a 
-                      href={job.subcontractorInvoiceUrl} 
-                      target="_blank" 
+                    <a
+                      href={job.subcontractorInvoiceUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-between p-6 rounded-2xl bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 transition-all group shadow-lg"
                     >
