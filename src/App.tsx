@@ -183,26 +183,6 @@ const App: React.FC = () => {
     setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, ...updates } : c));
   }, []);
 
-  const handleGenerateInvoice = useCallback((job: Job, type: InvoiceType) => {
-    const newInvoice = createInvoice(job, type, invoices);
-    setInvoices(prev => [...prev, newInvoice]);
-    setJobs(prev => prev.map(j =>
-      j.id === job.id
-        ? { ...j, invoices: [...(j.invoices || []), newInvoice] }
-        : j
-    ));
-    if (selectedJob?.id === job.id) {
-      setSelectedJob(prev => prev
-        ? { ...prev, invoices: [...(prev.invoices || []), newInvoice] }
-        : prev
-      );
-    }
-  }, [invoices, selectedJob]);
-
-  const handleUpdateInvoice = useCallback((invoiceId: string, updates: Partial<Invoice>) => {
-    setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, ...updates } : inv));
-  }, []);
-
   const [selectedJob, setSelectedJob] = useState<Job | null>(() => {
     const params = new URLSearchParams(window.location.search);
     // Check both ?portal=TOKEN (legacy) and /portal/:token (path-based)
@@ -233,6 +213,26 @@ const App: React.FC = () => {
     return null;
   });
   const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleGenerateInvoice = useCallback((job: Job, type: InvoiceType) => {
+    const newInvoice = createInvoice(job, type, invoices);
+    setInvoices(prev => [...prev, newInvoice]);
+    setJobs(prev => prev.map(j =>
+      j.id === job.id
+        ? { ...j, invoices: [...(j.invoices || []), newInvoice] }
+        : j
+    ));
+    if (selectedJob?.id === job.id) {
+      setSelectedJob(prev => prev
+        ? { ...prev, invoices: [...(prev.invoices || []), newInvoice] }
+        : prev
+      );
+    }
+  }, [invoices, selectedJob]);
+
+  const handleUpdateInvoice = useCallback((invoiceId: string, updates: Partial<Invoice>) => {
+    setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, ...updates } : inv));
+  }, []);
 
   // Router hook - provides navigateTo() which updates both URL and view state
   const { navigateTo } = useAppRouter(setView, selectedJob?.id);
