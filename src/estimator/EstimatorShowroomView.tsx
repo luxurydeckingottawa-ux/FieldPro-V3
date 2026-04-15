@@ -85,6 +85,36 @@ const FALLBACK_PREVIEW_COLOR = { primary: '#8A7A5E', secondary: '#6F5D48' };
 const getPreviewColor = (tierId: string | undefined) =>
   (tierId && TIER_TO_PREVIEW_COLOR[tierId]) || FALLBACK_PREVIEW_COLOR;
 
+// Manufacturer grain photos. Loaded as <img> on the card image strip.
+// Fallback hierarchy: priceBook upload -> this map -> color gradient.
+// These are hotlinked from the manufacturer CDNs; if any URL breaks, the
+// fallback gradient shows until Jack uploads a replacement via Settings > Price Book.
+const TIER_TO_TEXTURE_URL: Record<string, string> = {
+  // Fiberon
+  fiberon_goodlife_weekender: 'https://www.fiberondecking.com/cdn/shop/files/zqxfitddckgp0ji4aabl.jpg',
+  fiberon_goodlife_escapes:   'https://www.fiberondecking.com/cdn/shop/files/mlju9te8hqenl9b5jkqs.jpg',
+  fiberon_sanctuary:          'https://www.fiberondecking.com/cdn/shop/files/r29ebhu6xgurbiklszqx.jpg',
+  fiberon_concordia:          'https://www.fiberondecking.com/cdn/shop/files/vnvui2u2xelnuowbywod.jpg',
+  fiberon_paramount:          'https://www.fiberondecking.com/cdn/shop/files/bfayesgr1amxmtdrmyq3.jpg',
+  fiberon_promenade:          'https://www.fiberondecking.com/cdn/shop/files/nty1mavvdafvs85bpndh.jpg',
+  // TimberTech
+  tt_prime:                   'https://shop.timbertech.com/wp-content/uploads/2023/01/TimberTech-Dark-Teak-Prime-Composite-Decking-Beauty1.jpg',
+  tt_prime_plus:              'https://shop.timbertech.com/wp-content/uploads/2021/04/TimberTech-composite-prime-plus-coconut-husk-decking-beauty-1.jpg',
+  tt_terrain:                 'https://shop.timbertech.com/wp-content/uploads/2022/01/TimberTech-Brown-Oak-Terrain-Collection-PRO-Decking-Beauty-Shot-012122-1.jpg',
+  tt_reserve:                 'https://shop.timbertech.com/wp-content/uploads/2024/05/TimberTech-Composite-Reserve-Antique-Leather-pdp-beauty-1.jpg',
+  tt_legacy:                  'https://shop.timbertech.com/wp-content/uploads/2024/05/TimberTech-Composite-Legacy-Ashwood-pdp-beauty-1.jpg',
+  // Azek
+  azek_harvest:               'https://shop.timbertech.com/wp-content/uploads/2020/02/harvest_brownstone_premier_white_composite_02.jpg',
+  azek_landmark:              'https://shop.timbertech.com/wp-content/uploads/2024/05/TimberTech-Avanced-PVC-Landmark-American-Walnut-pdp-beauty-1.jpg',
+  azek_vintage:               'https://shop.timbertech.com/wp-content/uploads/2024/05/TimberTech-Avanced-PVC-Vintage-Coastline-Decking-pdp-beauty-1.jpg',
+  // Eva-Last
+  eva_infinity:               'https://www.eva-last.com/us/wp-content/uploads/2022/09/TigerCove_Inf_grooved-deck-1.jpg',
+  eva_apex:                   'https://www.eva-last.com/us/wp-content/uploads/2023/03/Apex-himalayan-cedar-1-2-600x600.jpg',
+  eva_pioneer:                'https://www.eva-last.com/us/wp-content/uploads/2026/01/pioneer-IPE.jpg',
+  // Woodbridge (Clubhouse - their domain is parked, using National Decking CDN which is the Canadian distributor)
+  woodbridge_pvc:             'https://nationaldecking.com/wp-content/uploads/2025/05/Royal-Walnut-Texture.webp',
+};
+
 // ROUND 6 FIX 1 — Tier badges now render as circular, physical-looking coin
 // stickers that mirror the 4-colour palette Jack uses on Luxury Decking's
 // showroom samples. getTierFromPrice returns a KEY; the renderer looks up the
@@ -1736,7 +1766,15 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                   {orderedOptions.map((opt) => {
                     const sel = isOptionSelected(activeCategory, opt);
                     const impact = getOptionImpactValue(activeCategory, opt);
-                    const hasImg = priceBookImages.has(opt.id);
+                    // Image resolution order: price book upload -> manufacturer
+                    // texture CDN -> color gradient fallback (rendered as the
+                    // strip's background below). The gradient always stays as
+                    // the strip background so a 404'd <img> with display:none
+                    // onError still shows a realistic colour swatch.
+                    const priceBookUrl = priceBookImages.get(opt.id);
+                    const manufacturerUrl = TIER_TO_TEXTURE_URL[opt.id];
+                    const imageUrl = priceBookUrl || manufacturerUrl;
+                    const hasImg = Boolean(imageUrl);
                     // FIX 1 — lighting (accessories) cards ALWAYS show steppers.
                     const isLighting = activeCategory === 'accessories';
                     // ROUND 5 FIX — categories that render the full 80px visual
@@ -1796,28 +1834,39 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                               // ROUND 5 FIX — 80px strip per spec (was 72).
                               // flexShrink 0 prevents the strip from being
                               // crushed when card height is tight.
+                              // ROUND 8 — gradient is ALWAYS the background so
+                              // it shows through if the manufacturer <img>
+                              // 404s (onError hides the broken img; the
+                              // gradient beneath remains visible).
                               height: 80,
                               flexShrink: 0,
                               position: 'relative',
                               overflow: 'hidden',
-                              background: hasImg
-                                ? 'rgba(0,0,0,0.2)'
-                                : `linear-gradient(135deg, ${opt.imageColor}, ${shade(
-                                    opt.imageColor,
-                                    -0.2
-                                  )})`,
+                              background: `linear-gradient(135deg, ${opt.imageColor}, ${shade(
+                                opt.imageColor,
+                                -0.2
+                              )})`,
                             }}
                           >
-                            {hasImg && (
+                            {imageUrl && (
                               <img
-                                src={priceBookImages.get(opt.id)}
+                                src={imageUrl}
                                 alt={opt.name}
+                                loading="lazy"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                }}
                                 style={{
                                   position: 'absolute',
                                   inset: 0,
                                   width: '100%',
                                   height: '100%',
                                   objectFit: 'cover',
+                                  display: 'block',
+                                  // z-index 1: sits above the gradient bg but
+                                  // below the brand label (z-index 2) and the
+                                  // tier coin (z-index 3).
+                                  zIndex: 1,
                                 }}
                               />
                             )}
