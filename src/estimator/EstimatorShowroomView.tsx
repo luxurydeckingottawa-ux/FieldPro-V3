@@ -119,6 +119,23 @@ const TIER_TO_TEXTURE_URL: Record<string, string> = {
   frameless_glass:            'https://www.vistarailings.com/wp-content/uploads/2023/02/ApprovedHR_Hamilton-Deck-and-Fence_July2022_2-scaled.jpg',
   // Privacy
   privacy_sunbelly_combined:  'https://d3k81ch9hvuctc.cloudfront.net/company/RTKhre/images/a7543182-edda-45e2-a973-b771f529df22.jpeg',
+  // Lighting (IN-LITE)
+  inlite_smart_hub:       'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/6/1615_10500602_4.png',
+  inlite_smart_hub_prot:  'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/6/3/6358_hubprotector-1.png',
+  inlite_smart_move:      'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/6/1625_10500706_1.png',
+  inlite_move:            'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/6/1622_10500705_2.png',
+  inlite_hub_50:          'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/6/3/6395_hub-75_1_2.png',
+  inlite_hub_100:         'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/6/3/6395_hub-75_1_2.png',
+  inlite_hub_prot:        'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/0/10500711_1_2.png',
+  inlite_hyve_22:         'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/5/4/5432_hyve22_black_1.png',
+  inlite_cubid:           'https://in-lite.com/media/catalog/product/cache/9412186e8478422d9f0e19b036685553/5/3/5371_10301006_cubid_dark-grey.png',
+  inlite_ace:             'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/5/5/5525_10301955_ace-up-down_1.png',
+  inlite_wedge_slim:      'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/5/3/5357_10301770_wedge-slim.png',
+  inlite_puck_22:         'https://in-lite.com/media/catalog/product/cache/9412186e8478422d9f0e19b036685553/5/7/5767_puck_22_pg.png',
+  inlite_mini_wedge:      'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/5/3/5361_10301780_mini-wedge.png',
+  inlite_liv_low:         'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/5/7/5792_10201776_liv-low_white_1.png',
+  inlite_sway:            'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/0/10202400_sway_black_hoofdfoto_1.png',
+  inlite_6_pkg:           'https://in-lite.com/media/catalog/product/cache/9412186e8478422d9f0e19b036685553/7/3/737_10104170_6.png',
 };
 
 // Skirting reuses the decking texture — same material, skirting board form.
@@ -1972,13 +1989,20 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                               flexShrink: 0,
                               position: 'relative',
                               overflow: 'hidden',
-                              background:
-                                isLighting && !hasImg
-                                  ? 'rgba(255,255,255,0.02)'
-                                  : `linear-gradient(135deg, ${opt.imageColor}, ${shade(
-                                      opt.imageColor,
-                                      -0.2
-                                    )})`,
+                              // ROUND 12 — lighting (accessories) cards use a
+                              // subtle light background ALWAYS (empty or with
+                              // photo). IN-LITE product shots are transparent
+                              // PNGs on white/neutral; the 0.02 white tint
+                              // gives breathing room around the fixture
+                              // silhouette instead of a dark dead space, while
+                              // decking grain textures keep their colour
+                              // gradient for the fallback-on-404 case.
+                              background: isLighting
+                                ? 'rgba(255,255,255,0.02)'
+                                : `linear-gradient(135deg, ${opt.imageColor}, ${shade(
+                                    opt.imageColor,
+                                    -0.2
+                                  )})`,
                             }}
                           >
                             {imageUrl && (
@@ -1994,7 +2018,15 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                                   inset: 0,
                                   width: '100%',
                                   height: '100%',
-                                  objectFit: 'cover',
+                                  // ROUND 12 — lighting (accessories) uses
+                                  // 'contain' so the full IN-LITE fixture
+                                  // silhouette is visible with padding around
+                                  // it; decking / railing / skirting grain
+                                  // textures keep 'cover' for the tight crop.
+                                  objectFit:
+                                    activeCategory === 'accessories'
+                                      ? 'contain'
+                                      : 'cover',
                                   display: 'block',
                                   // z-index 1: sits above the gradient bg but
                                   // below the brand label (z-index 2) and the
