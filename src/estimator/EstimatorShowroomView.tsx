@@ -135,7 +135,17 @@ const TIER_TO_TEXTURE_URL: Record<string, string> = {
   inlite_mini_wedge:      'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/5/3/5361_10301780_mini-wedge.png',
   inlite_liv_low:         'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/5/7/5792_10201776_liv-low_white_1.png',
   inlite_sway:            'https://in-lite.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/0/10202400_sway_black_hoofdfoto_1.png',
-  inlite_6_pkg:           'https://in-lite.com/media/catalog/product/cache/9412186e8478422d9f0e19b036685553/7/3/737_10104170_6.png',
+  inlite_6_pkg:           'https://in-lite.com/media/catalog/product/cache/9412186e8478422d9f0e19b036685553/7/0/703_10104050_6.png',
+  inlite_hyve:            'https://in-lite.com/media/catalog/product/cache/bcdda5f02faa4fd09545710440a20961/h/y/hyve_black_1_1.png',
+  inlite_big_cubid:       'https://in-lite.com/media/catalog/product/cache/bcdda5f02faa4fd09545710440a20961/5/3/5368_10301025_big-cubid_rose_silver_1.png',
+  inlite_ace_down:        'https://in-lite.com/media/catalog/product/cache/bcdda5f02faa4fd09545710440a20961/1/0/10301850_ace-down_2.png',
+  inlite_puck:            'https://in-lite.com/media/catalog/product/cache/bcdda5f02faa4fd09545710440a20961/p/u/puck_pg_2.png',
+  inlite_blink:           'https://in-lite.com/media/catalog/product/cache/bcdda5f02faa4fd09545710440a20961/5/3/5365_10301200_blink_rose-silver_4.png',
+  // Lighting (Fortress)
+  fortress_glow:          'https://fortressbp.com/Images/Lighting/LED/led-glow-ring.jpg',
+  fortress_vertical:      'https://fortressbp.com/Images/Lighting/LED/led-vertical-post-light.jpg',
+  fortress_surface:       'https://fortressbp.com/Images/Lighting/LED/led-surface-mount-light.jpg',
+  fortress_60w:           'https://fortressbp.com/Images/Lighting/LED/transformer.png',
 };
 
 // Skirting reuses the decking texture — same material, skirting board form.
