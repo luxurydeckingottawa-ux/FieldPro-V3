@@ -504,6 +504,9 @@ export interface Job {
 
   // Module: Live Itemized Estimate (editable post-estimator breakdown)
   liveEstimate?: LiveEstimate;
+
+  // Module: Invoices
+  invoices?: Invoice[];
 }
 
 export interface EstimateOption {
@@ -937,4 +940,32 @@ export interface Customer {
   createdAt: string;
   status: CustomerStatus;
   doNotService: boolean;
+}
+
+// Invoice module
+
+export type InvoiceType = 'deposit' | 'material_delivery' | 'final_payment';
+export type InvoiceStatus = 'draft' | 'sent' | 'paid';
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string; // e.g. INV-2025-001
+  jobId: string;
+  customerName: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  jobTitle: string;
+  jobAddress: string;
+  type: InvoiceType;
+  status: InvoiceStatus;
+  subtotal: number;       // before HST
+  hstRate: number;        // 0.13
+  hstAmount: number;      // subtotal * hstRate
+  total: number;          // subtotal + hstAmount
+  description: string;    // e.g. "30% Deposit -- Deck Construction"
+  issuedDate: string;     // ISO date string
+  dueDate?: string;
+  paidDate?: string;
+  notes?: string;
+  createdAt: string;
 }

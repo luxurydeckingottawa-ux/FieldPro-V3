@@ -3,7 +3,7 @@ import { User, Role } from '../types';
 import {
   LogOut, User as UserIcon, LayoutDashboard, BookOpen,
   Calendar, Kanban, Sun, Moon, MessageSquare, Settings, Calculator,
-  Plus, ChevronDown, UserPlus, ClipboardList, Briefcase, CalendarPlus, BarChart3, Users
+  Plus, ChevronDown, UserPlus, ClipboardList, Briefcase, CalendarPlus, BarChart3, Users, FileText
 } from 'lucide-react';
 
 interface NavBarProps {
@@ -184,6 +184,10 @@ const NavBar: React.FC<NavBarProps> = ({
               <button onClick={() => onNavigate('customers')} className={navButtonClass('customers')}>
                 <Users className="w-3.5 h-3.5" />
                 <span className="hidden md:inline">Customers</span>
+              </button>
+              <button onClick={() => onNavigate('invoices')} className={navButtonClass('invoices')}>
+                <FileText className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Invoices</span>
               </button>
             </div>
           )}

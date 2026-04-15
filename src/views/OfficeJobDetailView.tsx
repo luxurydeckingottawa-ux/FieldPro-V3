@@ -11,8 +11,11 @@ import {
   OfficeReviewStatus,
   ScheduleStatus,
   CustomerLifecycle,
-  DepositStatus
+  DepositStatus,
+  Invoice,
+  InvoiceType,
 } from '../types';
+import { printInvoice } from '../utils/invoiceUtils';
 import { PIPELINE_STAGES, APP_USERS, PAGE_TITLES, createDefaultBuildDetails } from '../constants';
 import JobSummaryCard from '../components/JobSummaryCard';
 import PortalSharingCard from '../components/PortalSharingCard';
@@ -63,7 +66,8 @@ import {
   Sparkles,
   Loader2,
   CreditCard,
-  DollarSign
+  DollarSign,
+  Printer,
 } from 'lucide-react';
 import { OfficeAIAssistant } from '../components/OfficeAIAssistant';
 import { AIOfficeInsights } from '../components/AIOfficeInsights';
@@ -84,6 +88,8 @@ interface OfficeJobDetailViewProps {
   onPreviewPortal: (job: Job) => void;
   onDeleteJob?: (jobId: string) => void;
   onOpenJobSetup?: () => void;
+  onGenerateInvoice?: (job: Job, type: InvoiceType) => void;
+  jobInvoices?: Invoice[];
 }
 
 const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
@@ -99,6 +105,8 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   onPreviewPortal,
   onDeleteJob,
   onOpenJobSetup,
+  onGenerateInvoice,
+  jobInvoices = [],
 }) => {
   const [showLiveStatusReport, setShowLiveStatusReport] = useState(false);
   const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -505,10 +513,10 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   const materialPaid = [PipelineStage.IN_FIELD, PipelineStage.COMPLETION, PipelineStage.PAID_CLOSED].includes(job.pipelineStage);
                   const finalPaid = job.pipelineStage === PipelineStage.PAID_CLOSED;
 
-                  const milestones = [
-                    { label: 'Deposit', sub: 'Due on signing', pct: 0.30, paid: depositPaid },
-                    { label: 'Material Delivery', sub: 'Due on delivery', pct: 0.30, paid: materialPaid },
-                    { label: 'Full Completion', sub: 'Due on completion', pct: 0.40, paid: finalPaid },
+                  const milestones: Array<{ label: string; sub: string; pct: number; paid: boolean; invoiceType: InvoiceType }> = [
+                    { label: 'Deposit', sub: 'Due on signing', pct: 0.30, paid: depositPaid, invoiceType: 'deposit' },
+                    { label: 'Material Delivery', sub: 'Due on delivery', pct: 0.30, paid: materialPaid, invoiceType: 'material_delivery' },
+                    { label: 'Full Completion', sub: 'Due on completion', pct: 0.40, paid: finalPaid, invoiceType: 'final_payment' },
                   ];
 
                   const totalPaid = milestones.filter(m => m.paid).reduce((s, m) => s + Math.round(base * m.pct), 0);
@@ -517,24 +525,61 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                   return (
                     <div>
                       <div className="divide-y divide-[var(--border-color)]">
-                        {milestones.map((m, i) => (
-                          <div key={i} className={`flex items-center justify-between px-5 py-3 transition-colors ${m.paid ? 'bg-[var(--bg-secondary)]/50' : ''}`}>
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${m.paid ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-[var(--bg-secondary)] border-[var(--border-color)]'}`}>
-                                {m.paid && <Check className="w-2.5 h-2.5 text-emerald-500" strokeWidth={3} />}
+                        {milestones.map((m, i) => {
+                          const existingInv = jobInvoices.find(inv => inv.type === m.invoiceType);
+                          return (
+                          <div key={i} className={`px-5 py-3 transition-colors ${m.paid ? 'bg-[var(--bg-secondary)]/50' : ''}`}>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${m.paid ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-[var(--bg-secondary)] border-[var(--border-color)]'}`}>
+                                  {m.paid && <Check className="w-2.5 h-2.5 text-emerald-500" strokeWidth={3} />}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className={`text-[10px] font-black uppercase tracking-widest leading-none ${m.paid ? 'line-through text-[var(--text-tertiary)]' : 'text-[var(--text-primary)]'}`}>
+                                    {m.label} <span className="font-normal text-[var(--text-tertiary)]">({Math.round(m.pct * 100)}%)</span>
+                                  </p>
+                                  <p className="text-[8px] text-[var(--text-tertiary)] mt-0.5">{m.sub}</p>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <p className={`text-[10px] font-black uppercase tracking-widest leading-none ${m.paid ? 'line-through text-[var(--text-tertiary)]' : 'text-[var(--text-primary)]'}`}>
-                                  {m.label} <span className="font-normal text-[var(--text-tertiary)]">({Math.round(m.pct * 100)}%)</span>
-                                </p>
-                                <p className="text-[8px] text-[var(--text-tertiary)] mt-0.5">{m.sub}</p>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className={`text-sm font-black font-mono ${m.paid ? 'line-through text-[var(--text-tertiary)]' : 'text-[var(--text-primary)]'}`}>
+                                  ${Math.round(base * m.pct).toLocaleString()}
+                                </span>
+                                {existingInv ? (
+                                  <div className="flex items-center gap-1">
+                                    <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full border ${
+                                      existingInv.status === 'paid'
+                                        ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/25'
+                                        : existingInv.status === 'sent'
+                                        ? 'bg-amber-500/15 text-amber-500 border-amber-500/25'
+                                        : 'bg-[var(--bg-secondary)] text-[var(--text-tertiary)] border-[var(--border-color)]'
+                                    }`}>
+                                      {existingInv.invoiceNumber}
+                                    </span>
+                                    <button
+                                      onClick={() => printInvoice(existingInv)}
+                                      title="Print Invoice"
+                                      className="p-1 rounded-lg border border-[var(--border-color)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--text-primary)]/20 transition-all"
+                                    >
+                                      <Printer size={10} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  onGenerateInvoice && (
+                                    <button
+                                      onClick={() => onGenerateInvoice(job, m.invoiceType)}
+                                      className="flex items-center gap-1 px-2 py-1 rounded-lg border border-[var(--brand-gold)]/25 bg-[var(--brand-gold)]/8 text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/15 transition-all text-[8px] font-black uppercase tracking-widest"
+                                    >
+                                      <FileText size={9} />
+                                      Generate
+                                    </button>
+                                  )
+                                )}
                               </div>
                             </div>
-                            <span className={`text-sm font-black font-mono shrink-0 ml-2 ${m.paid ? 'line-through text-[var(--text-tertiary)]' : 'text-[var(--text-primary)]'}`}>
-                              ${Math.round(base * m.pct).toLocaleString()}
-                            </span>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       {/* Summary footer */}
                       <div className="px-5 py-3 bg-[var(--bg-secondary)] border-t border-[var(--border-color)] space-y-1.5">

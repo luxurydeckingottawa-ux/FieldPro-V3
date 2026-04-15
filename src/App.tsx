@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence, EstimateOption, EstimateData, ScheduleStatus, LiveEstimate, LiveEstimateItem, Customer } from './types';
+import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence, EstimateOption, EstimateData, ScheduleStatus, LiveEstimate, LiveEstimateItem, Customer, Invoice, InvoiceType } from './types';
+import { createInvoice, printInvoice } from './utils/invoiceUtils';
 import { useAppRouter, pathToView } from './hooks/useAppRouter';
 import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES, ESTIMATE_STAGES, RATES } from './constants';
 import LoginView from './views/LoginView';
@@ -35,6 +36,7 @@ import ChatView from './components/ChatView';
 import UserManagementView from './views/UserManagementView';
 import { Calendar, Users, AlertCircle, ChevronLeft, Calculator } from 'lucide-react';
 import UnifiedPipelineView from './views/UnifiedPipelineView';
+import InvoicesView from './views/InvoicesView';
 
 import { geminiService } from './services/geminiService';
 import { supabase } from './lib/supabase';
@@ -175,9 +177,30 @@ const App: React.FC = () => {
   });
 
   const [customers, setCustomers] = useState<Customer[]>(SEED_CUSTOMERS);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   const handleUpdateCustomer = useCallback((customerId: string, updates: Partial<Customer>) => {
     setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, ...updates } : c));
+  }, []);
+
+  const handleGenerateInvoice = useCallback((job: Job, type: InvoiceType) => {
+    const newInvoice = createInvoice(job, type, invoices);
+    setInvoices(prev => [...prev, newInvoice]);
+    setJobs(prev => prev.map(j =>
+      j.id === job.id
+        ? { ...j, invoices: [...(j.invoices || []), newInvoice] }
+        : j
+    ));
+    if (selectedJob?.id === job.id) {
+      setSelectedJob(prev => prev
+        ? { ...prev, invoices: [...(prev.invoices || []), newInvoice] }
+        : prev
+      );
+    }
+  }, [invoices, selectedJob]);
+
+  const handleUpdateInvoice = useCallback((invoiceId: string, updates: Partial<Invoice>) => {
+    setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, ...updates } : inv));
   }, []);
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(() => {
@@ -2419,6 +2442,13 @@ const App: React.FC = () => {
             onBack={() => navigateTo('office-pipeline')}
           />
         )}
+        {view === 'invoices' && currentUser && (
+          <InvoicesView
+            invoices={invoices}
+            onUpdateInvoice={handleUpdateInvoice}
+            onBack={() => navigateTo('office-dashboard')}
+          />
+        )}
         {view === 'office-new-job' && currentUser && (
           <NewJobIntakeView
             onSave={(job) => { setNewJobPrefilledDate(undefined); setNewJobPrefilledContact(undefined); handleCreateJob(job); }}
@@ -2450,6 +2480,8 @@ const App: React.FC = () => {
             }}
             onDeleteJob={handleDeleteJob}
             onOpenJobSetup={() => setPendingJobAcceptance(selectedJob)}
+            onGenerateInvoice={handleGenerateInvoice}
+            jobInvoices={invoices.filter(i => i.jobId === selectedJob.id)}
           />
         )}
         {view === 'estimate-detail' && selectedJob && currentUser && (
