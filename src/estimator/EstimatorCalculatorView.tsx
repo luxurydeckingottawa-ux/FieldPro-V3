@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { generateGoodBetterBest, type EstimateOption, type GBBDimensions } from '../utils/goodBetterBest';
 import { loadPriceBook } from '../utils/priceBook';
 import EstimatorShowroomView from './EstimatorShowroomView';
+import MaterialMatrixShowroom from './MaterialMatrixShowroom';
 
 // Maps estimator tier IDs → price book item IDs so uploaded photos show on cards
 export const TIER_TO_ITEM_ID: Record<string, string> = {
@@ -420,11 +421,11 @@ export const PRICING_DATA: Category[] = [
   }
 ];
 
-const RAILING_PRICING_MATRIX = {
+export const RAILING_PRICING_MATRIX: Record<DeckSize, number> = {
   '12x12': 5896, '12x16': 6159, '12x20': 6314, '16x16': 6476, '16x20': 6678, '20x20': 7915,
 };
 
-const DECK_MATERIALS_MATRIX: Material[] = [
+export const DECK_MATERIALS_MATRIX: Material[] = [
   { id: 'pt-wood', name: 'Pressure treated wood', brand: 'Standard', tier: TierType.SELECT, description: 'Affordable and durable natural wood option.', warranty: '1-Year Limited', materialType: 'Natural Wood', basePricing: { '12x12': 6640, '12x16': 8763, '12x20': 10416, '16x16': 12150, '16x20': 14267, '20x20': 16710 } },
   { id: 'cedar', name: 'Cedar', brand: 'Standard', tier: TierType.SELECT, description: 'Naturally rot-resistant with a beautiful grain.', warranty: '5-Year Limited', materialType: 'Natural Wood', basePricing: { '12x12': 7584, '12x16': 9995, '12x20': 11936, '16x16': 13766, '16x20': 16267, '20x20': 19190 } },
   { id: 'fiberon-weekender', name: 'GoodLife - Weekender', brand: 'FiberOn', tier: TierType.SELECT, description: 'Value-oriented composite decking.', warranty: '25-Year Residential', materialType: 'Composite', basePricing: { '12x12': 9388, '12x16': 12315, '12x20': 14772, '16x16': 16798, '16x20': 19975, '20x20': 23770 } },
@@ -447,14 +448,14 @@ const DECK_MATERIALS_MATRIX: Material[] = [
   { id: 'eva-last-pioneer', name: 'Pioneer', brand: 'Eva-Last', tier: TierType.SIGNATURE, description: 'Premium textures with exception durability.', warranty: '35-Year Residential', materialType: 'Bamboo Composite', basePricing: { '12x12': 16115, '12x16': 21141, '12x20': 25698, '16x16': 28448, '16x20': 34413, '20x20': 41721 } }
 ];
 
-const TIER_CONFIG_MATRIX = {
+export const TIER_CONFIG_MATRIX: Record<TierType, { label: string; sealColor: string; textColor: string }> = {
   [TierType.SELECT]: { label: 'Select', sealColor: '#FFFFFF', textColor: '#000000' },
   [TierType.PREMIUM]: { label: 'Premium', sealColor: '#000000', textColor: '#FFFFFF' },
   [TierType.ELITE]: { label: 'Elite', sealColor: '#C0C0C0', textColor: '#000000' },
   [TierType.SIGNATURE]: { label: 'Signature', sealColor: '#D4AF37', textColor: '#000000' }
 };
 
-const DECK_SIZES_MATRIX: { label: string; value: DeckSize }[] = [
+export const DECK_SIZES_MATRIX: { label: string; value: DeckSize }[] = [
   { label: '12x12', value: '12x12' },
   { label: '12x16', value: '12x16' },
   { label: '12x20', value: '12x20' },
@@ -2055,10 +2056,9 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
   return (
     <div className="estimator-calculator-root">
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
-      {/* Showroom estimator renders its own top nav. For every other view
-          we keep the legacy main-nav so Good/Better/Best, Packages, and
-          Material Matrix all stay fully navigable. */}
-      {view !== 'calculator' && (
+      {/* Showroom views (calculator + materialMatrix) render their own shared
+          top nav. Packages + Good/Better/Best still use the legacy main-nav. */}
+      {view !== 'calculator' && view !== 'materialMatrix' && (
         <div className="main-nav">
           {onExit && (
             <button className="nav-btn" onClick={onExit} style={{ marginRight: 'auto', borderColor: '#c0392b', color: '#e74c3c' }}>
@@ -2081,7 +2081,19 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
       )}
 
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {view === 'materialMatrix' && <StandaloneMaterialMatrix onPrintRequest={handleMatrixPrint} />}
+        {view === 'materialMatrix' && (
+          <MaterialMatrixShowroom
+            onPrintRequest={handleMatrixPrint}
+            onExit={onExit}
+            view={view}
+            setView={setView}
+            isFullScreen={isFullScreen}
+            toggleFullScreen={toggleFullScreen}
+          />
+        )}
+        {/* Legacy rollback: keep StandaloneMaterialMatrix reachable as dead code
+            in case the new Material Matrix Showroom needs to be reverted fast. */}
+        {false && <StandaloneMaterialMatrix onPrintRequest={handleMatrixPrint} />}
         {view === 'gbb' && (
           <div style={{ flex: 1, overflow: 'auto', padding: '2rem', background: '#f8f9fa' }}>
             {(() => {

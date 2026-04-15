@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { loadPriceBook } from '../utils/priceBook';
+import ShowroomGlobalStyle from './showroom/ShowroomGlobalStyle';
+import ShowroomTopNav from './showroom/ShowroomTopNav';
 import {
   TIER_TO_ITEM_ID,
   PRICING_DATA,
@@ -89,7 +91,7 @@ const getPreviewColor = (tierId: string | undefined) =>
 // Fallback hierarchy: priceBook upload -> this map -> color gradient.
 // These are hotlinked from the manufacturer CDNs; if any URL breaks, the
 // fallback gradient shows until Jack uploads a replacement via Settings > Price Book.
-const TIER_TO_TEXTURE_URL: Record<string, string> = {
+export const TIER_TO_TEXTURE_URL: Record<string, string> = {
   // Fiberon
   fiberon_goodlife_weekender: 'https://www.fiberondecking.com/cdn/shop/files/zqxfitddckgp0ji4aabl.jpg',
   fiberon_goodlife_escapes:   'https://www.fiberondecking.com/cdn/shop/files/daxgnnraihi9xszgatio.jpg',
@@ -240,12 +242,13 @@ const FONT_DISPLAY = "'Playfair Display', Georgia, serif";
 // Grain overlay SVG (inline data-uri). Matches mockup exactly.
 const GRAIN_BG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
 
-const ShowroomGlobalStyle: React.FC = () => (
-  // Scoped styles for the showroom view. All selectors are prefixed
-  // with .est-showroom-root so they do not leak to the rest of FieldPro.
+const EstimatorScopedStyle: React.FC = () => (
+  // Scoped styles for the Estimator showroom view ONLY. All selectors are
+  // prefixed with .est-showroom-root so they do not leak to the rest of
+  // FieldPro. Universal showroom globals (font import, box-sizing reset,
+  // generic webkit scrollbar) live in ShowroomGlobalStyle so they can be
+  // shared with Material Matrix Showroom etc.
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
-
     .est-showroom-root {
       --lux-gold: #D4A853;
       --lux-gold-hover: #C49843;
@@ -275,10 +278,6 @@ const ShowroomGlobalStyle: React.FC = () => (
       flex-direction: column;
       overflow: hidden;
       position: relative;
-      box-sizing: border-box;
-    }
-    .est-showroom-root *, .est-showroom-root *::before, .est-showroom-root *::after {
-      box-sizing: border-box;
     }
 
     .est-showroom-root .est-grain {
@@ -297,12 +296,10 @@ const ShowroomGlobalStyle: React.FC = () => (
       font-family: inherit;
     }
 
+    /* Tighter 3px scrollbar specific to the dense Estimator panel; overrides
+       the 4px default from ShowroomGlobalStyle. */
     .est-showroom-root ::-webkit-scrollbar { width: 3px; height: 3px; }
-    .est-showroom-root ::-webkit-scrollbar-track { background: transparent; }
-    .est-showroom-root ::-webkit-scrollbar-thumb {
-      background: rgba(212,168,83,0.15);
-      border-radius: 3px;
-    }
+    .est-showroom-root ::-webkit-scrollbar-thumb { border-radius: 3px; }
     .est-showroom-root select option { background: #1a1a1a; color: var(--est-text-primary); }
 
     .est-showroom-root .est-cat-tab {
@@ -332,11 +329,6 @@ const ShowroomGlobalStyle: React.FC = () => (
     .est-showroom-root .est-panel-toggle:hover {
       color: rgba(212,168,83,0.9);
       filter: brightness(1.08);
-    }
-
-    .est-showroom-root .est-exit-showroom:hover {
-      border-color: rgba(212,168,83,0.35);
-      color: rgba(212,168,83,0.85);
     }
 
     .est-showroom-root .est-product-card {
@@ -751,74 +743,20 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
   // ---------- RENDER ----------
   return (
     <div className="est-showroom-root">
-      <ShowroomGlobalStyle />
+      <ShowroomGlobalStyle rootClass="est-showroom-root" />
+      <EstimatorScopedStyle />
       <div className="est-grain" />
 
-      {/* ══ TOP NAV BAR ══ */}
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 20,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 16px',
-          height: 48,
-          flexShrink: 0,
-          background: 'var(--est-bg-elevated)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+      {/* ══ TOP NAV BAR (shared) ══ */}
+      <ShowroomTopNav
+        activeTab="estimator"
+        onTabChange={(v) => {
+          if (v === 'estimator') setView?.('calculator');
+          else if (v === 'showroom') setView?.('packages');
+          else if (v === 'matrix') setView?.('materialMatrix');
         }}
-      >
-        <button
-          className="est-exit-showroom"
-          onClick={() => onExit?.()}
-          style={{
-            padding: '8px 18px',
-            borderRadius: 4,
-            border: '1px solid rgba(212,168,83,0.15)',
-            background: 'transparent',
-            color: 'rgba(212,168,83,0.55)',
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: 1,
-            cursor: 'pointer',
-            textTransform: 'uppercase',
-            transition: 'border-color 0.2s ease, color 0.2s ease',
-          }}
-        >
-          {'\u2039'} Exit Showroom
-        </button>
-
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {[
-            { id: 'calculator' as const, label: 'Estimator' },
-            { id: 'packages' as const, label: 'Showroom Packages' },
-            { id: 'materialMatrix' as const, label: 'Material Matrix' },
-          ].map((tab) => {
-            const isActive = view === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setView?.(tab.id)}
-                style={{
-                  padding: '10px 24px',
-                  borderRadius: 4,
-                  border: 'none',
-                  background: isActive ? 'var(--lux-gold)' : 'rgba(255,255,255,0.06)',
-                  color: isActive ? '#0A0A0A' : 'rgba(255,255,255,0.5)',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                  cursor: 'pointer',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        onExit={onExit}
+      />
 
       {/* ══ MAIN CONTENT ══ */}
       <div
