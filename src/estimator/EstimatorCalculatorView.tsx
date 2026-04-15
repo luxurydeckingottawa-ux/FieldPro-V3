@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { generateGoodBetterBest, type EstimateOption, type GBBDimensions } from '../utils/goodBetterBest';
 import { loadPriceBook } from '../utils/priceBook';
+import EstimatorShowroomView from './EstimatorShowroomView';
 
 // Maps estimator tier IDs → price book item IDs so uploaded photos show on cards
-const TIER_TO_ITEM_ID: Record<string, string> = {
+export const TIER_TO_ITEM_ID: Record<string, string> = {
   // Design
   '3d_design': 'item_001', 'arch_drawings': 'item_002', 'eng_stamp': 'item_003',
   'ottawa_permit_fee': 'item_004', 'helical_report': 'item_005',
@@ -51,7 +52,7 @@ const TIER_TO_ITEM_ID: Record<string, string> = {
 
 // --- Shared Types & Interfaces ---
 
-interface PricingTier {
+export interface PricingTier {
   id: string;
   name: string;
   brand?: string;
@@ -66,7 +67,7 @@ interface PricingTier {
   calculationType?: 'standard' | 'aluminum_component' | 'aluminum_glass_component' | 'frameless_glass_component' | 'lump_sum' | 'sqft_add' | 'percentage' | 'quantity' | 'lf_border_add' | 'river_wash_sqft' | 'mulch_sqft' | 'stepping_stones_qty';
 }
 
-interface Category {
+export interface Category {
   id: 'design' | 'foundation' | 'framing' | 'decking' | 'railing' | 'skirting' | 'privacy' | 'accessories' | 'pergolas' | 'extras' | 'protection';
   title: string;
   baseName: string;
@@ -74,7 +75,7 @@ interface Category {
   options: PricingTier[];
 }
 
-interface Dimensions {
+export interface Dimensions {
   sqft: number;
   footingsCount: number;
   steps: number;
@@ -105,7 +106,7 @@ interface Dimensions {
   steppingStonesCount: number;
 }
 
-interface ClientInfo {
+export interface ClientInfo {
   name: string;
   address: string;
 }
@@ -158,7 +159,7 @@ export interface SavedEstimateOption {
   summary: string;
 }
 
-export interface CustomEstimatorProps {
+export interface ShowroomEstimatorProps {
   dimensions: Dimensions;
   setDimensions: React.Dispatch<React.SetStateAction<Dimensions>>;
   selections: any;
@@ -185,7 +186,7 @@ export interface CustomEstimatorProps {
   onRemoveOption: (name: string) => void;
 }
 
-interface PackageSelection {
+export interface PackageSelection {
   size: PackageSize;
   level: PackageLevel;
   withRailings: boolean;
@@ -201,14 +202,14 @@ const BUSINESS_INFO = {
   website: "www.luxurydecking.ca"
 };
 
-const BASE_SQFT_PRICE = 28.95;
-const BASE_STEP_PRICE = 44.95;
-const BASE_RAILING_PRICE = 49.95; 
-const BASE_CEDAR_RAILING_PRICE = 74.95; 
-const FINANCING_FACTOR = 0.0196; 
+export const BASE_SQFT_PRICE = 28.95;
+export const BASE_STEP_PRICE = 44.95;
+export const BASE_RAILING_PRICE = 49.95;
+export const BASE_CEDAR_RAILING_PRICE = 74.95;
+export const FINANCING_FACTOR = 0.0196;
 const HST_RATE = 0.13;
 
-const COSTS = {
+export const COSTS = {
   fasciaPerLF: 24.95,
   disposalPerSqFt: 9.95,
   alumPost: 292.00,
@@ -228,13 +229,13 @@ const COSTS = {
   drinkRailPerLF: 21.75
 };
 
-const BASELINES = {
+export const BASELINES = {
   deckingPriceDelta: 44.95 - BASE_SQFT_PRICE,
   stepPrice: 59.95,
   fasciaPrice: 24.95
 };
 
-const PRICING_DATA: Category[] = [
+export const PRICING_DATA: Category[] = [
   {
     id: 'design',
     title: 'Design & Permits',
@@ -462,7 +463,7 @@ const DECK_SIZES_MATRIX: { label: string; value: DeckSize }[] = [
   { label: '20x20', value: '20x20' }
 ];
 
-const PACKAGE_PRICING: Record<PackageSize, PackagePriceRow> = {
+export const PACKAGE_PRICING: Record<PackageSize, PackagePriceRow> = {
   '12X12': { 
     noRailing: { SILVER: 3995, GOLD: 7495, PLATINUM: 12495, DIAMOND: 15495 }, 
     withRailing: { SILVER: 5995, GOLD: 12795, PLATINUM: 17795, DIAMOND: 20795 }, 
@@ -845,7 +846,7 @@ const MaterialCard = ({ material, size, showRailings, railingCost, isSelected, o
   );
 };
 
-const CustomEstimator: React.FC<CustomEstimatorProps> = ({ dimensions, setDimensions, selections, setSelections, lightingQuantities, setLightingQuantities, clientInfo, setClientInfo, activeCategory, setActiveCategory, resetCalculator, onSave, onAccept, onGenerateGBB, pricingSummary, estimateNumber, activePackage, setActivePackage, savedOptions, optionName, setOptionName, onSaveOption, onRemoveOption }) => {
+const CustomEstimator: React.FC<ShowroomEstimatorProps> = ({ dimensions, setDimensions, selections, setSelections, lightingQuantities, setLightingQuantities, clientInfo, setClientInfo, activeCategory, setActiveCategory, resetCalculator, onSave, onAccept, onGenerateGBB, pricingSummary, estimateNumber, activePackage, setActivePackage, savedOptions, optionName, setOptionName, onSaveOption, onRemoveOption }) => {
 
   // Price book images — keyed by tier ID, populated from uploaded photos in Settings > Price Book
   const priceBookImages = useMemo(() => {
@@ -2054,25 +2055,30 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
   return (
     <div className="estimator-calculator-root">
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
-      <div className="main-nav">
-        {onExit && (
-          <button className="nav-btn" onClick={onExit} style={{ marginRight: 'auto', borderColor: '#c0392b', color: '#e74c3c' }}>
-            ← Back to Field Pro
-          </button>
-        )}
-        <button className={`nav-btn ${view === 'calculator' ? 'active' : ''}`} onClick={() => setView('calculator')}>Estimator</button>
-        <button className={`nav-btn ${view === 'gbb' ? 'active' : ''}`} onClick={() => setView('gbb')}>Good / Better / Best</button>
-        <button className={`nav-btn ${view === 'packages' ? 'active' : ''}`} onClick={() => setView('packages')}>Showroom Packages</button>
-        <button className={`nav-btn ${view === 'materialMatrix' ? 'active' : ''}`} onClick={() => setView('materialMatrix')}>Material Matrix</button>
-        
-        <button className="fullscreen-toggle" onClick={toggleFullScreen} title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
-          {isFullScreen ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      {/* Showroom estimator renders its own top nav. For every other view
+          we keep the legacy main-nav so Good/Better/Best, Packages, and
+          Material Matrix all stay fully navigable. */}
+      {view !== 'calculator' && (
+        <div className="main-nav">
+          {onExit && (
+            <button className="nav-btn" onClick={onExit} style={{ marginRight: 'auto', borderColor: '#c0392b', color: '#e74c3c' }}>
+              ← Back to Field Pro
+            </button>
           )}
-        </button>
-      </div>
+          <button className={`nav-btn ${view === 'calculator' ? 'active' : ''}`} onClick={() => setView('calculator')}>Estimator</button>
+          <button className={`nav-btn ${view === 'gbb' ? 'active' : ''}`} onClick={() => setView('gbb')}>Good / Better / Best</button>
+          <button className={`nav-btn ${view === 'packages' ? 'active' : ''}`} onClick={() => setView('packages')}>Showroom Packages</button>
+          <button className={`nav-btn ${view === 'materialMatrix' ? 'active' : ''}`} onClick={() => setView('materialMatrix')}>Material Matrix</button>
+
+          <button className="fullscreen-toggle" onClick={toggleFullScreen} title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
+            {isFullScreen ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            )}
+          </button>
+        </div>
+      )}
 
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {view === 'materialMatrix' && <StandaloneMaterialMatrix onPrintRequest={handleMatrixPrint} />}
@@ -2174,7 +2180,36 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
           </div>
         )}
         {view === 'calculator' && (
-          <CustomEstimator dimensions={calcDimensions} setDimensions={setCalcDimensions} selections={calcSelections} setSelections={setCalcSelections} lightingQuantities={lightingQuantities} setLightingQuantities={setLightingQuantities} clientInfo={clientInfo} setClientInfo={setClientInfo} activeCategory={calcActiveCategory} setActiveCategory={setCalcActiveCategory} resetCalculator={resetCalculator} onSave={handleSaveEstimate} onAccept={handleAcceptQuote} onGenerateGBB={handleGenerateGBB} pricingSummary={pricingSummary} estimateNumber={estimateNumber} activePackage={activePackage} setActivePackage={setActivePackage} savedOptions={savedOptions} optionName={optionName} setOptionName={setOptionName} onSaveOption={handleSaveOption} onRemoveOption={handleRemoveOption} />
+          <EstimatorShowroomView
+            dimensions={calcDimensions}
+            setDimensions={setCalcDimensions}
+            selections={calcSelections}
+            setSelections={setCalcSelections}
+            lightingQuantities={lightingQuantities}
+            setLightingQuantities={setLightingQuantities}
+            clientInfo={clientInfo}
+            setClientInfo={setClientInfo}
+            activeCategory={calcActiveCategory}
+            setActiveCategory={setCalcActiveCategory}
+            resetCalculator={resetCalculator}
+            onSave={handleSaveEstimate}
+            onAccept={handleAcceptQuote}
+            onGenerateGBB={handleGenerateGBB}
+            pricingSummary={pricingSummary}
+            estimateNumber={estimateNumber}
+            activePackage={activePackage}
+            setActivePackage={setActivePackage}
+            savedOptions={savedOptions}
+            optionName={optionName}
+            setOptionName={setOptionName}
+            onSaveOption={handleSaveOption}
+            onRemoveOption={handleRemoveOption}
+            onExit={onExit}
+            view={view}
+            setView={setView}
+            isFullScreen={isFullScreen}
+            toggleFullScreen={toggleFullScreen}
+          />
         )}
         {view === 'packages' && (
           <PackageShowcase 
