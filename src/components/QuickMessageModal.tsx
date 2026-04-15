@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 import { 
   X, 
@@ -29,28 +29,37 @@ interface QuickMessageModalProps {
   clientPhone?: string;
   clientEmail?: string;
   initialType?: 'sms' | 'email';
+  initialMessage?: string;
   job?: Job;
   disableEmail?: boolean;
 }
 
-const QuickMessageModal: React.FC<QuickMessageModalProps> = ({ 
-  isOpen, 
-  onClose, 
+const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
+  isOpen,
+  onClose,
   onSend,
   clientName,
   clientPhone,
   clientEmail,
   initialType = 'sms',
+  initialMessage = '',
   job,
   disableEmail = false
 }) => {
   const [type, setType] = useState<'sms' | 'email'>(disableEmail ? 'sms' : initialType);
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(initialMessage);
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [showAiOptions, setShowAiOptions] = useState(false);
+
+  // Seed content from initialMessage when modal opens
+  useEffect(() => {
+    if (isOpen && initialMessage) {
+      setContent(initialMessage);
+    }
+  }, [isOpen, initialMessage]);
 
   const filteredTemplates = useMemo(() => {
     return MESSAGE_TEMPLATES.filter(t => t.type === 'both' || t.type === type);

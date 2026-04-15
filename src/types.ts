@@ -904,3 +904,37 @@ export interface EstimatorIntake {
     lastCheckedAt?: string;
   };
 }
+
+export interface CustomerAddress {
+  streetLine1: string;
+  streetLine2?: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  isBilling: boolean;
+  notes?: string;
+}
+
+export type CustomerStatus = 'active_client' | 'quoted_not_converted' | 'cold_lead' | 'prospect';
+
+export interface Customer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  phone: string;
+  homePhone?: string;
+  email: string;
+  company?: string;
+  customerType: 'homeowner' | 'business';
+  addresses: CustomerAddress[];
+  tags: string[];
+  notes: string;
+  leadSource?: string;
+  lifetimeValue: number; // dollars
+  lastServiceDate?: string;
+  hcpId?: string;
+  createdAt: string;
+  status: CustomerStatus;
+  doNotService: boolean;
+}

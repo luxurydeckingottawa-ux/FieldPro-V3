@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence, EstimateOption, EstimateData, ScheduleStatus, LiveEstimate, LiveEstimateItem } from './types';
+import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, NurtureSequence, EstimateOption, EstimateData, ScheduleStatus, LiveEstimate, LiveEstimateItem, Customer } from './types';
 import { useAppRouter, pathToView } from './hooks/useAppRouter';
 import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS, PIPELINE_STAGES, ESTIMATE_STAGES, RATES } from './constants';
 import LoginView from './views/LoginView';
@@ -25,6 +25,8 @@ import AutomationSettingsView from './views/AutomationSettingsView';
 import BusinessInfoView from './views/BusinessInfoView';
 import PriceBookView from './views/PriceBookView';
 import EstimateDetailView from './views/EstimateDetailView';
+import CustomersView from './views/CustomersView';
+import { SEED_CUSTOMERS } from './data/customers';
 import NavBar from './components/NavBar';
 import AcceptanceModal from './components/AcceptanceModal';
 import JobAcceptanceModal from './components/JobAcceptanceModal';
@@ -171,6 +173,12 @@ const App: React.FC = () => {
       customerPortalToken: job.customerPortalToken || crypto.randomUUID()
     }));
   });
+
+  const [customers, setCustomers] = useState<Customer[]>(SEED_CUSTOMERS);
+
+  const handleUpdateCustomer = useCallback((customerId: string, updates: Partial<Customer>) => {
+    setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, ...updates } : c));
+  }, []);
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -2394,7 +2402,7 @@ const App: React.FC = () => {
             onViewResources={() => navigateTo('resources')}
           />
         )}
-        {(view === 'office-pipeline' || view === 'customers') && currentUser && (
+        {view === 'office-pipeline' && currentUser && (
           <UnifiedPipelineView
             jobs={jobs}
             onSelectJob={handleSelectJob}
@@ -2402,6 +2410,13 @@ const App: React.FC = () => {
             onOpenEstimator={handleOpenNewEstimate}
             onUpdatePipelineStage={handleUpdatePipelineStage}
             onAutomationSettings={() => navigateTo('automation-settings')}
+          />
+        )}
+        {view === 'customers' && currentUser && (
+          <CustomersView
+            customers={customers}
+            onUpdateCustomer={handleUpdateCustomer}
+            onBack={() => navigateTo('office-pipeline')}
           />
         )}
         {view === 'office-new-job' && currentUser && (

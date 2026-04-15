@@ -105,6 +105,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [editFormData, setEditFormData] = useState<any>(null);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageType, setMessageType] = useState<'sms' | 'email'>('sms');
+  const [pendingReminderMessage, setPendingReminderMessage] = useState<string>('');
   const [customerInfoCollapsed, setCustomerInfoCollapsed] = useState(false);
   const [officeNotesCollapsed, setOfficeNotesCollapsed] = useState(true);
   const [siteNotesCollapsed, setSiteNotesCollapsed] = useState(true);
@@ -549,6 +550,21 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                             <span className="text-xs font-black text-[var(--text-primary)] font-mono">${totalOutstanding.toLocaleString()}</span>
                           </div>
                         )}
+                      </div>
+                      {/* Payment Reminder SMS */}
+                      <div className="px-5 pt-3 pb-1">
+                        <button
+                          onClick={() => {
+                            const firstName = job.clientName?.split(' ')[0] || job.clientName || 'there';
+                            const reminder = `Hi ${firstName}, just a friendly reminder that a payment is due on your ${job.jobNumber || 'project'} project. Please reach out if you have any questions. \u2013 Luxury Decking`;
+                            setPendingReminderMessage(reminder);
+                            setMessageType('sms');
+                            setIsMessageModalOpen(true);
+                          }}
+                          className="w-full py-2.5 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/25 rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/15 transition-all flex items-center justify-center gap-2"
+                        >
+                          <MessageSquare size={11} /> Send Payment Reminder
+                        </button>
                       </div>
                       {/* Stripe CTA */}
                       <div className="px-5 pb-4 pt-1">
@@ -2939,15 +2955,15 @@ Ottawa's Premium Deck Builders`;
       )}
 
       {/* Modals */}
-      <QuickMessageModal 
+      <QuickMessageModal
         isOpen={isMessageModalOpen}
-        onClose={() => setIsMessageModalOpen(false)}
+        onClose={() => { setIsMessageModalOpen(false); setPendingReminderMessage(''); }}
         clientName={job.clientName}
         clientPhone={job.clientPhone}
         clientEmail={job.clientEmail}
         initialType={messageType}
+        initialMessage={pendingReminderMessage}
         job={job}
-        messageType={messageType}
         onSend={(type, content) => {
           if (type === 'sms') {
             // Find or create session ID
