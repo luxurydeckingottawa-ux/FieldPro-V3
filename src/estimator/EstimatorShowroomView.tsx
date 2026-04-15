@@ -113,6 +113,12 @@ const TIER_TO_TEXTURE_URL: Record<string, string> = {
   eva_pioneer:                'https://www.eva-last.com/us/wp-content/uploads/2026/01/pioneer-IPE.jpg',
   // Woodbridge (Clubhouse - their domain is parked, using National Decking CDN which is the Canadian distributor)
   woodbridge_pvc:             'https://nationaldecking.com/wp-content/uploads/2025/05/Royal-Walnut-Texture.webp',
+  // Railings
+  fortress_al13_pkg:          'https://fortressrailing.com/Images/Railing/al13-home/al13-home-hero-sample-1.webp',
+  alum_glass:                 'https://fortressrailing.com/Images/Railing/hub/Glass-railing-hero-left.jpg',
+  frameless_glass:            'https://www.vistarailings.com/wp-content/uploads/2023/02/ApprovedHR_Hamilton-Deck-and-Fence_July2022_2-scaled.jpg',
+  // Privacy
+  privacy_sunbelly_combined:  'https://d3k81ch9hvuctc.cloudfront.net/company/RTKhre/images/a7543182-edda-45e2-a973-b771f529df22.jpeg',
 };
 
 // Skirting reuses the decking texture — same material, skirting board form.
