@@ -1061,8 +1061,11 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
               flexShrink: 0,
             }}
           >
-            {/* Wordmark */}
+            {/* ROUND 7 — LEFT: Wordmark + Estimate/Client/Address block
+                stacked vertically, left-aligned. Was previously split across
+                left (wordmark) and right (estimate info) columns. */}
             <div>
+              {/* Wordmark */}
               <div
                 style={{
                   fontSize: 9,
@@ -1097,47 +1100,11 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                   Estimator
                 </span>
               </div>
-            </div>
 
-            {/* Right: estimate info + price box */}
-            <div
-              style={{
-                textAlign: 'right',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 24,
-                position: 'relative',
-              }}
-            >
-              {toggleFullScreen && (
-                <button
-                  onClick={toggleFullScreen}
-                  title={isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-                  aria-label={isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-                  style={{
-                    position: 'absolute',
-                    top: -6,
-                    right: -6,
-                    padding: '6px 8px',
-                    borderRadius: 4,
-                    border: '1px solid rgba(212,168,83,0.10)',
-                    background: 'rgba(255,255,255,0.06)',
-                    color: 'rgba(212,168,83,0.55)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'color 0.2s ease, border-color 0.2s ease',
-                  }}
-                >
-                  {isFullScreen ? (
-                    <Minimize2 size={16} strokeWidth={2} />
-                  ) : (
-                    <Maximize2 size={16} strokeWidth={2} />
-                  )}
-                </button>
-              )}
-              <div>
+              {/* ROUND 7 — Estimate number + client + address block moved LEFT,
+                  under the wordmark. Styling identical to prior right-side version,
+                  just left-aligned now. */}
+              <div style={{ marginTop: 14, textAlign: 'left' }}>
                 <div
                   style={{
                     fontSize: 10,
@@ -1169,160 +1136,218 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                   {clientInfo.address || 'Project Address'}
                 </div>
               </div>
+            </div>
 
-              {/* FIX 5 — Price plaque + BUILD SUMMARY vertical stack */}
-              {/* ROUND 5 FIX — maxWidth 360 → 280 so the product grid below
-                  gets enough width to render 3 columns at ~198px each at
-                  1568×696 test resolution without squeezing. The build
-                  summary column-wraps internally once items > 6 chips. */}
+            {/* ROUND 7 — RIGHT: Build Summary panel + Price Plaque SIDE-BY-SIDE.
+                Build summary sits to the LEFT of the plaque, both panels share
+                the same top anchor and same fixed height (120px). Build summary
+                grows HORIZONTALLY via CSS multi-column layout as items are added. */}
+            <div
+              style={{
+                display: 'flex',
+                gap: 12,
+                alignItems: 'flex-start',
+                position: 'relative',
+              }}
+            >
+              {toggleFullScreen && (
+                <button
+                  onClick={toggleFullScreen}
+                  title={isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                  aria-label={isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                  style={{
+                    position: 'absolute',
+                    top: -6,
+                    right: -6,
+                    padding: '6px 8px',
+                    borderRadius: 4,
+                    border: '1px solid rgba(212,168,83,0.10)',
+                    background: 'rgba(255,255,255,0.06)',
+                    color: 'rgba(212,168,83,0.55)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'color 0.2s ease, border-color 0.2s ease',
+                    zIndex: 2,
+                  }}
+                >
+                  {isFullScreen ? (
+                    <Minimize2 size={16} strokeWidth={2} />
+                  ) : (
+                    <Maximize2 size={16} strokeWidth={2} />
+                  )}
+                </button>
+              )}
+
+              {/* ROUND 7 — BUILD SUMMARY panel, now a sibling of the price plaque.
+                  Fixed height 120px to match plaque. Grows horizontally via CSS
+                  columnWidth (browser auto-fits columns to panel width). When
+                  items exceed maxWidth, horizontal scroll takes over. */}
               <div
                 style={{
+                  height: 120,
+                  padding: '10px 14px',
+                  background: 'rgba(212,168,83,0.02)',
+                  border: '1px solid rgba(212,168,83,0.10)',
+                  borderRadius: 8,
+                  minWidth: 240,
+                  maxWidth: 560,
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: 'stretch',
-                  minWidth: 240,
-                  maxWidth: 280,
+                  textAlign: 'left',
+                  boxSizing: 'border-box',
                 }}
               >
-                {/* PRICE BOX — "plaque" treatment (FIX 2: scaled up for hero moment) */}
                 <div
                   style={{
-                    background: 'rgba(212,168,83,0.04)',
-                    border: '1px solid rgba(212,168,83,0.12)',
-                    borderTop: '1px solid rgba(212,168,83,0.35)',
-                    borderRadius: 8,
-                    padding: '14px 28px',
-                    minWidth: 240,
+                    fontSize: 9,
+                    letterSpacing: 2,
+                    color: 'rgba(212,168,83,0.35)',
+                    textTransform: 'uppercase',
+                    fontWeight: 700,
+                    marginBottom: 6,
+                    flexShrink: 0,
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: 10,
-                      letterSpacing: 2,
-                      color: 'rgba(212,168,83,0.4)',
-                      textTransform: 'uppercase',
-                      marginBottom: 2,
-                    }}
-                  >
-                    Total Project Investment
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                    <span
-                      style={{
-                        fontSize: 52,
-                        fontWeight: 800,
-                        color: 'var(--lux-gold)',
-                        fontFamily: FONT_DISPLAY,
-                        lineHeight: 1,
-                      }}
-                    >
-                      {fmtCAD(total)}
-                    </span>
-                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)' }}>+ HST</span>
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 4,
-                      justifyContent: 'flex-end',
-                      marginTop: 4,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 26,
-                        fontWeight: 600,
-                        color: 'var(--lux-blue)',
-                        fontFamily: FONT_DISPLAY,
-                      }}
-                    >
-                      {fmtCAD(monthly)}
-                    </span>
-                    <span style={{ fontSize: 12, color: 'rgba(91,155,213,0.5)' }}>/mo</span>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 7,
-                      letterSpacing: 1.5,
-                      color: 'rgba(91,155,213,0.45)',
-                      textTransform: 'uppercase',
-                      textAlign: 'right',
-                      marginTop: 2,
-                    }}
-                  >
-                    Financing Available O.A.C.
-                  </div>
+                  Build Summary
                 </div>
-
-                {/* FIX 5 — BUILD SUMMARY itemized list, stacked directly under plaque.
-                    Auto-switches to 2-column when items > 6 so it never overlaps cards. */}
-                <div
-                  style={{
-                    marginTop: 10,
-                    padding: '10px 14px',
-                    background: 'rgba(212,168,83,0.02)',
-                    border: '1px solid rgba(212,168,83,0.08)',
-                    borderRadius: 8,
-                    maxHeight: 280,
-                    overflowY: 'auto',
-                    textAlign: 'left',
-                  }}
-                >
+                {chips.length === 0 ? (
                   <div
                     style={{
-                      fontSize: 9,
-                      letterSpacing: 2,
-                      color: 'rgba(212,168,83,0.35)',
-                      textTransform: 'uppercase',
-                      fontWeight: 700,
-                      marginBottom: 6,
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 10,
+                      color: 'rgba(232,224,212,0.25)',
+                      fontStyle: 'italic',
                     }}
                   >
-                    Build Summary
+                    No upgrades selected
                   </div>
-                  {chips.length === 0 ? (
-                    <div
-                      style={{
-                        fontSize: 10,
-                        color: 'rgba(232,224,212,0.25)',
-                        fontStyle: 'italic',
-                        padding: '4px 0',
-                      }}
-                    >
-                      No upgrades selected
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        columnCount: chips.length > 6 ? 2 : 1,
-                        columnGap: 16,
-                      }}
-                    >
-                      {chips.map((item: any, i: number) => (
-                        <div
-                          key={i}
+                ) : (
+                  <div
+                    style={{
+                      flex: 1,
+                      columnGap: 20,
+                      columnRuleColor: 'rgba(212,168,83,0.08)',
+                      columnRuleWidth: 1,
+                      columnRuleStyle: 'solid',
+                      columnWidth: 160,
+                      columnFill: 'auto',
+                    }}
+                  >
+                    {chips.map((item: any, i: number) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          gap: 8,
+                          padding: '3px 0',
+                          borderBottom: '1px solid rgba(212,168,83,0.08)',
+                          fontSize: 11,
+                          fontFamily: FONT_BODY,
+                          breakInside: 'avoid',
+                        }}
+                      >
+                        <span
                           style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            gap: 8,
-                            padding: '3px 0',
-                            borderBottom: '1px solid rgba(212,168,83,0.08)',
-                            fontSize: 11,
-                            fontFamily: FONT_BODY,
-                            breakInside: 'avoid',
+                            color: 'rgba(255,255,255,0.6)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
                         >
-                          <span style={{ color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {item.label}
-                          </span>
-                          <span style={{ color: 'var(--lux-gold)', fontWeight: 600, flexShrink: 0 }}>
-                            ${item.value.toLocaleString()}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                          {item.label}
+                        </span>
+                        <span style={{ color: 'var(--lux-gold)', fontWeight: 600, flexShrink: 0 }}>
+                          ${item.value.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ROUND 7 — PRICE PLAQUE, now a sibling of Build Summary.
+                  Fixed height 120px, anchored rightmost. */}
+              <div
+                style={{
+                  height: 120,
+                  background: 'rgba(212,168,83,0.04)',
+                  border: '1px solid rgba(212,168,83,0.12)',
+                  borderTop: '1px solid rgba(212,168,83,0.35)',
+                  borderRadius: 8,
+                  padding: '14px 28px',
+                  minWidth: 240,
+                  textAlign: 'right',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: 2,
+                    color: 'rgba(212,168,83,0.4)',
+                    textTransform: 'uppercase',
+                    marginBottom: 2,
+                  }}
+                >
+                  Total Project Investment
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 44,
+                      fontWeight: 800,
+                      color: 'var(--lux-gold)',
+                      fontFamily: FONT_DISPLAY,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {fmtCAD(total)}
+                  </span>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>+ HST</span>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 4,
+                    justifyContent: 'flex-end',
+                    marginTop: 2,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 600,
+                      color: 'var(--lux-blue)',
+                      fontFamily: FONT_DISPLAY,
+                    }}
+                  >
+                    {fmtCAD(monthly)}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'rgba(91,155,213,0.5)' }}>/mo</span>
+                </div>
+                <div
+                  style={{
+                    fontSize: 7,
+                    letterSpacing: 1.5,
+                    color: 'rgba(91,155,213,0.45)',
+                    textTransform: 'uppercase',
+                    textAlign: 'right',
+                    marginTop: 2,
+                  }}
+                >
+                  Financing Available O.A.C.
                 </div>
               </div>
             </div>
