@@ -150,14 +150,18 @@ const TIER_BADGE: Record<TierKey, {
   },
   premium: {
     bg: 'radial-gradient(circle at 35% 30%, #2A2A2A 0%, #0A0A0A 70%, #000000 100%)',
-    ring: 'rgba(255,255,255,0.15)',
+    // ROUND 10 FIX 2c — ring bumped from 0.15 -> 0.45 so the black coin
+    // has a visible white trim when it sits on the dark card content area.
+    ring: 'rgba(255,255,255,0.45)',
     innerShadow: 'inset 0 1px 2px rgba(255,255,255,0.15), inset 0 -1px 1px rgba(0,0,0,0.5)',
     label: 'PREMIUM',
   },
   elite: {
-    bg: 'radial-gradient(circle at 35% 30%, #F0F0F0 0%, #C0C0C0 40%, #888888 100%)',
-    ring: 'rgba(255,255,255,0.25)',
-    innerShadow: 'inset 0 1px 2px rgba(255,255,255,0.3), inset 0 -1px 1px rgba(0,0,0,0.3)',
+    // ROUND 10 FIX 2a — darker brushed-steel palette so Elite is visually
+    // distinct from the white Select coin when they sit next to each other.
+    bg: 'radial-gradient(circle at 35% 30%, #D8D8D8 0%, #9A9A9A 40%, #5A5A5A 100%)',
+    ring: 'rgba(255,255,255,0.2)',
+    innerShadow: 'inset 0 1px 2px rgba(255,255,255,0.25), inset 0 -1px 1px rgba(0,0,0,0.35)',
     label: 'ELITE',
   },
   signature: {
@@ -1106,8 +1110,11 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
           >
             {/* ROUND 7 — LEFT: Wordmark + Estimate/Client/Address block
                 stacked vertically, left-aligned. Was previously split across
-                left (wordmark) and right (estimate info) columns. */}
-            <div>
+                left (wordmark) and right (estimate info) columns.
+                ROUND 10 FIX 1 — flexShrink: 0 locks wordmark block to its
+                natural width so Build Summary growth consumes the empty
+                gap between wordmark and plaque, NOT the wordmark itself. */}
+            <div style={{ flexShrink: 0 }}>
               {/* Wordmark */}
               <div
                 style={{
@@ -1224,9 +1231,13 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
               )}
 
               {/* ROUND 7 — BUILD SUMMARY panel, now a sibling of the price plaque.
-                  Fixed height 120px to match plaque. Grows horizontally via CSS
-                  columnWidth (browser auto-fits columns to panel width). When
-                  items exceed maxWidth, horizontal scroll takes over. */}
+                  Fixed height 120px to match plaque.
+                  ROUND 10 FIX 1 — panel now grows horizontally WITHOUT BOUND.
+                  maxWidth and overflowX: auto removed so content is ALWAYS
+                  visible; CSS multi-column (columnWidth: 160) auto-adds
+                  columns as the panel widens. width: auto lets the panel
+                  consume the empty space between the (flexShrink:0) wordmark
+                  block and the rightmost price plaque. */}
               <div
                 style={{
                   height: 120,
@@ -1235,8 +1246,8 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                   border: '1px solid rgba(212,168,83,0.10)',
                   borderRadius: 8,
                   minWidth: 240,
-                  maxWidth: 560,
-                  overflowX: 'auto',
+                  width: 'auto',
+                  overflowX: 'visible',
                   overflowY: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
@@ -1790,22 +1801,26 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                     const hasImg = Boolean(imageUrl);
                     // FIX 1 — lighting (accessories) cards ALWAYS show steppers.
                     const isLighting = activeCategory === 'accessories';
-                    // ROUND 5 FIX — categories that render the full 80px visual
-                    // image strip at the top of the card. Lighting and "other"
-                    // categories (design/foundation/framing/extras/protection)
-                    // skip the strip entirely and use a taller text layout so
-                    // the stepper / price line stays visible.
+                    // ROUND 5 / ROUND 10 FIX 3 — categories that render the full
+                    // 80px visual image strip at the top of the card. Lighting
+                    // (accessories) is now included so Jack can upload fixture
+                    // photos via Settings > Price Book. Non-visual categories
+                    // (design/foundation/framing/extras/protection) skip the
+                    // strip and use a taller text layout so the stepper /
+                    // price line stays visible.
                     const hasImageStrip =
                       activeCategory === 'decking' ||
                       activeCategory === 'railing' ||
                       activeCategory === 'skirting' ||
                       activeCategory === 'privacy' ||
-                      activeCategory === 'pergolas';
-                    // ROUND 5 FIX — explicit card minHeight so the grid cannot
-                    // collapse rows to 22px. Cards with image strip need ~170px
-                    // (80px strip + content); cards without need ~140px so the
-                    // stepper / price row is never clipped.
-                    const cardMinHeight = hasImageStrip ? 170 : 140;
+                      activeCategory === 'pergolas' ||
+                      activeCategory === 'accessories';
+                    // ROUND 5 FIX / ROUND 10 FIX 3 — explicit card minHeight so
+                    // the grid cannot collapse rows. Lighting cards need 180px
+                    // (80px strip + stepper row + description) so nothing
+                    // clips. Other strip categories stay at 170px; non-strip
+                    // categories at 140px.
+                    const cardMinHeight = isLighting ? 180 : hasImageStrip ? 170 : 140;
                     const isQty =
                       isLighting ||
                       opt.calculationType === 'quantity' ||
@@ -1819,6 +1834,13 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                     // FIX 3 — tier classification label (null for categories without a
                     // clear price range, e.g. railing uses componentized pricing).
                     const tier = getTierFromPrice(activeCategory, opt.priceDelta);
+                    // ROUND 10 FIX 4 — warranty badge only renders on the
+                    // extended 10-year warranty card within the protection
+                    // category. If the category grows to multiple tiers
+                    // later, this flag should check for the elite/extended
+                    // tier item only.
+                    const isWarrantyCard =
+                      activeCategory === 'protection' && opt.id === 'ext_warranty_10';
 
                     return (
                       <button
@@ -1834,12 +1856,97 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                         // ROUND 5 FIX — explicit minHeight anchors the grid row
                         // so cards can't collapse. overflow hidden is safe here
                         // because each card has reserved vertical space.
+                        // ROUND 10 FIX 4 — position: relative so the warranty
+                        // certification badge can anchor top-right of the
+                        // card for protection-category items.
                         style={{
                           minWidth: 0,
-                          minHeight: cardMinHeight,
+                          minHeight: isWarrantyCard ? 200 : cardMinHeight,
                           overflow: 'hidden',
+                          position: 'relative',
                         }}
                       >
+                        {/* ROUND 10 FIX 4 — 10-Year Craftsmanship Warranty
+                            certified stamp. Octagonal gold badge with
+                            radial gradient matching the SIGNATURE coin
+                            palette. Three-line type inside reads as a
+                            certified seal. Rendered only on the extended
+                            warranty card. */}
+                        {isWarrantyCard && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: 10,
+                              right: 10,
+                              width: 80,
+                              height: 80,
+                              clipPath:
+                                'polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%)',
+                              background:
+                                'radial-gradient(circle at 30% 25%, #F5D487 0%, #D4A853 45%, #A88238 100%)',
+                              boxShadow:
+                                'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.45)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 1,
+                              padding: '2px',
+                              pointerEvents: 'none',
+                              zIndex: 5,
+                              textAlign: 'center',
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 800,
+                                color: '#0A0A0A',
+                                fontFamily: FONT_DISPLAY,
+                                letterSpacing: 0.5,
+                                lineHeight: 1,
+                              }}
+                            >
+                              10-YEAR
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 6,
+                                fontWeight: 700,
+                                color: '#0A0A0A',
+                                fontFamily: FONT_BODY,
+                                letterSpacing: 0.8,
+                                lineHeight: 1,
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              Craftsmanship
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 7,
+                                fontWeight: 800,
+                                color: '#0A0A0A',
+                                fontFamily: FONT_DISPLAY,
+                                letterSpacing: 1.2,
+                                lineHeight: 1,
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              Warranty
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 9,
+                                color: 'rgba(10,10,10,0.55)',
+                                lineHeight: 0.8,
+                                marginTop: 1,
+                              }}
+                            >
+                              {'\u2605\u2605\u2605'}
+                            </div>
+                          </div>
+                        )}
                         {/* Image / swatch — only for categories with visual material */}
                         {hasImageStrip && (
                           <div
@@ -1851,14 +1958,21 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                               // it shows through if the manufacturer <img>
                               // 404s (onError hides the broken img; the
                               // gradient beneath remains visible).
+                              // ROUND 10 FIX 3 — lighting cards with NO image
+                              // use a near-black placeholder background
+                              // instead of the loud colour gradient, so the
+                              // empty slot reads as a clean upload target.
                               height: 80,
                               flexShrink: 0,
                               position: 'relative',
                               overflow: 'hidden',
-                              background: `linear-gradient(135deg, ${opt.imageColor}, ${shade(
-                                opt.imageColor,
-                                -0.2
-                              )})`,
+                              background:
+                                isLighting && !hasImg
+                                  ? 'rgba(255,255,255,0.02)'
+                                  : `linear-gradient(135deg, ${opt.imageColor}, ${shade(
+                                      opt.imageColor,
+                                      -0.2
+                                    )})`,
                             }}
                           >
                             {imageUrl && (
@@ -1893,36 +2007,41 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                                 }}
                               />
                             )}
-                            {/* ROUND 6 FIX 1 — Circular tier badge (coin
-                                style), top-right. Mirrors the 4-colour sticker
-                                palette on Luxury Decking's physical showroom
-                                samples: white Select, black Premium, silver
-                                Elite, gold Signature. No text inside — the
-                                radial gradient + inner/outer shadows read as a
-                                metallic sticker, and the tooltip gives QA /
-                                desktop users the label on hover. */}
-                            {tier && (
+                            {/* ROUND 10 FIX 3 — "NO IMAGE" placeholder for
+                                lighting cards without an uploaded photo.
+                                Signals to Jack where to drop fixture photos
+                                via Settings > Price Book. */}
+                            {isLighting && !hasImg && (
                               <div
-                                title={TIER_BADGE[tier].label}
                                 style={{
-                                  width: 24,
-                                  height: 24,
-                                  borderRadius: '50%',
-                                  background: TIER_BADGE[tier].bg,
-                                  border: `1.5px solid ${TIER_BADGE[tier].ring}`,
-                                  boxShadow: `${TIER_BADGE[tier].innerShadow}, 0 2px 6px rgba(0,0,0,0.4)`,
                                   position: 'absolute',
-                                  top: 8,
-                                  right: 8,
-                                  zIndex: 3,
-                                  flexShrink: 0,
+                                  inset: 0,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: 7,
+                                  letterSpacing: 2,
+                                  textTransform: 'uppercase',
+                                  color: 'rgba(212,168,83,0.2)',
+                                  fontWeight: 700,
+                                  fontFamily: FONT_BODY,
+                                  pointerEvents: 'none',
                                 }}
-                              />
+                              >
+                                No Image
+                              </div>
                             )}
-                            {/* Selected checkmark — moved to bottom-right so
-                                it doesn't collide with the tier coin when
-                                both are present. Card's gold outer border
-                                still communicates "selected" at a glance. */}
+                            {/* ROUND 10 FIX 2b — Tier coin MOVED from the
+                                image strip to the dark content area below
+                                (rendered at the bottom of the content
+                                block). This change keeps the photo clean
+                                for the material grain and puts the tier
+                                indicator in the text area where it can't
+                                fight the checkmark for attention. */}
+                            {/* Selected checkmark stays at bottom-right of
+                                image strip — it is the selected-state
+                                indicator on the photo, distinct from the
+                                tier coin in the content area. */}
                             {sel && (
                               <div
                                 style={{
@@ -1977,8 +2096,35 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                             flex: 1,
                             display: 'flex',
                             flexDirection: 'column',
+                            // ROUND 10 FIX 2b — position relative so the tier
+                            // coin (absolutely positioned, bottom-right) can
+                            // anchor inside the content area instead of the
+                            // image strip.
+                            position: 'relative',
                           }}
                         >
+                          {/* ROUND 10 FIX 2b — Tier coin, now in the dark
+                              content area at bottom-right. Reads as a
+                              brushed-metal sticker on dark wood. Tooltip
+                              label for QA / desktop hover. */}
+                          {tier && (
+                            <div
+                              title={TIER_BADGE[tier].label}
+                              style={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: '50%',
+                                background: TIER_BADGE[tier].bg,
+                                border: `1.5px solid ${TIER_BADGE[tier].ring}`,
+                                boxShadow: `${TIER_BADGE[tier].innerShadow}, 0 2px 6px rgba(0,0,0,0.4)`,
+                                position: 'absolute',
+                                bottom: 10,
+                                right: 10,
+                                zIndex: 4,
+                                flexShrink: 0,
+                              }}
+                            />
+                          )}
                           {/* ROUND 5 FIX — on cards without the image strip,
                               the brand label lives above the product name */}
                           {!hasImageStrip && opt.brand && (
