@@ -85,6 +85,23 @@ const FALLBACK_PREVIEW_COLOR = { primary: '#8A7A5E', secondary: '#6F5D48' };
 const getPreviewColor = (tierId: string | undefined) =>
   (tierId && TIER_TO_PREVIEW_COLOR[tierId]) || FALLBACK_PREVIEW_COLOR;
 
+// FIX 3 — Derive a visible tier classification label from the priceDelta
+// magnitude. Applied only to categories where PRICING_DATA uses per-unit
+// priceDelta values (decking is stored as raw-minus-base, skirting as
+// absolute per-sqft cost). Returns null for categories without a clear
+// price range (railing uses componentized pricing with mostly zeroed
+// deltas, so labeling by delta would mislead).
+const getTierFromPrice = (
+  category: string,
+  priceDelta: number
+): { label: string; color: string } | null => {
+  if (category !== 'decking' && category !== 'skirting') return null;
+  if (priceDelta < 5) return { label: 'SELECT', color: '#7B8B5E' }; // green
+  if (priceDelta < 15) return { label: 'PREMIUM', color: '#C27A3A' }; // orange
+  if (priceDelta < 30) return { label: 'ELITE', color: '#5B9BD5' }; // blue
+  return { label: 'SIGNATURE', color: '#D4A853' }; // gold
+};
+
 const fmtCAD = (n: number) =>
   new Intl.NumberFormat('en-CA', {
     style: 'currency',
@@ -297,8 +314,6 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
   toggleFullScreen,
 }) => {
   const [panelOpen, setPanelOpen] = useState<boolean>(true);
-  const [chipPopoverOpen, setChipPopoverOpen] = useState<boolean>(false);
-  const popoverRef = useRef<HTMLDivElement | null>(null);
   const firstSpecInputRef = useRef<HTMLInputElement | null>(null);
 
   // Auto-focus the first input in the category-inputs strip when the category
@@ -313,18 +328,6 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
       return () => window.clearTimeout(id);
     }
   }, [activeCategory]);
-
-  // Close the "+N more" popover on outside-click
-  useEffect(() => {
-    if (!chipPopoverOpen) return;
-    const onDoc = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setChipPopoverOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [chipPopoverOpen]);
 
   // --- Price book images (same pattern as CustomEstimator) ---
   const priceBookImages = useMemo(() => {
@@ -588,13 +591,11 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
   const total = Math.round(pricingSummary.subTotal || 0);
   const monthly = pricingSummary.monthly || Math.round(total * FINANCING_FACTOR);
 
-  // Build summary chips from pricingSummary.impacts (already computed by parent)
+  // Build summary line items from pricingSummary.impacts (already computed by parent).
+  // Rendered in the BUILD SUMMARY panel directly under the price plaque (FIX 5).
   const chips = (pricingSummary.impacts || [])
     .filter((imp: any) => typeof imp.value === 'number')
     .map((imp: any) => ({ label: imp.label, value: Math.round(imp.value) }));
-  const visibleChips = chips.slice(0, 5);
-  const overflowChips = chips.slice(5);
-  const showOverflow = overflowChips.length > 0;
 
   // --- Helpers for per-card state ---
   const isOptionSelected = (catId: string, opt: PricingTier): boolean => {
@@ -1108,74 +1109,159 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                 </div>
               </div>
 
-              {/* PRICE BOX — "plaque" treatment */}
+              {/* FIX 5 — Price plaque + BUILD SUMMARY vertical stack */}
+              {/* ROUND 5 FIX — maxWidth 360 → 280 so the product grid below
+                  gets enough width to render 3 columns at ~198px each at
+                  1568×696 test resolution without squeezing. The build
+                  summary column-wraps internally once items > 6 chips. */}
               <div
                 style={{
-                  background: 'rgba(212,168,83,0.04)',
-                  border: '1px solid rgba(212,168,83,0.12)',
-                  borderTop: '1px solid rgba(212,168,83,0.35)',
-                  borderRadius: 8,
-                  padding: '8px 20px',
-                  minWidth: 200,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  minWidth: 240,
+                  maxWidth: 280,
                 }}
               >
+                {/* PRICE BOX — "plaque" treatment (FIX 2: scaled up for hero moment) */}
                 <div
                   style={{
-                    fontSize: 8,
-                    letterSpacing: 2,
-                    color: 'rgba(212,168,83,0.4)',
-                    textTransform: 'uppercase',
-                    marginBottom: 2,
+                    background: 'rgba(212,168,83,0.04)',
+                    border: '1px solid rgba(212,168,83,0.12)',
+                    borderTop: '1px solid rgba(212,168,83,0.35)',
+                    borderRadius: 8,
+                    padding: '14px 28px',
+                    minWidth: 240,
                   }}
                 >
-                  Total Project Investment
-                </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <span
+                  <div
                     style={{
-                      fontSize: 36,
-                      fontWeight: 800,
-                      color: 'var(--lux-gold)',
-                      fontFamily: FONT_DISPLAY,
-                      lineHeight: 1,
+                      fontSize: 10,
+                      letterSpacing: 2,
+                      color: 'rgba(212,168,83,0.4)',
+                      textTransform: 'uppercase',
+                      marginBottom: 2,
                     }}
                   >
-                    {fmtCAD(total)}
-                  </span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>+ HST</span>
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'baseline',
-                    gap: 4,
-                    justifyContent: 'flex-end',
-                    marginTop: 4,
-                  }}
-                >
-                  <span
+                    Total Project Investment
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span
+                      style={{
+                        fontSize: 52,
+                        fontWeight: 800,
+                        color: 'var(--lux-gold)',
+                        fontFamily: FONT_DISPLAY,
+                        lineHeight: 1,
+                      }}
+                    >
+                      {fmtCAD(total)}
+                    </span>
+                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)' }}>+ HST</span>
+                  </div>
+                  <div
                     style={{
-                      fontSize: 18,
-                      fontWeight: 600,
-                      color: 'var(--lux-blue)',
-                      fontFamily: FONT_DISPLAY,
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: 4,
+                      justifyContent: 'flex-end',
+                      marginTop: 4,
                     }}
                   >
-                    {fmtCAD(monthly)}
-                  </span>
-                  <span style={{ fontSize: 10, color: 'rgba(91,155,213,0.5)' }}>/mo</span>
+                    <span
+                      style={{
+                        fontSize: 26,
+                        fontWeight: 600,
+                        color: 'var(--lux-blue)',
+                        fontFamily: FONT_DISPLAY,
+                      }}
+                    >
+                      {fmtCAD(monthly)}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'rgba(91,155,213,0.5)' }}>/mo</span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 7,
+                      letterSpacing: 1.5,
+                      color: 'rgba(91,155,213,0.45)',
+                      textTransform: 'uppercase',
+                      textAlign: 'right',
+                      marginTop: 2,
+                    }}
+                  >
+                    Financing Available O.A.C.
+                  </div>
                 </div>
+
+                {/* FIX 5 — BUILD SUMMARY itemized list, stacked directly under plaque.
+                    Auto-switches to 2-column when items > 6 so it never overlaps cards. */}
                 <div
                   style={{
-                    fontSize: 7,
-                    letterSpacing: 1.5,
-                    color: 'rgba(91,155,213,0.45)',
-                    textTransform: 'uppercase',
-                    textAlign: 'right',
-                    marginTop: 2,
+                    marginTop: 10,
+                    padding: '10px 14px',
+                    background: 'rgba(212,168,83,0.02)',
+                    border: '1px solid rgba(212,168,83,0.08)',
+                    borderRadius: 8,
+                    maxHeight: 280,
+                    overflowY: 'auto',
+                    textAlign: 'left',
                   }}
                 >
-                  Financing Available O.A.C.
+                  <div
+                    style={{
+                      fontSize: 9,
+                      letterSpacing: 2,
+                      color: 'rgba(212,168,83,0.35)',
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      marginBottom: 6,
+                    }}
+                  >
+                    Build Summary
+                  </div>
+                  {chips.length === 0 ? (
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: 'rgba(232,224,212,0.25)',
+                        fontStyle: 'italic',
+                        padding: '4px 0',
+                      }}
+                    >
+                      No upgrades selected
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        columnCount: chips.length > 6 ? 2 : 1,
+                        columnGap: 16,
+                      }}
+                    >
+                      {chips.map((item: any, i: number) => (
+                        <div
+                          key={i}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            gap: 8,
+                            padding: '3px 0',
+                            borderBottom: '1px solid rgba(212,168,83,0.08)',
+                            fontSize: 11,
+                            fontFamily: FONT_BODY,
+                            breakInside: 'avoid',
+                          }}
+                        >
+                          <span style={{ color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.label}
+                          </span>
+                          <span style={{ color: 'var(--lux-gold)', fontWeight: 600, flexShrink: 0 }}>
+                            ${item.value.toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1441,13 +1527,20 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                 <div
                   style={{
                     display: 'grid',
+                    // FIX 4 — minmax(0, 1fr) prevents grid items from growing
+                    // past their cell when price-delta text appears.
                     gridTemplateColumns:
                       activeOptions.length <= 4
-                        ? `repeat(${Math.max(activeOptions.length, 1)}, 1fr)`
-                        : 'repeat(3, 1fr)',
+                        ? `repeat(${Math.max(activeOptions.length, 1)}, minmax(0, 1fr))`
+                        : 'repeat(3, minmax(0, 1fr))',
                     gap: 10,
                     overflowY: 'auto',
                     flex: 1,
+                    // ROUND 5 FIX — minHeight 0 so the parent flex column
+                    // cannot crush this grid; alignContent start lets each
+                    // row use its cards' natural minHeight instead of
+                    // stretching them to fill.
+                    minHeight: 0,
                     alignContent: 'start',
                     paddingRight: 4,
                   }}
@@ -1456,86 +1549,195 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                     const sel = isOptionSelected(activeCategory, opt);
                     const impact = getOptionImpactValue(activeCategory, opt);
                     const hasImg = priceBookImages.has(opt.id);
+                    // FIX 1 — lighting (accessories) cards ALWAYS show steppers.
+                    const isLighting = activeCategory === 'accessories';
+                    // ROUND 5 FIX — categories that render the full 80px visual
+                    // image strip at the top of the card. Lighting and "other"
+                    // categories (design/foundation/framing/extras/protection)
+                    // skip the strip entirely and use a taller text layout so
+                    // the stepper / price line stays visible.
+                    const hasImageStrip =
+                      activeCategory === 'decking' ||
+                      activeCategory === 'railing' ||
+                      activeCategory === 'skirting' ||
+                      activeCategory === 'privacy' ||
+                      activeCategory === 'pergolas';
+                    // ROUND 5 FIX — explicit card minHeight so the grid cannot
+                    // collapse rows to 22px. Cards with image strip need ~170px
+                    // (80px strip + content); cards without need ~140px so the
+                    // stepper / price row is never clipped.
+                    const cardMinHeight = hasImageStrip ? 170 : 140;
                     const isQty =
-                      opt.calculationType === 'quantity' || opt.id === 'nami_fix';
+                      isLighting ||
+                      opt.calculationType === 'quantity' ||
+                      opt.id === 'nami_fix';
                     const qty =
                       opt.id === 'nami_fix'
                         ? dimensions.namiFixCount
                         : opt.id === 'alum_drink_rail'
                         ? dimensions.drinkRailLF
                         : lightingQuantities[opt.id] || 0;
+                    // FIX 3 — tier classification label (null for categories without a
+                    // clear price range, e.g. railing uses componentized pricing).
+                    const tier = getTierFromPrice(activeCategory, opt.priceDelta);
 
                     return (
                       <button
                         key={opt.id}
                         className={`est-product-card ${sel ? 'selected' : ''}`}
-                        onClick={() => handleOptionClick(activeCategory, opt)}
+                        // FIX 1 — Lighting cards don't call handleOptionClick;
+                        // qty steppers mutate state directly.
+                        onClick={
+                          isLighting
+                            ? undefined
+                            : () => handleOptionClick(activeCategory, opt)
+                        }
+                        // ROUND 5 FIX — explicit minHeight anchors the grid row
+                        // so cards can't collapse. overflow hidden is safe here
+                        // because each card has reserved vertical space.
+                        style={{
+                          minWidth: 0,
+                          minHeight: cardMinHeight,
+                          overflow: 'hidden',
+                        }}
                       >
-                        {/* Image / swatch */}
+                        {/* Image / swatch — only for categories with visual material */}
+                        {hasImageStrip && (
+                          <div
+                            style={{
+                              // ROUND 5 FIX — 80px strip per spec (was 72).
+                              // flexShrink 0 prevents the strip from being
+                              // crushed when card height is tight.
+                              height: 80,
+                              flexShrink: 0,
+                              position: 'relative',
+                              overflow: 'hidden',
+                              background: hasImg
+                                ? 'rgba(0,0,0,0.2)'
+                                : `linear-gradient(135deg, ${opt.imageColor}, ${shade(
+                                    opt.imageColor,
+                                    -0.2
+                                  )})`,
+                            }}
+                          >
+                            {hasImg && (
+                              <img
+                                src={priceBookImages.get(opt.id)}
+                                alt={opt.name}
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                }}
+                              />
+                            )}
+                            {activeCategory === 'decking' && !hasImg && (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  background:
+                                    'repeating-linear-gradient(90deg, transparent, transparent 22px, rgba(0,0,0,0.08) 22px, rgba(0,0,0,0.08) 24px)',
+                                }}
+                              />
+                            )}
+                            {/* FIX 3 — tier classification pill, top-left */}
+                            {tier && (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: 6,
+                                  left: 6,
+                                  zIndex: 2,
+                                  padding: '3px 7px',
+                                  borderRadius: 3,
+                                  background: `${tier.color}26`, // 15% opacity
+                                  border: `1px solid ${tier.color}66`, // 40% opacity
+                                  color: tier.color,
+                                  fontSize: 9,
+                                  letterSpacing: 2,
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  lineHeight: 1,
+                                }}
+                              >
+                                {tier.label}
+                              </div>
+                            )}
+                            {sel && (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: 6,
+                                  right: 6,
+                                  zIndex: 2,
+                                  width: 20,
+                                  height: 20,
+                                  borderRadius: '50%',
+                                  background: 'rgba(212,168,83,0.95)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: 11,
+                                  color: '#0A0A0A',
+                                  fontWeight: 800,
+                                }}
+                              >
+                                {'\u2713'}
+                              </div>
+                            )}
+                            {opt.brand && (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  bottom: 6,
+                                  left: 6,
+                                  zIndex: 2,
+                                  fontSize: 7,
+                                  letterSpacing: 1.5,
+                                  color: 'rgba(255,255,255,0.75)',
+                                  textTransform: 'uppercase',
+                                  background: 'rgba(0,0,0,0.45)',
+                                  padding: '2px 6px',
+                                  borderRadius: 3,
+                                }}
+                              >
+                                {opt.brand}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <div
                           style={{
-                            height: 72,
-                            position: 'relative',
-                            background: hasImg
-                              ? `url(${priceBookImages.get(opt.id)}) center/cover no-repeat`
-                              : `linear-gradient(135deg, ${opt.imageColor}, ${shade(
-                                  opt.imageColor,
-                                  -0.2
-                                )})`,
+                            padding: '10px',
+                            minWidth: 0,
+                            // ROUND 5 FIX — flex column so stepper row gets
+                            // pushed to bottom via margin-top:auto for lighting
+                            // / other categories that have no image strip.
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
                           }}
                         >
-                          {activeCategory === 'decking' && !hasImg && (
+                          {/* ROUND 5 FIX — on cards without the image strip,
+                              the brand label lives above the product name */}
+                          {!hasImageStrip && opt.brand && (
                             <div
                               style={{
-                                position: 'absolute',
-                                inset: 0,
-                                background:
-                                  'repeating-linear-gradient(90deg, transparent, transparent 22px, rgba(0,0,0,0.08) 22px, rgba(0,0,0,0.08) 24px)',
-                              }}
-                            />
-                          )}
-                          {sel && (
-                            <div
-                              style={{
-                                position: 'absolute',
-                                top: 6,
-                                right: 6,
-                                width: 20,
-                                height: 20,
-                                borderRadius: '50%',
-                                background: 'rgba(212,168,83,0.95)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 11,
-                                color: '#0A0A0A',
-                                fontWeight: 800,
-                              }}
-                            >
-                              {'\u2713'}
-                            </div>
-                          )}
-                          {opt.brand && (
-                            <div
-                              style={{
-                                position: 'absolute',
-                                bottom: 4,
-                                left: 6,
-                                fontSize: 7,
+                                fontSize: 8,
                                 letterSpacing: 1.5,
-                                color: 'rgba(255,255,255,0.65)',
+                                color: 'rgba(212,168,83,0.55)',
                                 textTransform: 'uppercase',
-                                background: 'rgba(0,0,0,0.35)',
-                                padding: '2px 6px',
-                                borderRadius: 3,
+                                fontWeight: 700,
+                                marginBottom: 2,
                               }}
                             >
                               {opt.brand}
                             </div>
                           )}
-                        </div>
-
-                        <div style={{ padding: '8px 10px 10px' }}>
                           <div
                             style={{
                               fontSize: 14,
@@ -1543,6 +1745,10 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                               color: sel ? 'var(--lux-gold)' : 'var(--est-text-primary)',
                               fontFamily: FONT_DISPLAY,
                               transition: 'color 0.3s',
+                              // FIX 4 — clip long names, never push card width
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
                             }}
                           >
                             {opt.name}
@@ -1553,6 +1759,10 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                               color: 'var(--est-text-secondary)',
                               marginTop: 2,
                               lineHeight: 1.3,
+                              overflow: 'hidden',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical' as any,
                             }}
                           >
                             {opt.description}
@@ -1564,8 +1774,13 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: 10,
-                                marginTop: 6,
+                                gap: 8,
+                                // ROUND 5 FIX — push stepper row to the bottom
+                                // of the card so it is always visible (primary
+                                // gripe on lighting cards in Round 4).
+                                marginTop: 'auto',
+                                paddingTop: 8,
+                                minWidth: 0,
                               }}
                             >
                               <button
@@ -1582,16 +1797,19 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                                     }));
                                   else handleQtyChange(opt.id, -1);
                                 }}
-                                style={qtyBtnStyle}
+                                style={isLighting ? lightingQtyBtnStyle : qtyBtnStyle}
                               >
-                                -
+                                {'\u2212'}
                               </button>
                               <span
                                 style={{
-                                  fontSize: 12,
-                                  fontWeight: 800,
-                                  color: 'var(--est-text-primary)',
-                                  minWidth: 20,
+                                  fontSize: isLighting ? 16 : 12,
+                                  fontWeight: isLighting ? 600 : 800,
+                                  color: isLighting
+                                    ? 'var(--lux-gold)'
+                                    : 'var(--est-text-primary)',
+                                  fontFamily: FONT_BODY,
+                                  minWidth: 24,
                                   textAlign: 'center',
                                 }}
                               >
@@ -1611,21 +1829,45 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                                     }));
                                   else handleQtyChange(opt.id, 1);
                                 }}
-                                style={qtyBtnStyle}
+                                style={isLighting ? lightingQtyBtnStyle : qtyBtnStyle}
                               >
                                 +
                               </button>
+                              {/* FIX 1 — lighting shows live +$ next to steppers when qty > 0 */}
+                              {isLighting && qty > 0 && (
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    color: 'var(--lux-gold)',
+                                    fontFamily: FONT_BODY,
+                                    marginLeft: 'auto',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }}
+                                >
+                                  +${Math.round(impact).toLocaleString()}
+                                </span>
+                              )}
                             </div>
                           ) : (
                             impact > 0 && (
                               <div
                                 style={{
                                   fontSize: 10,
-                                  marginTop: 4,
+                                  // ROUND 5 FIX — pin price delta to bottom
+                                  marginTop: 'auto',
+                                  paddingTop: 6,
                                   fontWeight: 600,
                                   color: sel
                                     ? 'var(--lux-gold)'
                                     : 'rgba(212,168,83,0.45)',
+                                  // FIX 4 — clip long price tags
+                                  display: 'block',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
                                 }}
                               >
                                 + ${Math.round(impact).toLocaleString()}
@@ -1638,108 +1880,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                   })}
                 </div>
 
-                {/* Build summary chips */}
-                {chips.length > 0 && (
-                  <div
-                    style={{
-                      marginTop: 8,
-                      flexShrink: 0,
-                      borderTop: '1px solid rgba(212,168,83,0.08)',
-                      paddingTop: 8,
-                      display: 'flex',
-                      gap: 6,
-                      flexWrap: 'wrap',
-                      alignItems: 'center',
-                      position: 'relative',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 8,
-                        letterSpacing: 2,
-                        color: 'rgba(212,168,83,0.20)',
-                        textTransform: 'uppercase',
-                        marginRight: 4,
-                        fontWeight: 700,
-                      }}
-                    >
-                      CURRENT BUILD
-                    </span>
-                    {visibleChips.map((item: any, i: number) => (
-                      <span key={i} style={chipStyle}>
-                        {item.label} {'\u00B7'} ${item.value.toLocaleString()}
-                      </span>
-                    ))}
-                    {showOverflow && (
-                      <div ref={popoverRef} style={{ position: 'relative' }}>
-                        <button
-                          onClick={() => setChipPopoverOpen((v) => !v)}
-                          style={{
-                            ...chipStyle,
-                            cursor: 'pointer',
-                            color: 'var(--lux-gold)',
-                            fontWeight: 700,
-                            border: '1px solid rgba(212,168,83,0.25)',
-                          }}
-                        >
-                          +{overflowChips.length} more
-                        </button>
-                        {chipPopoverOpen && (
-                          <div
-                            style={{
-                              position: 'absolute',
-                              right: 0,
-                              bottom: '100%',
-                              marginBottom: 8,
-                              background: 'rgba(17,17,17,0.98)',
-                              border: '1px solid rgba(212,168,83,0.2)',
-                              borderRadius: 6,
-                              padding: '10px 12px',
-                              minWidth: 280,
-                              maxWidth: 420,
-                              maxHeight: 260,
-                              overflowY: 'auto',
-                              zIndex: 50,
-                              boxShadow: '0 6px 24px rgba(0,0,0,0.5)',
-                            }}
-                          >
-                            <div
-                              style={{
-                                fontSize: 8,
-                                letterSpacing: 2,
-                                color: 'var(--lux-gold)',
-                                textTransform: 'uppercase',
-                                fontWeight: 700,
-                                marginBottom: 6,
-                              }}
-                            >
-                              All Line Items
-                            </div>
-                            {chips.map((item: any, i: number) => (
-                              <div
-                                key={i}
-                                style={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  gap: 12,
-                                  padding: '4px 0',
-                                  borderBottom: '1px solid rgba(255,255,255,0.04)',
-                                  fontSize: 10,
-                                  color: 'var(--est-text-primary)',
-                                }}
-                              >
-                                <span style={{ opacity: 0.8 }}>{item.label}</span>
-                                <span style={{ color: 'var(--lux-gold)', fontWeight: 700 }}>
-                                  ${item.value.toLocaleString()}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* FIX 5 — bottom chip strip removed; itemized list now lives under the price plaque */}
               </div>
             </div>
           </div>
@@ -1798,15 +1939,21 @@ const qtyBtnStyle: React.CSSProperties = {
   lineHeight: 1,
 };
 
-const chipStyle: React.CSSProperties = {
-  padding: '4px 10px',
+// FIX 1 — Lighting cards use a slightly larger, gold-at-60% stepper per spec.
+const lightingQtyBtnStyle: React.CSSProperties = {
+  background: 'rgba(212,168,83,0.6)',
+  color: '#0A0A0A',
+  border: 'none',
+  width: 24,
+  height: 24,
   borderRadius: 4,
-  background: 'rgba(212,168,83,0.05)',
-  border: '1px solid rgba(212,168,83,0.1)',
-  fontSize: 9,
-  color: 'rgba(212,168,83,0.7)',
-  letterSpacing: 0.5,
-  whiteSpace: 'nowrap',
+  fontWeight: 700,
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 16,
+  lineHeight: 1,
 };
 
 /**
