@@ -85,21 +85,65 @@ const FALLBACK_PREVIEW_COLOR = { primary: '#8A7A5E', secondary: '#6F5D48' };
 const getPreviewColor = (tierId: string | undefined) =>
   (tierId && TIER_TO_PREVIEW_COLOR[tierId]) || FALLBACK_PREVIEW_COLOR;
 
-// FIX 3 — Derive a visible tier classification label from the priceDelta
-// magnitude. Applied only to categories where PRICING_DATA uses per-unit
-// priceDelta values (decking is stored as raw-minus-base, skirting as
-// absolute per-sqft cost). Returns null for categories without a clear
-// price range (railing uses componentized pricing with mostly zeroed
-// deltas, so labeling by delta would mislead).
+// ROUND 6 FIX 1 — Tier badges now render as circular, physical-looking coin
+// stickers that mirror the 4-colour palette Jack uses on Luxury Decking's
+// showroom samples. getTierFromPrice returns a KEY; the renderer looks up the
+// TIER_BADGE map for the gradient/ring/shadow/label. Kept to decking +
+// skirting only (railing uses componentized pricing with mostly zeroed
+// deltas, so labelling by delta would mislead).
+type TierKey = 'select' | 'premium' | 'elite' | 'signature';
+
+const TIER_BADGE: Record<TierKey, {
+  bg: string;
+  ring: string;
+  innerShadow: string;
+  label: string;
+}> = {
+  select: {
+    bg: 'radial-gradient(circle at 35% 30%, #FFFFFF 0%, #E8E4DD 70%, #D4CEC3 100%)',
+    ring: 'rgba(255,255,255,0.3)',
+    innerShadow: 'inset 0 1px 2px rgba(0,0,0,0.1), inset 0 -1px 1px rgba(255,255,255,0.5)',
+    label: 'SELECT',
+  },
+  premium: {
+    bg: 'radial-gradient(circle at 35% 30%, #2A2A2A 0%, #0A0A0A 70%, #000000 100%)',
+    ring: 'rgba(255,255,255,0.15)',
+    innerShadow: 'inset 0 1px 2px rgba(255,255,255,0.15), inset 0 -1px 1px rgba(0,0,0,0.5)',
+    label: 'PREMIUM',
+  },
+  elite: {
+    bg: 'radial-gradient(circle at 35% 30%, #F0F0F0 0%, #C0C0C0 40%, #888888 100%)',
+    ring: 'rgba(255,255,255,0.25)',
+    innerShadow: 'inset 0 1px 2px rgba(255,255,255,0.3), inset 0 -1px 1px rgba(0,0,0,0.3)',
+    label: 'ELITE',
+  },
+  signature: {
+    bg: 'radial-gradient(circle at 35% 30%, #F5D487 0%, #D4A853 50%, #A88238 100%)',
+    ring: 'rgba(212,168,83,0.4)',
+    innerShadow: 'inset 0 1px 2px rgba(255,255,255,0.35), inset 0 -1px 1px rgba(0,0,0,0.25)',
+    label: 'SIGNATURE',
+  },
+};
+
+const TIER_ORDER: Record<TierKey, number> = {
+  select: 0,
+  premium: 1,
+  elite: 2,
+  signature: 3,
+};
+
+const tierOrder = (t: TierKey | null): number =>
+  t === null ? 4 : TIER_ORDER[t];
+
 const getTierFromPrice = (
   category: string,
   priceDelta: number
-): { label: string; color: string } | null => {
+): TierKey | null => {
   if (category !== 'decking' && category !== 'skirting') return null;
-  if (priceDelta < 5) return { label: 'SELECT', color: '#7B8B5E' }; // green
-  if (priceDelta < 15) return { label: 'PREMIUM', color: '#C27A3A' }; // orange
-  if (priceDelta < 30) return { label: 'ELITE', color: '#5B9BD5' }; // blue
-  return { label: 'SIGNATURE', color: '#D4A853' }; // gold
+  if (priceDelta < 5) return 'select';
+  if (priceDelta < 15) return 'premium';
+  if (priceDelta < 30) return 'elite';
+  return 'signature';
 };
 
 const fmtCAD = (n: number) =>
@@ -314,6 +358,9 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
   toggleFullScreen,
 }) => {
   const [panelOpen, setPanelOpen] = useState<boolean>(true);
+  // ROUND 6 FIX 3 — Sort-by-tier toggle. Persists across category changes
+  // (Jack treats it as a preference, not a per-tab setting).
+  const [sortByTier, setSortByTier] = useState<boolean>(false);
   const firstSpecInputRef = useRef<HTMLInputElement | null>(null);
 
   // Auto-focus the first input in the category-inputs strip when the category
@@ -585,6 +632,20 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
   // --- Derived values for display ---
   const activeCatObj = PRICING_DATA.find((c) => c.id === activeCategory);
   const activeOptions = activeCatObj?.options || [];
+  // ROUND 6 FIX 3 — When sortByTier is on and the current category actually
+  // supports tiers (decking / skirting), re-order the options Select -> Premium
+  // -> Elite -> Signature. Otherwise render in the original PRICING_DATA order.
+  // We sort a shallow copy so we don't mutate PRICING_DATA.
+  const tierSortable =
+    activeCategory === 'decking' || activeCategory === 'skirting';
+  const orderedOptions =
+    sortByTier && tierSortable
+      ? [...activeOptions].sort(
+          (a, b) =>
+            tierOrder(getTierFromPrice(activeCategory, a.priceDelta)) -
+            tierOrder(getTierFromPrice(activeCategory, b.priceDelta))
+        )
+      : activeOptions;
   const activeDecking = selections.decking;
 
   // Total and monthly from pricingSummary (preserve existing logic exactly)
@@ -1524,14 +1585,116 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                     ))}
                   </div>
                 )}
+                {/* ROUND 6 FIX 2 — Tier legend strip. Only renders for
+                    decking + skirting (the two categories where tier badges
+                    actually appear on cards). Left cluster: TIERS label + 4
+                    mini coin badges with tier names. Right: sort-by-tier
+                    toggle (FIX 3). */}
+                {tierSortable && (
+                  <div
+                    style={{
+                      flexShrink: 0,
+                      height: 32,
+                      background: 'rgba(212,168,83,0.02)',
+                      borderTop: '1px solid rgba(212,168,83,0.06)',
+                      borderBottom: '1px solid rgba(212,168,83,0.06)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0 10px',
+                      marginBottom: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 16,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 8,
+                          letterSpacing: 2,
+                          color: 'rgba(212,168,83,0.4)',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Tiers
+                      </span>
+                      {(['select', 'premium', 'elite', 'signature'] as TierKey[]).map(
+                        (key) => (
+                          <div
+                            key={key}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 16,
+                                height: 16,
+                                borderRadius: '50%',
+                                background: TIER_BADGE[key].bg,
+                                border: `1px solid ${TIER_BADGE[key].ring}`,
+                                boxShadow: `${TIER_BADGE[key].innerShadow}, 0 1px 3px rgba(0,0,0,0.35)`,
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: 9,
+                                letterSpacing: 1.5,
+                                color: 'rgba(255,255,255,0.55)',
+                                textTransform: 'uppercase',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {TIER_BADGE[key].label}
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                    {/* ROUND 6 FIX 3 — Sort-by-tier toggle. Persists across
+                        category switches; treated as a preference, not a
+                        per-tab setting. */}
+                    <button
+                      type="button"
+                      onClick={() => setSortByTier((v) => !v)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 4,
+                        border: sortByTier
+                          ? 'none'
+                          : '1px solid rgba(212,168,83,0.20)',
+                        background: sortByTier ? '#D4A853' : 'transparent',
+                        color: sortByTier ? '#0A0A0A' : 'rgba(212,168,83,0.5)',
+                        fontSize: 9,
+                        letterSpacing: 2,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        lineHeight: 1,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {sortByTier ? '\u2713 Sorted by Tier' : 'Sort by Tier'}
+                    </button>
+                  </div>
+                )}
                 <div
                   style={{
                     display: 'grid',
                     // FIX 4 — minmax(0, 1fr) prevents grid items from growing
                     // past their cell when price-delta text appears.
                     gridTemplateColumns:
-                      activeOptions.length <= 4
-                        ? `repeat(${Math.max(activeOptions.length, 1)}, minmax(0, 1fr))`
+                      orderedOptions.length <= 4
+                        ? `repeat(${Math.max(orderedOptions.length, 1)}, minmax(0, 1fr))`
                         : 'repeat(3, minmax(0, 1fr))',
                     gap: 10,
                     overflowY: 'auto',
@@ -1545,7 +1708,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                     paddingRight: 4,
                   }}
                 >
-                  {activeOptions.map((opt) => {
+                  {orderedOptions.map((opt) => {
                     const sel = isOptionSelected(activeCategory, opt);
                     const impact = getOptionImpactValue(activeCategory, opt);
                     const hasImg = priceBookImages.has(opt.id);
@@ -1643,34 +1806,41 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                                 }}
                               />
                             )}
-                            {/* FIX 3 — tier classification pill, top-left */}
+                            {/* ROUND 6 FIX 1 — Circular tier badge (coin
+                                style), top-right. Mirrors the 4-colour sticker
+                                palette on Luxury Decking's physical showroom
+                                samples: white Select, black Premium, silver
+                                Elite, gold Signature. No text inside — the
+                                radial gradient + inner/outer shadows read as a
+                                metallic sticker, and the tooltip gives QA /
+                                desktop users the label on hover. */}
                             {tier && (
                               <div
+                                title={TIER_BADGE[tier].label}
                                 style={{
+                                  width: 24,
+                                  height: 24,
+                                  borderRadius: '50%',
+                                  background: TIER_BADGE[tier].bg,
+                                  border: `1.5px solid ${TIER_BADGE[tier].ring}`,
+                                  boxShadow: `${TIER_BADGE[tier].innerShadow}, 0 2px 6px rgba(0,0,0,0.4)`,
                                   position: 'absolute',
-                                  top: 6,
-                                  left: 6,
-                                  zIndex: 2,
-                                  padding: '3px 7px',
-                                  borderRadius: 3,
-                                  background: `${tier.color}26`, // 15% opacity
-                                  border: `1px solid ${tier.color}66`, // 40% opacity
-                                  color: tier.color,
-                                  fontSize: 9,
-                                  letterSpacing: 2,
-                                  fontWeight: 700,
-                                  textTransform: 'uppercase',
-                                  lineHeight: 1,
+                                  top: 8,
+                                  right: 8,
+                                  zIndex: 3,
+                                  flexShrink: 0,
                                 }}
-                              >
-                                {tier.label}
-                              </div>
+                              />
                             )}
+                            {/* Selected checkmark — moved to bottom-right so
+                                it doesn't collide with the tier coin when
+                                both are present. Card's gold outer border
+                                still communicates "selected" at a glance. */}
                             {sel && (
                               <div
                                 style={{
                                   position: 'absolute',
-                                  top: 6,
+                                  bottom: 6,
                                   right: 6,
                                   zIndex: 2,
                                   width: 20,
