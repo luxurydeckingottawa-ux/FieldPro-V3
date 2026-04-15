@@ -92,7 +92,7 @@ const getPreviewColor = (tierId: string | undefined) =>
 const TIER_TO_TEXTURE_URL: Record<string, string> = {
   // Fiberon
   fiberon_goodlife_weekender: 'https://www.fiberondecking.com/cdn/shop/files/zqxfitddckgp0ji4aabl.jpg',
-  fiberon_goodlife_escapes:   'https://www.fiberondecking.com/cdn/shop/files/mlju9te8hqenl9b5jkqs.jpg',
+  fiberon_goodlife_escapes:   'https://www.fiberondecking.com/cdn/shop/files/daxgnnraihi9xszgatio.jpg',
   fiberon_sanctuary:          'https://www.fiberondecking.com/cdn/shop/files/r29ebhu6xgurbiklszqx.jpg',
   fiberon_concordia:          'https://www.fiberondecking.com/cdn/shop/files/vnvui2u2xelnuowbywod.jpg',
   fiberon_paramount:          'https://www.fiberondecking.com/cdn/shop/files/bfayesgr1amxmtdrmyq3.jpg',
@@ -114,6 +114,19 @@ const TIER_TO_TEXTURE_URL: Record<string, string> = {
   // Woodbridge (Clubhouse - their domain is parked, using National Decking CDN which is the Canadian distributor)
   woodbridge_pvc:             'https://nationaldecking.com/wp-content/uploads/2025/05/Royal-Walnut-Texture.webp',
 };
+
+// Skirting reuses the decking texture — same material, skirting board form.
+// Plain wood skirts (skirt_wood, skirt_cedar), PVC skirt (skirt_pvc), and
+// lattice (skirt_lattice) keep their gradient fallback (no photo override).
+TIER_TO_TEXTURE_URL['skirt_fiberon_gl']          = TIER_TO_TEXTURE_URL['fiberon_goodlife_weekender'];
+TIER_TO_TEXTURE_URL['skirt_fiberon_sanctuary']   = TIER_TO_TEXTURE_URL['fiberon_sanctuary'];
+TIER_TO_TEXTURE_URL['skirt_fiberon_concordia']   = TIER_TO_TEXTURE_URL['fiberon_concordia'];
+TIER_TO_TEXTURE_URL['skirt_tt_prime']            = TIER_TO_TEXTURE_URL['tt_prime'];
+TIER_TO_TEXTURE_URL['skirt_tt_legacy']           = TIER_TO_TEXTURE_URL['tt_legacy'];
+TIER_TO_TEXTURE_URL['skirt_azek_harvest']        = TIER_TO_TEXTURE_URL['azek_harvest'];
+TIER_TO_TEXTURE_URL['skirt_azek_vintage']        = TIER_TO_TEXTURE_URL['azek_vintage'];
+TIER_TO_TEXTURE_URL['skirt_eva_infinity']        = TIER_TO_TEXTURE_URL['eva_infinity'];
+TIER_TO_TEXTURE_URL['skirt_eva_apex']            = TIER_TO_TEXTURE_URL['eva_apex'];
 
 // ROUND 6 FIX 1 — Tier badges now render as circular, physical-looking coin
 // stickers that mirror the 4-colour palette Jack uses on Luxury Decking's
