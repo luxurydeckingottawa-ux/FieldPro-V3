@@ -1,11 +1,48 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import type { PricingTier, Dimensions } from '../EstimatorCalculatorView';
 
 /* ------------------------------------------------------------------ */
-/*  Framing option data                                                */
+/*  Real-world dimensions (in feet). 1 Three.js unit = 1 foot.        */
+/*                                                                     */
+/*  Deck frame: 8' wide x 12' deep (common residential size)          */
+/*  Joists run front-to-back (12' span).                               */
+/*  Rim joists run left-to-right (8' width).                           */
+/*                                                                     */
+/*  2x8 actual: 1.5" wide x 7.25" tall = 0.125' x 0.604'             */
+/*  2x10 actual: 1.5" wide x 9.25" tall = 0.125' x 0.771'            */
+/*                                                                     */
+/*  At 16" OC on 8' deck: joists at 0, 16, 32, 48, 64, 80, 96"       */
+/*    = 7 total (5 interior + 2 end joists)                            */
+/*  At 12" OC on 8' deck: joists at 0, 12, 24, 36, 48, 60, 72, 84, 96" */
+/*    = 9 total (7 interior + 2 end joists)                            */
+/* ------------------------------------------------------------------ */
+
+const DECK_W = 8;     // 8 feet wide
+const DECK_D = 12;    // 12 feet deep
+const JOIST_W = 0.125; // 1.5 inches
+const H_2x8 = 0.604;  // 7.25 inches
+const H_2x10 = 0.771; // 9.25 inches
+const RIM_W = 0.125;   // rim joist thickness (same as joists)
+
+function joistPositions(oc: number): number[] {
+  // oc in inches, deck width in feet
+  const widthInches = DECK_W * 12;
+  const positions: number[] = [];
+  for (let pos = 0; pos <= widthInches; pos += oc) {
+    positions.push(pos / 12); // convert back to feet
+  }
+  // Ensure the last joist is at the end
+  if (positions[positions.length - 1] < DECK_W - 0.01) {
+    positions.push(DECK_W);
+  }
+  return positions;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Framing options                                                    */
 /* ------------------------------------------------------------------ */
 
 interface FramingOption {
@@ -14,211 +51,88 @@ interface FramingOption {
   name: string;
   advantage: string;
   description: string;
-  joistCount: number;
-  heightMul: number;
+  oc: number; // on-center inches
+  joistH: number;
   material: 'wood' | 'fiberglass';
   badge: string | null;
   priceDelta: number;
 }
 
 const OPTIONS: FramingOption[] = [
-  { id: 'std', pricingId: null, name: '2\u00d78 PT \u00b7 16" OC', advantage: 'Ontario Building Code standard. Included with every deck.', description: 'Standard pressure-treated 2\u00d78 framing at 16" on-centre spacing. Meets Ontario Building Code for residential decks up to 14-foot spans. Included with every project.', joistCount: 11, heightMul: 1, material: 'wood', badge: 'INCLUDED', priceDelta: 0 },
-  { id: '8-12', pricingId: 'upgrade_2x8_12', name: '2\u00d78 PT \u00b7 12" OC', advantage: '33% more joists \u2014 reduces bounce underfoot.', description: 'Closer joist spacing eliminates flex and bounce, especially with composite decking. Recommended for hot tubs, outdoor kitchens, or diagonal board patterns.', joistCount: 15, heightMul: 1, material: 'wood', badge: null, priceDelta: 1.95 },
-  { id: '10-16', pricingId: 'upgrade_2x10_16', name: '2\u00d710 PT \u00b7 16" OC', advantage: '28% deeper joists \u2014 longer spans, less flex.', description: 'Larger 2\u00d710 joists span further without mid-span support. Ideal for elevated decks or spans over 14 feet.', joistCount: 11, heightMul: 1.28, material: 'wood', badge: null, priceDelta: 4.49 },
-  { id: '10-12', pricingId: 'upgrade_2x10_12', name: '2\u00d710 PT \u00b7 12" OC', advantage: 'Maximum wood frame \u2014 zero bounce.', description: 'The strongest conventional wood frame. Deeper joists at tighter spacing \u2014 feels like a concrete patio underfoot.', joistCount: 15, heightMul: 1.28, material: 'wood', badge: null, priceDelta: 6.49 },
-  { id: 'fg', pricingId: 'fiberglass_framing', name: 'Fiberglass Composite', advantage: 'Will not rot, warp, or split. Lifetime warranty.', description: 'Owens Corning fiberglass composite joists. Immune to moisture, insects, and UV. Zero maintenance for the life of the structure.', joistCount: 11, heightMul: 1.28, material: 'fiberglass', badge: 'PREMIUM', priceDelta: 29.95 },
+  { id: 'std', pricingId: null, name: '2\u00d78 PT \u00b7 16" OC', advantage: 'Ontario Building Code standard. Included with every deck.', description: 'Standard pressure-treated 2\u00d78 framing at 16" on-centre spacing. Meets Ontario Building Code for residential decks up to 14-foot spans. Included with every project.', oc: 16, joistH: H_2x8, material: 'wood', badge: 'INCLUDED', priceDelta: 0 },
+  { id: '8-12', pricingId: 'upgrade_2x8_12', name: '2\u00d78 PT \u00b7 12" OC', advantage: '33% more joists \u2014 reduces bounce underfoot.', description: 'Closer joist spacing eliminates flex and bounce, especially with composite decking. Recommended for hot tubs, outdoor kitchens, or diagonal board patterns.', oc: 12, joistH: H_2x8, material: 'wood', badge: null, priceDelta: 1.95 },
+  { id: '10-16', pricingId: 'upgrade_2x10_16', name: '2\u00d710 PT \u00b7 16" OC', advantage: '28% deeper joists \u2014 longer spans, less flex.', description: 'Larger 2\u00d710 joists span further without mid-span support. Ideal for elevated decks or spans over 14 feet.', oc: 16, joistH: H_2x10, material: 'wood', badge: null, priceDelta: 4.49 },
+  { id: '10-12', pricingId: 'upgrade_2x10_12', name: '2\u00d710 PT \u00b7 12" OC', advantage: 'Maximum wood frame \u2014 zero bounce.', description: 'The strongest conventional wood frame. Deeper joists at tighter spacing \u2014 feels like a concrete patio underfoot.', oc: 12, joistH: H_2x10, material: 'wood', badge: null, priceDelta: 6.49 },
+  { id: 'fg', pricingId: 'fiberglass_framing', name: 'Fiberglass Composite', advantage: 'Will not rot, warp, or split. Lifetime warranty.', description: 'Owens Corning fiberglass composite joists. Immune to moisture, insects, and UV. Zero maintenance for the life of the structure.', oc: 16, joistH: H_2x10, material: 'fiberglass', badge: 'PREMIUM', priceDelta: 29.95 },
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Materials                                                          */
+/*  Wood material with slight colour variation per piece               */
 /* ------------------------------------------------------------------ */
 
-const WOOD_COLOR = new THREE.Color('#C4A060');
-const WOOD_DARK = new THREE.Color('#8B7040');
-const FG_COLOR = new THREE.Color('#4A8B6B');
-const FG_DARK = new THREE.Color('#2E6B4A');
-const POST_COLOR = new THREE.Color('#9B8050');
-const BRACKET_COLOR = new THREE.Color('#A0A8B0');
+function woodMat(base: THREE.Color, seed: number, isGlass: boolean): THREE.MeshStandardMaterial {
+  const c = base.clone();
+  // Slight per-piece hue/lightness variation for realism
+  const vary = ((seed * 7919) % 100) / 100; // deterministic pseudo-random 0–1
+  c.offsetHSL(0, 0, (vary - 0.5) * 0.06);
+  return new THREE.MeshStandardMaterial({
+    color: c,
+    roughness: isGlass ? 0.6 : 0.88,
+    metalness: isGlass ? 0.05 : 0.0,
+  });
+}
 
 /* ------------------------------------------------------------------ */
 /*  3D Scene                                                           */
 /* ------------------------------------------------------------------ */
 
 interface SceneProps {
-  joistCount: number;
-  heightMul: number;
+  oc: number;
+  joistH: number;
   material: 'wood' | 'fiberglass';
 }
 
-/** Single lumber piece */
-const Lumber: React.FC<{
-  position: [number, number, number];
-  size: [number, number, number];
-  color: THREE.Color;
-  opacity?: number;
-  visible?: boolean;
-}> = ({ position, size, color, opacity = 1, visible = true }) => {
-  const ref = useRef<THREE.Mesh>(null);
-
-  useFrame(() => {
-    if (!ref.current) return;
-    const target = visible ? opacity : 0;
-    const current = (ref.current.material as THREE.MeshStandardMaterial).opacity;
-    if (Math.abs(current - target) > 0.01) {
-      (ref.current.material as THREE.MeshStandardMaterial).opacity += (target - current) * 0.12;
-      (ref.current.material as THREE.MeshStandardMaterial).needsUpdate = true;
-    }
-  });
-
-  return (
-    <mesh ref={ref} position={position} castShadow receiveShadow>
-      <boxGeometry args={size} />
-      <meshStandardMaterial
-        color={color}
-        roughness={0.85}
-        metalness={0.02}
-        transparent
-        opacity={visible ? opacity : 0}
-      />
-    </mesh>
-  );
-};
-
-/** Metal bracket */
-const Bracket: React.FC<{
-  position: [number, number, number];
-  visible?: boolean;
-}> = ({ position, visible = true }) => {
-  if (!visible) return null;
-  return (
-    <mesh position={position}>
-      <boxGeometry args={[0.08, 0.12, 0.04]} />
-      <meshStandardMaterial color={BRACKET_COLOR} roughness={0.4} metalness={0.6} />
-    </mesh>
-  );
-};
-
-const DeckFrame: React.FC<SceneProps> = ({ joistCount, heightMul, material }) => {
+const DeckFrame: React.FC<SceneProps> = ({ oc, joistH, material }) => {
   const isG = material === 'fiberglass';
-  const jColor = isG ? FG_COLOR : WOOD_COLOR;
-  const beamColor = isG ? FG_DARK : WOOD_DARK;
+  const baseColor = isG ? new THREE.Color('#4E9070') : new THREE.Color('#C8A665');
+  const rimColor = isG ? new THREE.Color('#3D7558') : new THREE.Color('#B89555');
 
-  // Frame dimensions (Three.js units ≈ feet)
-  const W = 5;        // width
-  const D = 3.5;      // depth
-  const jW = 0.125;   // joist width (1.5" = 0.125ft)
-  const jH = 0.6 * heightMul; // joist height
-  const beamH = 0.7;
-  const beamW = 0.25;
-  const postW = 0.3;
-  const postH = 1.2;
-  const rimW = 0.125;
+  const positions = useMemo(() => joistPositions(oc), [oc]);
 
-  // 15 joist slots
-  const MAX = 15;
-  const slots = useMemo(() => {
-    const arr: number[] = [];
-    for (let i = 0; i < MAX; i++) arr.push(-W / 2 + ((i + 1) / (MAX + 1)) * W);
-    return arr;
-  }, []);
+  // Centre the frame at origin
+  const cx = DECK_W / 2;
+  const cz = DECK_D / 2;
 
-  const vis = useMemo(() => {
-    const s = new Set<number>();
-    if (joistCount >= MAX) for (let i = 0; i < MAX; i++) s.add(i);
-    else for (let i = 0; i < joistCount; i++) s.add(Math.round((i * (MAX - 1)) / (joistCount - 1)));
-    return s;
-  }, [joistCount]);
-
-  const beamY = -postH / 2 - beamH / 2;
-  const joistY = beamY - beamH / 2 - jH / 2 + 0.02;
-  const postY = -postH / 2;
-
-  const posts = [-W * 0.42, -W * 0.14, W * 0.14, W * 0.42];
-
-  // Slow auto-rotation
+  // Slow auto-rotation around Y
   const groupRef = useRef<THREE.Group>(null);
-  useFrame((_, delta) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.05;
-    }
+  useFrame((_, dt) => {
+    if (groupRef.current) groupRef.current.rotation.y += dt * 0.06;
   });
+
+  // Create materials with slight variation
+  const joistMats = useMemo(
+    () => positions.map((_, i) => woodMat(baseColor, i, isG)),
+    [oc, isG] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const rimMat = useMemo(() => woodMat(rimColor, 99, isG), [isG]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <group ref={groupRef}>
-      {/* Posts */}
-      {posts.map((px, i) => (
-        <Lumber key={`post-${i}`}
-          position={[px, postY, 0]}
-          size={[postW, postH, postW]}
-          color={POST_COLOR}
-        />
+      {/* Interior joists — run front to back (along Z axis) */}
+      {positions.map((px, i) => (
+        <mesh key={`j-${i}-${oc}`} position={[px - cx, joistH / 2, 0]} castShadow receiveShadow material={joistMats[i]}>
+          <boxGeometry args={[JOIST_W, joistH, DECK_D - RIM_W * 2]} />
+        </mesh>
       ))}
 
-      {/* Beam (perpendicular to joists) */}
-      <Lumber
-        position={[0, beamY, 0]}
-        size={[W + 0.3, beamH, beamW]}
-        color={beamColor}
-      />
+      {/* Front rim joist — runs across the width */}
+      <mesh position={[0, joistH / 2, cz - RIM_W / 2]} castShadow receiveShadow material={rimMat}>
+        <boxGeometry args={[DECK_W, joistH, RIM_W]} />
+      </mesh>
 
-      {/* Joists — all 15 slots */}
-      {slots.map((jx, i) => (
-        <React.Fragment key={`j-${i}`}>
-          <Lumber
-            position={[jx, joistY, 0]}
-            size={[jW, jH, D]}
-            color={jColor}
-            visible={vis.has(i)}
-          />
-          <Bracket
-            position={[jx, beamY + beamH / 2 + 0.02, 0]}
-            visible={vis.has(i)}
-          />
-        </React.Fragment>
-      ))}
-
-      {/* End joists */}
-      <Lumber position={[-W / 2 - jW / 2, joistY, 0]} size={[jW, jH, D]} color={jColor} />
-      <Lumber position={[W / 2 + jW / 2, joistY, 0]} size={[jW, jH, D]} color={jColor} />
-
-      {/* Rim joist (front) */}
-      <Lumber
-        position={[0, joistY, D / 2 + rimW / 2]}
-        size={[W + jW * 4, jH, rimW]}
-        color={jColor}
-      />
-
-      {/* Ledger (back — always wood) */}
-      <Lumber
-        position={[0, joistY, -D / 2 - rimW / 2]}
-        size={[W + jW * 2, jH, rimW]}
-        color={WOOD_DARK}
-      />
-
-      {/* Blocking at beam line (between visible joists) */}
-      {slots.map((jx, i) => {
-        if (!vis.has(i)) return null;
-        let nextIdx = -1;
-        for (let n = i + 1; n < MAX; n++) { if (vis.has(n)) { nextIdx = n; break; } }
-        if (nextIdx < 0) return null;
-        const nx = slots[nextIdx];
-        const mid = (jx + nx) / 2;
-        const gap = nx - jx - jW;
-        if (gap < 0.05) return null;
-        return (
-          <Lumber key={`blk-${i}`}
-            position={[mid, joistY + jH * 0.1, 0]}
-            size={[gap, jH * 0.75, jW]}
-            color={jColor}
-            opacity={0.8}
-          />
-        );
-      })}
-
-      {/* Ground plane (subtle shadow catcher) */}
-      <mesh position={[0, postY - postH / 2 - 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[8, 6]} />
-        <shadowMaterial transparent opacity={0.15} />
+      {/* Back rim joist (ledger) — runs across the width */}
+      <mesh position={[0, joistH / 2, -(cz - RIM_W / 2)]} castShadow receiveShadow material={rimMat}>
+        <boxGeometry args={[DECK_W, joistH, RIM_W]} />
       </mesh>
     </group>
   );
@@ -236,12 +150,13 @@ interface Props {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Main Component                                                     */
+/*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
 const FramingVisualizer: React.FC<Props> = ({ selectedOption, dimensions, onSelectOption, getImpactValue }) => {
   const activeId = selectedOption?.id ?? null;
   const active = OPTIONS.find(o => o.pricingId === activeId) ?? OPTIONS[0];
+  const jPositions = joistPositions(active.oc);
 
   const [desc, setDesc] = useState(active.description);
   const [vis, setVis] = useState(true);
@@ -261,63 +176,74 @@ const FramingVisualizer: React.FC<Props> = ({ selectedOption, dimensions, onSele
       <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0 }}>
         {/* 3D Canvas */}
         <div style={{
-          flex: '1 1 62%', minWidth: 0, background: 'rgba(255,255,255,0.015)',
+          flex: '1 1 62%', minWidth: 0, background: '#080808',
           borderRadius: 10, border: '1px solid rgba(212,168,83,0.08)',
-          overflow: 'hidden', minHeight: 340,
+          overflow: 'hidden', minHeight: 360, position: 'relative',
         }}>
           <Canvas
             shadows
-            camera={{ position: [4, 3, 4], fov: 35 }}
+            camera={{ position: [8, 6, 10], fov: 30, near: 0.1, far: 100 }}
             style={{ width: '100%', height: '100%' }}
-            gl={{ antialias: true, alpha: true }}
+            gl={{ antialias: true, alpha: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
           >
-            <color attach="background" args={['#0A0A0A']} />
-            <ambientLight intensity={0.4} />
-            <directionalLight
-              position={[5, 8, 5]}
-              intensity={1.2}
-              castShadow
-              shadow-mapSize-width={1024}
-              shadow-mapSize-height={1024}
-            />
-            <directionalLight position={[-3, 4, -2]} intensity={0.3} />
-            <DeckFrame
-              joistCount={active.joistCount}
-              heightMul={active.heightMul}
-              material={active.material}
-            />
+            <color attach="background" args={['#080808']} />
+
+            {/* Lighting */}
+            <ambientLight intensity={0.35} />
+            <directionalLight position={[6, 10, 8]} intensity={1.8} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0002} />
+            <directionalLight position={[-4, 6, -3]} intensity={0.4} color="#B0C0D0" />
+            <pointLight position={[0, 5, 0]} intensity={0.3} />
+
+            <DeckFrame oc={active.oc} joistH={active.joistH} material={active.material} />
+
             <OrbitControls
               enableZoom={false}
               enablePan={false}
-              minPolarAngle={Math.PI / 6}
-              maxPolarAngle={Math.PI / 2.5}
+              minPolarAngle={Math.PI / 8}
+              maxPolarAngle={Math.PI / 2.8}
+              target={[0, 0.3, 0]}
               autoRotate
-              autoRotateSpeed={0.3}
+              autoRotateSpeed={0.4}
             />
           </Canvas>
+
+          {/* Overlay label */}
+          <div style={{
+            position: 'absolute', bottom: 12, left: 0, right: 0,
+            textAlign: 'center', pointerEvents: 'none',
+          }}>
+            <span style={{
+              fontSize: 11, fontWeight: 600, letterSpacing: 0.5,
+              color: 'rgba(212,168,83,0.5)', fontFamily: "'DM Sans', sans-serif",
+            }}>
+              {active.oc}" on centre &middot; {jPositions.length} joists &middot; {active.joistH === H_2x8 ? '2\u00d78' : '2\u00d710'} frame &middot; 8' \u00d7 12' deck
+            </span>
+          </div>
         </div>
 
-        {/* Cards */}
+        {/* Option cards */}
         <div style={{ flex: '0 0 310px', display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto', minHeight: 0 }}>
           {OPTIONS.map(o => {
             const on = o.pricingId === activeId || (o.pricingId === null && activeId === null);
             const imp = o.pricingId ? getImpactValue(o.pricingId) : 0;
+            const jCount = joistPositions(o.oc).length;
             return (
               <button key={o.id} onClick={() => select(o)} aria-pressed={on} style={{
                 display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
                 borderRadius: 8, border: 'none', borderLeft: on ? '3px solid #D4A853' : '3px solid transparent',
-                cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', height: 68, flexShrink: 0,
+                cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', height: 72, flexShrink: 0,
                 transition: 'all 200ms ease',
                 background: on ? 'rgba(212,168,83,0.07)' : 'rgba(255,255,255,0.02)',
               }}>
                 <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: on ? '#E8E0D4' : 'rgba(232,224,212,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: on ? '#E8E0D4' : 'rgba(232,224,212,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.name}</span>
                     {o.badge && <span style={{ fontSize: 7, fontWeight: 800, letterSpacing: 1, padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase' as const, whiteSpace: 'nowrap', flexShrink: 0, background: o.badge === 'PREMIUM' ? 'rgba(74,139,107,0.3)' : 'rgba(212,168,83,0.15)', color: o.badge === 'PREMIUM' ? '#6BCB9B' : '#D4A853' }}>{o.badge}</span>}
                   </div>
-                  <div style={{ fontSize: 10, lineHeight: '14px', color: on ? 'rgba(212,168,83,0.65)' : 'rgba(232,224,212,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{o.advantage}</div>
+                  <div style={{ fontSize: 10, lineHeight: '13px', color: on ? 'rgba(212,168,83,0.6)' : 'rgba(232,224,212,0.28)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.advantage}</div>
+                  <div style={{ fontSize: 9, color: 'rgba(232,224,212,0.2)' }}>{jCount} joists &middot; {o.joistH === H_2x8 ? '7.25"' : '9.25"'} deep</div>
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: on ? '#D4A853' : 'rgba(212,168,83,0.35)', whiteSpace: 'nowrap', flexShrink: 0, textAlign: 'right' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: on ? '#D4A853' : 'rgba(212,168,83,0.35)', whiteSpace: 'nowrap', flexShrink: 0, textAlign: 'right' }}>
                   {o.priceDelta === 0 ? 'Included' : imp > 0 ? `+$${Math.round(imp).toLocaleString()}` : `+$${o.priceDelta.toFixed(2)}/sf`}
                 </div>
               </button>
