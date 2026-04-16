@@ -16,7 +16,7 @@ interface QuoteSelections {
   privacy?: string;
   accessories?: string;
   extras?: string;
-  [key: string]: any;
+  [key: string]: string | undefined;
 }
 
 export function prefillBuildDetailsFromQuote(

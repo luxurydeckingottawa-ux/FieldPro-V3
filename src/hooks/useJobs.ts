@@ -24,16 +24,9 @@ import { createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOM
 import { supabase } from '../lib/supabase';
 import { dataService } from '../services/dataService';
 import { generateEstimatePDF } from '../utils/estimatePdf';
-import { COMPANY } from '../config/company';
+import { sendSms, sendGoogleReviewSms, sendWarrantySms, sendWarrantyEmail, sendEstimateEmail } from '../utils/communications';
 
 const JOBS_STORAGE_KEY = 'luxury_decking_jobs_v5';
-
-const INTERNAL_SECRET = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
-const internalHeaders = (extra: Record<string, string> = {}) => ({
-  'Content-Type': 'application/json',
-  ...(INTERNAL_SECRET ? { 'X-Internal-Secret': INTERNAL_SECRET } : {}),
-  ...extra,
-});
 
 /**
  * Strip raw camera photo data URIs from fieldProgress before saving to Supabase.
@@ -222,13 +215,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
           setTimeout(() => {
             handleSendMessage(sessionId, messageText);
             if (jobToUpdate.clientPhone) {
-              fetch('/.netlify/functions/send-sms', {
-                method: 'POST',
-                headers: internalHeaders(),
-                body: JSON.stringify({ to: jobToUpdate.clientPhone, message: messageText }),
-              }).then(res => res.json()).then(data => {
-                if (!data.success) console.error('Auto SMS failed:', data.error);
-              }).catch(err => console.error('Auto SMS error:', err));
+              sendSms(jobToUpdate.clientPhone, messageText);
             }
           }, 1000);
         }
@@ -267,64 +254,26 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     }
     handleUpdateJob(jobId, updates);
 
-    // Auto-send Google review request + warranty SMS when job moves to Paid & Closed
-    // Respect SMS quiet hours (9 AM – 8 PM) — if outside window, these will
-    // need to be sent manually or via a scheduled job.
+    // Auto-send Google review request + warranty SMS/email when job moves to Paid & Closed
+    // Respect SMS quiet hours (9 AM - 8 PM) for SMS only.
     if (newStage === PipelineStage.PAID_CLOSED && job) {
       const hour = new Date().getHours();
       const smsOk = hour >= 9 && hour < 20;
-      const reviewUrl = import.meta.env.VITE_GOOGLE_REVIEW_URL || 'https://g.page/r/luxury-decking/review';
-      const firstName = job.clientName?.split(' ')[0] || 'there';
-      const reviewMsg = `Hi ${firstName}, thank you for choosing ${COMPANY.name}! We'd love it if you could take a moment to leave us a Google review: ${reviewUrl} — Your feedback means the world to us!`;
+
       if (job.clientPhone && smsOk) {
-        fetch('/.netlify/functions/send-sms', {
-          method: 'POST',
-          headers: internalHeaders(),
-          body: JSON.stringify({ to: job.clientPhone, message: reviewMsg }),
-        }).catch(err => console.warn('[review-sms] failed:', err));
+        sendGoogleReviewSms(job.clientPhone, job.clientName);
       }
 
-      // Auto-send warranty delivery SMS
       if (job.clientPhone && job.customerPortalToken && smsOk) {
         const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
-        const warrantyMsg = `Hi ${firstName}, your ${COMPANY.name} project is officially complete! Your 5-year warranty is now active. Access your Project Portal and Warranty Package here: ${portalUrl}`;
-        fetch('/.netlify/functions/send-sms', {
-          method: 'POST',
-          headers: internalHeaders(),
-          body: JSON.stringify({ to: job.clientPhone, message: warrantyMsg }),
-        }).catch(err => console.warn('[warranty-sms] failed:', err));
+        sendWarrantySms(job.clientPhone, job.clientName, portalUrl);
       }
 
-      // Auto-send warranty delivery EMAIL
       if (job.clientEmail && job.customerPortalToken) {
         const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const pdfUrl = (job as any).verifiedBuildPassportUrl as string | undefined;
-        const warrantyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;padding:40px;border-radius:16px">
-  <div style="text-align:center;margin-bottom:32px">
-    <p style="margin:0;font-size:11px;font-weight:900;color:#c9a227;letter-spacing:3px;text-transform:uppercase">${COMPANY.name}</p>
-    <h1 style="margin:8px 0 0;font-size:28px;font-weight:900;color:#fff">Your Project is Complete!</h1>
-  </div>
-  <p style="color:#aaa;font-size:15px;line-height:1.6">Hi ${firstName},</p>
-  <p style="color:#aaa;font-size:15px;line-height:1.6">Your ${COMPANY.name} project is officially complete. Your <strong style="color:#c9a227">5-year warranty is now active</strong>.</p>
-  <div style="background:#111;border:1px solid #333;border-radius:12px;padding:24px;margin:24px 0;text-align:center">
-    <p style="margin:0 0 4px;font-size:11px;font-weight:900;color:#888;letter-spacing:2px;text-transform:uppercase">Your Warranty</p>
-    <p style="margin:0;font-size:20px;font-weight:900;color:#c9a227">5-Year Structural Warranty</p>
-    <p style="margin:4px 0 0;font-size:13px;color:#666">Access your full warranty certificate and project documentation below</p>
-  </div>
-  <a href="${portalUrl}" style="display:block;background:#c9a227;color:#000;text-align:center;padding:16px;border-radius:12px;font-weight:900;text-decoration:none;font-size:14px;letter-spacing:1px;text-transform:uppercase;margin:24px 0">Access Your Project Portal \u2192</a>
-  ${pdfUrl ? `<a href="${pdfUrl}" style="display:block;border:1px solid #333;color:#c9a227;text-align:center;padding:14px;border-radius:12px;font-weight:700;text-decoration:none;font-size:13px;margin:0 0 24px 0">Download Warranty Certificate (PDF)</a>` : ''}
-  <p style="color:#555;font-size:12px;text-align:center">Questions? Call us at ${COMPANY.phone}<br>${COMPANY.name} \u2014 ${COMPANY.fullAddress}</p>
-</div>`;
-        fetch('/.netlify/functions/send-email', {
-          method: 'POST',
-          headers: internalHeaders(),
-          body: JSON.stringify({
-            to: job.clientEmail,
-            subject: `Your ${COMPANY.name} Warranty is Now Active`,
-            htmlBody: warrantyHtml,
-          }),
-        }).catch(err => console.warn('[warranty-email] failed:', err));
+        sendWarrantyEmail(job.clientEmail, job.clientName, portalUrl, pdfUrl);
       }
     }
   }, [jobs, selectedJob, handleUpdateJob]);
@@ -424,6 +373,8 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
       };
       setJobs(prev => [newJob, ...prev]);
       setSelectedJob(newJob);
+      // D-02: Persist to Supabase — was missing, new jobs from calculator vanished on refresh
+      dataService.createJob(newJob).catch(err => console.error('[handleEstimateAccepted] Failed to persist new job:', err));
     }
   }, [calculatorSourceJobId, handleUpdateJob, jobs]);
 
@@ -600,54 +551,10 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     };
     handleUpdateJob(targetJobId!, { estimateData });
 
-    // Send HTML estimate email
+    // Send HTML estimate email (or fallback to mailto if no email on file)
     const portalUrl = `${window.location.origin}?portal=${portalToken}`;
     const clientEmail = jobs.find(j => j.id === targetJobId)?.clientEmail || '';
-    if (clientEmail) {
-      const estimateHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;padding:40px;border-radius:16px">
-  <div style="text-align:center;margin-bottom:32px">
-    <p style="margin:0;font-size:11px;font-weight:900;color:#c9a227;letter-spacing:3px;text-transform:uppercase">${COMPANY.name}</p>
-    <h1 style="margin:8px 0 0;font-size:28px;font-weight:900;color:#fff">Your Custom Estimate is Ready</h1>
-  </div>
-  <p style="color:#aaa;font-size:15px;line-height:1.6">Hi ${data.clientName},</p>
-  <p style="color:#aaa;font-size:15px;line-height:1.6">Thank you for your interest in ${COMPANY.name}. Your custom deck estimate is ready to review online.</p>
-  <div style="background:#111;border:1px solid #333;border-radius:12px;padding:24px;margin:24px 0">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span style="font-size:11px;font-weight:900;color:#888;letter-spacing:2px;text-transform:uppercase">Estimate Total</span>
-      <span style="font-size:28px;font-weight:900;color:#c9a227">$${totalAmount.toLocaleString()}</span>
-    </div>
-    <div style="border-top:1px solid #222;padding-top:12px">
-      <p style="margin:0;font-size:12px;color:#666">Estimate #${data.estimateNumber} \u2022 ${data.clientAddress}</p>
-    </div>
-  </div>
-  <a href="${portalUrl}" style="display:block;background:#c9a227;color:#000;text-align:center;padding:16px;border-radius:12px;font-weight:900;text-decoration:none;font-size:14px;letter-spacing:1px;text-transform:uppercase;margin:24px 0">Review Your Estimate Online \u2192</a>
-  <p style="color:#aaa;font-size:14px;line-height:1.6">Your portal lets you:</p>
-  <ul style="color:#888;font-size:14px;line-height:2;padding-left:20px">
-    <li>Review the full estimate breakdown</li>
-    <li>Accept and secure your spot with a deposit</li>
-    <li>Track your project from start to finish</li>
-  </ul>
-  <p style="color:#555;font-size:12px;text-align:center;margin-top:32px">Questions? Call us at <strong style="color:#c9a227">${COMPANY.phone}</strong> or reply to this email.<br>${COMPANY.name} \u2014 ${COMPANY.fullAddress}</p>
-</div>`;
-      fetch('/.netlify/functions/send-email', {
-        method: 'POST',
-        headers: internalHeaders(),
-        body: JSON.stringify({
-          to: clientEmail,
-          subject: `Your ${COMPANY.name} Estimate #${data.estimateNumber} \u2014 $${totalAmount.toLocaleString()}`,
-          htmlBody: estimateHtml,
-        }),
-      }).catch(err => console.warn('[estimate-email] failed:', err));
-    } else {
-      // Fallback: open mailto if no email on file
-      const emailSubject = encodeURIComponent('Your ${COMPANY.name} Estimate');
-      const emailBody = encodeURIComponent(
-        `Hi ${data.clientName},\n\nYour custom estimate is ready: ${portalUrl}\n\n${COMPANY.name} \u2014 ${COMPANY.phone}`
-      );
-      const mailLink = document.createElement('a');
-      mailLink.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;
-      mailLink.click();
-    }
+    sendEstimateEmail(clientEmail, data.clientName, portalUrl, totalAmount, data.estimateNumber, data.clientAddress);
 
     // Generate itemized estimate PDF and attach to job files (async, non-blocking)
     const jobNumberForPdf = createdNewJob?.jobNumber

@@ -4,7 +4,7 @@ import { CheckCircle2, Circle, AlertCircle, Camera, Megaphone } from 'lucide-rea
 
 interface EstimatorSiteIntakeProps {
   data: SiteIntakeChecklist;
-  onUpdate: (id: string, value?: any) => void;
+  onUpdate: (id: string, value?: boolean | string) => void;
   onAddPhoto: () => void;
 }
 

@@ -54,7 +54,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
     if (!chatMessage.trim() || !job.clientPhone) return;
     setChatSending(true);
     try {
-      const secret = (import.meta as any).env?.VITE_INTERNAL_API_SECRET;
+      const secret = import.meta.env?.VITE_INTERNAL_API_SECRET;
       await fetch('/.netlify/functions/send-sms', {
         method: 'POST',
         headers: {
@@ -221,7 +221,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
     }
   };
 
-  const handleUpdateChecklist = (id: string, value?: any) => {
+  const handleUpdateChecklist = (id: string, value?: boolean | string) => {
     const key = id as keyof SiteIntakeChecklist;
     setIntake(prev => {
       if (!prev || !prev.checklist) return prev;
@@ -337,7 +337,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
               onClick={() => {
                 handleStatusChange('on_way');
                 if (job?.clientPhone) {
-                  const secret = (import.meta as any).env?.VITE_INTERNAL_API_SECRET;
+                  const secret = import.meta.env?.VITE_INTERNAL_API_SECRET;
                   fetch('/.netlify/functions/send-sms', {
                     method: 'POST',
                     headers: {
@@ -415,7 +415,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`flex items-center gap-2 px-4 py-4 text-xs font-bold uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${
                 activeTab === tab.id 
                   ? 'border-[var(--brand-gold)] text-[var(--brand-gold)]' 
@@ -475,7 +475,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
 
               {/* Street View / Satellite Image */}
               {job.projectAddress && (() => {
-                const mapsKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_KEY;
+                const mapsKey = import.meta.env?.VITE_GOOGLE_MAPS_KEY;
                 const encodedAddr = encodeURIComponent(job.projectAddress);
                 const streetViewUrl = mapsKey
                   ? `https://maps.googleapis.com/maps/api/streetview?size=600x200&location=${encodedAddr}&key=${mapsKey}&fov=90&pitch=10`

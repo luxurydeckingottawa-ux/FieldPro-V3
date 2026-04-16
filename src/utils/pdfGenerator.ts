@@ -4,10 +4,17 @@ import { AppState } from '../types';
 import { PAGE_TITLES, RATES } from '../constants';
 import { COMPANY } from '../config/company';
 
+// jspdf-autotable augments jsPDF with autoTable() and lastAutoTable.
+// The type augmentation does not always resolve, so we define it here.
+interface JsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: Record<string, unknown>) => void;
+  lastAutoTable: { finalY: number };
+}
+
 const BLUE_BRAND = [0, 0, 0]; // Black/Dark for luxury feel
 
 export const generateCloseoutPDF = async (state: AppState): Promise<string> => {
-  const doc = new jsPDF() as any;
+  const doc = new jsPDF() as JsPDFWithAutoTable;
   const { jobInfo, pages, userRole, customerSignatureCloudinaryUrl } = state;
 
   // Header
@@ -62,7 +69,7 @@ export const generateCloseoutPDF = async (state: AppState): Promise<string> => {
       margin: { left: 20, right: 20 }
     });
 
-    y = (doc as any).lastAutoTable.finalY + 15;
+    y = doc.lastAutoTable.finalY + 15;
     
     // Photo Embedding Grid
     const validPhotos = page.photos.filter(p => !!p.url);
@@ -182,10 +189,10 @@ export const generateCloseoutPDF = async (state: AppState): Promise<string> => {
 };
 
 export const generateInvoicePDF = async (state: AppState): Promise<string> => {
-  const doc = new jsPDF() as any;
+  const doc = new jsPDF() as JsPDFWithAutoTable;
   const { jobInfo, invoicing } = state;
-  const r = RATES as any;
-  const d = invoicing as any;
+  const r = RATES as unknown as Record<string, number>;
+  const d = invoicing as unknown as Record<string, number | boolean | string>;
 
   doc.setFillColor(0, 0, 0);
   doc.rect(0, 0, 210, 40, 'F');
@@ -202,7 +209,7 @@ export const generateInvoicePDF = async (state: AppState): Promise<string> => {
   doc.text(`Address: ${jobInfo.jobAddress}`, 20, 66);
   doc.text(`Invoice Date: ${new Date().toLocaleDateString()}`, 140, 50);
 
-  const items: any[] = [];
+  const items: (string | number)[][] = [];
   let subtotal = 0;
 
   const checkAndAdd = (field: string, label: string, unit: string) => {

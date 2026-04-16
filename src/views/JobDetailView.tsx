@@ -331,7 +331,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                   ['obstaclesIdentified', 'Obstacles Identified'],
                   ['permitRequired', 'Permit Required'],
                 ] as [string, string][]).map(([key, label]) => {
-                  const val = (job.estimatorIntake!.checklist as any)[key];
+                  const val = (job.estimatorIntake!.checklist as unknown as Record<string, boolean | string | undefined>)[key];
                   return (
                     <div key={key} className="flex items-center gap-2">
                       <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${val ? 'bg-[var(--brand-gold)]' : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'}`}>

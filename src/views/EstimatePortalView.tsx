@@ -300,8 +300,8 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     return { x: (e as MouseEvent).clientX - rect.left, y: (e as MouseEvent).clientY - rect.top };
                   };
 
-                  canvas.onmousedown = canvas.ontouchstart = (e: any) => { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x * (600 / canvas.offsetWidth), p.y * (120 / canvas.offsetHeight)); };
-                  canvas.onmousemove = canvas.ontouchmove = (e: any) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x * (600 / canvas.offsetWidth), p.y * (120 / canvas.offsetHeight)); ctx.stroke(); };
+                  canvas.onmousedown = canvas.ontouchstart = (e: MouseEvent | TouchEvent) => { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x * (600 / canvas.offsetWidth), p.y * (120 / canvas.offsetHeight)); };
+                  canvas.onmousemove = canvas.ontouchmove = (e: MouseEvent | TouchEvent) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x * (600 / canvas.offsetWidth), p.y * (120 / canvas.offsetHeight)); ctx.stroke(); };
                   canvas.onmouseup = canvas.ontouchend = canvas.onmouseleave = () => { isDrawing = false; };
                 }}
               />
@@ -607,13 +607,13 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                           </ul>
                         </div>
 
-                        {(option as any).valueInsight && (
+                        {(option as unknown as Record<string, string>).valueInsight && (
                           <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-100">
                             <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1 flex items-center gap-1">
                               <Sparkles className="w-3 h-3" /> Value Insight
                             </p>
                             <p className="text-xs text-amber-900 font-medium leading-relaxed">
-                              {(option as any).valueInsight}
+                              {(option as unknown as Record<string, string>).valueInsight}
                             </p>
                           </div>
                         )}
@@ -873,7 +873,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                           <td className="p-6 text-sm font-semibold text-slate-600">{row.label}</td>
                           {estimateData.options.map(opt => (
                             <td key={opt.id} className={`p-6 text-sm font-medium ${selectedOptionId === opt.id ? 'bg-slate-50 font-bold' : 'text-slate-900'}`}>
-                              {(opt as any).specs?.[row.key]}
+                              {(opt as unknown as Record<string, Record<string, string>>).specs?.[row.key]}
                             </td>
                           ))}
                         </tr>
@@ -1087,14 +1087,14 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative">
                 <div className="absolute top-1/2 left-0 right-0 h-px bg-slate-200 hidden lg:block -translate-y-1/2 z-0" />
-                {(estimateData as any).whatHappensNext?.map((step: any, i: number) => {
+                {estimateData.whatHappensNext?.map((step, i: number) => {
                   const isObject = typeof step === 'object' && step !== null;
                   const title = isObject ? step.title : `Step ${i + 1}`;
                   const desc = isObject ? step.desc : step;
                   const iconName = isObject ? step.icon : 'CheckCircle2';
 
                   // Map icon names to components
-                  const iconMap: Record<string, any> = {
+                  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
                     'CheckCircle2': CheckCircle2,
                     'ShieldCheck': ShieldCheck,
                     'Calendar': Calendar,

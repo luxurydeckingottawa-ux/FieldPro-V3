@@ -18,6 +18,8 @@ import {
   type Dimensions,
   type ClientInfo,
   type PricingTier,
+  type PricingImpact,
+  type CalculatorSelections,
   type PackageSelection,
   type PackageSize,
   type PackageLevel,
@@ -686,7 +688,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
         packageDraft.level === 'DIAMOND' ? 'frameless_glass' : 'fortress_al13_pkg';
     }
 
-    setSelections((prev: any) => ({
+    setSelections((prev: CalculatorSelections) => ({
       ...prev,
       decking: deckOpts.find((o) => o.id === targetDeckId) || null,
       railing: targetRailId
@@ -727,8 +729,8 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
   // Build summary line items from pricingSummary.impacts (already computed by parent).
   // Rendered in the BUILD SUMMARY panel directly under the price plaque (FIX 5).
   const chips = (pricingSummary.impacts || [])
-    .filter((imp: any) => typeof imp.value === 'number')
-    .map((imp: any) => ({ label: imp.label, value: Math.round(imp.value) }));
+    .filter((imp: PricingImpact) => typeof imp.value === 'number')
+    .map((imp: PricingImpact) => ({ label: imp.label, value: Math.round(imp.value) }));
 
   // --- Helpers for per-card state ---
   const isOptionSelected = (catId: string, opt: PricingTier): boolean => {
@@ -736,7 +738,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
     if (opt.id === 'nami_fix') return dimensions.namiFixCount > 0;
     if (opt.id === 'alum_drink_rail') return dimensions.drinkRailLF > 0;
     if (Array.isArray(selections[catId]))
-      return selections[catId].some((e: any) => e.id === opt.id);
+      return (selections[catId] as PricingTier[]).some((e: PricingTier) => e.id === opt.id);
     return selections[catId]?.id === opt.id;
   };
 
@@ -1265,7 +1267,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                       columnFill: 'auto',
                     }}
                   >
-                    {chips.map((item: any, i: number) => (
+                    {chips.map((item: { label: string; value: number }, i: number) => (
                       <div
                         key={i}
                         style={{
@@ -2151,7 +2153,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                               overflow: 'hidden',
                               display: '-webkit-box',
                               WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical' as any,
+                              WebkitBoxOrient: 'vertical' as 'vertical',
                             }}
                           >
                             {opt.description}

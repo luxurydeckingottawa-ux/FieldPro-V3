@@ -14,6 +14,12 @@
 
 const https = require('https');
 
+// Simple request-size guard to prevent abuse (S-10)
+function checkPayloadSize(event, maxBytes = 10000) {
+  if (event.body && event.body.length > maxBytes) return false;
+  return true;
+}
+
 // Shared secret guard. SECURITY: defaults to DENY when env var is missing.
 function checkInternalSecret(event) {
   const secret = process.env.INTERNAL_API_SECRET;
@@ -29,6 +35,10 @@ exports.handler = async function(event) {
 
   if (!checkInternalSecret(event)) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+  }
+
+  if (!checkPayloadSize(event)) {
+    return { statusCode: 413, body: JSON.stringify({ error: 'Payload too large' }) };
   }
 
   let payload;

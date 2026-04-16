@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Line, Text } from 'react-konva';
+import Konva from 'konva';
 import { SketchData, SketchStroke, SketchLabel } from '../types';
 import { 
   Pencil, 
@@ -22,7 +23,7 @@ const EstimatorSketchPad: React.FC<EstimatorSketchPadProps> = ({ data, onChange 
   const [inputText, setInputText] = useState('');
   const [showInput, setShowInput] = useState(false);
   const [inputPos, setInputPos] = useState({ x: 0, y: 0 });
-  const stageRef = useRef<any>(null);
+  const stageRef = useRef<Konva.Stage | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -35,7 +36,7 @@ const EstimatorSketchPad: React.FC<EstimatorSketchPadProps> = ({ data, onChange 
     }
   }, []);
 
-  const handleMouseDown = (e: any) => {
+  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
     
@@ -65,7 +66,7 @@ const EstimatorSketchPad: React.FC<EstimatorSketchPadProps> = ({ data, onChange 
     onChange({ strokes: [...(data.strokes || []), newStroke] });
   };
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (!isDrawing || !data.strokes || tool === 'text' || tool === 'marker') return;
     const stage = e.target.getStage();
     const point = stage.getPointerPosition();

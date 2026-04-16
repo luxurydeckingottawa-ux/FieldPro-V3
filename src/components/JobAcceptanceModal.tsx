@@ -330,8 +330,8 @@ const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
   const summary = job.acceptedBuildSummary;
 
 
-  const sel = job.calculatorSelections as any;
-  const dim = job.calculatorDimensions as any;
+  const sel = job.calculatorSelections as Record<string, string> | undefined;
+  const dim = job.calculatorDimensions as Record<string, number> | undefined;
   const bd  = job.buildDetails;
 
   const [form, setForm] = useState<FormState>({
@@ -340,7 +340,7 @@ const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
     clientPhone: job.clientPhone || '',
     clientEmail: job.clientEmail || '',
     projectAddress: job.projectAddress || '',
-    siteAccessNotes: (job as any).estimatorIntake?.siteAccessNotes ?? '',
+    siteAccessNotes: (job.estimatorIntake as unknown as Record<string, string> | undefined)?.siteAccessNotes ?? '',
     parkingNotes: '',
     // B — Project Scope (core)
     packageTier: job.acceptedOptionName || summary?.optionName || '',

@@ -40,9 +40,9 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
         flags: allFlags,
         lastCheckedAt: new Date().toISOString()
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("AI Analysis failed:", err);
-      setError(err.message || "AI Analysis failed. Please check your API key.");
+      setError(err instanceof Error ? err.message : "AI Analysis failed. Please check your API key.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -55,9 +55,9 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
     try {
       const summary = await estimatorAiService.summarizeSiteNotes(intake.notes);
       onUpdateAiInsights({ summary });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("AI Summarization failed:", err);
-      setError(err.message || "AI Summarization failed. Please check your API key.");
+      setError(err instanceof Error ? err.message : "AI Summarization failed. Please check your API key.");
     } finally {
       setIsSummarizing(false);
     }

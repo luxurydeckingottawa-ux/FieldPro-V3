@@ -129,7 +129,7 @@ const JobSummaryCard: React.FC<JobSummaryCardProps> = ({
       {/* House Photo — full width at top */}
       <div className="w-full h-[160px] bg-[var(--bg-secondary)] relative overflow-hidden">
         <img
-          src={`https://maps.googleapis.com/maps/api/streetview?size=600x320&location=${encodeURIComponent((job.projectAddress || '') + ', Ottawa, ON')}&key=${(import.meta as any).env?.VITE_GOOGLE_MAPS_KEY || ''}`}
+          src={`https://maps.googleapis.com/maps/api/streetview?size=600x320&location=${encodeURIComponent((job.projectAddress || '') + ', Ottawa, ON')}&key=${import.meta.env?.VITE_GOOGLE_MAPS_KEY || ''}`}
           alt="Street view"
           className="w-full h-full object-cover"
           onError={e => {

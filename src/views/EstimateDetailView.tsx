@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Job, PipelineStage, CustomerLifecycle, LiveEstimateItem, LiveEstimate } from '../types';
+import { Job, PipelineStage, CustomerLifecycle, LiveEstimateItem, LiveEstimate, EstimateOption, EstimateAddOn, JobFile, JobNote, SiteIntakeChecklist } from '../types';
 import {
   ArrowLeft, User, MapPin, Phone, Mail, Calendar,
   DollarSign, FileText, MessageSquare, ExternalLink,
@@ -71,7 +71,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
     if (!job.clientPhone && !job.clientEmail) return;
     setSendingTouchId(touchId);
     try {
-      const sends: Promise<any>[] = [];
+      const sends: Promise<Response>[] = [];
       if ((channel === 'sms' || channel === 'sms+email') && job.clientPhone) {
         sends.push(fetch('/.netlify/functions/send-sms', {
           method: 'POST',
@@ -156,7 +156,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
     warm: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-500', badge: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
     cool: { bg: 'bg-purple-500/10', border: 'border-purple-500/20', text: 'text-purple-500', badge: 'bg-purple-500/10 text-purple-500 border-purple-500/20' },
     cold: { bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-500', badge: 'bg-gray-500/10 text-gray-500 border-gray-500/20' },
-  } as Record<string, any>)[engagementHeat] || { bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-500', badge: 'bg-gray-500/10 text-gray-500 border-gray-500/20' };
+  } as Record<string, { bg: string; border: string; text: string; badge: string }>)[engagementHeat] || { bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-500', badge: 'bg-gray-500/10 text-gray-500 border-gray-500/20' };
 
   const isLeadStage = [
     PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
@@ -316,7 +316,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                         <BarChart3 className="w-3 h-3 text-blue-500" /> Option Engagement
                       </h4>
                       <div className="space-y-2">
-                        {job.estimateData.options.map((opt: any) => (
+                        {job.estimateData.options.map((opt: EstimateOption) => (
                           <div key={opt.id} className="flex items-center justify-between">
                             <span className="text-xs font-medium text-[var(--text-secondary)]">{opt.name}</span>
                             <div className="flex-1 mx-3 h-1.5 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
@@ -333,7 +333,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                       </h4>
                       <div className="space-y-2">
                         {job.estimateData?.addOns && job.estimateData.addOns.length > 0 ? (
-                          job.estimateData.addOns.slice(0, 4).map((addon: any) => (
+                          job.estimateData.addOns.slice(0, 4).map((addon: EstimateAddOn) => (
                             <div key={addon.id} className="flex items-center justify-between">
                               <span className="text-xs font-medium text-[var(--text-secondary)]">{addon.name}</span>
                               <div className="flex-1 mx-3 h-1.5 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
@@ -634,7 +634,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
             )}
 
             {/* Estimate Documents */}
-            {job.files?.some((f: any) => f.type === 'estimate' || f.type === 'contract') && (
+            {job.files?.some((f: JobFile) => f.type === 'estimate' || f.type === 'contract') && (
               <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
                 <div className="px-5 py-3 border-b border-[var(--border-color)]">
                   <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
@@ -643,8 +643,8 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                 </div>
                 <div className="p-4 space-y-2">
                   {job.files
-                    .filter((f: any) => f.type === 'estimate' || f.type === 'contract')
-                    .map((file: any) => (
+                    .filter((f: JobFile) => f.type === 'estimate' || f.type === 'contract')
+                    .map((file: JobFile) => (
                       <div
                         key={file.id}
                         onClick={() => {
@@ -703,8 +703,8 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               </div>
               <div className="p-5">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {job.files?.filter((f: any) => f.type === 'photo').length > 0 ? (
-                    job.files.filter((f: any) => f.type === 'photo').slice(0, 8).map((photo: any) => (
+                  {job.files?.filter((f: JobFile) => f.type === 'photo').length > 0 ? (
+                    job.files.filter((f: JobFile) => f.type === 'photo').slice(0, 8).map((photo: JobFile) => (
                       <div key={photo.id} className="aspect-square rounded-lg overflow-hidden border border-[var(--border-color)] relative group cursor-pointer">
                         <img src={photo.url} alt={photo.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" referrerPolicy="no-referrer" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -727,7 +727,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                       <ClipboardList className="w-3 h-3" /> Estimator Site Notes
                     </p>
                     <div className="space-y-2">
-                      {job.siteNotes.slice(0, 3).map((note: any) => (
+                      {job.siteNotes.slice(0, 3).map((note: JobNote) => (
                         <div key={note.id} className="text-sm text-[var(--text-primary)] italic">
                           "{note.text}"
                           <span className="block text-[10px] font-bold text-[var(--text-secondary)] mt-0.5">- {note.author} | {note.timestamp?.split('T')[0]}</span>
@@ -812,7 +812,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                 </div>
                 <div className="p-5">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {job.estimateData.options.map((option: any) => (
+                    {job.estimateData.options.map((option: EstimateOption) => (
                       <div key={option.id} className={`p-4 rounded-lg border transition-all ${
                         job.acceptedOptionId === option.id 
                           ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/30' 
@@ -888,7 +888,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                         ['obstaclesIdentified', 'Obstacles Identified'],
                         ['permitRequired', 'Permit Required'],
                       ] as [string, string][]).map(([key, label]) => {
-                        const val = (job.estimatorIntake!.checklist as any)[key];
+                        const val = (job.estimatorIntake!.checklist as unknown as Record<string, boolean | string | undefined>)[key];
                         return (
                           <div key={key} className="flex items-center gap-2">
                             <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${val ? 'bg-[var(--brand-gold)]' : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'}`}>
@@ -1306,7 +1306,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               <div className="p-4">
                 {job.officeNotes && job.officeNotes.length > 0 ? (
                   <div className="space-y-2">
-                    {job.officeNotes.slice(0, 5).map((note: any, i: number) => (
+                    {job.officeNotes.slice(0, 5).map((note: JobNote, i: number) => (
                       <div key={i} className="p-3 bg-[var(--bg-secondary)] rounded-lg">
                         <p className="text-sm text-[var(--text-primary)]">{typeof note === 'string' ? note : note.text || ''}</p>
                         {typeof note === 'object' && note.date && <p className="text-[10px] text-[var(--text-secondary)] mt-1">{new Date(note.date).toLocaleDateString('en-CA')}</p>}

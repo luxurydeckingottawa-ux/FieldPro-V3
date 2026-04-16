@@ -13,8 +13,8 @@ interface InvoicingViewProps {
 const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, onBack }) => {
   const calculateItemized = () => {
     const items: { label: string; amount: number; qty: number; unit: string; total: number }[] = [];
-    const r = RATES as any;
-    const d = data as any;
+    const r = RATES as unknown as Record<string, number>;
+    const d = data as unknown as Record<string, number | boolean | string>;
 
     const addItem = (field: string, label: string, unit: string) => {
       if (d[field] > 0) {
@@ -115,7 +115,7 @@ const InvoicingView: React.FC<InvoicingViewProps> = ({ data, onUpdate, onNext, o
           {Icon && <Icon size={14} className="text-[var(--brand-gold)]" />} {label}
         </label>
         <span className="font-label opacity-60 px-2.5 py-1 rounded-full border border-[var(--border-color)]">
-          ${(RATES as any)[field] || '?'}/{unit}
+          ${(RATES as unknown as Record<string, number>)[field] || '?'}/{unit}
         </span>
       </div>
       

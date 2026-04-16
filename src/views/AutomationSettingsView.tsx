@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { getLeadTouches, getCampaignTouches, CampaignTouch } from '../utils/dripCampaign';
 import type { EngagementTier } from '../utils/engagementScoring';
-import { Job, PipelineStage } from '../types';
+import { Job, PipelineStage, JobStatus, FieldStatus, CompletionPackageStatus, PhotoCompletionStatus, CompletionReadinessStatus, OfficeReviewStatus, ScheduleStatus, OfficeChecklist } from '../types';
 import { COMPANY } from '../config/company';
 
 // ── Persistence ──────────────────────────────────────────────────────────────
@@ -82,17 +82,17 @@ const PREVIEW_JOB: Job = {
   plannedDurationDays: 5,
   pipelineStage: PipelineStage.LEAD_IN,
   currentStage: 0,
-  status: 'scheduled' as any,
-  fieldStatus: 'PENDING' as any,
-  completionPackageStatus: 'NOT_SUBMITTED' as any,
-  photoCompletionStatus: 'NOT_CONFIRMED' as any,
-  completionReadinessStatus: 'NOT_READY' as any,
-  officeReviewStatus: 'NOT_READY' as any,
+  status: JobStatus.SCHEDULED,
+  fieldStatus: FieldStatus.PENDING,
+  completionPackageStatus: CompletionPackageStatus.NOT_SUBMITTED,
+  photoCompletionStatus: PhotoCompletionStatus.NOT_CONFIRMED,
+  completionReadinessStatus: CompletionReadinessStatus.NOT_READY,
+  officeReviewStatus: OfficeReviewStatus.NOT_READY,
   signoffStatus: 'pending',
   invoiceSupportStatus: 'pending',
   finalSubmissionStatus: 'pending',
-  officialScheduleStatus: 'ON_SCHEDULE' as any,
-  officeChecklists: [] as any,
+  officialScheduleStatus: ScheduleStatus.ON_SCHEDULE,
+  officeChecklists: [] as OfficeChecklist[],
   officeNotes: [],
   siteNotes: [],
   files: [],

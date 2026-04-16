@@ -11,14 +11,44 @@
 
 import { supabase, isSupabaseConfigured, LUXURY_DECKING_ORG_ID } from '../lib/supabase';
 import { safeSetItem, safeGetItem } from '../utils/storage';
-import { Job, EstimatorIntake, ChatSession, User, Invoice, Customer } from '../types';
+import { Job, EstimatorIntake, ChatSession, User, Invoice, Customer, JobNote, JobFile, Role } from '../types';
 import { APP_USERS } from '../constants';
+
+// Supabase row shapes for notes, files, and chat messages
+interface SupabaseNoteRow {
+  id: string;
+  job_id: string;
+  author: string;
+  text: string;
+  created_at: string;
+  note_type: 'office' | 'site';
+}
+
+interface SupabaseFileRow {
+  id: string;
+  job_id: string;
+  name: string;
+  url: string;
+  file_type: JobFile['type'];
+  uploaded_at: string;
+}
+
+interface SupabaseChatMessageRow {
+  id: string;
+  sender_id: string;
+  sender_name: string;
+  text: string;
+  created_at: string;
+  is_from_client: boolean;
+  status: string;
+  template_id?: string;
+}
 
 // ============================================================
 // Type converters: camelCase (app) <-> snake_case (database)
 // ============================================================
 
-function jobToRow(job: Job): Record<string, any> {
+function jobToRow(job: Job): Record<string, unknown> {
   return {
     id: job.id,
     org_id: LUXURY_DECKING_ORG_ID,
@@ -99,7 +129,7 @@ function jobToRow(job: Job): Record<string, any> {
   };
 }
 
-export function rowToJob(row: Record<string, any>): Job {
+export function rowToJob(row: Record<string, unknown>): Job {
   return {
     id: row.id,
     jobNumber: row.job_number,
@@ -187,7 +217,7 @@ export function rowToJob(row: Record<string, any>): Job {
 // INVOICE converters
 // ============================================================
 
-function invoiceToRow(invoice: Invoice): Record<string, any> {
+function invoiceToRow(invoice: Invoice): Record<string, unknown> {
   return {
     id: invoice.id,
     org_id: LUXURY_DECKING_ORG_ID,
@@ -213,7 +243,7 @@ function invoiceToRow(invoice: Invoice): Record<string, any> {
   };
 }
 
-function rowToInvoice(row: Record<string, any>): Invoice {
+function rowToInvoice(row: Record<string, unknown>): Invoice {
   return {
     id: row.id,
     invoiceNumber: row.invoice_number,
@@ -242,7 +272,7 @@ function rowToInvoice(row: Record<string, any>): Invoice {
 // CUSTOMER converters
 // ============================================================
 
-function customerToRow(customer: Customer): Record<string, any> {
+function customerToRow(customer: Customer): Record<string, unknown> {
   return {
     id: customer.id,
     org_id: LUXURY_DECKING_ORG_ID,
@@ -267,7 +297,7 @@ function customerToRow(customer: Customer): Record<string, any> {
   };
 }
 
-function rowToCustomer(row: Record<string, any>): Customer {
+function rowToCustomer(row: Record<string, unknown>): Customer {
   return {
     id: row.id,
     firstName: row.first_name || '',
@@ -321,8 +351,8 @@ export const dataService = {
           supabase!.from('job_files').select('*').in('job_id', jobIds),
         ]);
 
-        const notesByJob: Record<string, any[]> = {};
-        const filesByJob: Record<string, any[]> = {};
+        const notesByJob: Record<string, JobNote[]> = {};
+        const filesByJob: Record<string, JobFile[]> = {};
 
         (notesResult.data || []).forEach(n => {
           if (!notesByJob[n.job_id]) notesByJob[n.job_id] = [];
@@ -376,12 +406,12 @@ export const dataService = {
       supabase!.from('job_notes').select('*').eq('job_id', jobId),
       supabase!.from('job_files').select('*').eq('job_id', jobId),
     ]);
-    const allNotes = (notesResult.data || []).map((n: any) => ({
+    const allNotes = (notesResult.data || []).map((n: SupabaseNoteRow) => ({
       id: n.id, author: n.author, text: n.text, timestamp: n.created_at, type: n.note_type,
     }));
-    job.officeNotes = allNotes.filter((n: any) => n.type === 'office');
-    job.siteNotes = allNotes.filter((n: any) => n.type === 'site');
-    job.files = (filesResult.data || []).map((f: any) => ({
+    job.officeNotes = allNotes.filter((n: JobNote) => n.type === 'office');
+    job.siteNotes = allNotes.filter((n: JobNote) => n.type === 'site');
+    job.files = (filesResult.data || []).map((f: SupabaseFileRow) => ({
       id: f.id, name: f.name, url: f.url, type: f.file_type, uploadedAt: f.uploaded_at,
     }));
     return job;
@@ -472,7 +502,7 @@ export const dataService = {
   async updateJob(jobId: string, updates: Partial<Job>): Promise<void> {
     if (isSupabaseConfigured()) {
       // Convert only the provided updates to snake_case
-      const row: Record<string, any> = {};
+      const row: Record<string, unknown> = {};
       const keyMap: Record<string, string> = {
         jobNumber: 'job_number', clientName: 'client_name', clientPhone: 'client_phone',
         clientEmail: 'client_email', projectAddress: 'project_address',
@@ -761,7 +791,7 @@ export const dataService = {
         unreadCount: row.unread_count,
         lastMessage: row.last_message,
         lastMessageTimestamp: row.last_message_at,
-        messages: (row.chat_messages || []).map((m: any) => ({
+        messages: (row.chat_messages || []).map((m: SupabaseChatMessageRow) => ({
           id: m.id,
           senderId: m.sender_id,
           senderName: m.sender_name,
@@ -822,7 +852,7 @@ export const dataService = {
         id: appUser?.id || profile.id,
         email: profile.email,
         name: profile.name || appUser?.name || '',
-        role: (profile.role || appUser?.role) as any,
+        role: (profile.role || appUser?.role) as Role,
       };
     }
 
@@ -853,7 +883,7 @@ export const dataService = {
         id: profile.id,
         email: profile.email,
         name: profile.name,
-        role: profile.role as any,
+        role: profile.role as Role,
       };
     }
     return null;
@@ -912,7 +942,7 @@ export const dataService = {
 
   async updateInvoice(invoiceId: string, updates: Partial<Invoice>): Promise<void> {
     if (isSupabaseConfigured()) {
-      const row: Record<string, any> = {};
+      const row: Record<string, unknown> = {};
       const keyMap: Record<string, string> = {
         invoiceNumber: 'invoice_number',
         jobId: 'job_id',
@@ -1036,7 +1066,7 @@ export const dataService = {
 
   async updateCustomer(customerId: string, updates: Partial<Customer>): Promise<void> {
     if (isSupabaseConfigured()) {
-      const row: Record<string, any> = {};
+      const row: Record<string, unknown> = {};
       const keyMap: Record<string, string> = {
         firstName: 'first_name',
         lastName: 'last_name',

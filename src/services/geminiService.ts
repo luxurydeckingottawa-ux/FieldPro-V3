@@ -228,7 +228,7 @@ export const geminiService = {
 
     return {
       portalEngagement: updatedEngagement,
-      engagementHeat: heat.toLowerCase() as any
+      engagementHeat: heat.toLowerCase() as 'cold' | 'warm' | 'hot'
     };
   },
 

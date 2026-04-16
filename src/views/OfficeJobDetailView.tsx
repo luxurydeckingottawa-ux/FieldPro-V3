@@ -110,7 +110,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
 }) => {
   const [showLiveStatusReport, setShowLiveStatusReport] = useState(false);
   const [editingSection, setEditingSection] = useState<string | null>(null);
-  const [editFormData, setEditFormData] = useState<any>(null);
+  const [editFormData, setEditFormData] = useState<Partial<Job> | null>(null);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageType, setMessageType] = useState<'sms' | 'email'>('sms');
   const [pendingReminderMessage, setPendingReminderMessage] = useState<string>('');
@@ -201,7 +201,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
     if (!job.clientPhone && !job.clientEmail) return;
     setSendingLeadTouchId(touchId);
     try {
-      const sends: Promise<any>[] = [];
+      const sends: Promise<Response>[] = [];
       if ((channel === 'sms' || channel === 'sms+email') && job.clientPhone) {
         sends.push(fetch('/.netlify/functions/send-sms', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -722,7 +722,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     ['obstaclesIdentified', 'Obstacles Identified'],
                     ['permitRequired', 'Permit Required'],
                   ] as [string, string][]).map(([key, label]) => {
-                    const val = (job.estimatorIntake!.checklist as any)[key];
+                    const val = (job.estimatorIntake!.checklist as unknown as Record<string, boolean | string | undefined>)[key];
                     return (
                       <div key={key} className="flex items-center gap-2">
                         <div className={`w-3.5 h-3.5 rounded flex items-center justify-center flex-shrink-0 ${val ? 'bg-[var(--brand-gold)]' : 'bg-[var(--bg-secondary)] border border-[var(--border-color)]'}`}>
@@ -1881,7 +1881,7 @@ Ottawa's Premium Deck Builders`;
                             if (!job.clientPhone) { alert('No phone number on file for this customer.'); return; }
                             const firstName = job.clientName?.split(' ')[0] || 'there';
                             const msg = `Hi ${firstName}, your materials for your Luxury Decking project are scheduled for delivery and will be placed on your driveway. Please let us know if you have specific placement instructions. Thank you!`;
-                            const secret = (import.meta as any).env?.VITE_INTERNAL_API_SECRET;
+                            const secret = import.meta.env?.VITE_INTERNAL_API_SECRET;
                             fetch('/.netlify/functions/send-sms', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json', ...(secret ? { 'X-Internal-Secret': secret } : {}) },
@@ -2175,10 +2175,10 @@ Ottawa's Premium Deck Builders`;
                             <p className="text-sm font-bold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fasciaLf} lf</p>
                           </div>
                         )}
-                        {(job.digitalWorkOrder?.fastenerType || job.buildDetails?.decking?.fastenerType) && (
+                        {job.digitalWorkOrder?.fastenerType && (
                           <div>
                             <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Fasteners</p>
-                            <p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder?.fastenerType || (job.buildDetails?.decking as any)?.fastenerType}</p>
+                            <p className="text-sm font-bold text-[var(--text-primary)]">{job.digitalWorkOrder.fastenerType}</p>
                           </div>
                         )}
                       </div>

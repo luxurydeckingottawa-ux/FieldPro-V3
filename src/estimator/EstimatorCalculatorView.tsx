@@ -154,6 +154,37 @@ export interface PackagePriceRow {
   };
 }
 
+/** Shape of the calculator's category selections state */
+export interface CalculatorSelections {
+  design: PricingTier[];
+  foundation: PricingTier | null;
+  framing: PricingTier | null;
+  decking: PricingTier | null;
+  railing: PricingTier | null;
+  skirting: PricingTier | null;
+  accessories: PricingTier[];
+  privacy: PricingTier[];
+  pergolas: PricingTier | null;
+  extras: PricingTier[];
+  protection: PricingTier[];
+}
+
+/** A single pricing impact line item */
+export interface PricingImpact {
+  label: string;
+  value: number;
+}
+
+/** The output of the pricing calculator */
+export interface PricingSummary {
+  fixedSubTotal: number;
+  subTotal: number;
+  hst: number;
+  finalTotal: number;
+  monthly: number;
+  impacts: PricingImpact[];
+}
+
 export interface SavedEstimateOption {
   name: string;
   price: number;
@@ -163,8 +194,8 @@ export interface SavedEstimateOption {
 export interface ShowroomEstimatorProps {
   dimensions: Dimensions;
   setDimensions: React.Dispatch<React.SetStateAction<Dimensions>>;
-  selections: any;
-  setSelections: React.Dispatch<React.SetStateAction<any>>;
+  selections: CalculatorSelections;
+  setSelections: React.Dispatch<React.SetStateAction<CalculatorSelections>>;
   lightingQuantities: Record<string, number>;
   setLightingQuantities: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   clientInfo: ClientInfo;
@@ -175,7 +206,7 @@ export interface ShowroomEstimatorProps {
   onSave: () => void;
   onAccept: () => void;
   onGenerateGBB?: () => void;
-  pricingSummary: any;
+  pricingSummary: PricingSummary;
   estimateNumber: number;
   activePackage: PackageSelection | null;
   setActivePackage: (pkg: PackageSelection | null) => void;
@@ -801,7 +832,7 @@ const SealBadge = ({ tier, size = 'md' }: { tier: TierType, size?: 'sm' | 'md' }
   );
 };
 
-const MaterialCard = ({ material, size, showRailings, railingCost, isSelected, onToggle, onPrint }: any) => {
+const MaterialCard = ({ material, size, showRailings, railingCost, isSelected, onToggle, onPrint }: { material: Material; size: DeckSize; showRailings: boolean; railingCost: number; isSelected: boolean; onToggle: () => void; onPrint: () => void }) => {
   const basePrice = material.basePricing[size];
   const totalPrice = showRailings ? basePrice + railingCost : basePrice;
   const monthlyPrice = Math.round(totalPrice * FINANCING_FACTOR);
@@ -1231,7 +1262,7 @@ const CustomEstimator: React.FC<ShowroomEstimatorProps> = ({ dimensions, setDime
                   : (opt.id === 'alum_drink_rail'
                     ? dimensions.drinkRailLF > 0
                     : (Array.isArray(selections[activeCategory]) 
-                        ? selections[activeCategory].some((e:any) => e.id === opt.id) 
+                        ? selections[activeCategory].some((e: PricingTier) => e.id === opt.id) 
                         : selections[activeCategory]?.id === opt.id)));
               
               const priceLabel = impact === 0 ? 'Included' : (impact > 0 ? `+ $${Math.round(impact).toLocaleString()}` : `- $${Math.round(Math.abs(impact)).toLocaleString()}`);
@@ -1295,7 +1326,7 @@ const CustomEstimator: React.FC<ShowroomEstimatorProps> = ({ dimensions, setDime
             <div className="total-value">${Math.round(pricingSummary.subTotal).toLocaleString()}<span style={{fontSize:'1.2rem', color:'#777', marginLeft:'12px', fontWeight: 600}}>+ HST</span></div>
             {pricingSummary.impacts.length > 0 && (
               <div className="impact-breakdown">
-                {pricingSummary.impacts.map((imp:any, idx:number) => (
+                {pricingSummary.impacts.map((imp: PricingImpact, idx: number) => (
                   <div key={idx} className="impact-row">
                     <span className="truncate pr-4">{imp.label}</span>
                     <span className={`impact-value shrink-0 ${imp.value < 0 ? 'savings' : ''}`}>{imp.value < 0 ? '-' : '+'}${Math.round(Math.abs(imp.value)).toLocaleString()}</span>
@@ -1421,7 +1452,7 @@ const PackageShowcase: React.FC<PackageShowcaseProps> = ({ size, setSize, railin
   );
 };
 
-const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose, onPrint }: any) => {
+const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose, onPrint }: { materials: Material[]; size: DeckSize; showRailings: boolean; railingCost: number; onClose: () => void; onPrint: () => void }) => {
   return (
     <div className="comparison-overlay fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 md:p-10">
       <div className="bg-[#111] border border-white/10 w-full max-w-6xl max-h-full overflow-hidden flex flex-col rounded-2xl shadow-2xl">
@@ -1445,7 +1476,7 @@ const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose
             <thead>
               <tr className="border-b border-white/10">
                 <th className="py-4 px-4 text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Specifications</th>
-                {materials.map((m: any) => (
+                {materials.map((m: Material) => (
                   <th key={m.id} className="py-4 px-4 min-w-[200px]">
                     <div className="flex items-center gap-2 mb-2">
                       <SealBadge tier={m.tier} size="sm" />
@@ -1459,7 +1490,7 @@ const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose
             <tbody className="text-sm font-bold">
               <tr className="border-b border-white/5">
                 <td className="py-5 px-4 text-[var(--text-tertiary)] text-[10px] uppercase">Base Investment</td>
-                {materials.map((m: any) => {
+                {materials.map((m: Material) => {
                   const base = m.basePricing[size];
                   const total = showRailings ? base + railingCost : base;
                   return (
@@ -1472,19 +1503,19 @@ const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose
               </tr>
               <tr className="border-b border-white/5">
                 <td className="py-5 px-4 text-[var(--text-tertiary)] text-[10px] uppercase">Material Type</td>
-                {materials.map((m: any) => (
+                {materials.map((m: Material) => (
                   <td key={m.id} className="py-5 px-4 text-[var(--text-secondary)]">{m.materialType}</td>
                 ))}
               </tr>
               <tr className="border-b border-white/5">
                 <td className="py-5 px-4 text-[var(--text-tertiary)] text-[10px] uppercase">Warranty Coverage</td>
-                {materials.map((m: any) => (
+                {materials.map((m: Material) => (
                   <td key={m.id} className="py-5 px-4 text-[var(--text-secondary)]">{m.warranty}</td>
                 ))}
               </tr>
               <tr className="border-b border-white/5">
                 <td className="py-5 px-4 text-[var(--text-tertiary)] text-[10px] uppercase">Performance Grade</td>
-                {materials.map((m: any) => (
+                {materials.map((m: Material) => (
                   <td key={m.id} className="py-5 px-4">
                     <span className="px-2 py-1 bg-white/5 rounded text-[10px] text-white border border-white/5">{m.tier}</span>
                   </td>
@@ -1492,7 +1523,7 @@ const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose
               </tr>
               <tr>
                 <td className="py-5 px-4 text-[var(--text-tertiary)] text-[10px] uppercase align-top">Value Proposition</td>
-                {materials.map((m: any) => (
+                {materials.map((m: Material) => (
                   <td key={m.id} className="py-5 px-4 text-[var(--text-secondary)] text-xs italic leading-relaxed font-normal">"{m.description}"</td>
                 ))}
               </tr>
@@ -1590,9 +1621,9 @@ export interface EstimatorCalculatorProps {
     clientName: string;
     clientAddress: string;
     estimateNumber: number;
-    selections: any;
+    selections: CalculatorSelections;
     dimensions: Dimensions;
-    pricingSummary: any;
+    pricingSummary: PricingSummary;
     activePackage: PackageSelection | null;
   }) => void;
   /** Called when user saves estimate and wants to send quote to client */
@@ -1600,9 +1631,9 @@ export interface EstimatorCalculatorProps {
     clientName: string;
     clientAddress: string;
     estimateNumber: number;
-    selections: any;
+    selections: CalculatorSelections;
     dimensions: Dimensions;
-    pricingSummary: any;
+    pricingSummary: PricingSummary;
     activePackage: PackageSelection | null;
   }) => void;
   /** Called when user wants to exit back to Field Pro */
@@ -1687,7 +1718,7 @@ useEffect(() => {
   }, [calcSelections.decking]);
 
   const pricingSummary = useMemo(() => {
-    const impacts: any[] = [];
+    const impacts: PricingImpact[] = [];
     let subTotal = 0;
 
     const BASE_DECKING_ID = 'fiberon_goodlife_weekender';
@@ -1800,7 +1831,7 @@ useEffect(() => {
     const skirtingTotal = calcDimensions.skirtingSqFt * (calcSelections.skirting?.priceDelta || 0);
     if (skirtingTotal > 0) { subTotal += skirtingTotal; impacts.push({ label: `Skirting (${calcDimensions.skirtingSqFt} sqft)`, value: skirtingTotal }); }
 
-    calcSelections.privacy.forEach((p: any) => {
+    calcSelections.privacy.forEach((p: PricingTier) => {
       let pTotal = 0;
       if (p.id === 'privacy_sunbelly_combined') {
          pTotal = (calcDimensions.privacyPosts * COSTS.privacyPost) + (calcDimensions.privacyScreens * COSTS.privacyScreen);
@@ -1824,7 +1855,7 @@ useEffect(() => {
 
     if (calcSelections.pergolas) { subTotal += calcSelections.pergolas.priceDelta; impacts.push({ label: calcSelections.pergolas.name, value: calcSelections.pergolas.priceDelta }); }
 
-    calcSelections.extras.forEach((e: any) => {
+    calcSelections.extras.forEach((e: PricingTier) => {
       let cost = 0;
       if (e.calculationType === 'sqft_add') cost = e.priceDelta * calcDimensions.sqft;
       else if (e.calculationType === 'lf_border_add') cost = e.priceDelta * calcDimensions.borderLF;
@@ -1838,7 +1869,7 @@ useEffect(() => {
 
     const fixedSubTotal = subTotal;
 
-    calcSelections.design.forEach((d: any) => {
+    calcSelections.design.forEach((d: PricingTier) => {
       if (d.calculationType === 'percentage') {
         const cost = fixedSubTotal * d.priceDelta;
         subTotal += cost;
@@ -1848,7 +1879,7 @@ useEffect(() => {
       }
     });
 
-    calcSelections.protection.forEach((p: any) => {
+    calcSelections.protection.forEach((p: PricingTier) => {
       if (p.calculationType === 'percentage') {
         const cost = fixedSubTotal * p.priceDelta;
         subTotal += cost;
@@ -2466,8 +2497,8 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
                   <td style={{textAlign:'right'}}>${Math.round(pricingSummary.fixedSubTotal).toLocaleString()}</td>
                 </tr>
                 {pricingSummary.impacts
-                  .filter((imp:any) => Math.round(imp.value) !== 0)
-                  .map((imp:any, idx:number) => (
+                  .filter((imp: PricingImpact) => Math.round(imp.value) !== 0)
+                  .map((imp: PricingImpact, idx: number) => (
                     <tr key={idx}>
                       <td>{inferQtyFromLabel(imp.label)}</td>
                       <td>{imp.label}</td>

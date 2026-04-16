@@ -105,7 +105,7 @@ function warnUnmappedMatrixIdsOnce() {
   if (hasWarnedUnmapped) return;
   hasWarnedUnmapped = true;
   // Only in dev; production builds won't spam the field tablets.
-  const isDev = typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV;
+  const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
   if (!isDev) return;
   const unmapped = DECK_MATERIALS_MATRIX
     .filter((m) => !MATRIX_ID_TO_TEXTURE_KEY[m.id] && !EXPECTED_NO_PHOTO_IDS.has(m.id))

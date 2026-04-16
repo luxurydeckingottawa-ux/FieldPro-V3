@@ -107,7 +107,7 @@ const pruneStorage = () => {
       let stripped = false;
       for (const job of jobs) {
         if (job.estimatorIntake?.photos) {
-          job.estimatorIntake.photos = job.estimatorIntake.photos.map((p: any) => {
+          job.estimatorIntake.photos = job.estimatorIntake.photos.map((p: { url?: string }) => {
             if (p.url && p.url.startsWith('data:')) {
               stripped = true;
               return { ...p, url: '' };

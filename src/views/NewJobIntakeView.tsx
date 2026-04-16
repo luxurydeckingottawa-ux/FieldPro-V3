@@ -94,7 +94,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
     onSave(newJob);
   };
 
-  const updateBuildDetail = (section: keyof BuildDetails, field: string, value: any) => {
+  const updateBuildDetail = (section: keyof BuildDetails, field: string, value: string | boolean | number) => {
     setBuildDetails(prev => ({
       ...prev,
       [section]: {
@@ -470,7 +470,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       <div className="relative flex items-center justify-center">
                         <input 
                           type="checkbox" 
-                          checked={(buildDetails.sitePrep as any)[item.id]}
+                          checked={(buildDetails.sitePrep as unknown as Record<string, boolean>)[item.id]}
                           onChange={e => updateBuildDetail('sitePrep', item.id, e.target.checked)}
                           className="peer w-6 h-6 rounded-lg border-white/20 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/50 transition-all cursor-pointer appearance-none border"
                         />

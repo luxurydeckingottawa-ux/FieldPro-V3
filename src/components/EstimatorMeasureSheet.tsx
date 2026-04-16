@@ -1,6 +1,6 @@
 import React from 'react';
 import { MeasureSheet } from '../types';
-import { Ruler, Layers, Footprints, Construction } from 'lucide-react';
+import { Ruler, Layers, Footprints, Construction, type LucideIcon } from 'lucide-react';
 
 interface EstimatorMeasureSheetProps {
   data: MeasureSheet;
@@ -10,7 +10,7 @@ interface EstimatorMeasureSheetProps {
 const EstimatorMeasureSheet: React.FC<EstimatorMeasureSheetProps> = ({ data, onChange }) => {
   if (!data) return null;
 
-  const renderSection = (title: string, icon: any, children: React.ReactNode) => (
+  const renderSection = (title: string, icon: LucideIcon, children: React.ReactNode) => (
     <div className="bg-[var(--bg-primary)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm space-y-6">
       <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-4">
         <div className="w-10 h-10 bg-[var(--brand-gold)]/10 rounded-xl flex items-center justify-center">

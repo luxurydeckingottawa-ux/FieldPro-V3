@@ -1,54 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserRole, AppState, PageState, User, Job, Role, JobStatus, OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage, CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus, SoldWorkflowStatus, EstimatorIntake, ScheduleStatus, Customer, Invoice, InvoiceType } from './types';
-// createInvoice moved to useInvoices hook; printInvoice used by views directly
+import {
+  UserRole, AppState, PageState, User, Job, Role, JobStatus,
+  OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage,
+  CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus,
+  SoldWorkflowStatus, EstimatorIntake, ScheduleStatus, // Customer, Invoice used by AppRouter via hooks
+} from './types';
 import { useAppRouter, pathToView } from './hooks/useAppRouter';
 import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, PIPELINE_STAGES, ESTIMATE_STAGES, RATES } from './constants';
-import LoginView from './views/LoginView';
-import JobsListView from './views/JobsListView';
-import JobDetailView from './views/JobDetailView';
-import OfficeDashboardView from './views/OfficeDashboardView';
-// StatsView -- lazy-loaded via LazyViews.tsx
-import WorkflowContainer from './views/WorkflowContainer';
-import FieldResourcesView from './views/FieldResourcesView';
 import { generateCloseoutPDF, generateInvoicePDF } from './utils/pdfGenerator';
 import { safeSetItem } from './utils/storage';
-import SchedulingCalendarView from './views/SchedulingCalendarView';
-// OfficeJobDetailView -- lazy-loaded via LazyViews.tsx
-import NewJobIntakeView from './views/NewJobIntakeView';
-// CustomerPortalView -- lazy-loaded via LazyViews.tsx
-import EstimatePortalView from './views/EstimatePortalView';
-import EstimatorDashboardView from './views/EstimatorDashboardView';
-import EstimatorWorkflowView from './views/EstimatorWorkflowView';
-import BookingSettingsView from './views/BookingSettingsView';
-import PublicBookingView from './views/PublicBookingView';
-import AutomationSettingsView from './views/AutomationSettingsView';
-import BusinessInfoView from './views/BusinessInfoView';
-import PriceBookView from './views/PriceBookView';
-// EstimateDetailView -- lazy-loaded via LazyViews.tsx
-import CustomersView from './views/CustomersView';
-import NavBar from './components/NavBar';
-import AcceptanceModal from './components/AcceptanceModal';
-import JobAcceptanceModal from './components/JobAcceptanceModal';
-import { EstimatorCalendar } from './components/EstimatorCalendar';
-// ChatView -- lazy-loaded via LazyViews.tsx
-import UserManagementView from './views/UserManagementView';
-import { Calendar, Users, AlertCircle, ChevronLeft, Calculator } from 'lucide-react';
-import UnifiedPipelineView from './views/UnifiedPipelineView';
-import InvoicesView from './views/InvoicesView';
-
-// Code-split views -- each loads as a separate chunk on first navigation
-import { EstimatorCalculatorView, OfficeJobDetailView, CustomerPortalView, EstimateDetailView, StatsView, ChatView } from './LazyViews';
-
 import { geminiService } from './services/geminiService';
 import { supabase } from './lib/supabase';
-// EstimatorCalculatorView -- lazy-loaded via LazyViews.tsx
 import { measureSheetToCalculatorDimensions, jobToCalculatorClientInfo, loadEstimatorIntake } from './estimator/dataBridge';
 import { dataService } from './services/dataService';
-import { processAllCampaigns } from './utils/dripCampaignProcessor';
 import { useJobs } from './hooks/useJobs';
 import { COMPANY } from './config/company';
 import { useInvoices } from './hooks/useInvoices';
 import { useCustomers } from './hooks/useCustomers';
+import { sendGoogleReviewEmail, sendLeadAcknowledgementSms, sendSms } from './utils/communications';
+import AppRouter from './components/AppRouter';
 
 const INTERNAL_SECRET = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
 const internalHeaders = (extra: Record<string, string> = {}) => ({
@@ -56,46 +26,6 @@ const internalHeaders = (extra: Record<string, string> = {}) => ({
   ...(INTERNAL_SECRET ? { 'X-Internal-Secret': INTERNAL_SECRET } : {}),
   ...extra,
 });
-
-// Simple Error Boundary
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught an error", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-8 bg-rose-50 border-2 border-rose-200 rounded-2xl m-4">
-          <h2 className="text-2xl font-bold text-rose-700 mb-4 flex items-center gap-2">
-            <AlertCircle className="w-8 h-8" />
-            Something went wrong
-          </h2>
-          <pre className="bg-white p-4 rounded-xl border border-rose-100 text-rose-600 overflow-auto max-h-[400px] text-sm font-mono">
-            {this.state.error?.stack || this.state.error?.message}
-          </pre>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-6 px-6 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors"
-          >
-            Reload Application
-          </button>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 const STORAGE_KEY = 'luxury_decking_app_state_v4';
 // JOBS_STORAGE_KEY moved to useJobs hook
@@ -422,13 +352,7 @@ const App: React.FC = () => {
 
         // Send real SMS via Twilio if message is from office and client has a phone number
         if (!isFromClient && session.clientPhone) {
-          fetch('/.netlify/functions/send-sms', {
-            method: 'POST',
-            headers: internalHeaders(),
-            body: JSON.stringify({ to: session.clientPhone, message: text }),
-          }).then(res => res.json()).then(data => {
-            if (!data.success) console.error('SMS failed:', data.error);
-          }).catch(err => console.error('SMS error:', err));
+          sendSms(session.clientPhone, text);
         }
 
         return {
@@ -539,22 +463,11 @@ const App: React.FC = () => {
 
   // Jobs localStorage persistence is now handled inside useJobs()
 
-  // ── Drip Campaign Auto-Processor ─────────────────────────────────────────
-  // Runs on load and every 30 minutes. Fires any overdue touches automatically.
-  useEffect(() => {
-    const run = async () => {
-      const updates = await processAllCampaigns(jobs);
-      if (updates.length > 0) {
-        updates.forEach(({ jobId, updates: jobUpdates }) => {
-          handleUpdateJob(jobId, jobUpdates);
-        });
-      }
-    };
-
-    run();
-    const interval = setInterval(run, 30 * 60 * 1000); // every 30 minutes
-    return () => clearInterval(interval);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // ── Drip Campaign ───────────────────────────────────────────────────────
+  // D-09: Client-side drip processor REMOVED. The server-side Supabase
+  // Edge Function (process-drip-campaigns) runs hourly via pg_cron and
+  // handles all automated campaign touches. Running both created a
+  // double-send risk. The Edge Function is the single source of truth.
   // ─────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -821,18 +734,12 @@ const App: React.FC = () => {
     dataService.createJob(jobWithCampaign).catch(err => console.error('Failed to persist new job:', err));
 
     // Auto-fire Touch 1: instant SMS acknowledgement for new leads
-    // Respect quiet hours: only send between 9 AM – 8 PM. If outside window,
+    // Respect quiet hours: only send between 9 AM - 8 PM. If outside window,
     // the drip campaign processor will pick it up at the next eligible hour.
     if (newJob.pipelineStage === PipelineStage.LEAD_IN && newJob.clientPhone) {
       const hour = new Date().getHours();
       if (hour >= 9 && hour < 20) {
-        const firstName = newJob.clientName?.split(' ')[0] || 'there';
-        const smsT1 = `Hi ${firstName}, this is Angela from ${COMPANY.name}. Thank you for reaching out about your deck project. We will be in touch shortly to learn more about what you have in mind. In the meantime, feel free to explore our transparent pricing packages here: https://${COMPANY.website}/pricing. Talk soon!`;
-        fetch('/.netlify/functions/send-sms', {
-          method: 'POST',
-          headers: internalHeaders(),
-          body: JSON.stringify({ to: newJob.clientPhone, message: smsT1 }),
-        }).catch(err => console.warn('[T1 SMS] failed:', err));
+        sendLeadAcknowledgementSms(newJob.clientPhone, newJob.clientName);
       }
     }
 
@@ -1127,132 +1034,10 @@ const App: React.FC = () => {
         console.warn("Netlify form submission failed, but local state is updated:", e);
       }
 
-      // ── Google Review Request Email ──────────────────────────────────────────
-      // Fire after submission — client is in peak happiness right after completion.
+      // Google Review Request Email -- fire after submission (peak happiness)
       const completedJob = jobs.find(j => j.id === workflowState.jobId);
-      const clientEmail = completedJob?.clientEmail;
-      const clientFirstName = completedJob?.clientName?.split(' ')[0] || 'there';
-      if (clientEmail) {
-        const GOOGLE_REVIEW_URL = 'https://g.page/r/CexyItAnWVxTEAI/review';
-        const reviewHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<style>
-  @keyframes starPop {
-    0%   { transform: scale(1) rotate(-8deg); }
-    30%  { transform: scale(1.35) rotate(4deg); }
-    60%  { transform: scale(0.9) rotate(-3deg); }
-    100% { transform: scale(1) rotate(0deg); }
-  }
-  .star { display:inline-block; animation: starPop 1.4s ease infinite; }
-  .s1 { animation-delay: 0s; }
-  .s2 { animation-delay: 0.18s; }
-  .s3 { animation-delay: 0.36s; }
-  .s4 { animation-delay: 0.54s; }
-  .s5 { animation-delay: 0.72s; }
-</style>
-</head>
-<body style="margin:0;padding:0;background:#0d0d0d;font-family:'Helvetica Neue',Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0d0d;padding:40px 0;">
-  <tr><td align="center">
-    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#111111;border-radius:20px;overflow:hidden;border:1px solid #222;">
-
-      <!-- Logo -->
-      <tr><td align="center" style="padding:40px 40px 0;">
-        <img src="https://fieldprov3.netlify.app/assets/logo-white.png"
-             alt="${COMPANY.name}" width="160"
-             style="display:block;width:160px;height:auto;" />
-      </td></tr>
-
-      <!-- Gold divider -->
-      <tr><td align="center" style="padding:24px 40px 0;">
-        <div style="height:2px;background:linear-gradient(90deg,transparent,#D4AF37,transparent);width:100%;"></div>
-      </td></tr>
-
-      <!-- Stars -->
-      <tr><td align="center" style="padding:36px 40px 0;">
-        <span class="star s1" style="font-size:42px;">⭐</span>
-        <span class="star s2" style="font-size:42px;">⭐</span>
-        <span class="star s3" style="font-size:42px;">⭐</span>
-        <span class="star s4" style="font-size:42px;">⭐</span>
-        <span class="star s5" style="font-size:42px;">⭐</span>
-      </td></tr>
-
-      <!-- Headline -->
-      <tr><td align="center" style="padding:28px 48px 0;">
-        <h1 style="margin:0;font-size:28px;font-weight:900;color:#ffffff;line-height:1.2;letter-spacing:-0.5px;">
-          How does your new deck look, ${clientFirstName}?
-        </h1>
-      </td></tr>
-
-      <!-- Body copy -->
-      <tr><td align="center" style="padding:20px 52px 0;">
-        <p style="margin:0;font-size:15px;color:#aaaaaa;line-height:1.7;text-align:center;">
-          The crew just wrapped up your project and we couldn't be prouder of the result.
-          Your feedback means everything — not just to us, but to every homeowner who's
-          trying to decide if ${COMPANY.name} is the right team for them.
-        </p>
-      </td></tr>
-
-      <tr><td align="center" style="padding:12px 52px 0;">
-        <p style="margin:0;font-size:15px;color:#aaaaaa;line-height:1.7;text-align:center;">
-          If you love your new deck, <strong style="color:#D4AF37;">30 seconds and 5 stars</strong>
-          would mean the world to our team.
-        </p>
-      </td></tr>
-
-      <!-- CTA Button -->
-      <tr><td align="center" style="padding:36px 40px 0;">
-        <a href="${GOOGLE_REVIEW_URL}" target="_blank"
-           style="display:inline-flex;align-items:center;gap:14px;background:#ffffff;color:#111111;
-                  text-decoration:none;padding:18px 36px;border-radius:50px;
-                  font-size:16px;font-weight:900;letter-spacing:0.3px;
-                  box-shadow:0 4px 24px rgba(212,175,55,0.25);">
-          <img src="https://www.google.com/favicon.ico" width="22" height="22"
-               alt="G" style="border-radius:4px;" />
-          Leave a Google 5-Star Review
-        </a>
-      </td></tr>
-
-      <!-- Subtext -->
-      <tr><td align="center" style="padding:20px 40px 0;">
-        <p style="margin:0;font-size:11px;color:#555555;letter-spacing:2px;text-transform:uppercase;font-weight:700;">
-          It only takes 30 seconds to support our team
-        </p>
-      </td></tr>
-
-      <!-- Gold divider -->
-      <tr><td align="center" style="padding:32px 40px 0;">
-        <div style="height:1px;background:linear-gradient(90deg,transparent,#333,transparent);width:100%;"></div>
-      </td></tr>
-
-      <!-- Footer -->
-      <tr><td align="center" style="padding:24px 40px 40px;">
-        <p style="margin:0 0 6px;font-size:12px;font-weight:900;color:#D4AF37;letter-spacing:3px;text-transform:uppercase;">
-          The ${COMPANY.name} Team
-        </p>
-        <p style="margin:0;font-size:11px;color:#444444;">
-          Ottawa, ON &nbsp;·&nbsp; 613-707-3060 &nbsp;·&nbsp; luxurydeckingottawa.com
-        </p>
-      </td></tr>
-
-    </table>
-  </td></tr>
-</table>
-</body>
-</html>`;
-
-        fetch('/.netlify/functions/send-email', {
-          method: 'POST',
-          headers: internalHeaders(),
-          body: JSON.stringify({
-            to: clientEmail,
-            subject: `The crew just packed up — how does your new deck look? ⭐⭐⭐⭐⭐`,
-            htmlBody: reviewHtml,
-          }),
-        }).catch(err => console.warn('[review-email] failed to send:', err));
+      if (completedJob?.clientEmail) {
+        sendGoogleReviewEmail(completedJob.clientEmail, completedJob.clientName);
       }
 
     } catch (error) {
@@ -1691,513 +1476,73 @@ const App: React.FC = () => {
     }
   }, [selectedJob?.id]);
 
-  if (view === 'login') {
-    return <LoginView onLogin={handleLogin} />;
-  }
-
-  // Auth guard: unauthenticated access to any non-public view redirects to login
-  // customer-portal and estimate-portal are publicly accessible via token
-  const PUBLIC_VIEWS = ['customer-portal', 'estimate-portal'];
-  if (!currentUser && !PUBLIC_VIEWS.includes(view)) {
-    return <LoginView onLogin={handleLogin} />;
-  }
-
-  if (view === 'workflow') {
-    return (
-      <WorkflowContainer
-        state={workflowState}
-        setState={setWorkflowState}
-        isOnline={isOnline}
-        isUploading={isUploading}
-        uploadProgress={uploadProgress}
-        error={submissionError}
-        onFullSubmission={handleFullSubmission}
-        onExit={() => navigateTo('detail', selectedJob?.id)}
-        clientPhone={selectedJob?.clientPhone}
-        onScheduleUpdate={handleFieldScheduleUpdate}
-      />
-    );
-  }
-
-  if (view === 'estimator-calculator') {
-    return (
-      <>
-        <EstimatorCalculatorView
-          initialDimensions={calculatorInitialDimensions}
-          initialClientInfo={calculatorInitialClientInfo}
-          initialSelections={calculatorInitialSelections}
-          onEstimateAccepted={handleEstimateAcceptedLocal}
-          onEstimateSaved={handleEstimateSaved}
-          onExit={() => navigateTo(currentUser?.role === Role.ADMIN ? 'office-pipeline' : 'estimator-dashboard')}
-        />
-        {showCalculatorAcceptance && calculatorAcceptanceJob && (
-          <AcceptanceModal
-            job={calculatorAcceptanceJob}
-            isOpen={showCalculatorAcceptance}
-            onClose={() => setShowCalculatorAcceptance(false)}
-            onAccept={(jobId, updates) => {
-              handleUpdateJob(jobId, updates);
-              if (updates.pipelineStage) {
-                handleUpdatePipelineStage(jobId, updates.pipelineStage);
-              }
-              setShowCalculatorAcceptance(false);
-              // Show the job setup wizard before opening the job file
-              const jobForSetup = jobs.find(j => j.id === jobId) ?? calculatorAcceptanceJob;
-              if (jobForSetup) {
-                setPendingJobAcceptance({ ...jobForSetup, ...updates });
-              } else {
-                navigateTo('office-job-detail', jobId);
-              }
-            }}
-          />
-        )}
-      </>
-    );
-  }
-
-  if (view === 'public-booking') {
-    return (
-      <PublicBookingView
-        existingJobs={jobs}
-        onBookingComplete={(job) => {
-          setJobs(prev => [job, ...prev]);
-        }}
-      />
-    );
-  }
-
-  if (view === 'customer-portal') {
-      return (
-        <div className="min-h-screen bg-slate-50">
-          {portalLoading ? (
-            <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB]">
-              <div className="text-center space-y-4">
-                <div className="h-12 w-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-slate-500 text-sm">Loading your project...</p>
-              </div>
-            </div>
-          ) : selectedJob ? (
-            (selectedJob.pipelineStage === PipelineStage.EST_SENT ||
-             selectedJob.pipelineStage === PipelineStage.EST_COMPLETED ||
-             selectedJob.pipelineStage === PipelineStage.EST_APPROVED ||
-             selectedJob.pipelineStage === PipelineStage.EST_ON_HOLD ||
-             selectedJob.pipelineStage === PipelineStage.EST_IN_PROGRESS ||
-             selectedJob.pipelineStage === PipelineStage.EST_UNSCHEDULED ||
-             selectedJob.pipelineStage === PipelineStage.EST_SCHEDULED ||
-             selectedJob.pipelineStage === PipelineStage.EST_REJECTED ||
-             // Legacy lifecycle stages (only if NOT at a job stage)
-             ((selectedJob.lifecycleStage === CustomerLifecycle.ESTIMATE_SENT || 
-               selectedJob.lifecycleStage === CustomerLifecycle.FOLLOW_UP_NEEDED) &&
-              ![PipelineStage.JOB_SOLD, PipelineStage.ADMIN_SETUP, PipelineStage.PRE_PRODUCTION, 
-                PipelineStage.READY_TO_START, PipelineStage.IN_FIELD, PipelineStage.COMPLETION, 
-                PipelineStage.PAID_CLOSED].includes(selectedJob.pipelineStage)) ||
-             !selectedJob.pipelineStage) ? (
-              <EstimatePortalView 
-                job={selectedJob} 
-                onAcceptOption={onAcceptOption}
-                onSignContract={onSignContract}
-                onTrackEngagement={onTrackEngagement}
-                onClose={(currentUser?.role === Role.ADMIN || false) ? handleClosePortal : undefined}
-              />
-            ) : (
-              <CustomerPortalView 
-                job={selectedJob} 
-                allJobs={jobs}
-                chatSessions={chatSessions}
-                onSendMessage={(sessionId, text) => handleSendMessage(sessionId, text, true)}
-                onBack={(currentUser?.role === Role.ADMIN || false) ? handleClosePortal : undefined}
-              />
-            )
-          ) : (
-          <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB]">
-            <div className="text-center space-y-4 px-6">
-              <div className="h-16 w-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <AlertCircle className="w-8 h-8" />
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900">Invalid Portal Link</h2>
-              <p className="text-slate-500 max-w-xs mx-auto">This project link is no longer active or is incorrect. Please check with your project manager.</p>
-              
-              <div className="flex flex-col gap-3 pt-6">
-                {currentUser && (currentUser.role === Role.ADMIN) ? (
-                  <button 
-                    onClick={() => navigateTo('office-dashboard')}
-                    className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20"
-                  >
-                    Return to Dashboard
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => window.location.href = window.location.origin}
-                    className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20"
-                  >
-                    Go to Homepage
-                  </button>
-                )}
-                
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest pt-4">
-                  {COMPANY.name} Field Pro
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300">
-      {currentUser && (
-        <NavBar
-          currentUser={currentUser}
-          view={view}
-          theme={theme}
-          onNavigate={(v) => navigateTo(v)}
-          onLogout={handleLogout}
-          onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
-          onOpenEstimator={handleOpenNewEstimate}
-          onNewLead={() => {
-            setNewJobInitialStage(PipelineStage.LEAD_IN);
-            navigateTo('office-new-job');
-          }}
-          onNewEstimateAppointment={() => {
-            setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
-            navigateTo('office-new-job');
-          }}
-          onNewJob={() => {
-            setNewJobInitialStage(PipelineStage.JOB_SOLD);
-            navigateTo('office-new-job');
-          }}
-        />
-      )}
-
-      <main className="py-0 max-w-7xl mx-auto px-6 mt-6">
-        {aiError && (
-          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3 text-rose-700 animate-in fade-in slide-in-from-top-4 duration-300">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="font-bold text-sm">AI Configuration Issue</p>
-              <p className="text-xs opacity-90">{aiError}</p>
-            </div>
-            {window.aistudio && (
-              <button 
-                onClick={() => window.aistudio?.openSelectKey()}
-                className="px-3 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors"
-              >
-                Select Key
-              </button>
-            )}
-          </div>
-        )}
-
-        {storageError && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3 text-amber-700 animate-in fade-in slide-in-from-top-4 duration-300">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="font-bold text-sm">Storage Almost Full</p>
-              <p className="text-xs opacity-90">Local storage is reaching its limit. Some data may not be saved. We've automatically pruned old data, but you may want to clear your browser cache or old jobs.</p>
-            </div>
-            <button 
-              onClick={() => navigateTo('user-management')}
-              className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg hover:bg-amber-700 transition-colors"
-            >
-              Manage Storage
-            </button>
-          </div>
-        )}
-
-        <ErrorBoundary>
-          {view === 'jobs' && currentUser && (
-          <JobsListView 
-            user={currentUser} 
-            jobs={jobs}
-            onSelectJob={handleSelectJob} 
-            onViewResources={() => navigateTo('resources')}
-          />
-        )}
-        {view === 'office-pipeline' && currentUser && (
-          <UnifiedPipelineView
-            jobs={jobs}
-            onSelectJob={handleSelectJob}
-            onNewJob={(stage) => { setNewJobInitialStage(stage); navigateTo('office-new-job'); }}
-            onOpenEstimator={handleOpenNewEstimate}
-            onUpdatePipelineStage={handleUpdatePipelineStage}
-            onAutomationSettings={() => navigateTo('automation-settings')}
-          />
-        )}
-        {view === 'customers' && currentUser && (
-          <CustomersView
-            customers={customers}
-            onUpdateCustomer={handleUpdateCustomer}
-            onBack={() => navigateTo('office-pipeline')}
-          />
-        )}
-        {view === 'invoices' && currentUser && (
-          <InvoicesView
-            invoices={invoices}
-            onUpdateInvoice={handleUpdateInvoice}
-            onBack={() => navigateTo('office-dashboard')}
-          />
-        )}
-        {view === 'office-new-job' && currentUser && (
-          <NewJobIntakeView
-            onSave={(job) => { setNewJobPrefilledDate(undefined); setNewJobPrefilledContact(undefined); handleCreateJob(job); }}
-            onCancel={() => { setNewJobPrefilledDate(undefined); setNewJobPrefilledContact(undefined); navigateTo(currentUser?.role === Role.ESTIMATOR ? 'estimator-dashboard' : 'office-pipeline'); }}
-            initialStage={newJobInitialStage}
-            initialDate={newJobPrefilledDate}
-            allJobs={jobs}
-            prefilledContact={newJobPrefilledContact}
-          />
-        )}
-        {view === 'office-job-detail' && selectedJob && currentUser && (
-          <OfficeJobDetailView
-            job={selectedJob}
-            allJobs={jobs}
-            onBack={() => navigateTo('office-pipeline')}
-            onUpdatePipelineStage={handleUpdatePipelineStage}
-            onUpdateOfficeChecklist={handleUpdateOfficeChecklist}
-            onUpdateJob={handleUpdateJob}
-            onUpdateSchedule={handleUpdateSchedule}
-            onOpenFieldWorkflow={(job) => {
-              setSelectedJob(job);
-              handleOpenWorkflow(job);
-            }}
-            onSendMessage={handleSendMessage}
-            onPreviewPortal={(job) => {
-              if (!job) return;
-              setSelectedJob(job);
-              navigateTo('customer-portal', selectedJob?.customerPortalToken || selectedJob?.id);
-            }}
-            onDeleteJob={handleDeleteJob}
-            onOpenJobSetup={() => setPendingJobAcceptance(selectedJob)}
-            onGenerateInvoice={handleGenerateInvoice}
-            jobInvoices={invoices.filter(i => i.jobId === selectedJob.id)}
-          />
-        )}
-        {view === 'estimate-detail' && selectedJob && currentUser && (
-          <EstimateDetailView
-            job={selectedJob}
-            onBack={() => navigateTo('office-pipeline')}
-            onUpdateJob={handleUpdateJob}
-            onUpdatePipelineStage={(jobId, newStage) => {
-              handleUpdatePipelineStage(jobId, newStage);
-              if (newStage === PipelineStage.JOB_SOLD) {
-                // Intercept: show setup wizard before opening job file
-                const jobForSetup = jobs.find(j => j.id === jobId) ?? selectedJob;
-                if (jobForSetup) {
-                  setPendingJobAcceptance({ ...jobForSetup, pipelineStage: newStage });
-                }
-              }
-            }}
-            onOpenEstimator={(job) => {
-              setSelectedJob(job);
-              handleOpenEstimateForJob(job);
-            }}
-            onPreviewPortal={(job) => {
-              setSelectedJob(job);
-              navigateTo('customer-portal', selectedJob?.customerPortalToken || selectedJob?.id);
-            }}
-            onDeleteJob={handleDeleteJob}
-            onJobAccepted={(jobId) => {
-              // Intercept: show setup wizard before opening job file
-              const jobForSetup = jobs.find(j => j.id === jobId) ?? selectedJob;
-              if (jobForSetup) {
-                setPendingJobAcceptance(jobForSetup);
-              } else {
-                navigateTo('office-job-detail', jobId);
-              }
-            }}
-            onBookAppointment={(job) => {
-              setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
-              setNewJobPrefilledContact({
-                clientName: job.clientName,
-                clientPhone: job.clientPhone,
-                clientEmail: job.clientEmail,
-                projectAddress: job.projectAddress,
-              });
-              navigateTo('office-new-job');
-            }}
-          />
-        )}
-        {view === 'office-dashboard' && currentUser && (
-          <OfficeDashboardView 
-            jobs={jobs}
-            onSelectJob={handleSelectJob} 
-            onViewResources={() => navigateTo('resources')}
-            onNewJob={() => { setNewJobInitialStage(PipelineStage.LEAD_IN); navigateTo('office-new-job'); }}
-          />
-        )}
-        {view === 'stats' && currentUser && (
-          <StatsView
-            jobs={jobs}
-            onBack={() => navigateTo('office-dashboard')}
-          />
-        )}
-        {view === 'detail' && selectedJob && currentUser && (
-          <JobDetailView 
-            job={selectedJob} 
-            user={currentUser}
-            allJobs={jobs}
-            onBack={() => navigateTo(currentUser.role === Role.ADMIN ? 'office-dashboard' : 'jobs')}
-            onOpenWorkflow={handleOpenWorkflow}
-            onUpdateOfficeReviewStatus={handleUpdateOfficeReviewStatus}
-            onUpdateSchedule={handleUpdateSchedule}
-            onUpdateFieldForecast={handleUpdateFieldForecast}
-            onSendMessage={handleSendMessage}
-          />
-        )}
-        {view === 'user-management' && currentUser?.role === Role.ADMIN && (
-          <UserManagementView onBack={() => navigateTo('office-dashboard')} />
-        )}
-        {view === 'resources' && currentUser && (
-          <FieldResourcesView 
-            user={currentUser} 
-            onBack={() => navigateTo(currentUser.role === Role.ADMIN ? 'office-dashboard' : 'jobs')}
-          />
-        )}
-        {view === 'scheduling' && currentUser && (
-          <SchedulingCalendarView
-            jobs={jobs}
-            onSelectJob={handleSelectJob}
-            onUpdateSchedule={handleUpdateSchedule}
-            onNewAppointment={(date) => {
-              setNewJobPrefilledDate(date);
-              setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED);
-              navigateTo('office-new-job');
-            }}
-            onSendMessage={(phone, name) => {
-              const msg = `Hi ${name.split(' ')[0]}, this is ${COMPANY.name} confirming your estimate appointment. Reply to this message if you have any questions!`;
-              window.open(`sms:${phone}?body=${encodeURIComponent(msg)}`);
-            }}
-          />
-        )}
-        {view === 'chat' && currentUser && (
-          <ChatView 
-            sessions={chatSessions}
-            currentUser={currentUser}
-            jobs={jobs}
-            onSendMessage={handleSendMessage}
-          />
-        )}
-        {view === 'estimator-dashboard' && currentUser && (
-          <EstimatorDashboardView 
-            jobs={jobs}
-            onSelectJob={handleSelectJob}
-            onOpenCalendar={() => navigateTo('estimator-calendar')}
-            onNewEstimate={() => { setNewJobInitialStage(PipelineStage.EST_UNSCHEDULED); navigateTo('office-new-job'); }}
-          />
-        )}
-        {view === 'estimator-calendar' && currentUser && (
-          <div className="flex flex-col h-full overflow-hidden">
-            <div className="bg-[var(--bg-primary)] p-2 border-b border-[var(--border-color)]">
-              <button 
-                onClick={() => navigateTo('estimator-dashboard')}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/5 rounded-xl transition-all"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Back to Dashboard
-              </button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <EstimatorCalendar
-                appointments={jobs
-                  .filter(j => j.scheduledDate && j.clientName)
-                  .map(j => ({
-                    id: j.id,
-                    clientName: j.clientName,
-                    address: j.projectAddress || '',
-                    time: '',
-                    date: j.scheduledDate!,
-                    type: 'estimate' as const,
-                    status: 'scheduled' as const,
-                  }))}
-                installSchedule={jobs
-                  .filter(j => j.plannedStartDate && j.pipelineStage && [
-                    PipelineStage.JOB_SOLD, PipelineStage.ADMIN_SETUP, PipelineStage.PRE_PRODUCTION,
-                    PipelineStage.READY_TO_START, PipelineStage.IN_FIELD
-                  ].includes(j.pipelineStage))
-                  .map(j => ({
-                    id: j.id,
-                    clientName: j.clientName,
-                    address: j.projectAddress || '',
-                    startDate: j.plannedStartDate!,
-                    endDate: j.plannedFinishDate || j.plannedStartDate!,
-                    crewName: j.assignedCrewOrSubcontractor || 'Unassigned',
-                    status: 'tentative' as const,
-                  }))}
-              />
-            </div>
-          </div>
-        )}
-        {view === 'estimator-workflow' && !selectedJob && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-[var(--text-secondary)]">
-            <p className="text-lg font-bold">No job selected.</p>
-            <button
-              onClick={() => navigateTo('office-pipeline')}
-              className="px-6 py-3 bg-[var(--brand-gold)] text-white rounded-xl font-bold hover:opacity-90 transition-all"
-            >
-              Go to Pipeline
-            </button>
-          </div>
-        )}
-        {view === 'estimator-workflow' && selectedJob && currentUser && (
-          <EstimatorWorkflowView
-            key={selectedJob.id}
-            job={selectedJob}
-            onBack={() => navigateTo('estimator-dashboard')}
-            onSave={handleUpdateEstimatorIntake}
-            onPushToEstimating={handlePushToEstimating}
-          />
-        )}
-        {view === 'booking-settings' && currentUser && (
-          <BookingSettingsView
-            onBack={() => navigateTo('office-dashboard')}
-            onNavigate={navigateTo}
-          />
-        )}
-        {view === 'automation-settings' && currentUser && (
-          <AutomationSettingsView
-            onBack={() => navigateTo('office-pipeline')}
-          />
-        )}
-        {view === 'business-info' && currentUser?.role === Role.ADMIN && (
-          <BusinessInfoView
-            onBack={() => navigateTo('booking-settings')}
-          />
-        )}
-        {view === 'price-book' && currentUser?.role === Role.ADMIN && (
-          <PriceBookView
-            onBack={() => navigateTo('booking-settings')}
-          />
-        )}
-        </ErrorBoundary>
-      </main>
-
-      {/* Job Acceptance Wizard — intercepts JOB_SOLD transition */}
-      {pendingJobAcceptance && (
-        <JobAcceptanceModal
-          key={pendingJobAcceptance.id}
-          job={pendingJobAcceptance}
-          onComplete={(updates) => {
-            const jobId = pendingJobAcceptance.id;
-            handleUpdateJob(jobId, updates);
-            setPendingJobAcceptance(null);
-            navigateTo('office-job-detail', jobId);
-          }}
-          onSkip={() => {
-            const jobId = pendingJobAcceptance.id;
-            setPendingJobAcceptance(null);
-            navigateTo('office-job-detail', jobId);
-          }}
-          onFillLater={() => {
-            const jobId = pendingJobAcceptance.id;
-            handleUpdateJob(jobId, { needsJobSetup: true });
-            setPendingJobAcceptance(null);
-            navigateTo('office-job-detail', jobId);
-          }}
-        />
-      )}
-    </div>
+    <AppRouter
+      view={view}
+      currentUser={currentUser}
+      theme={theme}
+      navigateTo={navigateTo}
+      handleLogin={handleLogin}
+      handleLogout={handleLogout}
+      setTheme={setTheme}
+      jobs={jobs}
+      setJobs={setJobs}
+      selectedJob={selectedJob}
+      setSelectedJob={setSelectedJob}
+      handleSelectJob={handleSelectJob}
+      handleUpdateJob={handleUpdateJob}
+      handleDeleteJob={handleDeleteJob}
+      handleUpdatePipelineStage={handleUpdatePipelineStage}
+      handleCreateJob={handleCreateJob}
+      handleOpenWorkflow={handleOpenWorkflow}
+      handleUpdateOfficeChecklist={handleUpdateOfficeChecklist}
+      handleUpdateSchedule={handleUpdateSchedule}
+      handleUpdateOfficeReviewStatus={handleUpdateOfficeReviewStatus}
+      handleUpdateFieldForecast={handleUpdateFieldForecast}
+      handleUpdateEstimatorIntake={handleUpdateEstimatorIntake}
+      handleOpenNewEstimate={handleOpenNewEstimate}
+      handleOpenEstimateForJob={handleOpenEstimateForJob}
+      handlePushToEstimating={handlePushToEstimating}
+      handleEstimateAcceptedLocal={handleEstimateAcceptedLocal}
+      handleEstimateSaved={handleEstimateSaved}
+      calculatorInitialDimensions={calculatorInitialDimensions}
+      calculatorInitialClientInfo={calculatorInitialClientInfo}
+      calculatorInitialSelections={calculatorInitialSelections}
+      calculatorSourceJobId={calculatorSourceJobId}
+      showCalculatorAcceptance={showCalculatorAcceptance}
+      setShowCalculatorAcceptance={setShowCalculatorAcceptance}
+      calculatorAcceptanceJob={calculatorAcceptanceJob}
+      portalLoading={portalLoading}
+      onAcceptOption={onAcceptOption}
+      onSignContract={onSignContract}
+      onTrackEngagement={onTrackEngagement}
+      handleClosePortal={handleClosePortal}
+      workflowState={workflowState}
+      setWorkflowState={setWorkflowState}
+      isOnline={isOnline}
+      isUploading={isUploading}
+      uploadProgress={uploadProgress}
+      submissionError={submissionError}
+      handleFullSubmission={handleFullSubmission}
+      handleFieldScheduleUpdate={handleFieldScheduleUpdate}
+      chatSessions={chatSessions}
+      handleSendMessage={handleSendMessage}
+      customers={customers}
+      handleUpdateCustomer={handleUpdateCustomer}
+      invoices={invoices}
+      handleUpdateInvoice={handleUpdateInvoice}
+      handleGenerateInvoice={handleGenerateInvoice}
+      pendingJobAcceptance={pendingJobAcceptance}
+      setPendingJobAcceptance={setPendingJobAcceptance}
+      newJobInitialStage={newJobInitialStage}
+      setNewJobInitialStage={setNewJobInitialStage}
+      newJobPrefilledDate={newJobPrefilledDate}
+      setNewJobPrefilledDate={setNewJobPrefilledDate}
+      newJobPrefilledContact={newJobPrefilledContact}
+      setNewJobPrefilledContact={setNewJobPrefilledContact}
+      aiError={aiError}
+      storageError={storageError}
+    />
   );
 };
 
