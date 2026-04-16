@@ -70,14 +70,66 @@ const OPTIONS: FramingOption[] = [
 /*  Wood material with slight colour variation per piece               */
 /* ------------------------------------------------------------------ */
 
+/** Create a small canvas texture simulating wood grain */
+function createWoodTexture(baseHex: string, isGlass: boolean): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d')!;
+
+  // Base fill
+  ctx.fillStyle = baseHex;
+  ctx.fillRect(0, 0, 64, 256);
+
+  // Grain lines (run along the length of the board)
+  const base = new THREE.Color(baseHex);
+  for (let i = 0; i < 40; i++) {
+    const y = Math.random() * 256;
+    const w = 0.5 + Math.random() * 1.5;
+    const lightness = (Math.random() - 0.5) * 0.12;
+    const c = base.clone();
+    c.offsetHSL(0, 0, lightness);
+    ctx.strokeStyle = `#${c.getHexString()}`;
+    ctx.lineWidth = w;
+    ctx.globalAlpha = 0.3 + Math.random() * 0.4;
+    ctx.beginPath();
+    ctx.moveTo(0, y + (Math.random() - 0.5) * 3);
+    ctx.bezierCurveTo(16, y + (Math.random() - 0.5) * 5, 48, y + (Math.random() - 0.5) * 5, 64, y + (Math.random() - 0.5) * 3);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Occasional knot (subtle dark spot)
+  if (!isGlass && Math.random() > 0.5) {
+    const kx = 10 + Math.random() * 44;
+    const ky = 40 + Math.random() * 176;
+    const kr = 2 + Math.random() * 3;
+    const kc = base.clone();
+    kc.offsetHSL(0, -0.1, -0.15);
+    ctx.fillStyle = `#${kc.getHexString()}`;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.ellipse(kx, ky, kr, kr * 1.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(1, 2);
+  return tex;
+}
+
 function woodMat(base: THREE.Color, seed: number, isGlass: boolean): THREE.MeshStandardMaterial {
   const c = base.clone();
-  // Slight per-piece hue/lightness variation for realism
-  const vary = ((seed * 7919) % 100) / 100; // deterministic pseudo-random 0–1
-  c.offsetHSL(0, 0, (vary - 0.5) * 0.06);
+  const vary = ((seed * 7919) % 100) / 100;
+  c.offsetHSL(0, 0, (vary - 0.5) * 0.05);
+  const tex = createWoodTexture(`#${c.getHexString()}`, isGlass);
   return new THREE.MeshStandardMaterial({
+    map: tex,
     color: c,
-    roughness: isGlass ? 0.6 : 0.88,
+    roughness: isGlass ? 0.55 : 0.85,
     metalness: isGlass ? 0.05 : 0.0,
   });
 }
@@ -182,7 +234,7 @@ const FramingVisualizer: React.FC<Props> = ({ selectedOption, dimensions, onSele
         }}>
           <Canvas
             shadows
-            camera={{ position: [8, 6, 10], fov: 30, near: 0.1, far: 100 }}
+            camera={{ position: [10, 7.5, 12], fov: 28, near: 0.1, far: 100 }}
             style={{ width: '100%', height: '100%' }}
             gl={{ antialias: true, alpha: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
           >
@@ -197,8 +249,10 @@ const FramingVisualizer: React.FC<Props> = ({ selectedOption, dimensions, onSele
             <DeckFrame oc={active.oc} joistH={active.joistH} material={active.material} />
 
             <OrbitControls
-              enableZoom={false}
+              enableZoom={true}
               enablePan={false}
+              minDistance={8}
+              maxDistance={22}
               minPolarAngle={Math.PI / 8}
               maxPolarAngle={Math.PI / 2.8}
               target={[0, 0.3, 0]}
@@ -206,6 +260,25 @@ const FramingVisualizer: React.FC<Props> = ({ selectedOption, dimensions, onSele
               autoRotateSpeed={0.4}
             />
           </Canvas>
+
+          {/* Zoom buttons */}
+          <div style={{
+            position: 'absolute', top: 12, right: 12,
+            display: 'flex', flexDirection: 'column', gap: 4,
+          }}>
+            {['+', '\u2212'].map((label, i) => (
+              <button key={label} onClick={() => {
+                // Dispatch wheel event to trigger OrbitControls zoom
+                const el = document.querySelector('canvas');
+                if (el) el.dispatchEvent(new WheelEvent('wheel', { deltaY: i === 0 ? -100 : 100, bubbles: true }));
+              }} style={{
+                width: 28, height: 28, borderRadius: 6, border: '1px solid rgba(212,168,83,0.2)',
+                background: 'rgba(0,0,0,0.5)', color: 'rgba(212,168,83,0.7)', fontSize: 16,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700, lineHeight: 1, backdropFilter: 'blur(4px)',
+              }}>{label}</button>
+            ))}
+          </div>
 
           {/* Overlay label */}
           <div style={{
@@ -216,7 +289,7 @@ const FramingVisualizer: React.FC<Props> = ({ selectedOption, dimensions, onSele
               fontSize: 11, fontWeight: 600, letterSpacing: 0.5,
               color: 'rgba(212,168,83,0.5)', fontFamily: "'DM Sans', sans-serif",
             }}>
-              {active.oc}" on centre &middot; {jPositions.length} joists &middot; {active.joistH === H_2x8 ? '2\u00d78' : '2\u00d710'} frame &middot; 8' \u00d7 12' deck
+              {`${active.oc}" on centre \u00b7 ${jPositions.length} joists \u00b7 ${active.joistH === H_2x8 ? '2\u00d78' : '2\u00d710'} frame \u00b7 8\u2032 \u00d7 12\u2032 deck`}
             </span>
           </div>
         </div>
