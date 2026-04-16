@@ -4,6 +4,7 @@ import { loadPriceBook } from '../utils/priceBook';
 import ShowroomGlobalStyle from './showroom/ShowroomGlobalStyle';
 import ShowroomTopNav from './showroom/ShowroomTopNav';
 import FramingVisualizer from './showroom/FramingVisualizer';
+import FoundationVisualizer from './showroom/FoundationVisualizer';
 import {
   TIER_TO_ITEM_ID,
   PRICING_DATA,
@@ -1759,6 +1760,27 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                         .find((o) => o.id === optionId);
                       if (!opt) return 0;
                       return getOptionImpactValue('framing', opt);
+                    }}
+                  />
+                ) : activeCategory === 'foundation' ? (
+                  <FoundationVisualizer
+                    selectedOption={selections.foundation}
+                    dimensions={dimensions}
+                    onSelectOption={(optionId) => {
+                      if (optionId === '__deselect__') {
+                        setSelections({ ...selections, foundation: null });
+                        return;
+                      }
+                      const opt = (PRICING_DATA.find((c) => c.id === 'foundation')?.options ?? [])
+                        .find((o) => o.id === optionId);
+                      if (!opt) return;
+                      handleOptionClick('foundation', opt);
+                    }}
+                    getImpactValue={(optionId) => {
+                      const opt = (PRICING_DATA.find((c) => c.id === 'foundation')?.options ?? [])
+                        .find((o) => o.id === optionId);
+                      if (!opt) return 0;
+                      return getOptionImpactValue('foundation', opt);
                     }}
                   />
                 ) : (
