@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Environment } from '@react-three/drei';
+import * as THREE from 'three';
 import type { PricingTier, Dimensions } from '../EstimatorCalculatorView';
 
 /* ------------------------------------------------------------------ */
@@ -19,35 +22,207 @@ interface FramingOption {
 }
 
 const OPTIONS: FramingOption[] = [
-  { id: 'std', pricingId: null, name: '2\u00d78 PT \u00b7 16" OC', advantage: 'Ontario Building Code standard. Included with every deck.', description: 'Standard pressure-treated 2\u00d78 framing at 16-inch on-centre spacing. Meets Ontario Building Code for residential decks up to 14-foot spans. Included with every project.', joistCount: 11, heightMul: 1, material: 'wood', badge: 'INCLUDED', priceDelta: 0 },
+  { id: 'std', pricingId: null, name: '2\u00d78 PT \u00b7 16" OC', advantage: 'Ontario Building Code standard. Included with every deck.', description: 'Standard pressure-treated 2\u00d78 framing at 16" on-centre spacing. Meets Ontario Building Code for residential decks up to 14-foot spans. Included with every project.', joistCount: 11, heightMul: 1, material: 'wood', badge: 'INCLUDED', priceDelta: 0 },
   { id: '8-12', pricingId: 'upgrade_2x8_12', name: '2\u00d78 PT \u00b7 12" OC', advantage: '33% more joists \u2014 reduces bounce underfoot.', description: 'Closer joist spacing eliminates flex and bounce, especially with composite decking. Recommended for hot tubs, outdoor kitchens, or diagonal board patterns.', joistCount: 15, heightMul: 1, material: 'wood', badge: null, priceDelta: 1.95 },
-  { id: '10-16', pricingId: 'upgrade_2x10_16', name: '2\u00d710 PT \u00b7 16" OC', advantage: '28% deeper joists \u2014 longer spans, less flex.', description: 'Larger 2\u00d710 joists span further without mid-span support. Ideal for elevated decks or spans over 14 feet.', joistCount: 11, heightMul: 1.3, material: 'wood', badge: null, priceDelta: 4.49 },
-  { id: '10-12', pricingId: 'upgrade_2x10_12', name: '2\u00d710 PT \u00b7 12" OC', advantage: 'Maximum wood frame \u2014 zero bounce.', description: 'The strongest conventional wood frame. Deeper joists at tighter spacing \u2014 feels like a concrete patio underfoot.', joistCount: 15, heightMul: 1.3, material: 'wood', badge: null, priceDelta: 6.49 },
-  { id: 'fg', pricingId: 'fiberglass_framing', name: 'Fiberglass Composite', advantage: 'Will not rot, warp, or split. Lifetime warranty.', description: 'Owens Corning fiberglass composite joists. Immune to moisture, insects, and UV. Zero maintenance for the life of the structure.', joistCount: 11, heightMul: 1.3, material: 'fiberglass', badge: 'PREMIUM', priceDelta: 29.95 },
+  { id: '10-16', pricingId: 'upgrade_2x10_16', name: '2\u00d710 PT \u00b7 16" OC', advantage: '28% deeper joists \u2014 longer spans, less flex.', description: 'Larger 2\u00d710 joists span further without mid-span support. Ideal for elevated decks or spans over 14 feet.', joistCount: 11, heightMul: 1.28, material: 'wood', badge: null, priceDelta: 4.49 },
+  { id: '10-12', pricingId: 'upgrade_2x10_12', name: '2\u00d710 PT \u00b7 12" OC', advantage: 'Maximum wood frame \u2014 zero bounce.', description: 'The strongest conventional wood frame. Deeper joists at tighter spacing \u2014 feels like a concrete patio underfoot.', joistCount: 15, heightMul: 1.28, material: 'wood', badge: null, priceDelta: 6.49 },
+  { id: 'fg', pricingId: 'fiberglass_framing', name: 'Fiberglass Composite', advantage: 'Will not rot, warp, or split. Lifetime warranty.', description: 'Owens Corning fiberglass composite joists. Immune to moisture, insects, and UV. Zero maintenance for the life of the structure.', joistCount: 11, heightMul: 1.28, material: 'fiberglass', badge: 'PREMIUM', priceDelta: 29.95 },
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Wood grain CSS gradient (repeating pattern)                        */
+/*  Materials                                                          */
 /* ------------------------------------------------------------------ */
 
-const woodGrain = (base: string, light: string, dark: string) =>
-  `repeating-linear-gradient(
-    90deg,
-    ${base} 0px, ${base} 3px,
-    ${light} 3px, ${light} 5px,
-    ${base} 5px, ${base} 11px,
-    ${dark} 11px, ${dark} 12px,
-    ${base} 12px, ${base} 18px,
-    ${light} 18px, ${light} 19px,
-    ${base} 19px, ${base} 24px
-  )`;
+const WOOD_COLOR = new THREE.Color('#C4A060');
+const WOOD_DARK = new THREE.Color('#8B7040');
+const FG_COLOR = new THREE.Color('#4A8B6B');
+const FG_DARK = new THREE.Color('#2E6B4A');
+const POST_COLOR = new THREE.Color('#9B8050');
+const BRACKET_COLOR = new THREE.Color('#A0A8B0');
 
-const WOOD_TOP_BG = woodGrain('#C9A96E', '#D4B87A', '#B89858');
-const WOOD_FRONT_BG = woodGrain('#9B7E52', '#A68A5E', '#8B6E42');
-const WOOD_SIDE_BG = '#7D6544';
-const FG_TOP_BG = woodGrain('#4FA87A', '#5AB888', '#3F9868');
-const FG_FRONT_BG = woodGrain('#3A7D5D', '#448D6A', '#306D4D');
-const FG_SIDE_BG = '#2E6B4A';
+/* ------------------------------------------------------------------ */
+/*  3D Scene                                                           */
+/* ------------------------------------------------------------------ */
+
+interface SceneProps {
+  joistCount: number;
+  heightMul: number;
+  material: 'wood' | 'fiberglass';
+}
+
+/** Single lumber piece */
+const Lumber: React.FC<{
+  position: [number, number, number];
+  size: [number, number, number];
+  color: THREE.Color;
+  opacity?: number;
+  visible?: boolean;
+}> = ({ position, size, color, opacity = 1, visible = true }) => {
+  const ref = useRef<THREE.Mesh>(null);
+
+  useFrame(() => {
+    if (!ref.current) return;
+    const target = visible ? opacity : 0;
+    const current = (ref.current.material as THREE.MeshStandardMaterial).opacity;
+    if (Math.abs(current - target) > 0.01) {
+      (ref.current.material as THREE.MeshStandardMaterial).opacity += (target - current) * 0.12;
+      (ref.current.material as THREE.MeshStandardMaterial).needsUpdate = true;
+    }
+  });
+
+  return (
+    <mesh ref={ref} position={position} castShadow receiveShadow>
+      <boxGeometry args={size} />
+      <meshStandardMaterial
+        color={color}
+        roughness={0.85}
+        metalness={0.02}
+        transparent
+        opacity={visible ? opacity : 0}
+      />
+    </mesh>
+  );
+};
+
+/** Metal bracket */
+const Bracket: React.FC<{
+  position: [number, number, number];
+  visible?: boolean;
+}> = ({ position, visible = true }) => {
+  if (!visible) return null;
+  return (
+    <mesh position={position}>
+      <boxGeometry args={[0.08, 0.12, 0.04]} />
+      <meshStandardMaterial color={BRACKET_COLOR} roughness={0.4} metalness={0.6} />
+    </mesh>
+  );
+};
+
+const DeckFrame: React.FC<SceneProps> = ({ joistCount, heightMul, material }) => {
+  const isG = material === 'fiberglass';
+  const jColor = isG ? FG_COLOR : WOOD_COLOR;
+  const beamColor = isG ? FG_DARK : WOOD_DARK;
+
+  // Frame dimensions (Three.js units ≈ feet)
+  const W = 5;        // width
+  const D = 3.5;      // depth
+  const jW = 0.125;   // joist width (1.5" = 0.125ft)
+  const jH = 0.6 * heightMul; // joist height
+  const beamH = 0.7;
+  const beamW = 0.25;
+  const postW = 0.3;
+  const postH = 1.2;
+  const rimW = 0.125;
+
+  // 15 joist slots
+  const MAX = 15;
+  const slots = useMemo(() => {
+    const arr: number[] = [];
+    for (let i = 0; i < MAX; i++) arr.push(-W / 2 + ((i + 1) / (MAX + 1)) * W);
+    return arr;
+  }, []);
+
+  const vis = useMemo(() => {
+    const s = new Set<number>();
+    if (joistCount >= MAX) for (let i = 0; i < MAX; i++) s.add(i);
+    else for (let i = 0; i < joistCount; i++) s.add(Math.round((i * (MAX - 1)) / (joistCount - 1)));
+    return s;
+  }, [joistCount]);
+
+  const beamY = -postH / 2 - beamH / 2;
+  const joistY = beamY - beamH / 2 - jH / 2 + 0.02;
+  const postY = -postH / 2;
+
+  const posts = [-W * 0.42, -W * 0.14, W * 0.14, W * 0.42];
+
+  // Slow auto-rotation
+  const groupRef = useRef<THREE.Group>(null);
+  useFrame((_, delta) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.05;
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Posts */}
+      {posts.map((px, i) => (
+        <Lumber key={`post-${i}`}
+          position={[px, postY, 0]}
+          size={[postW, postH, postW]}
+          color={POST_COLOR}
+        />
+      ))}
+
+      {/* Beam (perpendicular to joists) */}
+      <Lumber
+        position={[0, beamY, 0]}
+        size={[W + 0.3, beamH, beamW]}
+        color={beamColor}
+      />
+
+      {/* Joists — all 15 slots */}
+      {slots.map((jx, i) => (
+        <React.Fragment key={`j-${i}`}>
+          <Lumber
+            position={[jx, joistY, 0]}
+            size={[jW, jH, D]}
+            color={jColor}
+            visible={vis.has(i)}
+          />
+          <Bracket
+            position={[jx, beamY + beamH / 2 + 0.02, 0]}
+            visible={vis.has(i)}
+          />
+        </React.Fragment>
+      ))}
+
+      {/* End joists */}
+      <Lumber position={[-W / 2 - jW / 2, joistY, 0]} size={[jW, jH, D]} color={jColor} />
+      <Lumber position={[W / 2 + jW / 2, joistY, 0]} size={[jW, jH, D]} color={jColor} />
+
+      {/* Rim joist (front) */}
+      <Lumber
+        position={[0, joistY, D / 2 + rimW / 2]}
+        size={[W + jW * 4, jH, rimW]}
+        color={jColor}
+      />
+
+      {/* Ledger (back — always wood) */}
+      <Lumber
+        position={[0, joistY, -D / 2 - rimW / 2]}
+        size={[W + jW * 2, jH, rimW]}
+        color={WOOD_DARK}
+      />
+
+      {/* Blocking at beam line (between visible joists) */}
+      {slots.map((jx, i) => {
+        if (!vis.has(i)) return null;
+        let nextIdx = -1;
+        for (let n = i + 1; n < MAX; n++) { if (vis.has(n)) { nextIdx = n; break; } }
+        if (nextIdx < 0) return null;
+        const nx = slots[nextIdx];
+        const mid = (jx + nx) / 2;
+        const gap = nx - jx - jW;
+        if (gap < 0.05) return null;
+        return (
+          <Lumber key={`blk-${i}`}
+            position={[mid, joistY + jH * 0.1, 0]}
+            size={[gap, jH * 0.75, jW]}
+            color={jColor}
+            opacity={0.8}
+          />
+        );
+      })}
+
+      {/* Ground plane (subtle shadow catcher) */}
+      <mesh position={[0, postY - postH / 2 - 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[8, 6]} />
+        <shadowMaterial transparent opacity={0.15} />
+      </mesh>
+    </group>
+  );
+};
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
@@ -61,7 +236,7 @@ interface Props {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Main component                                                     */
+/*  Main Component                                                     */
 /* ------------------------------------------------------------------ */
 
 const FramingVisualizer: React.FC<Props> = ({ selectedOption, dimensions, onSelectOption, getImpactValue }) => {
@@ -84,14 +259,42 @@ const FramingVisualizer: React.FC<Props> = ({ selectedOption, dimensions, onSele
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, minHeight: 0 }}>
       <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0 }}>
-        {/* 3D Frame */}
+        {/* 3D Canvas */}
         <div style={{
           flex: '1 1 62%', minWidth: 0, background: 'rgba(255,255,255,0.015)',
           borderRadius: 10, border: '1px solid rgba(212,168,83,0.08)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 16, overflow: 'hidden', perspective: 900,
+          overflow: 'hidden', minHeight: 340,
         }}>
-          <Frame3D count={active.joistCount} hMul={active.heightMul} mat={active.material} />
+          <Canvas
+            shadows
+            camera={{ position: [4, 3, 4], fov: 35 }}
+            style={{ width: '100%', height: '100%' }}
+            gl={{ antialias: true, alpha: true }}
+          >
+            <color attach="background" args={['#0A0A0A']} />
+            <ambientLight intensity={0.4} />
+            <directionalLight
+              position={[5, 8, 5]}
+              intensity={1.2}
+              castShadow
+              shadow-mapSize-width={1024}
+              shadow-mapSize-height={1024}
+            />
+            <directionalLight position={[-3, 4, -2]} intensity={0.3} />
+            <DeckFrame
+              joistCount={active.joistCount}
+              heightMul={active.heightMul}
+              material={active.material}
+            />
+            <OrbitControls
+              enableZoom={false}
+              enablePan={false}
+              minPolarAngle={Math.PI / 6}
+              maxPolarAngle={Math.PI / 2.5}
+              autoRotate
+              autoRotateSpeed={0.3}
+            />
+          </Canvas>
         </div>
 
         {/* Cards */}
@@ -132,180 +335,3 @@ const FramingVisualizer: React.FC<Props> = ({ selectedOption, dimensions, onSele
 };
 
 export default FramingVisualizer;
-
-/* ================================================================== */
-/*  Frame3D — CSS 3D transformed deck frame                           */
-/* ================================================================== */
-
-interface Frame3DProps { count: number; hMul: number; mat: 'wood' | 'fiberglass'; }
-
-const Frame3D: React.FC<Frame3DProps> = ({ count, hMul, mat }) => {
-  const isG = mat === 'fiberglass';
-  const topBg = isG ? FG_TOP_BG : WOOD_TOP_BG;
-  const frontBg = isG ? FG_FRONT_BG : WOOD_FRONT_BG;
-  const sideBg = isG ? FG_SIDE_BG : WOOD_SIDE_BG;
-
-  // Dimensions in px (the whole thing is inside a CSS 3D perspective container)
-  const W = 400;   // frame width
-  const D = 280;   // frame depth
-  const jW = 8;    // joist width
-  const jH = Math.round(18 * hMul); // joist height — scales for 2x8 vs 2x10
-  const beamH = 22;
-  const beamW = 12;
-  const postW = 14;
-  const postH = 40;
-
-  // 15 joist positions
-  const MAX = 15;
-  const slots = useMemo(() => {
-    const arr: number[] = [];
-    for (let i = 0; i < MAX; i++) arr.push(((i + 1) / (MAX + 1)) * W);
-    return arr;
-  }, []);
-
-  const visible = useMemo(() => {
-    const s = new Set<number>();
-    if (count >= MAX) { for (let i = 0; i < MAX; i++) s.add(i); }
-    else { for (let i = 0; i < count; i++) s.add(Math.round((i * (MAX - 1)) / (count - 1))); }
-    return s;
-  }, [count]);
-
-  const beamY = D * 0.48;
-  const posts = [W * 0.05, W * 0.35, W * 0.65, W * 0.95];
-
-  // Lumber piece component — a 3D box using CSS transforms
-  const Lumber: React.FC<{
-    x: number; y: number; z: number;
-    w: number; d: number; h: number;
-    top: string; front: string; side: string;
-    op?: number; k: string;
-  }> = ({ x, y, z, w, d, h, top, front, side, op = 1, k }) => (
-    <div key={k} style={{
-      position: 'absolute',
-      left: x, top: y - z - h,
-      width: w, height: h,
-      opacity: op,
-      transition: 'opacity 300ms ease, height 300ms ease, top 300ms ease',
-      transformStyle: 'preserve-3d' as const,
-    }}>
-      {/* Front face */}
-      <div style={{
-        position: 'absolute', width: w, height: h,
-        background: front,
-        borderBottom: '1px solid rgba(0,0,0,0.2)',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.15)',
-      }} />
-      {/* Top face — skewed to create 3D depth illusion */}
-      <div style={{
-        position: 'absolute', width: w, height: Math.round(d * 0.35),
-        background: top,
-        transform: 'skewX(-40deg)',
-        transformOrigin: 'bottom left',
-        top: -Math.round(d * 0.35) + 1,
-        borderTop: '1px solid rgba(255,255,255,0.1)',
-        boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.08)',
-      }} />
-      {/* Right side face */}
-      <div style={{
-        position: 'absolute',
-        right: -Math.round(d * 0.18),
-        top: -Math.round(d * 0.35) + 1,
-        width: Math.round(d * 0.18),
-        height: h + Math.round(d * 0.35) - 1,
-        background: side,
-        transform: 'skewY(-50deg)',
-        transformOrigin: 'top left',
-        borderRight: '1px solid rgba(0,0,0,0.15)',
-      }} />
-    </div>
-  );
-
-  return (
-    <div style={{
-      position: 'relative',
-      width: W + 100,
-      height: D * 0.5 + jH + postH + beamH + 60,
-      margin: '0 auto',
-      transform: 'scale(0.85)',
-      transformOrigin: 'center center',
-    }}>
-      {/* Ground shadow */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: '10%',
-        width: '80%',
-        height: 20,
-        background: 'radial-gradient(ellipse, rgba(0,0,0,0.25) 0%, transparent 70%)',
-        borderRadius: '50%',
-      }} />
-
-      {/* Posts (behind everything) */}
-      {posts.map((px, i) => (
-        <Lumber key={`p${i}`} k={`p${i}`}
-          x={px + 20} y={D * 0.5 + jH + beamH + postH} z={0}
-          w={postW} d={postW} h={postH}
-          top={WOOD_TOP_BG} front={WOOD_FRONT_BG} side={WOOD_SIDE_BG}
-        />
-      ))}
-
-      {/* Beam */}
-      <Lumber k="beam"
-        x={10} y={D * 0.5 + jH + beamH} z={0}
-        w={W + 40} d={beamW} h={beamH}
-        top={isG ? FG_TOP_BG : woodGrain('#8B7355', '#9B8365', '#7B6545')}
-        front={isG ? FG_FRONT_BG : woodGrain('#6B5740', '#7B6750', '#5B4730')}
-        side={isG ? FG_SIDE_BG : '#5A4830'}
-      />
-
-      {/* Ledger (back) */}
-      <Lumber k="ledger"
-        x={20} y={D * 0.5 + jH - 8} z={0}
-        w={W} d={10} h={jH}
-        top={woodGrain('#8B7A5A', '#9B8A6A', '#7B6A4A')}
-        front={woodGrain('#6B5A3A', '#7B6A4A', '#5B4A2A')}
-        side="#5A4835"
-      />
-
-      {/* Joists — all 15 slots */}
-      {slots.map((jx, i) => (
-        <Lumber key={`j${i}`} k={`j${i}`}
-          x={jx + 20 - jW / 2}
-          y={D * 0.5 + jH}
-          z={0}
-          w={jW} d={D} h={jH}
-          top={topBg} front={frontBg} side={sideBg}
-          op={visible.has(i) ? 1 : 0}
-        />
-      ))}
-
-      {/* End joists */}
-      <Lumber k="eL" x={20 - jW} y={D * 0.5 + jH} z={0} w={jW} d={D} h={jH} top={topBg} front={frontBg} side={sideBg} />
-      <Lumber k="eR" x={W + 20} y={D * 0.5 + jH} z={0} w={jW} d={D} h={jH} top={topBg} front={frontBg} side={sideBg} />
-
-      {/* Rim joist (front) */}
-      <Lumber k="rim"
-        x={20 - jW} y={D * 0.5 + jH + 8} z={0}
-        w={W + jW * 2} d={10} h={jH}
-        top={topBg} front={frontBg} side={sideBg}
-      />
-
-      {/* Spacing label */}
-      <div style={{
-        position: 'absolute',
-        bottom: -4,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        fontSize: 10,
-        fontWeight: 600,
-        color: 'rgba(212,168,83,0.4)',
-        letterSpacing: 0.5,
-        fontFamily: "'DM Sans', sans-serif",
-        whiteSpace: 'nowrap',
-      }}>
-        {count >= 15 ? '12"' : '16"'} on centre \u00b7 {count + 2} joists
-      </div>
-    </div>
-  );
-};

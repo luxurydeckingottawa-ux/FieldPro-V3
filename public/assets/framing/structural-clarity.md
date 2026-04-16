@@ -1,0 +1,13 @@
+# Structural Clarity
+
+A visual philosophy for revealing the hidden architecture of outdoor living.
+
+---
+
+What lies beneath the surface defines everything above it. Structural Clarity is a design movement that treats invisible framework as worthy of the same reverence as the finished surface. Every joist, every connection, every grain line carries the weight of intention. The philosophy demands that technical precision be rendered with the warmth of craft — where engineering drawings meet fine woodworking, where the analytical becomes beautiful through meticulously crafted attention to material truth.
+
+Space is defined by rhythm. The repeating cadence of parallel members — evenly spaced, uniformly dimensioned — creates a visual heartbeat that communicates strength before the mind processes the geometry. Wider spacing reads as open, confident, sufficient. Tighter spacing reads as dense, deliberate, premium. The eye understands structural density intuitively. This philosophy exploits that instinct by presenting framework as a landscape of repeated forms, each element placed with painstaking precision, the cumulative effect more powerful than any single member.
+
+Material speaks through light. Pressure-treated lumber carries a warm amber-honey tone on fresh-cut surfaces, deepening to golden brown where grain catches shadow. The top face receives the most light — brightest, warmest. The front face sits in half-shadow — richer, more saturated. The side face falls into deeper tone — grounding the form in three-dimensional space. These three values, held consistently across every element, transform flat geometry into convincing mass. The craftsmanship lies in the discipline of this lighting model: never breaking the illusion, never flattening the depth. For composite materials, the same three-value system applies but shifts to a cooler, greener register — immediately distinguishable, unmistakably engineered.
+
+Composition favors the three-quarter view — the architectural draftsperson's angle that reveals width, depth, and height simultaneously. The frame floats against void, uncontaminated by context, allowing the structure itself to command attention. A subtle ground shadow anchors the object in space without competing for focus. Labels, if present, are whispered — small, precise, positioned with the restraint of a master typographer who understands that the drawing already said everything. The result should feel like an artifact from an architectural monograph: something that took countless hours of expert labor to produce, where every pixel serves the revelation of structural truth.
