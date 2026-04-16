@@ -36,7 +36,7 @@ const ProjectLocationMap: React.FC<ProjectLocationMapProps> = ({ address, classN
             </div>
             <div className="space-y-1">
               <p className="text-[9px] font-black text-white uppercase tracking-widest">House Preview</p>
-              <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest leading-tight max-w-[120px]">
+              <p className="text-[8px] font-bold text-[var(--text-secondary)] uppercase tracking-widest leading-tight max-w-[120px]">
                 Sample Image (API Key Required)
               </p>
             </div>

@@ -5,10 +5,11 @@ import { generateContractPDF } from '../utils/contractPdf';
 import { generateDepositInvoice } from '../utils/depositInvoice';
 import { prefillBuildDetailsFromQuote } from '../utils/prefillBuildDetails';
 import { createDefaultBuildDetails } from '../constants';
-import { 
-  X, CheckCircle2, FileText, DollarSign, 
+import {
+  X, CheckCircle2, FileText, DollarSign,
   Calendar, Shield, AlertCircle, Download, Loader2
 } from 'lucide-react';
+import { COMPANY } from '../config/company';
 
 // Safe fallback for build details when none exist
 const createSafeBuildDetails = (): BuildDetails => {
@@ -266,7 +267,7 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
             <div className="text-xs text-[var(--text-secondary)] space-y-4 max-h-64 overflow-y-auto pr-2">
               <div>
                 <p className="font-bold text-[var(--text-primary)] mb-1">Scope of Work</p>
-                <p>The parties agree that the project entails the construction of a new deck at the property listed above. The full scope of work is defined exclusively by the accepted Luxury Decking estimate #{job.jobNumber}, including but not limited to project dimensions, materials, foundations, framing, decking, railings, stairs, and any selected upgrades. The accepted estimate forms an integral part of this Agreement and governs all pricing, inclusions, specifications, and assumptions.</p>
+                <p>The parties agree that the project entails the construction of a new deck at the property listed above. The full scope of work is defined exclusively by the accepted {COMPANY.name} estimate #{job.jobNumber}, including but not limited to project dimensions, materials, foundations, framing, decking, railings, stairs, and any selected upgrades. The accepted estimate forms an integral part of this Agreement and governs all pricing, inclusions, specifications, and assumptions.</p>
               </div>
               <div>
                 <p className="font-bold text-[var(--text-primary)] mb-1">Extras and Change Orders</p>
@@ -294,7 +295,7 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
               </div>
               <div>
                 <p className="font-bold text-[var(--text-primary)] mb-1">Warranty</p>
-                <p>Luxury Decking provides a five (5) year workmanship warranty on labour. Manufacturer warranties on materials apply separately and are subject to the terms provided by the manufacturer.</p>
+                <p>{COMPANY.name} provides a five (5) year workmanship warranty on labour. Manufacturer warranties on materials apply separately and are subject to the terms provided by the manufacturer.</p>
               </div>
               <div>
                 <p className="font-bold text-[var(--text-primary)] mb-1">Material Ownership</p>

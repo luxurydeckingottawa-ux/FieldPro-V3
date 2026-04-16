@@ -6,6 +6,7 @@ import { loadBookingConfig, getAvailableTimeSlots } from '../utils/bookingConfig
 import { dataService } from '../services/dataService';
 import { createDefaultBuildDetails, createDefaultOfficeChecklists } from '../constants';
 import BookingCalendar from '../components/BookingCalendar';
+import { COMPANY } from '../config/company';
 
 interface PublicBookingViewProps {
   existingJobs: Job[];
@@ -108,7 +109,7 @@ const PublicBookingView: React.FC<PublicBookingViewProps> = ({ existingJobs, onB
         method: 'POST',
         body: JSON.stringify({
           to: formData.phone,
-          message: `Hi ${firstName}, your Luxury Decking estimate appointment is confirmed for ${formattedDateTime}. We'll see you then! Questions? Call or text us anytime.`,
+          message: `Hi ${firstName}, your ${COMPANY.name} estimate appointment is confirmed for ${formattedDateTime}. We'll see you then! Questions? Call or text us anytime.`,
         }),
       });
     } catch {}
@@ -122,7 +123,7 @@ const PublicBookingView: React.FC<PublicBookingViewProps> = ({ existingJobs, onB
   if (booked && bookedJob) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center px-6 py-16 text-white">
-        <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-6">Luxury Decking Ottawa</p>
+        <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-6">{COMPANY.legalName}</p>
         <CheckCircle2 className="w-20 h-20 text-[var(--brand-gold)] mb-6" />
         <h1 className="text-3xl font-black uppercase tracking-tight text-center mb-2">You're Booked!</h1>
         <p className="text-white/50 text-sm text-center mb-8">Appointment Confirmed</p>
@@ -141,7 +142,7 @@ const PublicBookingView: React.FC<PublicBookingViewProps> = ({ existingJobs, onB
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans">
       {/* Header */}
       <div className="border-b border-white/10 py-5 px-6 text-center">
-        <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em]">Luxury Decking Ottawa</p>
+        <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em]">{COMPANY.legalName}</p>
         <h1 className="text-lg font-black uppercase tracking-tight mt-1">Book a Free Estimate</h1>
       </div>
 

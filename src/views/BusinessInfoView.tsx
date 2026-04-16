@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Upload, CheckCircle2, Building2, Phone, Globe, Mail, Palette, Image, Star } from 'lucide-react';
+import { COMPANY } from '../config/company';
 
 // ── Persistence ──────────────────────────────────────────────────────────────
 
@@ -19,12 +20,12 @@ export interface BusinessInfo {
 }
 
 const DEFAULTS: BusinessInfo = {
-  companyName: 'Luxury Decking',
+  companyName: COMPANY.name,
   tagline: 'Field Pro',
-  phone: '613-707-3060',
-  email: 'info@luxurydecking.ca',
-  website: 'luxurydecking.ca',
-  address: 'Ottawa, ON',
+  phone: COMPANY.phone,
+  email: COMPANY.email,
+  website: COMPANY.website,
+  address: COMPANY.fullAddress,
   primaryColor: '#B8892A',
   accentColor: '#1a1a1a',
 };
@@ -228,12 +229,12 @@ const BusinessInfoView: React.FC<BusinessInfoViewProps> = ({ onBack }) => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { field: 'companyName' as const, label: 'Company Name', icon: <Building2 className="w-3.5 h-3.5" />, placeholder: 'Luxury Decking' },
+              { field: 'companyName' as const, label: 'Company Name', icon: <Building2 className="w-3.5 h-3.5" />, placeholder: COMPANY.name },
               { field: 'tagline' as const, label: 'App Tagline', icon: <Building2 className="w-3.5 h-3.5" />, placeholder: 'Field Pro' },
               { field: 'phone' as const, label: 'Phone Number', icon: <Phone className="w-3.5 h-3.5" />, placeholder: '613-555-0000' },
               { field: 'email' as const, label: 'Email', icon: <Mail className="w-3.5 h-3.5" />, placeholder: 'info@company.com' },
               { field: 'website' as const, label: 'Website', icon: <Globe className="w-3.5 h-3.5" />, placeholder: 'company.com' },
-              { field: 'address' as const, label: 'City / Region', icon: <Building2 className="w-3.5 h-3.5" />, placeholder: 'Ottawa, ON' },
+              { field: 'address' as const, label: 'City / Region', icon: <Building2 className="w-3.5 h-3.5" />, placeholder: COMPANY.fullAddress },
             ].map(({ field, label, icon, placeholder }) => (
               <div key={field}>
                 <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1 flex items-center gap-1">

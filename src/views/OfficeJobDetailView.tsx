@@ -253,7 +253,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
       case 'needs_attention':
         return 'text-rose-600 bg-rose-50 border-rose-100';
       default:
-        return 'text-gray-600 bg-gray-50 border-gray-100';
+        return 'text-[var(--text-tertiary)] bg-gray-50 border-gray-100';
     }
   };
 
@@ -263,7 +263,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
       case ScheduleStatus.AHEAD: return 'text-sky-500 bg-sky-500/10 border-sky-500/20';
       case ScheduleStatus.BEHIND: return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
       case ScheduleStatus.DELAYED: return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
-      default: return 'text-gray-500 bg-gray-500/10 border-gray-500/20';
+      default: return 'text-[var(--text-tertiary)] bg-gray-500/10 border-gray-500/20';
     }
   };
 
@@ -339,7 +339,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     {stage.label}
                   </button>
                   {idx < PIPELINE_STAGES.length - 1 && (
-                    <ChevronRight className="w-3 h-3 text-gray-800 mx-0.5" />
+                    <ChevronRight className="w-3 h-3 text-[var(--text-primary)] mx-0.5" />
                   )}
                 </div>
               );
@@ -372,7 +372,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                     onDeleteJob(job.id);
                   }
                 }}
-                className="p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                className="p-2 text-[var(--text-tertiary)] hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
                 title="Delete Job"
               >
                 <Trash2 className="w-4 h-4" />
@@ -1300,7 +1300,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                               <span className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-wide">{delayLabel}</span>
                               <span className="text-[8px] font-bold text-[var(--text-secondary)] bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded uppercase tracking-wider">{channelLabel}</span>
                               {touch.subject && (
-                                <span className="text-[9px] text-gray-500 truncate max-w-[180px]">{touch.subject}</span>
+                                <span className="text-[9px] text-[var(--text-tertiary)] truncate max-w-[180px]">{touch.subject}</span>
                               )}
                             </div>
                           </div>
@@ -2397,7 +2397,7 @@ Ottawa's Premium Deck Builders`;
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-[var(--brand-gold)]" />
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Project Schedule</h3>
+                    <h3 className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Project Schedule</h3>
                   </div>
                   <button
                     onClick={() => {
@@ -2552,7 +2552,7 @@ Ottawa's Premium Deck Builders`;
               </div>
               <button 
                 onClick={() => setEditingSection(null)}
-                className="p-3 hover:bg-white/5 rounded-2xl transition-all text-gray-500 hover:text-white border border-transparent hover:border-white/10"
+                className="p-3 hover:bg-white/5 rounded-2xl transition-all text-[var(--text-tertiary)] hover:text-white border border-transparent hover:border-white/10"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -2739,7 +2739,7 @@ Ottawa's Premium Deck Builders`;
                             onChange={(e) => setEditFormData({ ...editFormData, footings: { ...editFormData.footings, attachedToHouse: e.target.checked } })}
                             className="w-5 h-5 rounded border-white/10 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/20"
                           />
-                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-white transition-colors">Attached to House</span>
+                          <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest group-hover:text-white transition-colors">Attached to House</span>
                         </label>
                         <label className="flex items-center gap-3 cursor-pointer group">
                           <input 
@@ -2748,7 +2748,7 @@ Ottawa's Premium Deck Builders`;
                             onChange={(e) => setEditFormData({ ...editFormData, footings: { ...editFormData.footings, floating: e.target.checked } })}
                             className="w-5 h-5 rounded border-white/10 bg-white/5 text-[var(--brand-gold)] focus:ring-[var(--brand-gold)]/20"
                           />
-                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-white transition-colors">Floating Structure</span>
+                          <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest group-hover:text-white transition-colors">Floating Structure</span>
                         </label>
                       </div>
                     </div>
@@ -2935,7 +2935,7 @@ Ottawa's Premium Deck Builders`;
                             </div>
                             <div>
                               <p className="text-xs font-bold text-white">{file.name}</p>
-                              <p className="text-[8px] text-gray-600 uppercase font-black tracking-widest">{file.type}</p>
+                              <p className="text-[8px] text-[var(--text-tertiary)] uppercase font-black tracking-widest">{file.type}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -2943,7 +2943,7 @@ Ottawa's Premium Deck Builders`;
                               href={file.url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="p-2 text-gray-600 hover:text-[var(--brand-gold)] transition-colors"
+                              className="p-2 text-[var(--text-tertiary)] hover:text-[var(--brand-gold)] transition-colors"
                             >
                               <ExternalLink size={16} />
                             </a>
@@ -2952,7 +2952,7 @@ Ottawa's Premium Deck Builders`;
                                 const updatedFiles = job.files.filter(f => f.id !== file.id);
                                 onUpdateJob(job.id, { files: updatedFiles });
                               }}
-                              className="p-2 text-gray-600 hover:text-rose-500 transition-colors"
+                              className="p-2 text-[var(--text-tertiary)] hover:text-rose-500 transition-colors"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -2961,7 +2961,7 @@ Ottawa's Premium Deck Builders`;
                       ))}
                       {(!job.files || job.files.length === 0) && (
                         <div className="p-8 rounded-2xl border border-dashed border-white/5 flex flex-col items-center justify-center text-center">
-                          <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">No files uploaded yet.</p>
+                          <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">No files uploaded yet.</p>
                         </div>
                       )}
                     </div>
@@ -2974,7 +2974,7 @@ Ottawa's Premium Deck Builders`;
             <div className="p-8 border-t border-white/5 bg-white/[0.02] flex items-center justify-end gap-4">
               <button 
                 onClick={() => setEditingSection(null)}
-                className="px-8 py-4 bg-white/5 text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white/10 hover:text-white transition-all"
+                className="px-8 py-4 bg-white/5 text-[var(--text-secondary)] text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white/10 hover:text-white transition-all"
               >
                 Cancel
               </button>
@@ -3040,7 +3040,7 @@ Ottawa's Premium Deck Builders`;
               </div>
               <button 
                 onClick={() => setShowLiveStatusReport(false)}
-                className="p-3 hover:bg-white/5 rounded-2xl transition-all text-gray-500 hover:text-white border border-transparent hover:border-white/10"
+                className="p-3 hover:bg-white/5 rounded-2xl transition-all text-[var(--text-tertiary)] hover:text-white border border-transparent hover:border-white/10"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -3051,10 +3051,10 @@ Ottawa's Premium Deck Builders`;
               {!job.fieldProgress ? (
                 <div className="h-full flex flex-col items-center justify-center text-center py-20">
                   <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                    <History className="w-10 h-10 text-gray-700" />
+                    <History className="w-10 h-10 text-[var(--text-primary)]" />
                   </div>
                   <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 italic">No Live Data Yet</h3>
-                  <p className="text-xs text-gray-500 font-bold uppercase tracking-widest max-w-sm leading-relaxed">
+                  <p className="text-xs text-[var(--text-tertiary)] font-bold uppercase tracking-widest max-w-sm leading-relaxed">
                     The field crew has not started the digital workflow for this job yet. Once they begin checking off items or uploading photos, they will appear here in real-time.
                   </p>
                 </div>
@@ -3078,7 +3078,7 @@ Ottawa's Premium Deck Builders`;
                         <span className="text-4xl font-black text-white">
                           {Object.values(job.fieldProgress).reduce((acc, page) => acc + page.checklist.filter(i => i.completed || i.isNA).length, 0)}
                         </span>
-                        <span className="text-lg font-black text-gray-600 uppercase tracking-tight italic">
+                        <span className="text-lg font-black text-[var(--text-tertiary)] uppercase tracking-tight italic">
                           / {Object.values(job.fieldProgress).reduce((acc, page) => acc + page.checklist.length, 0)}
                         </span>
                       </div>
@@ -3090,14 +3090,14 @@ Ottawa's Premium Deck Builders`;
                         <span className="text-4xl font-black text-white">
                           {Object.values(job.fieldProgress).reduce((acc, page) => acc + page.photos.filter(p => p.url || p.cloudinaryUrl).length, 0)}
                         </span>
-                        <span className="text-lg font-black text-gray-600 uppercase tracking-tight italic">Photos</span>
+                        <span className="text-lg font-black text-[var(--text-tertiary)] uppercase tracking-tight italic">Photos</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Detailed Stage Breakdown */}
                   <div className="space-y-8">
-                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] border-b border-white/5 pb-4">Detailed Progress Breakdown</h3>
+                    <h3 className="text-xs font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] border-b border-white/5 pb-4">Detailed Progress Breakdown</h3>
                     
                     <div className="grid grid-cols-1 gap-8">
                       {[1, 2, 3, 4, 5].map(stageNum => {
@@ -3156,7 +3156,7 @@ Ottawa's Premium Deck Builders`;
                                           ? 'text-amber-500/60 italic' 
                                           : item.completed 
                                             ? 'text-white' 
-                                            : 'text-gray-600'
+                                            : 'text-[var(--text-tertiary)]'
                                       }`}>
                                         {item.label}
                                         {item.isNA && <span className="text-[8px] ml-2 opacity-50 font-black tracking-widest not-italic">NOT APPLICABLE</span>}
@@ -3189,8 +3189,8 @@ Ottawa's Premium Deck Builders`;
                                         </>
                                       ) : (
                                         <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-30">
-                                          <Camera className="w-5 h-5 text-gray-500" />
-                                          <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest">{photo.label}</p>
+                                          <Camera className="w-5 h-5 text-[var(--text-tertiary)]" />
+                                          <p className="text-[8px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">{photo.label}</p>
                                         </div>
                                       )}
                                     </div>

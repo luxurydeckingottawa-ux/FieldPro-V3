@@ -1,10 +1,10 @@
 /**
  * Engagement Scoring Engine
- * 
+ *
  * Scores portal engagement into HOT / WARM / COOL / COLD tiers.
  * Used to select which follow-up message template to send.
- * 
- * Based on the Luxury Decking CRM Pipeline Follow-Up Master System.
+ *
+ * Based on the FieldPro CRM Pipeline Follow-Up Master System.
  */
 
 import { PortalEngagement } from '../types';

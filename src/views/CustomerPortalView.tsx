@@ -576,7 +576,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--brand-gold)] mb-1">What Happens Next</p>
                   <h4 className="text-base font-bold mb-1">{nextMilestone.title}</h4>
-                  <p className="text-xs text-gray-400 leading-relaxed">{nextMilestone.desc}</p>
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{nextMilestone.desc}</p>
                 </div>
               </div>
             )}
@@ -851,7 +851,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   <Zap className="w-5 h-5" />
                   <h3 className="text-sm font-black uppercase tracking-widest">Latest Field Update</h3>
                 </div>
-                <p className="text-sm text-gray-300 font-medium leading-relaxed">
+                <p className="text-sm text-[var(--text-secondary)] font-medium leading-relaxed">
                   {latestFieldUpdate}
                 </p>
               </div>
@@ -1334,7 +1334,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               {/* Multi-Option Estimate Display */}
               {job.estimateData?.options && job.estimateData.options.length > 1 && !job.acceptedOptionId && (
                 <div className="space-y-3">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Choose Your Package</p>
+                  <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest px-1">Choose Your Package</p>
                   {job.estimateData.options.map((option) => (
                     <div
                       key={option.id}
@@ -1351,24 +1351,24 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                         <div>
                           <h3 className="text-sm font-black text-white">{option.title || option.name}</h3>
                           {option.description && (
-                            <p className="text-[10px] text-gray-500 mt-0.5">{option.description}</p>
+                            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{option.description}</p>
                           )}
                         </div>
                         <div className="text-right ml-4">
                           <div className="text-lg font-black text-white">${option.price.toLocaleString()}</div>
-                          <div className="text-[8px] text-gray-600">+ HST</div>
+                          <div className="text-[8px] text-[var(--text-tertiary)]">+ HST</div>
                         </div>
                       </div>
                       {option.features && option.features.length > 0 && (
                         <ul className="space-y-1 mt-3">
                           {option.features.slice(0, 4).map((f, i) => (
-                            <li key={i} className="flex items-center gap-2 text-[10px] text-gray-400">
+                            <li key={i} className="flex items-center gap-2 text-[10px] text-[var(--text-secondary)]">
                               <span className="text-[var(--brand-gold)] text-[8px]">+</span> {f}
                             </li>
                           ))}
                         </ul>
                       )}
-                      <p className="text-[9px] text-gray-600 mt-3">Contact us to select this package.</p>
+                      <p className="text-[9px] text-[var(--text-tertiary)] mt-3">Contact us to select this package.</p>
                     </div>
                   ))}
                 </div>

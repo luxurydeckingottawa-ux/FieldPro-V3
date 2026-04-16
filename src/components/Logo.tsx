@@ -1,5 +1,6 @@
 import React from 'react';
 import { Shield } from 'lucide-react';
+import { COMPANY } from '../config/company';
 
 const Logo: React.FC = () => {
   return (
@@ -8,7 +9,7 @@ const Logo: React.FC = () => {
         <Shield className="text-[var(--bg-primary)] w-5 h-5" />
       </div>
       <div className="flex flex-col">
-        <span className="text-sm font-bold text-[var(--text-primary)] leading-none">Luxury Decking</span>
+        <span className="text-sm font-bold text-[var(--text-primary)] leading-none">{COMPANY.name}</span>
         <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-widest font-semibold">Field Pro</span>
       </div>
     </div>

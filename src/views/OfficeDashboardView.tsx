@@ -3,9 +3,10 @@ import { Job, JobStatus, OfficeReviewStatus, PipelineStage, ForecastReviewStatus
 import { getJobIssues, JobIssue } from '../utils/issueLogic';
 import TimeAttendanceView from '../components/TimeAttendanceView';
 import { timeClockService } from '../services/TimeClockService';
-import { 
-  LayoutDashboard, 
-  Clock, 
+import { COMPANY } from '../config/company';
+import {
+  LayoutDashboard,
+  Clock,
   CheckCircle2, 
   AlertCircle, 
   FileCheck, 
@@ -226,7 +227,7 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
                 <span className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em]">System Live</span>
               </div>
               <h1 className="text-5xl font-display leading-none">Operations Hub</h1>
-              <p className="font-label mt-4">Luxury Decking Field Pro • Control Layer</p>
+              <p className="font-label mt-4">{COMPANY.name} Field Pro &bull; Control Layer</p>
             </div>
           </div>
           

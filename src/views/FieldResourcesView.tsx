@@ -41,7 +41,7 @@ const FieldResourcesView: React.FC<FieldResourcesViewProps> = ({ user, onBack })
       case 'pdf': return <FileText className="w-5 h-5 text-rose-500" />;
       case 'video': return <Video className="w-5 h-5 text-blue-500" />;
       case 'image': return <BookOpen className="w-5 h-5 text-[var(--brand-gold)]" />;
-      default: return <ExternalLink className="w-5 h-5 text-gray-500" />;
+      default: return <ExternalLink className="w-5 h-5 text-[var(--text-tertiary)]" />;
     }
   };
 

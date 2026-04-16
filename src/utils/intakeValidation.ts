@@ -6,6 +6,7 @@
  */
 
 import { EstimatorIntake, AiFlag } from '../types';
+import { COMPANY } from '../config/company';
 
 export function validateIntakeCompleteness(intake: EstimatorIntake): AiFlag[] {
   const flags: AiFlag[] = [];
@@ -61,7 +62,7 @@ export function validateIntakeCompleteness(intake: EstimatorIntake): AiFlag[] {
   }
 
   if (!cl.marketingSource) {
-    addFlag('missing', 'intake', 'Marketing source is missing. Ask the client how they found Luxury Decking.', 'medium');
+    addFlag('missing', 'intake', `Marketing source is missing. Ask the client how they found ${COMPANY.name}.`, 'medium');
   }
 
   // --- HELPFUL REMINDERS (low severity) ---

@@ -231,7 +231,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                       <Clock className="w-3 h-3" /> Available Times
                     </label>
                     {!apptDate ? (
-                      <p className="text-xs text-gray-500 italic px-1">Select a date first to see available slots.</p>
+                      <p className="text-xs text-[var(--text-tertiary)] italic px-1">Select a date first to see available slots.</p>
                     ) : (() => {
                       const slots = getAvailableTimeSlots(apptDate, bookingConfig, allJobs, apptEstimator);
                       if (slots.length === 0) {
@@ -244,10 +244,10 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                               disabled={slot.booked}
                               className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all border ${
                                 slot.booked
-                                  ? 'bg-white/5 border-white/5 text-gray-600 cursor-not-allowed line-through'
+                                  ? 'bg-white/5 border-white/5 text-[var(--text-tertiary)] cursor-not-allowed line-through'
                                   : apptTime === slot.time
                                     ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black'
-                                    : 'bg-white/5 border-white/10 text-gray-300 hover:border-[var(--brand-gold)]/40 hover:text-white'
+                                    : 'bg-white/5 border-white/10 text-[var(--text-secondary)] hover:border-[var(--brand-gold)]/40 hover:text-white'
                               }`}>
                               {slot.label}{slot.booked ? ' — Booked' : ''}
                             </button>
@@ -478,11 +478,11 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                           <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                         </div>
                       </div>
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">{item.label}</span>
+                      <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] group-hover:text-white transition-colors">{item.label}</span>
                     </label>
                   ))}
                   <div className="col-span-1 md:col-span-2 space-y-2 mt-4">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Site Prep Notes</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Site Prep Notes</label>
                     <textarea 
                       value={buildDetails.sitePrep.notes}
                       onChange={e => updateBuildDetail('sitePrep', 'notes', e.target.value)}
@@ -497,7 +497,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                 <h2 className="text-xl font-black text-white uppercase tracking-tight italic mb-8">Footings & Foundation</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Footing Type</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Footing Type</label>
                     <select 
                       value={buildDetails.footings.type}
                       onChange={e => updateBuildDetail('footings', 'type', e.target.value)}
@@ -511,7 +511,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Bracket Type</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Bracket Type</label>
                     <input 
                       type="text" 
                       value={buildDetails.footings.bracketType}
@@ -533,7 +533,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                           <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                         </div>
                       </div>
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Attached to House</span>
+                      <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] group-hover:text-white transition-colors">Attached to House</span>
                     </label>
                     <label className="flex items-center gap-4 cursor-pointer group">
                       <div className="relative flex items-center justify-center">
@@ -547,7 +547,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                           <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                         </div>
                       </div>
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Floating Deck</span>
+                      <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] group-hover:text-white transition-colors">Floating Deck</span>
                     </label>
                   </div>
                 </div>
@@ -561,7 +561,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                 <h2 className="text-xl font-black text-white uppercase tracking-tight italic mb-8">Framing Specifications</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Lumber Type</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Lumber Type</label>
                     <select 
                       value={buildDetails.framing.type}
                       onChange={e => updateBuildDetail('framing', 'type', e.target.value)}
@@ -575,7 +575,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Joist Size</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Joist Size</label>
                     <select 
                       value={buildDetails.framing.joistSize}
                       onChange={e => updateBuildDetail('framing', 'joistSize', e.target.value)}
@@ -589,7 +589,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Joist Spacing</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Joist Spacing</label>
                     <select 
                       value={buildDetails.framing.joistSpacing}
                       onChange={e => updateBuildDetail('framing', 'joistSpacing', e.target.value)}
@@ -602,7 +602,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Joist Protection Type</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Joist Protection Type</label>
                     <input 
                       type="text" 
                       value={buildDetails.framing.joistProtectionType}
@@ -623,7 +623,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Joist Protection Included</span>
+                    <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] group-hover:text-white transition-colors">Joist Protection Included</span>
                   </label>
                 </div>
               </section>
@@ -632,7 +632,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                 <h2 className="text-xl font-black text-white uppercase tracking-tight italic mb-8">Landscaping / Ground Prep</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Prep Type</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Prep Type</label>
                     <select 
                       value={buildDetails.landscaping.prepType}
                       onChange={e => updateBuildDetail('landscaping', 'prepType', e.target.value)}
@@ -646,7 +646,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     </select>
                   </div>
                   <div className="col-span-1 md:col-span-2 space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Landscaping Notes</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Landscaping Notes</label>
                     <textarea 
                       value={buildDetails.landscaping.notes}
                       onChange={e => updateBuildDetail('landscaping', 'notes', e.target.value)}
@@ -665,7 +665,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                 <h2 className="text-xl font-black text-white uppercase tracking-tight italic mb-8">Decking Selection</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Material Type</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Material Type</label>
                     <select 
                       value={buildDetails.decking.type}
                       onChange={e => updateBuildDetail('decking', 'type', e.target.value)}
@@ -680,7 +680,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Brand</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Brand</label>
                     <input 
                       type="text" 
                       value={buildDetails.decking.brand}
@@ -690,7 +690,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Color</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Color</label>
                     <input 
                       type="text" 
                       value={buildDetails.decking.color}
@@ -700,7 +700,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Accent / Picture Frame</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Accent / Picture Frame</label>
                     <input 
                       type="text" 
                       value={buildDetails.decking.accentNote}
@@ -727,11 +727,11 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Railing Included</span>
+                    <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] group-hover:text-white transition-colors">Railing Included</span>
                   </label>
                   {buildDetails.railing.included && (
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Railing Type</label>
+                      <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Railing Type</label>
                       <input 
                         type="text" 
                         value={buildDetails.railing.type}
@@ -763,12 +763,12 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Stairs Included</span>
+                    <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] group-hover:text-white transition-colors">Stairs Included</span>
                   </label>
                   {buildDetails.stairs.included && (
                     <>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Stair Style</label>
+                        <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Stair Style</label>
                         <input 
                           type="text" 
                           value={buildDetails.stairs.style}
@@ -778,7 +778,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Stair Material</label>
+                        <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Stair Material</label>
                         <input 
                           type="text" 
                           value={buildDetails.stairs.type}
@@ -806,12 +806,12 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Skirting Included</span>
+                    <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] group-hover:text-white transition-colors">Skirting Included</span>
                   </label>
                   {buildDetails.skirting.included && (
                     <>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Skirting Type</label>
+                        <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Skirting Type</label>
                         <input 
                           type="text" 
                           value={buildDetails.skirting.type}
@@ -832,7 +832,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                             <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                           </div>
                         </div>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Trap Door / Access Hatch</span>
+                        <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] group-hover:text-white transition-colors">Trap Door / Access Hatch</span>
                       </label>
                     </>
                   )}
@@ -858,11 +858,11 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Lighting Included</span>
+                    <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] group-hover:text-white transition-colors">Lighting Included</span>
                   </label>
                   {buildDetails.electrical.lightingIncluded && (
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Lighting Type</label>
+                      <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Lighting Type</label>
                       <input 
                         type="text" 
                         value={buildDetails.electrical.lightingType}
@@ -873,7 +873,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     </div>
                   )}
                   <div className="col-span-1 md:col-span-2 space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Rough-In Notes</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Rough-In Notes</label>
                     <textarea 
                       value={buildDetails.electrical.roughInNotes}
                       onChange={e => updateBuildDetail('electrical', 'roughInNotes', e.target.value)}
@@ -899,11 +899,11 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                         <div className="w-3 h-3 bg-[var(--brand-gold)] rounded-sm" />
                       </div>
                     </div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Privacy Wall Included</span>
+                    <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] group-hover:text-white transition-colors">Privacy Wall Included</span>
                   </label>
                   {buildDetails.features.privacyWall && (
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Privacy Wall Type</label>
+                      <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Privacy Wall Type</label>
                       <input 
                         type="text" 
                         value={buildDetails.features.privacyWallType}
@@ -913,7 +913,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                     </div>
                   )}
                   <div className="col-span-1 md:col-span-2 space-y-2">
-                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-1">Custom Build Notes</label>
+                    <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] ml-1">Custom Build Notes</label>
                     <textarea 
                       value={buildDetails.features.customNotes}
                       onChange={e => updateBuildDetail('features', 'customNotes', e.target.value)}
@@ -935,7 +935,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
                 if (currentIndex > 0) setActiveSection(sections[currentIndex - 1].id);
               }}
               disabled={activeSection === 'basic'}
-              className="px-8 py-4 rounded-2xl text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:bg-white/5 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent transition-all active:scale-95 flex items-center gap-3"
+              className="px-8 py-4 rounded-2xl text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] hover:bg-white/5 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent transition-all active:scale-95 flex items-center gap-3"
             >
               <ArrowLeft className="w-4 h-4" />
               Previous Section

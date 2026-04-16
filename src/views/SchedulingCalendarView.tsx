@@ -585,7 +585,7 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                       })}
                       {onNewAppointment && (
                         <button onClick={() => onNewAppointment(format(day, 'yyyy-MM-dd'))}
-                          className="w-full mt-1 text-center text-[9px] font-black text-gray-600 hover:text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/5 rounded py-0.5 transition-colors opacity-0 group-hover:opacity-100">
+                          className="w-full mt-1 text-center text-[9px] font-black text-[var(--text-tertiary)] hover:text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/5 rounded py-0.5 transition-colors opacity-0 group-hover:opacity-100">
                           + Add
                         </button>
                       )}

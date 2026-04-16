@@ -9,6 +9,7 @@ import FinalCompletionView from '../views/FinalCompletionView';
 import InvoicingView from '../views/InvoicingView';
 import ReviewView from '../views/ReviewView';
 import { CheckCircle2, CloudUpload, Mail, ArrowLeft, MessageSquare, Calendar } from 'lucide-react';
+import { COMPANY } from '../config/company';
 
 interface WorkflowContainerProps {
   state: AppState;
@@ -61,7 +62,7 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
             <CheckCircle2 className="h-12 w-12 text-red-500 rotate-45" />
           </div>
           <h2 className="text-3xl font-black text-white mb-4 italic uppercase tracking-tight">Submission Failed</h2>
-          <p className="text-gray-400 mb-12 leading-relaxed">{error}</p>
+          <p className="text-[var(--text-secondary)] mb-12 leading-relaxed">{error}</p>
           <button 
             onClick={onFullSubmission}
             className="btn-primary w-full py-4 text-sm"
@@ -213,10 +214,10 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
               <button
                 onClick={() => {
                   const firstName = state.jobInfo.customerName?.split(' ')[0] || 'there';
-                  const msg = `Hi ${firstName}, this is your Luxury Decking crew. `;
+                  const msg = `Hi ${firstName}, this is your ${COMPANY.name} crew. `;
                   window.location.href = `sms:${clientPhone}?body=${encodeURIComponent(msg)}`;
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-white transition-all"
                 title="Message client"
               >
                 <MessageSquare size={12} /> Message Client
@@ -243,7 +244,7 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
           </button>
           {showScheduleUpdate && (
             <div className="absolute bottom-14 right-0 w-72 bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 shadow-2xl">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Daily Schedule Update</p>
+              <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3">Daily Schedule Update</p>
 
               {/* Status selector */}
               <div className="grid grid-cols-3 gap-1.5 mb-3">
@@ -260,7 +261,7 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
                         ? opt.color === 'emerald' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
                           : opt.color === 'rose' ? 'bg-rose-500/20 border-rose-500/40 text-rose-400'
                           : 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                        : 'bg-white/5 border-white/10 text-gray-500 hover:bg-white/10'
+                        : 'bg-white/5 border-white/10 text-[var(--text-tertiary)] hover:bg-white/10'
                     }`}
                   >
                     {opt.label}
@@ -278,7 +279,7 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
                   onChange={e => setDaysRemaining(Number(e.target.value))}
                   className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm text-center"
                 />
-                <span className="text-[10px] text-gray-500">days left</span>
+                <span className="text-[10px] text-[var(--text-tertiary)]">days left</span>
               </div>
 
               {/* Note / reason (optional) */}

@@ -32,6 +32,7 @@ import EstimatorMeasureSheet from '../components/EstimatorMeasureSheet';
 import EstimatorSketchPad from '../components/EstimatorSketchPad';
 import { safeSetItem, safeRemoveItem } from '../utils/storage';
 import { validateIntakeCompleteness, generateHandoffSummary as generateRuleHandoffSummary } from '../utils/intakeValidation';
+import { COMPANY } from '../config/company';
 
 interface EstimatorWorkflowViewProps {
   job: Job;
@@ -345,7 +346,7 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                     },
                     body: JSON.stringify({
                       to: job.clientPhone,
-                      message: `Hi ${job.clientName?.split(' ')[0] || 'there'}, your estimator from Luxury Decking is on their way! See you shortly.`,
+                      message: `Hi ${job.clientName?.split(' ')[0] || 'there'}, your estimator from ${COMPANY.name} is on their way! See you shortly.`,
                     }),
                   }).catch(() => {/* non-blocking */});
                 }
@@ -834,12 +835,12 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
           {showChat && (
             <div className="absolute bottom-14 right-0 w-72 bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 shadow-2xl">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Message Client</p>
-                <button onClick={() => setShowChat(false)} className="text-gray-600 hover:text-white transition-all">
+                <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Message Client</p>
+                <button onClick={() => setShowChat(false)} className="text-[var(--text-tertiary)] hover:text-white transition-all">
                   <X size={14} />
                 </button>
               </div>
-              <p className="text-[9px] text-gray-600 mb-2 truncate">To: {job.clientName} ({job.clientPhone})</p>
+              <p className="text-[9px] text-[var(--text-tertiary)] mb-2 truncate">To: {job.clientName} ({job.clientPhone})</p>
               <textarea
                 value={chatMessage}
                 onChange={e => setChatMessage(e.target.value)}

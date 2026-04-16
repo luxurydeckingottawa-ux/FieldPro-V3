@@ -135,7 +135,7 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
           <div className="flex items-center gap-1.5 min-w-0">
             <Mail size={9} className={campaignStatus.overdue ? 'text-rose-400 shrink-0' : 'text-[var(--brand-gold)] shrink-0'} />
             <span className={`text-[8px] font-black uppercase tracking-widest truncate ${
-              campaignStatus.overdue ? 'text-rose-400' : 'text-gray-500'
+              campaignStatus.overdue ? 'text-rose-400' : 'text-[var(--text-tertiary)]'
             }`}>
               {campaignStatus.label}
             </span>

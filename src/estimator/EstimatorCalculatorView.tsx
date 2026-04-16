@@ -817,23 +817,23 @@ const MaterialCard = ({ material, size, showRailings, railingCost, isSelected, o
         <div className="mb-2">
           <div className="flex items-baseline gap-1">
             <p className="text-xl font-black text-white leading-none tracking-tighter">${totalPrice.toLocaleString()}</p>
-            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-tighter">+ HST</span>
+            <span className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-tighter">+ HST</span>
           </div>
           <div className="flex items-center gap-1.5 mt-1">
              <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">Est. ${monthlyPrice}/mo</p>
-             <span className="text-[6px] text-gray-600 font-bold uppercase tracking-tighter">{showRailings ? '(Incl Railings)' : '(Surface Only)'}</span>
+             <span className="text-[6px] text-[var(--text-tertiary)] font-bold uppercase tracking-tighter">{showRailings ? '(Incl Railings)' : '(Surface Only)'}</span>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-1 mb-2 py-1.5 border-y border-white/5">
-          <div><p className="text-[7px] font-black text-gray-600 uppercase tracking-widest">Type</p><p className="text-[8px] text-gray-300 font-bold truncate">{material.materialType}</p></div>
-          <div><p className="text-[7px] font-black text-gray-600 uppercase tracking-widest">Warranty</p><p className="text-[8px] text-gray-300 font-bold truncate">{material.warranty}</p></div>
+          <div><p className="text-[7px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Type</p><p className="text-[8px] text-[var(--text-secondary)] font-bold truncate">{material.materialType}</p></div>
+          <div><p className="text-[7px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Warranty</p><p className="text-[8px] text-[var(--text-secondary)] font-bold truncate">{material.warranty}</p></div>
         </div>
-        <div className="mb-2"><p className="text-[9px] text-gray-500 line-clamp-2 italic leading-tight">"{material.description}"</p></div>
+        <div className="mb-2"><p className="text-[9px] text-[var(--text-tertiary)] line-clamp-2 italic leading-tight">"{material.description}"</p></div>
         
         <div className="mt-auto pt-2 flex items-center justify-between border-t border-white/5">
           <div className="flex items-center gap-1.5">
             <div className={`w-2 h-2 rounded-full border border-white/10 ${isSelected ? 'bg-[#ebc453] shadow-[0_0_6px_rgba(235,196,83,0.4)]' : 'bg-transparent'}`}></div>
-            <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${isSelected ? 'text-[#ebc453]' : 'text-gray-600'}`}>{isSelected ? 'SELECTED' : 'SELECT'}</span>
+            <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${isSelected ? 'text-[#ebc453]' : 'text-[var(--text-tertiary)]'}`}>{isSelected ? 'SELECTED' : 'SELECT'}</span>
           </div>
           <button 
             onClick={(e) => { e.stopPropagation(); onPrint(); }}
@@ -1152,7 +1152,7 @@ const CustomEstimator: React.FC<ShowroomEstimatorProps> = ({ dimensions, setDime
         {/* Save as Named Estimate Option */}
         <div className="control-section">
           <div className="mt-4 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3">Save as Estimate Option</div>
+            <div className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-3">Save as Estimate Option</div>
             <div className="flex gap-2 mb-3">
               {(['Good', 'Better', 'Best'] as const).map(tier => (
                 <button
@@ -1161,7 +1161,7 @@ const CustomEstimator: React.FC<ShowroomEstimatorProps> = ({ dimensions, setDime
                   className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
                     optionName === tier
                       ? 'bg-[var(--brand-gold)]/20 border-[var(--brand-gold)]/40 text-[var(--brand-gold)]'
-                      : 'bg-white/[0.03] border-white/10 text-gray-500 hover:text-white'
+                      : 'bg-white/[0.03] border-white/10 text-[var(--text-tertiary)] hover:text-white'
                   }`}
                 >
                   {tier}
@@ -1171,7 +1171,7 @@ const CustomEstimator: React.FC<ShowroomEstimatorProps> = ({ dimensions, setDime
             <div className="flex items-center justify-between">
               <div className="text-xs font-black text-white">
                 ${Math.round(pricingSummary.subTotal).toLocaleString()}
-                <span className="text-[9px] text-gray-500 ml-1 font-normal">+ HST</span>
+                <span className="text-[9px] text-[var(--text-tertiary)] ml-1 font-normal">+ HST</span>
               </div>
               <button
                 onClick={() => onSaveOption(optionName)}
@@ -1193,7 +1193,7 @@ const CustomEstimator: React.FC<ShowroomEstimatorProps> = ({ dimensions, setDime
                     <span className="text-[10px] text-white font-black">${opt.price.toLocaleString()}</span>
                     <button
                       onClick={() => onRemoveOption(opt.name)}
-                      className="text-gray-600 hover:text-red-400 transition-colors text-sm leading-none"
+                      className="text-[var(--text-tertiary)] hover:text-red-400 transition-colors text-sm leading-none"
                     >
                       x
                     </button>
@@ -1428,7 +1428,7 @@ const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose
         <div className="p-6 border-b border-white/5 flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-black italic uppercase tracking-tighter">Material <span className="text-[#ebc453]">Comparison</span></h2>
-            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">Comparing {materials.length} Premium Solutions • {size} Footprint</p>
+            <p className="text-[var(--text-tertiary)] text-[10px] font-bold uppercase tracking-widest mt-1">Comparing {materials.length} Premium Solutions • {size} Footprint</p>
           </div>
           <div className="flex items-center gap-3">
             <button 
@@ -1444,7 +1444,7 @@ const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="py-4 px-4 text-[10px] font-black text-gray-600 uppercase tracking-widest">Specifications</th>
+                <th className="py-4 px-4 text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Specifications</th>
                 {materials.map((m: any) => (
                   <th key={m.id} className="py-4 px-4 min-w-[200px]">
                     <div className="flex items-center gap-2 mb-2">
@@ -1458,7 +1458,7 @@ const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose
             </thead>
             <tbody className="text-sm font-bold">
               <tr className="border-b border-white/5">
-                <td className="py-5 px-4 text-gray-500 text-[10px] uppercase">Base Investment</td>
+                <td className="py-5 px-4 text-[var(--text-tertiary)] text-[10px] uppercase">Base Investment</td>
                 {materials.map((m: any) => {
                   const base = m.basePricing[size];
                   const total = showRailings ? base + railingCost : base;
@@ -1471,19 +1471,19 @@ const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose
                 })}
               </tr>
               <tr className="border-b border-white/5">
-                <td className="py-5 px-4 text-gray-500 text-[10px] uppercase">Material Type</td>
+                <td className="py-5 px-4 text-[var(--text-tertiary)] text-[10px] uppercase">Material Type</td>
                 {materials.map((m: any) => (
-                  <td key={m.id} className="py-5 px-4 text-gray-300">{m.materialType}</td>
+                  <td key={m.id} className="py-5 px-4 text-[var(--text-secondary)]">{m.materialType}</td>
                 ))}
               </tr>
               <tr className="border-b border-white/5">
-                <td className="py-5 px-4 text-gray-500 text-[10px] uppercase">Warranty Coverage</td>
+                <td className="py-5 px-4 text-[var(--text-tertiary)] text-[10px] uppercase">Warranty Coverage</td>
                 {materials.map((m: any) => (
-                  <td key={m.id} className="py-5 px-4 text-gray-300">{m.warranty}</td>
+                  <td key={m.id} className="py-5 px-4 text-[var(--text-secondary)]">{m.warranty}</td>
                 ))}
               </tr>
               <tr className="border-b border-white/5">
-                <td className="py-5 px-4 text-gray-500 text-[10px] uppercase">Performance Grade</td>
+                <td className="py-5 px-4 text-[var(--text-tertiary)] text-[10px] uppercase">Performance Grade</td>
                 {materials.map((m: any) => (
                   <td key={m.id} className="py-5 px-4">
                     <span className="px-2 py-1 bg-white/5 rounded text-[10px] text-white border border-white/5">{m.tier}</span>
@@ -1491,16 +1491,16 @@ const ComparisonOverlay = ({ materials, size, showRailings, railingCost, onClose
                 ))}
               </tr>
               <tr>
-                <td className="py-5 px-4 text-gray-500 text-[10px] uppercase align-top">Value Proposition</td>
+                <td className="py-5 px-4 text-[var(--text-tertiary)] text-[10px] uppercase align-top">Value Proposition</td>
                 {materials.map((m: any) => (
-                  <td key={m.id} className="py-5 px-4 text-gray-400 text-xs italic leading-relaxed font-normal">"{m.description}"</td>
+                  <td key={m.id} className="py-5 px-4 text-[var(--text-secondary)] text-xs italic leading-relaxed font-normal">"{m.description}"</td>
                 ))}
               </tr>
             </tbody>
           </table>
         </div>
         <div className="p-6 bg-white/5 border-t border-white/5 text-center">
-          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em]">All estimates include professional installation, helical piles, and HST not included.</p>
+          <p className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-[0.3em]">All estimates include professional installation, helical piles, and HST not included.</p>
         </div>
       </div>
     </div>
@@ -1531,20 +1531,20 @@ const StandaloneMaterialMatrix: React.FC<{
           <div className="flex justify-between items-center">
             <div><p className="text-[#ebc453] font-bold tracking-[0.4em] uppercase text-[10px] mb-1">Luxury Decking</p><h1 className="text-3xl font-black tracking-tighter uppercase italic">THE MATERIAL <span className="text-[#ebc453] font-light">MATRIX</span></h1></div>
             <div className="flex items-center gap-5">
-              <div className="flex items-center bg-white/5 rounded-lg px-4 py-2 border border-white/10"><span className="text-xs font-bold text-gray-500 mr-3 uppercase tracking-widest">Railings</span><button onClick={() => setShowRailings(!showRailings)} className={`relative w-11 h-6 rounded-full transition-all duration-300 ${showRailings ? 'bg-[#ebc453]' : 'bg-white/10'}`}><div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 transform ${showRailings ? 'translate-x-5' : 'translate-x-0'}`}></div></button></div>
-              <button disabled={selectedForComparison.length === 0} onClick={() => setIsComparisonOpen(true)} className={`px-6 py-2.5 rounded text-[11px] font-black uppercase tracking-widest transition-all ${selectedForComparison.length > 0 ? 'bg-[#ebc453] text-black shadow-xl hover:scale-105' : 'bg-white/5 text-gray-600 border border-white/10 cursor-not-allowed'}`}>Compare ({selectedForComparison.length})</button>
-              {selectedForComparison.length > 0 && <button onClick={() => setSelectedForComparison([])} className="text-gray-500 hover:text-white font-bold uppercase text-[9px] tracking-widest">Reset</button>}
+              <div className="flex items-center bg-white/5 rounded-lg px-4 py-2 border border-white/10"><span className="text-xs font-bold text-[var(--text-tertiary)] mr-3 uppercase tracking-widest">Railings</span><button onClick={() => setShowRailings(!showRailings)} className={`relative w-11 h-6 rounded-full transition-all duration-300 ${showRailings ? 'bg-[#ebc453]' : 'bg-white/10'}`}><div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 transform ${showRailings ? 'translate-x-5' : 'translate-x-0'}`}></div></button></div>
+              <button disabled={selectedForComparison.length === 0} onClick={() => setIsComparisonOpen(true)} className={`px-6 py-2.5 rounded text-[11px] font-black uppercase tracking-widest transition-all ${selectedForComparison.length > 0 ? 'bg-[#ebc453] text-black shadow-xl hover:scale-105' : 'bg-white/5 text-[var(--text-tertiary)] border border-white/10 cursor-not-allowed'}`}>Compare ({selectedForComparison.length})</button>
+              {selectedForComparison.length > 0 && <button onClick={() => setSelectedForComparison([])} className="text-[var(--text-tertiary)] hover:text-white font-bold uppercase text-[9px] tracking-widest">Reset</button>}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-10 py-1">
-            <div className="flex items-center gap-4"><span className="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em]">Size</span><div className="flex gap-1.5">{DECK_SIZES_MATRIX.map(s => <button key={s.value} onClick={() => setSelectedSize(s.value)} className={`px-4 py-1.5 rounded text-[11px] font-black transition-all border ${selectedSize === s.value ? 'bg-[#ebc453] text-black border-[#ebc453]' : 'bg-transparent text-gray-500 border-white/5 hover:border-white/20'}`}>{s.label}</button>)}</div></div>
-            <div className="flex items-center gap-4"><span className="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em]">Tier</span><div className="flex gap-1.5"><button onClick={() => setActiveTierFilter('All')} className={`px-4 py-1.5 rounded text-[11px] font-black transition-all border ${activeTierFilter === 'All' ? 'bg-white text-black' : 'bg-transparent text-gray-500 border-white/5'}`}>ALL</button>{(Object.keys(TIER_CONFIG_MATRIX) as TierType[]).map(t => <button key={t} onClick={() => setActiveTierFilter(t)} className={`px-5 py-1.5 rounded text-[11px] font-black transition-all border flex items-center gap-2 ${activeTierFilter === t ? 'bg-white/10 border-[#ebc453] text-white' : 'bg-transparent text-gray-500 border-white/5'}`}><SealBadge tier={t} size="sm" /> {TIER_CONFIG_MATRIX[t].label.toUpperCase()}</button>)}</div></div>
+            <div className="flex items-center gap-4"><span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.3em]">Size</span><div className="flex gap-1.5">{DECK_SIZES_MATRIX.map(s => <button key={s.value} onClick={() => setSelectedSize(s.value)} className={`px-4 py-1.5 rounded text-[11px] font-black transition-all border ${selectedSize === s.value ? 'bg-[#ebc453] text-black border-[#ebc453]' : 'bg-transparent text-[var(--text-tertiary)] border-white/5 hover:border-white/20'}`}>{s.label}</button>)}</div></div>
+            <div className="flex items-center gap-4"><span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.3em]">Tier</span><div className="flex gap-1.5"><button onClick={() => setActiveTierFilter('All')} className={`px-4 py-1.5 rounded text-[11px] font-black transition-all border ${activeTierFilter === 'All' ? 'bg-white text-black' : 'bg-transparent text-[var(--text-tertiary)] border-white/5'}`}>ALL</button>{(Object.keys(TIER_CONFIG_MATRIX) as TierType[]).map(t => <button key={t} onClick={() => setActiveTierFilter(t)} className={`px-5 py-1.5 rounded text-[11px] font-black transition-all border flex items-center gap-2 ${activeTierFilter === t ? 'bg-white/10 border-[#ebc453] text-white' : 'bg-transparent text-[var(--text-tertiary)] border-white/5'}`}><SealBadge tier={t} size="sm" /> {TIER_CONFIG_MATRIX[t].label.toUpperCase()}</button>)}</div></div>
           </div>
         </div>
       </header>
       <main className="max-w-[1900px] mx-auto px-8 py-6 flex-1 overflow-y-auto w-full">
         <div className="mb-6 flex items-center justify-between border-l-2 border-[#ebc453] pl-5 bg-white/5 py-2.5 rounded-r">
-          <div className="flex items-center gap-6"><span className="text-xs font-black text-white uppercase tracking-widest">{selectedSize} Footprint</span><span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Base Estimate • Helical Piles & 2 Steps Included</span></div>
+          <div className="flex items-center gap-6"><span className="text-xs font-black text-white uppercase tracking-widest">{selectedSize} Footprint</span><span className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase tracking-widest">Base Estimate • Helical Piles & 2 Steps Included</span></div>
           <p className="text-sm font-black text-[#ebc453] pr-5 uppercase tracking-[0.2em]">Add Railings: +${railingCost.toLocaleString()}</p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4 pb-10">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, Role } from '../types';
 import { APP_USERS } from '../constants';
+import { COMPANY } from '../config/company';
 import { Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { isSupabaseConfigured } from '../lib/supabase';
@@ -66,7 +67,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
             <img src="/assets/logo-white.png" alt="FieldPro" className="w-10 h-10 object-contain" />
           </div>
           <h1 className="text-2xl font-display tracking-tight text-[var(--text-primary)]">FieldPro</h1>
-          <p className="text-sm font-heading text-[var(--brand-gold)] mt-1">Luxury Decking</p>
+          <p className="text-sm font-heading text-[var(--brand-gold)] mt-1">{COMPANY.name}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

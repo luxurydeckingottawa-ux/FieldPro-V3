@@ -40,7 +40,7 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-2">
           <Users size={13} className="text-[var(--brand-gold)]" />
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+          <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">
             {isEstimateStage ? 'Estimate Portal' : 'Project Portal'}
           </span>
         </div>
@@ -69,7 +69,7 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
         </button>
         <button
           onClick={copyPortalLink}
-          className="flex items-center justify-center gap-1.5 p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all"
+          className="flex items-center justify-center gap-1.5 p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[var(--text-secondary)] hover:text-white transition-all"
         >
           {copied ? <Check size={13} className="text-[var(--brand-gold)]" /> : <Copy size={13} />}
           <span className={`text-[9px] font-black uppercase tracking-widest ${copied ? 'text-[var(--brand-gold)]' : ''}`}>

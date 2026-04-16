@@ -24,6 +24,7 @@ import { createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOM
 import { supabase } from '../lib/supabase';
 import { dataService } from '../services/dataService';
 import { generateEstimatePDF } from '../utils/estimatePdf';
+import { COMPANY } from '../config/company';
 
 const JOBS_STORAGE_KEY = 'luxury_decking_jobs_v5';
 
@@ -274,7 +275,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
       const smsOk = hour >= 9 && hour < 20;
       const reviewUrl = import.meta.env.VITE_GOOGLE_REVIEW_URL || 'https://g.page/r/luxury-decking/review';
       const firstName = job.clientName?.split(' ')[0] || 'there';
-      const reviewMsg = `Hi ${firstName}, thank you for choosing Luxury Decking! We'd love it if you could take a moment to leave us a Google review: ${reviewUrl} — Your feedback means the world to us!`;
+      const reviewMsg = `Hi ${firstName}, thank you for choosing ${COMPANY.name}! We'd love it if you could take a moment to leave us a Google review: ${reviewUrl} — Your feedback means the world to us!`;
       if (job.clientPhone && smsOk) {
         fetch('/.netlify/functions/send-sms', {
           method: 'POST',
@@ -286,7 +287,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
       // Auto-send warranty delivery SMS
       if (job.clientPhone && job.customerPortalToken && smsOk) {
         const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
-        const warrantyMsg = `Hi ${firstName}, your Luxury Decking project is officially complete! Your 5-year warranty is now active. Access your Project Portal and Warranty Package here: ${portalUrl}`;
+        const warrantyMsg = `Hi ${firstName}, your ${COMPANY.name} project is officially complete! Your 5-year warranty is now active. Access your Project Portal and Warranty Package here: ${portalUrl}`;
         fetch('/.netlify/functions/send-sms', {
           method: 'POST',
           headers: internalHeaders(),
@@ -301,11 +302,11 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         const pdfUrl = (job as any).verifiedBuildPassportUrl as string | undefined;
         const warrantyHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;padding:40px;border-radius:16px">
   <div style="text-align:center;margin-bottom:32px">
-    <p style="margin:0;font-size:11px;font-weight:900;color:#c9a227;letter-spacing:3px;text-transform:uppercase">Luxury Decking</p>
+    <p style="margin:0;font-size:11px;font-weight:900;color:#c9a227;letter-spacing:3px;text-transform:uppercase">${COMPANY.name}</p>
     <h1 style="margin:8px 0 0;font-size:28px;font-weight:900;color:#fff">Your Project is Complete!</h1>
   </div>
   <p style="color:#aaa;font-size:15px;line-height:1.6">Hi ${firstName},</p>
-  <p style="color:#aaa;font-size:15px;line-height:1.6">Your Luxury Decking project is officially complete. Your <strong style="color:#c9a227">5-year warranty is now active</strong>.</p>
+  <p style="color:#aaa;font-size:15px;line-height:1.6">Your ${COMPANY.name} project is officially complete. Your <strong style="color:#c9a227">5-year warranty is now active</strong>.</p>
   <div style="background:#111;border:1px solid #333;border-radius:12px;padding:24px;margin:24px 0;text-align:center">
     <p style="margin:0 0 4px;font-size:11px;font-weight:900;color:#888;letter-spacing:2px;text-transform:uppercase">Your Warranty</p>
     <p style="margin:0;font-size:20px;font-weight:900;color:#c9a227">5-Year Structural Warranty</p>
@@ -313,14 +314,14 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
   </div>
   <a href="${portalUrl}" style="display:block;background:#c9a227;color:#000;text-align:center;padding:16px;border-radius:12px;font-weight:900;text-decoration:none;font-size:14px;letter-spacing:1px;text-transform:uppercase;margin:24px 0">Access Your Project Portal \u2192</a>
   ${pdfUrl ? `<a href="${pdfUrl}" style="display:block;border:1px solid #333;color:#c9a227;text-align:center;padding:14px;border-radius:12px;font-weight:700;text-decoration:none;font-size:13px;margin:0 0 24px 0">Download Warranty Certificate (PDF)</a>` : ''}
-  <p style="color:#555;font-size:12px;text-align:center">Questions? Call us at 613-707-3060<br>Luxury Decking \u2014 Ottawa, ON</p>
+  <p style="color:#555;font-size:12px;text-align:center">Questions? Call us at ${COMPANY.phone}<br>${COMPANY.name} \u2014 ${COMPANY.fullAddress}</p>
 </div>`;
         fetch('/.netlify/functions/send-email', {
           method: 'POST',
           headers: internalHeaders(),
           body: JSON.stringify({
             to: job.clientEmail,
-            subject: `Your Luxury Decking Warranty is Now Active`,
+            subject: `Your ${COMPANY.name} Warranty is Now Active`,
             htmlBody: warrantyHtml,
           }),
         }).catch(err => console.warn('[warranty-email] failed:', err));
@@ -605,11 +606,11 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     if (clientEmail) {
       const estimateHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;padding:40px;border-radius:16px">
   <div style="text-align:center;margin-bottom:32px">
-    <p style="margin:0;font-size:11px;font-weight:900;color:#c9a227;letter-spacing:3px;text-transform:uppercase">Luxury Decking</p>
+    <p style="margin:0;font-size:11px;font-weight:900;color:#c9a227;letter-spacing:3px;text-transform:uppercase">${COMPANY.name}</p>
     <h1 style="margin:8px 0 0;font-size:28px;font-weight:900;color:#fff">Your Custom Estimate is Ready</h1>
   </div>
   <p style="color:#aaa;font-size:15px;line-height:1.6">Hi ${data.clientName},</p>
-  <p style="color:#aaa;font-size:15px;line-height:1.6">Thank you for your interest in Luxury Decking. Your custom deck estimate is ready to review online.</p>
+  <p style="color:#aaa;font-size:15px;line-height:1.6">Thank you for your interest in ${COMPANY.name}. Your custom deck estimate is ready to review online.</p>
   <div style="background:#111;border:1px solid #333;border-radius:12px;padding:24px;margin:24px 0">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <span style="font-size:11px;font-weight:900;color:#888;letter-spacing:2px;text-transform:uppercase">Estimate Total</span>
@@ -626,22 +627,22 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     <li>Accept and secure your spot with a deposit</li>
     <li>Track your project from start to finish</li>
   </ul>
-  <p style="color:#555;font-size:12px;text-align:center;margin-top:32px">Questions? Call us at <strong style="color:#c9a227">613-707-3060</strong> or reply to this email.<br>Luxury Decking \u2014 Ottawa, ON</p>
+  <p style="color:#555;font-size:12px;text-align:center;margin-top:32px">Questions? Call us at <strong style="color:#c9a227">${COMPANY.phone}</strong> or reply to this email.<br>${COMPANY.name} \u2014 ${COMPANY.fullAddress}</p>
 </div>`;
       fetch('/.netlify/functions/send-email', {
         method: 'POST',
         headers: internalHeaders(),
         body: JSON.stringify({
           to: clientEmail,
-          subject: `Your Luxury Decking Estimate #${data.estimateNumber} \u2014 $${totalAmount.toLocaleString()}`,
+          subject: `Your ${COMPANY.name} Estimate #${data.estimateNumber} \u2014 $${totalAmount.toLocaleString()}`,
           htmlBody: estimateHtml,
         }),
       }).catch(err => console.warn('[estimate-email] failed:', err));
     } else {
       // Fallback: open mailto if no email on file
-      const emailSubject = encodeURIComponent('Your Luxury Decking Estimate');
+      const emailSubject = encodeURIComponent('Your ${COMPANY.name} Estimate');
       const emailBody = encodeURIComponent(
-        `Hi ${data.clientName},\n\nYour custom estimate is ready: ${portalUrl}\n\nLuxury Decking \u2014 613-707-3060`
+        `Hi ${data.clientName},\n\nYour custom estimate is ready: ${portalUrl}\n\n${COMPANY.name} \u2014 ${COMPANY.phone}`
       );
       const mailLink = document.createElement('a');
       mailLink.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;

@@ -46,6 +46,7 @@ import { measureSheetToCalculatorDimensions, jobToCalculatorClientInfo, loadEsti
 import { dataService } from './services/dataService';
 import { processAllCampaigns } from './utils/dripCampaignProcessor';
 import { useJobs } from './hooks/useJobs';
+import { COMPANY } from './config/company';
 import { useInvoices } from './hooks/useInvoices';
 import { useCustomers } from './hooks/useCustomers';
 
@@ -826,7 +827,7 @@ const App: React.FC = () => {
       const hour = new Date().getHours();
       if (hour >= 9 && hour < 20) {
         const firstName = newJob.clientName?.split(' ')[0] || 'there';
-        const smsT1 = `Hi ${firstName}, this is Angela from Luxury Decking. Thank you for reaching out about your deck project. We will be in touch shortly to learn more about what you have in mind. In the meantime, feel free to explore our transparent pricing packages here: https://luxurydecking.ca/pricing. Talk soon!`;
+        const smsT1 = `Hi ${firstName}, this is Angela from ${COMPANY.name}. Thank you for reaching out about your deck project. We will be in touch shortly to learn more about what you have in mind. In the meantime, feel free to explore our transparent pricing packages here: https://${COMPANY.website}/pricing. Talk soon!`;
         fetch('/.netlify/functions/send-sms', {
           method: 'POST',
           headers: internalHeaders(),
@@ -1011,7 +1012,7 @@ const App: React.FC = () => {
                   ...(job.files || []),
                   {
                     id: `f-passport-${Date.now()}`,
-                    name: `Luxury Decking Verified Build Passport - ${job.clientName}.pdf`,
+                    name: `${COMPANY.name} Verified Build Passport - ${job.clientName}.pdf`,
                     url: verifiedBuildPassportUrl,
                     type: 'closeout',
                     uploadedAt: new Date().toISOString()
@@ -1050,7 +1051,7 @@ const App: React.FC = () => {
               ...(prev.files || []),
               {
                 id: `f-passport-${Date.now()}`,
-                name: `Luxury Decking Verified Build Passport - ${prev.clientName}.pdf`,
+                name: `${COMPANY.name} Verified Build Passport - ${prev.clientName}.pdf`,
                 url: verifiedBuildPassportUrl,
                 type: 'closeout',
                 uploadedAt: new Date().toISOString()
@@ -1095,7 +1096,7 @@ const App: React.FC = () => {
         const filesToSave = [
           ...(verifiedBuildPassportUrl ? [{
             id: `f-passport-${workflowState.jobId}`,
-            name: `Luxury Decking Verified Build Passport - ${workflowState.jobInfo.jobName}.pdf`,
+            name: `${COMPANY.name} Verified Build Passport - ${workflowState.jobInfo.jobName}.pdf`,
             url: verifiedBuildPassportUrl,
             type: 'closeout',
             uploadedAt: new Date().toISOString(),
@@ -1161,7 +1162,7 @@ const App: React.FC = () => {
       <!-- Logo -->
       <tr><td align="center" style="padding:40px 40px 0;">
         <img src="https://fieldprov3.netlify.app/assets/logo-white.png"
-             alt="Luxury Decking" width="160"
+             alt="${COMPANY.name}" width="160"
              style="display:block;width:160px;height:auto;" />
       </td></tr>
 
@@ -1191,7 +1192,7 @@ const App: React.FC = () => {
         <p style="margin:0;font-size:15px;color:#aaaaaa;line-height:1.7;text-align:center;">
           The crew just wrapped up your project and we couldn't be prouder of the result.
           Your feedback means everything — not just to us, but to every homeowner who's
-          trying to decide if Luxury Decking is the right team for them.
+          trying to decide if ${COMPANY.name} is the right team for them.
         </p>
       </td></tr>
 
@@ -1230,7 +1231,7 @@ const App: React.FC = () => {
       <!-- Footer -->
       <tr><td align="center" style="padding:24px 40px 40px;">
         <p style="margin:0 0 6px;font-size:12px;font-weight:900;color:#D4AF37;letter-spacing:3px;text-transform:uppercase;">
-          The Luxury Decking Team
+          The ${COMPANY.name} Team
         </p>
         <p style="margin:0;font-size:11px;color:#444444;">
           Ottawa, ON &nbsp;·&nbsp; 613-707-3060 &nbsp;·&nbsp; luxurydeckingottawa.com
@@ -1268,7 +1269,7 @@ const App: React.FC = () => {
     const subject = encodeURIComponent(`${typeTag} SUBMISSION: ${workflowState.jobInfo.jobName}`);
     let body = `Job Close-out Package: ${closeoutUrl}\n`;
     if (invoiceUrl) body += `Subcontractor Invoice: ${invoiceUrl}\n`;
-    body += `\nFull documentation verified via Luxury Decking Field Pro.`;
+    body += `\nFull documentation verified via ${COMPANY.name} Field Pro.`;
     const mailLink = document.createElement('a'); mailLink.href = `mailto:${OFFICE_EMAIL}?subject=${subject}&body=${encodeURIComponent(body)}`; mailLink.click();
   }, [workflowState.userRole, workflowState.jobInfo.jobName]);
 
@@ -1834,7 +1835,7 @@ const App: React.FC = () => {
                 )}
                 
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest pt-4">
-                  Luxury Decking Field Pro
+                  {COMPANY.name} Field Pro
                 </p>
               </div>
             </div>
@@ -2065,7 +2066,7 @@ const App: React.FC = () => {
               navigateTo('office-new-job');
             }}
             onSendMessage={(phone, name) => {
-              const msg = `Hi ${name.split(' ')[0]}, this is Luxury Decking confirming your estimate appointment. Reply to this message if you have any questions!`;
+              const msg = `Hi ${name.split(' ')[0]}, this is ${COMPANY.name} confirming your estimate appointment. Reply to this message if you have any questions!`;
               window.open(`sms:${phone}?body=${encodeURIComponent(msg)}`);
             }}
           />

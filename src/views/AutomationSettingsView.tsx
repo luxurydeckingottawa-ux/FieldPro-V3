@@ -7,6 +7,7 @@ import {
 import { getLeadTouches, getCampaignTouches, CampaignTouch } from '../utils/dripCampaign';
 import type { EngagementTier } from '../utils/engagementScoring';
 import { Job, PipelineStage } from '../types';
+import { COMPANY } from '../config/company';
 
 // ── Persistence ──────────────────────────────────────────────────────────────
 
@@ -324,8 +325,8 @@ const JOB_AUTOMATIONS = [
     channel: 'sms+email' as const,
     delayDays: 0,
     description: 'Sent when estimate is accepted, requesting deposit to secure build date',
-    sms: `Hi {name}, congratulations! Your deck project with Luxury Decking is moving forward. To secure your build date, please submit your deposit through your portal: {portal_link}. Questions? Call or text 613-707-3060. — Angela`,
-    email: `Hi {name},\n\nExciting news — your deck project is officially moving forward!\n\nTo secure your spot in our build schedule, we ask that you submit your deposit at your earliest convenience. You can do so through your project portal:\n\n{portal_link}\n\nOnce we receive your deposit, we will confirm your official build start date and send you a detailed project timeline.\n\nWe are looking forward to building something great together.`,
+    sms: `Hi {name}, congratulations! Your deck project with ${COMPANY.name} is moving forward. To secure your build date, please submit your deposit through your portal: {portal_link}. Questions? Call or text ${COMPANY.phone}. \u2014 Angela`,
+    email: `Hi {name},\n\nExciting news \u2014 your deck project is officially moving forward!\n\nTo secure your spot in our build schedule, we ask that you submit your deposit at your earliest convenience. You can do so through your project portal:\n\n{portal_link}\n\nOnce we receive your deposit, we will confirm your official build start date and send you a detailed project timeline.\n\nWe are looking forward to building something great together.`,
   },
   {
     id: 'job-week-before',
@@ -333,7 +334,7 @@ const JOB_AUTOMATIONS = [
     channel: 'sms' as const,
     delayDays: -7,
     description: 'Reminder sent 1 week before the scheduled build start',
-    sms: `Hi {name}, this is Angela from Luxury Decking. Your deck build is scheduled to begin in 7 days! Our crew will arrive at {address} at the confirmed time. If anything has changed, please reach out at 613-707-3060.`,
+    sms: `Hi {name}, this is Angela from ${COMPANY.name}. Your deck build is scheduled to begin in 7 days! Our crew will arrive at {address} at the confirmed time. If anything has changed, please reach out at ${COMPANY.phone}.`,
     email: '',
   },
   {
@@ -342,7 +343,7 @@ const JOB_AUTOMATIONS = [
     channel: 'sms' as const,
     delayDays: -1,
     description: 'Final reminder the day before build start',
-    sms: `Hi {name}, just a reminder that your Luxury Decking crew arrives tomorrow to begin your deck project. If you have any last-minute questions, call or text 613-707-3060. See you tomorrow!`,
+    sms: `Hi {name}, just a reminder that your ${COMPANY.name} crew arrives tomorrow to begin your deck project. If you have any last-minute questions, call or text ${COMPANY.phone}. See you tomorrow!`,
     email: '',
   },
   {
@@ -351,8 +352,8 @@ const JOB_AUTOMATIONS = [
     channel: 'sms+email' as const,
     delayDays: 0,
     description: 'Sent immediately when the job is marked complete — requests Google review',
-    sms: `Hi {name}, your deck is complete! Thank you for trusting Luxury Decking with your project. We would really appreciate a quick Google review — it makes a huge difference for a small local business: {review_link}. Enjoy your new outdoor space! — Angela`,
-    email: `Hi {name},\n\nYour deck project is officially complete — congratulations!\n\nIt was a pleasure working with you and your family on this build. We hope you love your new outdoor space for many years to come.\n\nIf you have a moment, leaving us a Google review would mean the world to our team. It helps other homeowners find us and supports a local Ottawa business:\n\n{review_link}\n\nAlso, keep an eye out for your 5-year warranty package arriving by email shortly. If you ever have questions about your deck, we are always here.\n\nThank you again for choosing Luxury Decking.`,
+    sms: `Hi {name}, your deck is complete! Thank you for trusting ${COMPANY.name} with your project. We would really appreciate a quick Google review \u2014 it makes a huge difference for a small local business: {review_link}. Enjoy your new outdoor space! \u2014 Angela`,
+    email: `Hi {name},\n\nYour deck project is officially complete \u2014 congratulations!\n\nIt was a pleasure working with you and your family on this build. We hope you love your new outdoor space for many years to come.\n\nIf you have a moment, leaving us a Google review would mean the world to our team. It helps other homeowners find us and supports a local ${COMPANY.city} business:\n\n{review_link}\n\nAlso, keep an eye out for your 5-year warranty package arriving by email shortly. If you ever have questions about your deck, we are always here.\n\nThank you again for choosing ${COMPANY.name}.`,
   },
   {
     id: 'job-complete-warranty',
@@ -361,7 +362,7 @@ const JOB_AUTOMATIONS = [
     delayDays: 1,
     description: 'Warranty certificate + build passport sent 24h after completion',
     sms: '',
-    email: `Hi {name},\n\nAttached is your Luxury Decking Build Passport and 5-Year Structural Warranty.\n\nInside you will find:\n- A complete record of your build stages and materials\n- Site photos from your project\n- Your official 5-year structural warranty card\n- Maintenance tips to keep your deck looking great\n\nPlease save this document — it may be valuable for home insurance and future resale.\n\nThank you for being a Luxury Decking client.`,
+    email: `Hi {name},\n\nAttached is your ${COMPANY.name} Build Passport and 5-Year Structural Warranty.\n\nInside you will find:\n- A complete record of your build stages and materials\n- Site photos from your project\n- Your official 5-year structural warranty card\n- Maintenance tips to keep your deck looking great\n\nPlease save this document \u2014 it may be valuable for home insurance and future resale.\n\nThank you for being a ${COMPANY.name} client.`,
   },
 ];
 

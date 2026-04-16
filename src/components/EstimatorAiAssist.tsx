@@ -81,7 +81,7 @@ const EstimatorAiAssist: React.FC<EstimatorAiAssistProps> = ({ intake, onUpdateA
       case 'high': return 'text-rose-600 bg-rose-50 border-rose-100';
       case 'medium': return 'text-amber-600 bg-amber-50 border-amber-100';
       case 'low': return 'text-blue-600 bg-blue-50 border-blue-100';
-      default: return 'text-gray-600 bg-gray-50 border-gray-100';
+      default: return 'text-[var(--text-tertiary)] bg-gray-50 border-gray-100';
     }
   };
 

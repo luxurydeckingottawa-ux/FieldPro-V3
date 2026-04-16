@@ -31,6 +31,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import QuickMessageModal from '../components/QuickMessageModal';
+import { COMPANY } from '../config/company';
 
 interface JobDetailViewProps {
   job: Job;
@@ -72,7 +73,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
       onSendMessage?.(sessionId, message);
     } else {
       // Handle email intent
-      const mailLink = document.createElement('a'); mailLink.href = `mailto:${job.clientEmail}?subject=Luxury Decking: ${job.jobNumber}&body=${encodeURIComponent(message)}`; mailLink.click();
+      const mailLink = document.createElement('a'); mailLink.href = `mailto:${job.clientEmail}?subject=${COMPANY.name}: ${job.jobNumber}&body=${encodeURIComponent(message)}`; mailLink.click();
     }
     setIsMessageModalOpen(false);
   };
@@ -230,13 +231,13 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                   <Settings className="h-7 w-7 text-[var(--brand-gold)]" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-1">Office Control</p>
+                  <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.3em] mb-1">Office Control</p>
                   <h2 className="text-xl font-black text-white tracking-tight italic uppercase">Review Management</h2>
                 </div>
               </div>
               
               <div className="flex items-center gap-4">
-                <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Status:</span>
+                <span className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Status:</span>
                 <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 shadow-inner">
                   {[
                     { id: OfficeReviewStatus.NOT_READY, label: 'Pending' },
@@ -250,7 +251,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                       className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
                         job.officeReviewStatus === status.id 
                           ? 'bg-[var(--brand-gold)] text-black shadow-[0_0_15px_rgba(196,164,50,0.3)]' 
-                          : 'text-gray-500 hover:text-gray-300'
+                          : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                       }`}
                     >
                       {status.label}
@@ -632,7 +633,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                           {file.type === 'drawing' && <Ruler className="h-6 w-6 text-[var(--brand-gold)]" />}
                           {file.type === 'permit' && <ShieldCheck className="h-6 w-6 text-blue-500" />}
                           {file.type === 'photo' && <Camera className="h-6 w-6 text-purple-500" />}
-                          {file.type === 'other' && <FileText className="h-6 w-6 text-gray-400" />}
+                          {file.type === 'other' && <FileText className="h-6 w-6 text-[var(--text-secondary)]" />}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--brand-gold)] transition-colors uppercase tracking-tight">{file.name}</p>
