@@ -15,6 +15,17 @@ const NETLIFY_SMS   = '/.netlify/functions/send-sms';
 const NETLIFY_EMAIL = '/.netlify/functions/send-email';
 const INTERNAL_SECRET = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
 
+// ── SMS Quiet Hours ─────────────────────────────────────────────────────────
+// Do NOT send SMS outside these hours. Emails are OK anytime.
+// Times are in the local timezone of the browser / Edge Function runtime.
+const SMS_EARLIEST_HOUR = 9;   // 9:00 AM — earliest SMS can go out
+const SMS_LATEST_HOUR = 20;    // 8:00 PM — latest SMS can go out (20:00)
+
+function isWithinSmsWindow(): boolean {
+  const hour = new Date().getHours();
+  return hour >= SMS_EARLIEST_HOUR && hour < SMS_LATEST_HOUR;
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function touchDueAt(startedAt: string, touch: CampaignTouch): Date {
@@ -98,7 +109,14 @@ export async function processAllCampaigns(
       if (isDone(touch, completed)) continue;
       if (now < touchDueAt(campaign.startedAt, touch)) continue;
 
-      // Touch is due and not yet sent — fire it
+      // SMS quiet hours: if this touch includes SMS and we're outside the
+      // send window (9 AM – 8 PM), delay the ENTIRE touch until the next
+      // eligible hour. Don't mark it complete — the next cron run during
+      // business hours will pick it up and send it.
+      const hasSms = touch.channel === 'sms' || touch.channel === 'sms+email';
+      if (hasSms && !isWithinSmsWindow()) continue;
+
+      // Touch is due, within send window, and not yet sent — fire it
       try {
         await fireTouch(job, touch);
         const tier = calculateEngagementTier(job.portalEngagement).tier;

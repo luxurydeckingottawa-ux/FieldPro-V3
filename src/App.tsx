@@ -820,14 +820,19 @@ const App: React.FC = () => {
     dataService.createJob(jobWithCampaign).catch(err => console.error('Failed to persist new job:', err));
 
     // Auto-fire Touch 1: instant SMS acknowledgement for new leads
+    // Respect quiet hours: only send between 9 AM – 8 PM. If outside window,
+    // the drip campaign processor will pick it up at the next eligible hour.
     if (newJob.pipelineStage === PipelineStage.LEAD_IN && newJob.clientPhone) {
-      const firstName = newJob.clientName?.split(' ')[0] || 'there';
-      const smsT1 = `Hi ${firstName}, this is Angela from Luxury Decking. Thank you for reaching out about your deck project. We will be in touch shortly to learn more about what you have in mind. In the meantime, feel free to explore our transparent pricing packages here: https://luxurydecking.ca/pricing. Talk soon!`;
-      fetch('/.netlify/functions/send-sms', {
-        method: 'POST',
-        headers: internalHeaders(),
-        body: JSON.stringify({ to: newJob.clientPhone, message: smsT1 }),
-      }).catch(err => console.warn('[T1 SMS] failed:', err));
+      const hour = new Date().getHours();
+      if (hour >= 9 && hour < 20) {
+        const firstName = newJob.clientName?.split(' ')[0] || 'there';
+        const smsT1 = `Hi ${firstName}, this is Angela from Luxury Decking. Thank you for reaching out about your deck project. We will be in touch shortly to learn more about what you have in mind. In the meantime, feel free to explore our transparent pricing packages here: https://luxurydecking.ca/pricing. Talk soon!`;
+        fetch('/.netlify/functions/send-sms', {
+          method: 'POST',
+          headers: internalHeaders(),
+          body: JSON.stringify({ to: newJob.clientPhone, message: smsT1 }),
+        }).catch(err => console.warn('[T1 SMS] failed:', err));
+      }
     }
 
     // Always route to estimator workflow — the on-site checklist, measurements, sketch, and photos

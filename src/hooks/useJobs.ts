@@ -266,12 +266,16 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     }
     handleUpdateJob(jobId, updates);
 
-    // Auto-send Google review request when job moves to Paid & Closed
+    // Auto-send Google review request + warranty SMS when job moves to Paid & Closed
+    // Respect SMS quiet hours (9 AM – 8 PM) — if outside window, these will
+    // need to be sent manually or via a scheduled job.
     if (newStage === PipelineStage.PAID_CLOSED && job) {
+      const hour = new Date().getHours();
+      const smsOk = hour >= 9 && hour < 20;
       const reviewUrl = import.meta.env.VITE_GOOGLE_REVIEW_URL || 'https://g.page/r/luxury-decking/review';
       const firstName = job.clientName?.split(' ')[0] || 'there';
       const reviewMsg = `Hi ${firstName}, thank you for choosing Luxury Decking! We'd love it if you could take a moment to leave us a Google review: ${reviewUrl} — Your feedback means the world to us!`;
-      if (job.clientPhone) {
+      if (job.clientPhone && smsOk) {
         fetch('/.netlify/functions/send-sms', {
           method: 'POST',
           headers: internalHeaders(),
@@ -280,7 +284,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
       }
 
       // Auto-send warranty delivery SMS
-      if (job.clientPhone && job.customerPortalToken) {
+      if (job.clientPhone && job.customerPortalToken && smsOk) {
         const portalUrl = `${window.location.origin}?portal=${job.customerPortalToken}`;
         const warrantyMsg = `Hi ${firstName}, your Luxury Decking project is officially complete! Your 5-year warranty is now active. Access your Project Portal and Warranty Package here: ${portalUrl}`;
         fetch('/.netlify/functions/send-sms', {

@@ -354,7 +354,17 @@ Deno.serve(async (req) => {
       if (isDone(touch.id, completed)) continue;
       if (now < touchDueAt(campaign.startedAt, touch)) continue;
 
-      // Touch is due — fire it
+      // SMS quiet hours: if this touch includes SMS and we're outside
+      // 9 AM – 8 PM Eastern, delay the entire touch until the next morning.
+      // The hourly cron will pick it up at the next eligible run.
+      const hasSms = touch.channel === 'sms' || touch.channel === 'sms+email';
+      if (hasSms) {
+        const eastern = new Date(now.toLocaleString('en-US', { timeZone: 'America/Toronto' }));
+        const hour = eastern.getHours();
+        if (hour < 9 || hour >= 20) continue; // Outside 9 AM – 8 PM ET
+      }
+
+      // Touch is due and within send window — fire it
       try {
         if ((touch.channel === 'sms' || touch.channel === 'sms+email') && job.client_phone && touch.sms) {
           await sendSms(job.client_phone, touch.sms);
