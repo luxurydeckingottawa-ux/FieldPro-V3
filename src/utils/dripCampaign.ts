@@ -75,6 +75,18 @@ function portalLink(job: Job): string {
   return `${window.location.origin}?portal=${token}`;
 }
 
+/** HTML-friendly portal link for email templates — renders as a clickable button/link */
+function portalLinkHtml(job: Job, label = 'View Your Estimate'): string {
+  const url = portalLink(job);
+  return `<a href="${url}" style="display:inline-block;padding:12px 24px;background:#c9a84c;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:14px">${label}</a>`;
+}
+
+/** Clean text link for emails where a button is too heavy */
+function portalLinkText(job: Job, label = 'Click here to view your estimate'): string {
+  const url = portalLink(job);
+  return `<a href="${url}" style="color:#c9a84c;font-weight:bold">${label}</a>`;
+}
+
 function projectType(job: Job): string {
   return job.projectType || 'deck project';
 }
@@ -163,7 +175,7 @@ function getEstimateTouch1(job: Job): CampaignTouch {
     delayMinutes: 180, // 3 hours after estimate sent
     subject: 'Your ${COMPANY_NAME} estimate is ready',
     smsTemplate: `Hi ${name}, your estimate for your ${pType} has been sent to your inbox. You can view it, compare options, and explore different packages right from the portal. Let me know if you have any questions. - Angela, ${COMPANY_NAME}`,
-    emailTemplate: `Hi ${name},\n\nThank you for taking the time to meet with us about your deck project. Your personalized estimate is now ready to view in your portal.\n\nInside your estimate, you can:\n- Review the full project scope and specifications\n- Compare package tiers (Silver, Gold, Platinum, Diamond)\n- See exactly what is included at each level\n- Explore optional upgrades and add-ons\n\nTake your time reviewing everything. If you have any questions about materials, timelines, or the process, we are happy to walk through it with you.\n\nView Your Estimate: ${portalLink(job)}${sig()}`,
+    emailTemplate: `Hi ${name},\n\nThank you for taking the time to meet with us about your deck project. Your personalized estimate is now ready to view in your portal.\n\nInside your estimate, you can:\n- Review the full project scope and specifications\n- Compare package tiers (Silver, Gold, Platinum, Diamond)\n- See exactly what is included at each level\n- Explore optional upgrades and add-ons\n\nTake your time reviewing everything. If you have any questions about materials, timelines, or the process, we are happy to walk through it with you.\n\n${portalLinkHtml(job, 'View Your Estimate')}${sig()}`,
   };
 }
 
@@ -179,7 +191,7 @@ function getEstimateTouchDay3(job: Job, tier: EngagementTier): CampaignTouch {
     },
     WARM: {
       subject: 'A few things that might help with your decision',
-      email: `Hi ${name},\n\nJust checking in on your deck estimate. I know there is a lot to consider, so I wanted to share a couple of things that might help as you think it through.\n\nOne question we hear often is about the difference between our package tiers. Here is the short version: every tier uses the same structural standards and build process. The difference is in the surface materials, railing style, and finishing details. So you are never compromising on quality, just choosing the level of finish that fits your vision and budget.\n\nIf you have any questions, just reply to this email or text us at ${PHONE}. No pressure, just clarity.\n\nView Your Estimate: ${link}${sig()}`,
+      email: `Hi ${name},\n\nJust checking in on your deck estimate. I know there is a lot to consider, so I wanted to share a couple of things that might help as you think it through.\n\nOne question we hear often is about the difference between our package tiers. Here is the short version: every tier uses the same structural standards and build process. The difference is in the surface materials, railing style, and finishing details. So you are never compromising on quality, just choosing the level of finish that fits your vision and budget.\n\nIf you have any questions, just reply to this email or text us at ${PHONE}. No pressure, just clarity.\n\n${portalLinkHtml(job, 'View Your Estimate')}${sig()}`,
       sms: `Hi ${name}, following up on your deck estimate. Any questions I can help with? No rush, just want to make sure you have everything you need. - Angela`,
     },
     COOL: {
@@ -189,7 +201,7 @@ function getEstimateTouchDay3(job: Job, tier: EngagementTier): CampaignTouch {
     },
     COLD: {
       subject: 'Did you get a chance to see your deck estimate?',
-      email: `Hi ${name},\n\nI wanted to make sure your estimate came through okay. Sometimes these things end up in spam or get buried in a busy inbox.\n\nYour personalized estimate is waiting in your portal and includes full project specifications, package options, and transparent pricing for your ${projectType(job)}.\n\nHere is a direct link: ${link}\n\nIf anything has changed or the timing is not right, that is completely fine. Just let me know and I will update your file.${sig()}`,
+      email: `Hi ${name},\n\nI wanted to make sure your estimate came through okay. Sometimes these things end up in spam or get buried in a busy inbox.\n\nYour personalized estimate is waiting in your portal and includes full project specifications, package options, and transparent pricing for your ${projectType(job)}.\n\n${portalLinkHtml(job, 'View Your Estimate')}\n\nIf anything has changed or the timing is not right, that is completely fine. Just let me know and I will update your file.${sig()}`,
       sms: `Hi ${name}, just checking in. I sent your deck estimate a few days ago and wanted to make sure you received it. Here is the link: ${link}. Let me know if you have any questions. - Angela`,
     },
   };
@@ -224,12 +236,12 @@ function getEstimateTouchDay7(job: Job, tier: EngagementTier): CampaignTouch {
     },
     COOL: {
       subject: 'Still thinking about your deck project?',
-      email: `Hi ${name},\n\nJust a gentle check-in. If your deck project is still on your mind, your estimate is ready whenever you are: ${link}\n\nIf you would like to adjust the scope, explore different material options, or talk through a different budget range, we can absolutely do that. Our estimates are not one-size-fits-all.\n\nLet me know how you would like to proceed, or if anything has changed.${sig()}`,
+      email: `Hi ${name},\n\nJust a gentle check-in. If your deck project is still on your mind, your estimate is ready whenever you are.\n\n${portalLinkHtml(job, 'View Your Estimate')}\n\nIf you would like to adjust the scope, explore different material options, or talk through a different budget range, we can absolutely do that. Our estimates are not one-size-fits-all.\n\nLet me know how you would like to proceed, or if anything has changed.${sig()}`,
       sms: `Hi ${name}, just checking in on your deck estimate. If you want to adjust anything or have questions, just reply here. - Angela`,
     },
     COLD: {
       subject: 'Your estimate is still available',
-      email: `Hi ${name},\n\nYour deck estimate is still available in your portal if you would like to take a look: ${link}\n\nIf the timing has changed or you have decided to hold off, no problem at all. Just let me know and I will close out your file.\n\nIf you have any concerns about scope, budget, or process, I am happy to discuss. Sometimes a quick text back and forth can clear things up.${sig()}`,
+      email: `Hi ${name},\n\nYour deck estimate is still available in your portal if you would like to take a look.\n\n${portalLinkHtml(job, 'View Your Estimate')}\n\nIf the timing has changed or you have decided to hold off, no problem at all. Just let me know and I will close out your file.\n\nIf you have any concerns about scope, budget, or process, I am happy to discuss. Sometimes a quick text back and forth can clear things up.${sig()}`,
       sms: `Hi ${name}, your deck estimate is still available here: ${link}. If the timing is not right, just let me know and I will update your file. - Angela`,
     },
   };
@@ -263,7 +275,7 @@ function getEstimateTouchDay14(job: Job, tier: EngagementTier): CampaignTouch {
       ? `Hi ${name}, last follow-up from me on your deck estimate. If you are still interested, I would love to help finalize things. If you have gone another direction, no hard feelings. Just let me know. - Angela`
       : `Hi ${name}, just a final check-in about your deck project. If you have moved on, completely understood. If you are still thinking about it, your estimate is here: ${link}. - Angela`,
     emailTemplate: isHotWarm
-      ? `Hi ${name},\n\nThis will be my last follow-up on your estimate. I do not want to be a bother, and I know you are busy.\n\nIf you are still considering the project, here is what I want you to know:\n\n- Your estimate pricing is current as of today\n- Our build calendar is filling and earlier bookings get more scheduling flexibility\n- We can adjust scope, materials, or budget to find something that works\n\nIf you have decided to go another direction or the timing is not right, completely understood. We are here whenever your project comes back up.\n\nView Your Estimate: ${link}${sig()}`
+      ? `Hi ${name},\n\nThis will be my last follow-up on your estimate. I do not want to be a bother, and I know you are busy.\n\nIf you are still considering the project, here is what I want you to know:\n\n- Your estimate pricing is current as of today\n- Our build calendar is filling and earlier bookings get more scheduling flexibility\n- We can adjust scope, materials, or budget to find something that works\n\nIf you have decided to go another direction or the timing is not right, completely understood. We are here whenever your project comes back up.\n\n${portalLinkHtml(job, 'View Your Estimate')}${sig()}`
       : `Hi ${name},\n\nI have followed up a few times and have not heard back, so I am going to go ahead and close your estimate file.\n\nIf your project comes back up in the future, please do not hesitate to reach out. We would be happy to put together a fresh estimate at that point.\n\nWishing you all the best.${sig()}`,
   };
 }

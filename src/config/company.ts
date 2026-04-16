@@ -38,7 +38,7 @@ export const COMPANY: CompanyConfig = {
   legalName: 'Luxury Decking Ottawa',
   tagline: 'Premium Outdoor Living',
   phone: '(613) 707-3060',
-  email: 'jack@luxurydecking.ca',
+  email: 'admin@luxurydecking.ca',
   officeEmail: import.meta.env.VITE_OFFICE_EMAIL || 'luxurydeckingteam@gmail.com',
   website: 'luxurydecking.ca',
   city: 'Ottawa',

@@ -38,7 +38,7 @@ const INSTAQUOTE     = 'https://luxurydecking.ca/instaquote';
 const PROCESS_PAGE   = 'https://luxurydecking.ca/our-process';
 const MATERIALS_PAGE = 'https://luxurydecking.ca/materials';
 const PHONE          = '613-707-3060';
-const EMAIL          = 'info@luxurydecking.ca';
+const EMAIL          = 'admin@luxurydecking.ca';
 const WEBSITE        = 'luxurydecking.ca';
 
 // ── types (minimal, matching the React app) ───────────────────────────────────
