@@ -8,7 +8,7 @@ interface ProjectLocationMapProps {
 }
 
 const ProjectLocationMap: React.FC<ProjectLocationMapProps> = ({ address, className = '', hideAddress = false }) => {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
   // Street View Static API URL
   const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=800x600&location=${encodeURIComponent(address)}&key=${apiKey}`;

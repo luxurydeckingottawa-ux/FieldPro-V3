@@ -9,10 +9,9 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
     ],
-    define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || process.env.API_KEY),
-    },
+    // SECURITY: Do NOT put API keys in the define block — they leak into the client bundle.
+    // Gemini calls go through the server-side gemini-proxy Netlify function.
+    define: {},
     optimizeDeps: {
       include: [],
     },

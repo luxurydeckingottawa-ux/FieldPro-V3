@@ -1,5 +1,6 @@
 import { getAI, handleAiError } from "../lib/ai";
 import { EstimatorIntake, AiFlag, AiHandoffSummary } from "../types";
+import { COMPANY } from "../config/company";
 
 export const estimatorAiService = {
   /**
@@ -7,7 +8,7 @@ export const estimatorAiService = {
    */
   async detectMissingInfo(intake: EstimatorIntake): Promise<AiFlag[]> {
     const prompt = `
-      You are an AI Estimator Assist for Luxury Decking. 
+      You are an AI Estimator Assist for ${COMPANY.name}. 
       Review the following site intake data and flag any missing or likely incomplete information.
       
       Intake Checklist: ${JSON.stringify(intake.checklist)}

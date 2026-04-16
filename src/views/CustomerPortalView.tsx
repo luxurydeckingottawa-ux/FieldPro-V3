@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Job, JobStatus, PipelineStage, ChatSession } from '../types';
+import { COMPANY } from '../config/company';
 import { 
   Clock, MapPin, CheckCircle2, Phone, MessageSquare, 
   ChevronRight, Sun, Cloud, CloudRain, CalendarDays, Truck, 
@@ -218,7 +219,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
       case PipelineStage.COMPLETION:
         return { title: 'Final Walkthrough', desc: 'We will review every detail with you to ensure absolute perfection.' };
       case PipelineStage.PAID_CLOSED:
-        return { title: 'Project Complete', desc: 'Your dream space is finished. Thank you for choosing Luxury Decking!' };
+        return { title: 'Project Complete', desc: `Your dream space is finished. Thank you for choosing ${COMPANY.name}!` };
       default:
         return { title: 'Next Steps', desc: 'We are moving your project forward to the next phase.' };
     }
@@ -448,7 +449,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-tight">Project Portal</h1>
-              <p className="text-xs text-[#666] font-medium uppercase tracking-wider">Luxury Decking Field Pro</p>
+              <p className="text-xs text-[#666] font-medium uppercase tracking-wider">{COMPANY.name} Field Pro</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -513,7 +514,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       <p className="text-xs font-black uppercase tracking-[0.3em] text-[#E8D88A] mb-2">Project Officially Complete</p>
                       <h4 className="text-4xl font-black tracking-tight">Job Complete</h4>
                       <p className="text-sm text-[var(--brand-gold)]/5 leading-relaxed opacity-90 mt-2 max-w-sm">
-                        Congratulations! Your dream outdoor space is now ready for years of enjoyment. Thank you for trusting Luxury Decking.
+                        Congratulations! Your dream outdoor space is now ready for years of enjoyment. Thank you for trusting {COMPANY.name}.
                       </p>
                     </div>
                   </div>
@@ -1749,8 +1750,8 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
       {/* Footer */}
       <footer className="max-w-3xl mx-auto px-6 py-12 border-t border-[#F0F0F0] text-center space-y-4">
-        <p className="text-xs text-[#999] font-medium uppercase tracking-widest">Luxury Decking Field Pro</p>
-        <p className="text-[10px] text-[#BBB]">© 2026 Luxury Decking. All rights reserved. Built for quality and transparency.</p>
+        <p className="text-xs text-[#999] font-medium uppercase tracking-widest">{COMPANY.name} Field Pro</p>
+        <p className="text-[10px] text-[#BBB]">© 2026 {COMPANY.name}. All rights reserved. Built for quality and transparency.</p>
       </footer>
 
       {/* Photo Lightbox Modal */}
@@ -1840,7 +1841,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   </div>
                   <div>
                     <h3 className="font-bold text-[#1A1A1A]">Project Chat</h3>
-                    <p className="text-[10px] text-[var(--brand-gold)] font-bold uppercase tracking-wider">Direct with Luxury Decking</p>
+                    <p className="text-[10px] text-[var(--brand-gold)] font-bold uppercase tracking-wider">Direct with {COMPANY.name}</p>
                   </div>
                 </div>
                 <button 

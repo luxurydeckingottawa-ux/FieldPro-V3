@@ -139,7 +139,28 @@ const JobSummaryCard: React.FC<JobSummaryCardProps> = ({
             if (parent && !parent.querySelector('.fallback-icon')) {
               const div = document.createElement('div');
               div.className = 'fallback-icon flex flex-col items-center justify-center h-full gap-2';
-              div.innerHTML = `<div style="color:#9ca3af"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><p style="font-size:9px;font-weight:700;color:#9ca3af;text-align:center;line-height:1.3;padding:0 12px">${job.projectAddress || 'No address'}</p>`;
+              // SECURITY: Use DOM API (not innerHTML) to avoid XSS from user-sourced address
+              const iconWrap = document.createElement('div');
+              iconWrap.style.color = '#9ca3af';
+              const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+              svg.setAttribute('width', '28');
+              svg.setAttribute('height', '28');
+              svg.setAttribute('viewBox', '0 0 24 24');
+              svg.setAttribute('fill', 'none');
+              svg.setAttribute('stroke', 'currentColor');
+              svg.setAttribute('stroke-width', '1.5');
+              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              path.setAttribute('d', 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z');
+              const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+              poly.setAttribute('points', '9 22 9 12 15 12 15 22');
+              svg.appendChild(path);
+              svg.appendChild(poly);
+              iconWrap.appendChild(svg);
+              const label = document.createElement('p');
+              Object.assign(label.style, { fontSize: '9px', fontWeight: '700', color: '#9ca3af', textAlign: 'center', lineHeight: '1.3', padding: '0 12px' });
+              label.textContent = job.projectAddress || 'No address';
+              div.appendChild(iconWrap);
+              div.appendChild(label);
               parent.appendChild(div);
             }
           }}

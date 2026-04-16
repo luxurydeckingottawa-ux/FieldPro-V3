@@ -7,7 +7,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Outfit', 'Inter', 'sans-serif'],
+        display: ['Orbitron', 'Inter', 'sans-serif'],
+        heading: ['Syne', 'Inter', 'sans-serif'],
+        body: ['Outfit', 'Inter', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
     },
   },

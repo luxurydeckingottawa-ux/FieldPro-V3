@@ -15,9 +15,10 @@
 
 const https = require('https');
 
+// SECURITY: defaults to DENY when env var is missing.
 function checkInternalSecret(event) {
   const secret = process.env.INTERNAL_API_SECRET;
-  if (!secret) return true;
+  if (!secret) return false;
   const provided = event.headers['x-internal-secret'] || event.headers['X-Internal-Secret'];
   return provided === secret;
 }

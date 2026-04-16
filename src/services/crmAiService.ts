@@ -1,5 +1,6 @@
 import { Job } from "../types";
 import { getAI, handleAiError } from "../lib/ai";
+import { COMPANY } from "../config/company";
 
 export const crmAiService = {
   /**
@@ -7,7 +8,7 @@ export const crmAiService = {
    */
   async generateFollowUpDraft(job: Job, type: string, context?: string): Promise<string> {
     const prompt = `
-      You are an AI CRM assistant for "Luxury Decking", a premium deck contractor.
+      You are an AI CRM assistant for "${COMPANY.name}", a premium deck contractor.
       Draft a professional, personalized ${type} follow-up message for the following client:
       
       Client Name: ${job.clientName}

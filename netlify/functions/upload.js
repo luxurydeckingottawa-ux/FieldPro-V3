@@ -6,10 +6,10 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Shared secret guard. TODO: replace with Supabase JWT verification once auth is fully integrated.
+// Shared secret guard. SECURITY: defaults to DENY when env var is missing.
 function checkInternalSecret(event) {
   const secret = process.env.INTERNAL_API_SECRET;
-  if (!secret) return true; // not configured — allow (dev/staging without the env var set)
+  if (!secret) return false;
   const provided = event.headers['x-internal-secret'] || event.headers['X-Internal-Secret'];
   return provided === secret;
 }

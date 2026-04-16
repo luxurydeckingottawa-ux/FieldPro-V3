@@ -1,4 +1,5 @@
 import { PhotoUpload, InvoicingData, User, Role, Job, PipelineStage, OfficeChecklist, BuildDetails, PipelineAutomation, MessageTemplate } from './types';
+import { COMPANY } from './config/company';
 
 // Pre-sale pipeline stages — jobs in these stages route to estimate-detail view
 export const ESTIMATE_STAGES: PipelineStage[] = [
@@ -22,10 +23,10 @@ export const LOST_REASONS = [
 ];
 
 export const APP_USERS: User[] = [
-  { id: 'u1', email: 'admin@luxurydecking.ca', password: 'LuxDeck2026!', name: 'Admin User', role: Role.ADMIN },
-  { id: 'u2', email: 'estimator@luxurydecking.ca', password: 'LuxDeck2026!', name: 'Field Estimator', role: Role.ESTIMATOR },
-  { id: 'u3', email: 'field@luxurydecking.ca', password: 'LuxDeck2026!', name: 'Field Lead', role: Role.FIELD_EMPLOYEE },
-  { id: 'u4', email: 'sub@external.ca', password: 'LuxDeck2026!', name: 'Subcontractor A', role: Role.SUBCONTRACTOR },
+  { id: 'u1', email: 'admin@luxurydecking.ca', name: 'Admin User', role: Role.ADMIN },
+  { id: 'u2', email: 'estimator@luxurydecking.ca', name: 'Field Estimator', role: Role.ESTIMATOR },
+  { id: 'u3', email: 'field@luxurydecking.ca', name: 'Field Lead', role: Role.FIELD_EMPLOYEE },
+  { id: 'u4', email: 'sub@external.ca', name: 'Subcontractor A', role: Role.SUBCONTRACTOR },
 ];
 
 export const PIPELINE_STAGES = [
@@ -383,7 +384,7 @@ export const RATES = {
 export const DEFAULT_AUTOMATIONS: PipelineAutomation[] = [
   {
     stage: PipelineStage.JOB_SOLD,
-    messageTemplate: "Hi {clientName}, thank you for choosing Luxury Decking! Your project {jobNumber} is now in our system. We will notify you once admin setup is complete.",
+    messageTemplate: "Hi {clientName}, thank you for choosing ${COMPANY.name}! Your project {jobNumber} is now in our system. We will notify you once admin setup is complete.",
     enabled: true
   },
   {
@@ -403,7 +404,7 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
     id: 't1',
     title: 'Start Date Confirmation',
     category: 'start',
-    content: "Hi {clientName}, this is Luxury Decking. We are confirming your project {jobNumber} is scheduled to start on {startDate}. Our team will arrive between 8-9 AM. Please ensure the work area is clear.",
+    content: "Hi {clientName}, this is ${COMPANY.name}. We are confirming your project {jobNumber} is scheduled to start on {startDate}. Our team will arrive between 8-9 AM. Please ensure the work area is clear.",
     type: 'both',
     stage: PipelineStage.READY_TO_START
   },

@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { AppState } from '../types';
 import { PAGE_TITLES, RATES } from '../constants';
+import { COMPANY } from '../config/company';
 
 const BLUE_BRAND = [0, 0, 0]; // Black/Dark for luxury feel
 
@@ -15,7 +16,7 @@ export const generateCloseoutPDF = async (state: AppState): Promise<string> => {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  doc.text('LUXURY DECKING', 20, 20);
+  doc.text(COMPANY.name.toUpperCase(), 20, 20);
   doc.setFontSize(10);
   doc.text('VERIFIED BUILD PASSPORT', 20, 28);
 
@@ -118,7 +119,7 @@ export const generateCloseoutPDF = async (state: AppState): Promise<string> => {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  doc.text('LUXURY DECKING', 20, 20);
+  doc.text(COMPANY.name.toUpperCase(), 20, 20);
   doc.setFontSize(10);
   doc.text('5-YEAR WORKMANSHIP WARRANTY', 20, 28);
 
@@ -129,17 +130,17 @@ export const generateCloseoutPDF = async (state: AppState): Promise<string> => {
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   const warrantyText = [
-    'Luxury Decking stands behind every project with our industry-leading 5-Year Workmanship Warranty.',
+    `${COMPANY.name} stands behind every project with our industry-leading 5-Year Workmanship Warranty.`,
     '',
     'This warranty covers all aspects of the installation and labour performed by our certified teams. ',
     'We guarantee that your project has been built to the highest standards of structural integrity ',
     'and aesthetic finish as outlined in our Verified Build Passport.',
     '',
     'Warranty Coverage Includes:',
-    '• Structural framing integrity',
-    '• Fastener and hardware performance',
-    '• Decking and railing installation alignment',
-    '• Workmanship-related settlement or movement',
+    '\u2022 Structural framing integrity',
+    '\u2022 Fastener and hardware performance',
+    '\u2022 Decking and railing installation alignment',
+    '\u2022 Workmanship-related settlement or movement',
     '',
     'This warranty is a testament to our commitment to excellence and your long-term satisfaction.',
     'For any warranty-related inquiries, please contact our office with your Job Number.'
@@ -240,7 +241,7 @@ export const generateInvoicePDF = async (state: AppState): Promise<string> => {
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.text('Payment Terms: E-transfer to luxurydeckingottawa@gmail.com', 20, finalY + 40);
+  doc.text(`Payment Terms: E-transfer to ${COMPANY.officeEmail}`, 20, finalY + 40);
   doc.text('Note: Invoice submitted with completed QC package.', 20, finalY + 48);
 
   return doc.output('datauristring');

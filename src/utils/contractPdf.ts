@@ -4,6 +4,8 @@
  * using HTML-to-canvas approach (no external dependencies).
  */
 
+import { COMPANY } from '../config/company';
+
 interface ContractData {
   jobNumber: string;
   clientName: string;
@@ -162,9 +164,9 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
 </head>
 <body>
   <div class="header">
-    <h1>Luxury Decking</h1>
-    <p>Premium Custom Deck Builder | Ottawa, Ontario</p>
-    <p>613-707-3060 | admin@luxurydecking.ca</p>
+    <h1>${COMPANY.name}</h1>
+    <p>${COMPANY.tagline} | ${COMPANY.fullAddress}</p>
+    <p>${COMPANY.phone} | ${COMPANY.email}</p>
   </div>
 
   <div class="contract-title">Project Agreement & Acceptance</div>
@@ -248,13 +250,13 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
   <div class="section">
     <div class="section-title">Project Agreement</div>
     <div class="terms">
-      <p><strong>Scope of Work:</strong> The parties agree that the project entails the construction of a new deck at the property listed above. The full scope of work is defined exclusively by the accepted Luxury Decking estimate #${jobNumber}, including but not limited to project dimensions, materials, foundations, framing, decking, railings, stairs, and any selected upgrades.</p>
+      <p><strong>Scope of Work:</strong> The parties agree that the project entails the construction of a new deck at the property listed above. The full scope of work is defined exclusively by the accepted ${COMPANY.name} estimate #${jobNumber}, including but not limited to project dimensions, materials, foundations, framing, decking, railings, stairs, and any selected upgrades.</p>
       <p><strong>Extras and Change Orders:</strong> Any work not explicitly included in the accepted estimate shall be considered extras. All extras must be approved in writing by the Homeowner prior to commencement.</p>
       <p><strong>Schedule and Site Access:</strong> The Contractor will provide an anticipated start window once materials are confirmed and the deposit has been received. The Homeowner agrees to provide clear access to the work area. Normal working hours are Monday to Saturday, 8:00 a.m. to 6:00 p.m.</p>
       <p><strong>Site Conditions:</strong> Pricing is based on typical site conditions. If hidden conditions are discovered, the Contractor will notify the Homeowner and provide a change order for approval.</p>
       <p><strong>Weather and Delays:</strong> Outdoor construction is weather-dependent. The Contractor is not liable for delays caused by events beyond its reasonable control.</p>
       <p><strong>Payment Policy:</strong> Invoices are due within five (5) calendar days of receipt. Overdue balances are subject to a 10% late payment fee and interest at 4% per month on unpaid balances exceeding $1,000.</p>
-      <p><strong>Warranty:</strong> Luxury Decking provides a five (5) year workmanship warranty on labour. Manufacturer warranties apply separately.</p>
+      <p><strong>Warranty:</strong> ${COMPANY.name} provides a five (5) year workmanship warranty on labour. Manufacturer warranties apply separately.</p>
       <p><strong>Material Ownership:</strong> All materials remain the property of the Contractor until payment is made in full.</p>
       <p><strong>Governing Law:</strong> This Agreement shall be governed by the laws of the Province of Ontario.</p>
       <p><strong>Entire Agreement:</strong> This Agreement, together with the accepted estimate, constitutes the entire agreement between the parties.</p>
@@ -273,7 +275,7 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
         <div class="sig-date">${formattedDate}</div>
       </div>
       <div class="sig-block">
-        <div class="sig-label">For Luxury Decking</div>
+        <div class="sig-label">For ${COMPANY.name}</div>
         <div class="sig-line"></div>
         <div class="sig-name">Authorized Representative</div>
         <div class="sig-date">${formattedDate}</div>
@@ -282,7 +284,7 @@ export async function generateContractPDF(data: ContractData): Promise<string> {
   </div>
 
   <div class="footer">
-    <p>Luxury Decking | Ottawa, Ontario | 613-707-3060 | luxurydecking.ca</p>
+    <p>${COMPANY.name} | ${COMPANY.fullAddress} | ${COMPANY.phone} | ${COMPANY.website}</p>
     <p>This document was digitally signed on ${formattedDate}</p>
   </div>
 </body>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Job, PortalEngagement, CustomerLifecycle, DepositStatus, SoldWorkflowStatus } from '../types';
+import { COMPANY } from '../config/company';
 import { 
   Check, Info, Shield, 
   Award, Zap, MessageSquare, Phone,
@@ -62,51 +63,24 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   const estimateData = useMemo(() => {
     if (job.estimateData) return job.estimateData;
     
-    // If we have actual estimate amounts, generate options from real data
+    // If we have an actual estimate amount, show it as a single honest option
+    // Do NOT fabricate fake Good/Better/Best tiers — customers will ask about options that don't exist
     const totalAmount = job.totalAmount || job.estimateAmount || 0;
     if (totalAmount > 0 && job.acceptedBuildSummary) {
-      // Generate relative pricing for 3 tiers based on the accepted amount
-      const goodPrice = Math.round(totalAmount * 0.65);
-      const betterPrice = totalAmount;
-      const bestPrice = Math.round(totalAmount * 1.35);
-
+      const summary = job.acceptedBuildSummary;
       return {
         options: [
           {
-            id: 'opt-good',
-            name: 'Classic Wood',
-            title: 'Pressure Treated Deck',
-            description: 'A solid, budget-friendly deck built with quality pressure treated lumber. A timeless look with proven durability.',
-            price: goodPrice,
-            features: ['Pressure Treated Lumber', 'Standard Wood Railing', 'Deck Block Footings', '2-Year Workmanship Warranty'],
-            differences: ['Requires annual staining/sealing', 'Natural wood will weather over time', 'Most affordable option'],
-            isRecommended: false,
-            valueInsight: 'Best for budget-conscious homeowners who prefer the natural wood look.',
-            specs: { maintenance: 'High', longevity: '10-15 Years', warranty: '2 Years', heat: 'Low' }
-          },
-          {
-            id: 'opt-better',
-            name: 'Composite',
-            title: 'Fiberon GoodLife Composite Deck',
-            description: 'The best of both worlds. Low-maintenance composite decking with a natural wood look and superior longevity.',
-            price: betterPrice,
-            features: ['Fiberon GoodLife Composite', 'Fortress Aluminum Railing', 'Concrete Sonotube Footings', '30-Year Material Warranty'],
-            differences: ['Low maintenance (soap & water)', 'No splintering or rotting', 'Best value for long-term investment'],
+            id: 'opt-quoted',
+            name: summary.packageName || 'Your Custom Deck',
+            title: summary.packageName || 'Custom Deck Package',
+            description: summary.description || 'Your personalized deck design, built to your exact specifications.',
+            price: totalAmount,
+            features: summary.features || ['Custom design to your specifications', 'Professional installation', 'Full warranty coverage'],
+            differences: [],
             isRecommended: true,
-            valueInsight: 'The smart choice - eliminates maintenance while providing a 30-year warranty.',
-            specs: { maintenance: 'Ultra-Low', longevity: '30+ Years', warranty: '30 Years', heat: 'Moderate' }
-          },
-          {
-            id: 'opt-best',
-            name: 'Premium PVC',
-            title: 'Clubhouse Woodbridge PVC Deck',
-            description: 'Our premium option. Ultra-durable PVC decking with helical pile foundation for maximum stability and a lifetime of beauty.',
-            price: bestPrice,
-            features: ['ClubHouse Woodbridge PVC', 'Fortress Aluminum Railing', 'Helical Pile Foundation', 'Limited Lifetime Warranty'],
-            differences: ['Virtually zero maintenance', 'Most durable foundation option', 'Superior heat and scratch resistance'],
-            isRecommended: false,
-            valueInsight: 'The ultimate in luxury outdoor living with the strongest foundation.',
-            specs: { maintenance: 'None', longevity: 'Lifetime', warranty: 'Lifetime', heat: 'Low' }
+            valueInsight: 'This quote was customized for your property and preferences.',
+            specs: summary.specs || {}
           }
         ],
         addOns: [],
@@ -294,7 +268,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             <div className="text-xs text-slate-500 space-y-2 max-h-32 overflow-y-auto">
               <p>By signing below, you agree to the project scope, pricing, and payment schedule as outlined above.</p>
               <p>Any changes to the scope after acceptance will require a written change order with adjusted pricing.</p>
-              <p>Luxury Decking provides a workmanship warranty on all installations. Material warranties are provided by the respective manufacturers.</p>
+              <p>{COMPANY.name} provides a workmanship warranty on all installations. Material warranties are provided by the respective manufacturers.</p>
               <p>This agreement is governed by the laws of the Province of Ontario.</p>
             </div>
           </div>
@@ -375,7 +349,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
           </div>
           <h2 className="text-4xl font-black text-slate-900 mb-4">Project Accepted!</h2>
           <p className="text-slate-600 text-lg mb-10 leading-relaxed">
-            Thank you for choosing Luxury Decking. We've received your selection and your project is now moving into our planning and scheduling phase.
+            Thank you for choosing {COMPANY.name}. We've received your selection and your project is now moving into our planning and scheduling phase.
           </p>
           
           <div className="bg-slate-50 rounded-3xl p-8 mb-10 text-left border border-slate-100">
@@ -1028,7 +1002,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             <section className="space-y-12">
               <div className="text-center max-w-2xl mx-auto">
                 <h3 className="text-3xl font-black mb-4">The Objection Center</h3>
-                <p className="text-slate-600">We know you have choices. Here is why homeowners choose Luxury Decking over the competition.</p>
+                <p className="text-slate-600">We know you have choices. Here is why homeowners choose {COMPANY.name} over the competition.</p>
               </div>
  
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1108,7 +1082,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   The Road Ahead
                 </div>
                 <h3 className="text-3xl md:text-4xl font-black mb-4">Your Journey After Acceptance</h3>
-                <p className="text-slate-600 max-w-2xl mx-auto">We've refined our process to be as smooth as the finish on our decks. Here is exactly what you can expect once you join the Luxury Decking family.</p>
+                <p className="text-slate-600 max-w-2xl mx-auto">We've refined our process to be as smooth as the finish on our decks. Here is exactly what you can expect once you join the {COMPANY.name} family.</p>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative">
@@ -1165,10 +1139,10 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 </div>
                 <h3 className="text-2xl font-bold mb-4">Our Commitment to You</h3>
                 <p className="text-slate-600 mb-8 leading-relaxed">
-                  At Luxury Decking, we don't just build structures; we build relationships. We promise to respect your property, communicate transparently, and deliver a finished product that exceeds your expectations.
+                  At {COMPANY.name}, we don't just build structures; we build relationships. We promise to respect your property, communicate transparently, and deliver a finished product that exceeds your expectations.
                 </p>
                 <div className="pt-8 border-t border-slate-100 flex flex-col items-center">
-                  <div className="font-serif italic text-3xl text-slate-400 mb-2">The Luxury Decking Team</div>
+                  <div className="font-serif italic text-3xl text-slate-400 mb-2">The {COMPANY.name} Team</div>
                   <p className="text-xs font-bold text-slate-900 uppercase tracking-widest">Quality Without Compromise</p>
                 </div>
               </div>
@@ -1179,7 +1153,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
         {activeTab === 'why-us' && (
           <div className="space-y-24 py-12">
             <div className="text-center max-w-3xl mx-auto">
-              <h2 className="text-4xl font-black mb-6">The Luxury Decking Difference</h2>
+              <h2 className="text-4xl font-black mb-6">The {COMPANY.name} Difference</h2>
               <p className="text-xl text-slate-600">We've spent years refining our process to ensure every project is a masterpiece of durability and design.</p>
             </div>
             

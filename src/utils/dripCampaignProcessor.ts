@@ -9,9 +9,11 @@
 import { Job } from '../types';
 import { getCampaignTouches, CampaignTouch } from './dripCampaign';
 import { calculateEngagementTier } from './engagementScoring';
+import { COMPANY } from '../config/company';
 
 const NETLIFY_SMS   = '/.netlify/functions/send-sms';
 const NETLIFY_EMAIL = '/.netlify/functions/send-email';
+const INTERNAL_SECRET = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,11 +34,16 @@ function isDone(touch: CampaignTouch, completedTouches: string[]): boolean {
 async function fireTouch(job: Job, touch: CampaignTouch): Promise<void> {
   const sends: Promise<Response>[] = [];
 
+  const authHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(INTERNAL_SECRET ? { 'X-Internal-Secret': INTERNAL_SECRET } : {}),
+  };
+
   if ((touch.channel === 'sms' || touch.channel === 'sms+email') && job.clientPhone && touch.smsTemplate) {
     sends.push(
       fetch(NETLIFY_SMS, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({ to: job.clientPhone, message: touch.smsTemplate }),
       })
     );
@@ -51,10 +58,10 @@ async function fireTouch(job: Job, touch: CampaignTouch): Promise<void> {
     sends.push(
       fetch(NETLIFY_EMAIL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({
           to: job.clientEmail,
-          subject: touch.subject || 'Luxury Decking Follow-Up',
+          subject: touch.subject || `${COMPANY.name} Follow-Up`,
           htmlBody,
         }),
       })

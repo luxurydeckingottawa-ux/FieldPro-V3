@@ -385,7 +385,6 @@ export interface Job {
     lastFollowUpDraft?: string;
     projectHistorySummary?: string;
   };
-  lastContactDate?: string;
   engagementHeat?: 'cold' | 'warm' | 'hot';
 
   // Module: Phase 5 Sold Workflow

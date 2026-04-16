@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { Job, ChecklistItem, PhotoUpload } from '../types';
 import { PAGE_TITLES } from '../constants';
+import { COMPANY } from '../config/company';
 
 // Brand colours
 const GOLD: [number, number, number] = [212, 175, 55];
@@ -131,13 +132,13 @@ async function buildCoverPage(doc: jsPDF, job: Job, logoBase64: string | null): 
       tc(doc, WHITE);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(18);
-      doc.text('LUXURY DECKING', PW / 2, 28, { align: 'center' });
+      doc.text(COMPANY.name.toUpperCase(), PW / 2, 28, { align: 'center' });
     }
   } else {
     tc(doc, WHITE);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
-    doc.text('LUXURY DECKING', PW / 2, 28, { align: 'center' });
+    doc.text(COMPANY.name.toUpperCase(), PW / 2, 28, { align: 'center' });
   }
 
   // Gold accent line just below header
@@ -209,14 +210,14 @@ async function buildCoverPage(doc: jsPDF, job: Job, logoBase64: string | null): 
   tc(doc, BLACK);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.text('\u2713 LUXURY DECKING CERTIFIED', PW / 2, y + 6.5, { align: 'center' });
+  doc.text(`\u2713 ${COMPANY.name.toUpperCase()} CERTIFIED`, PW / 2, y + 6.5, { align: 'center' });
 
   // Footer
   tc(doc, MID_GRAY);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.text(
-    'LUXURY DECKING  \u00B7  OTTAWA, ON  \u00B7  613-707-3060  \u00B7  luxurydecking.ca',
+    `${COMPANY.name.toUpperCase()}  \u00B7  ${COMPANY.fullAddress.toUpperCase()}  \u00B7  ${COMPANY.phone}  \u00B7  ${COMPANY.website}`,
     PW / 2,
     PH - 10,
     { align: 'center' }
@@ -247,7 +248,7 @@ async function buildEvidencePage(
       tc(doc, WHITE);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
-      doc.text('LUXURY DECKING', MARGIN + 2, 20);
+      doc.text(COMPANY.name.toUpperCase(), MARGIN + 2, 20);
     }
   } else {
     tc(doc, WHITE);
@@ -473,7 +474,7 @@ function buildWarrantyCertPage(doc: jsPDF, job: Job, logoBlackBase64: string | n
       tc(doc, DARK_GRAY);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.text('LUXURY DECKING', PW / 2, y + 8, { align: 'center' });
+      doc.text(COMPANY.name.toUpperCase(), PW / 2, y + 8, { align: 'center' });
       y += 20;
     }
   } else {
@@ -581,7 +582,7 @@ function buildWarrantyCertPage(doc: jsPDF, job: Job, logoBlackBase64: string | n
   tc(doc, DARK_GRAY);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
-  doc.text('Authorized Signature (Luxury Decking):', MARGIN + 6, y);
+  doc.text(`Authorized Signature (${COMPANY.name}):`, MARGIN + 6, y);
   y += 4;
   dc(doc, DARK_GRAY);
   doc.setLineWidth(0.5);
@@ -614,7 +615,7 @@ function buildWarrantyTermsPage(doc: jsPDF): void {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   const titleLines = doc.splitTextToSize(
-    'Luxury Decking & PermaLite \u2013 Labour & Workmanship Warranty Terms',
+    `${COMPANY.name} & PermaLite \u2013 Labour & Workmanship Warranty Terms`,
     PW - MARGIN * 2 - 12
   );
   doc.text(titleLines, PW / 2, y, { align: 'center' });
@@ -627,11 +628,11 @@ function buildWarrantyTermsPage(doc: jsPDF): void {
   const sections: TermSection[] = [
     {
       heading: 'Labour & Workmanship Warranty',
-      body: 'Luxury Decking warrants all labour and workmanship for a period of five (5) years from the date of substantial completion. Where the Diamond Package or Extended Coverage Upgrade was selected, the labour and workmanship warranty is extended to ten (10) years from the date of substantial completion.',
+      body: `${COMPANY.name} warrants all labour and workmanship for a period of five (5) years from the date of substantial completion. Where the Diamond Package or Extended Coverage Upgrade was selected, the labour and workmanship warranty is extended to ten (10) years from the date of substantial completion.`,
     },
     {
       heading: 'Warranty Conditions',
-      body: 'This warranty applies to normal residential use only. The structure must not have been altered, modified, or added to without prior written consent from Luxury Decking. Proper drainage conditions must be maintained around the structure, and the deck must not be subjected to abnormal loads.',
+      body: `This warranty applies to normal residential use only. The structure must not have been altered, modified, or added to without prior written consent from ${COMPANY.name}. Proper drainage conditions must be maintained around the structure, and the deck must not be subjected to abnormal loads.`,
     },
     {
       heading: 'Exclusions',
@@ -639,7 +640,7 @@ function buildWarrantyTermsPage(doc: jsPDF): void {
     },
     {
       heading: 'Limitation of Remedy',
-      body: 'The sole remedy under this warranty is repair or replacement of defective workmanship at Luxury Decking\'s sole discretion. Luxury Decking shall not be liable for any consequential, incidental, or indirect damages arising from any warranty claim.',
+      body: `The sole remedy under this warranty is repair or replacement of defective workmanship at ${COMPANY.name}'s sole discretion. ${COMPANY.name} shall not be liable for any consequential, incidental, or indirect damages arising from any warranty claim.`,
     },
     {
       heading: 'Warranty Transferability',
@@ -647,7 +648,7 @@ function buildWarrantyTermsPage(doc: jsPDF): void {
     },
     {
       heading: 'Warranty Claims',
-      body: 'To make a warranty claim, contact Luxury Decking at 613-707-3060 or via luxurydecking.ca with your project number and a description of the concern. Luxury Decking will arrange an inspection within a reasonable time. Warranty service will be scheduled at Luxury Decking\'s discretion based on seasonal availability.',
+      body: `To make a warranty claim, contact ${COMPANY.name} at ${COMPANY.phone} or via ${COMPANY.website} with your project number and a description of the concern. ${COMPANY.name} will arrange an inspection within a reasonable time. Warranty service will be scheduled at ${COMPANY.name}'s discretion based on seasonal availability.`,
     },
   ];
 
@@ -682,7 +683,7 @@ function buildWarrantyTermsPage(doc: jsPDF): void {
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(7);
   doc.text(
-    'LUXURY DECKING  \u00B7  OTTAWA, ON  \u00B7  613-707-3060  \u00B7  luxurydecking.ca',
+    `${COMPANY.name.toUpperCase()}  \u00B7  ${COMPANY.fullAddress.toUpperCase()}  \u00B7  ${COMPANY.phone}  \u00B7  ${COMPANY.website}`,
     PW / 2,
     PH - 10,
     { align: 'center' }

@@ -1,5 +1,6 @@
 import { Job, PortalEngagement } from "../types";
 import { getAI, handleAiError } from "../lib/ai";
+import { COMPANY } from "../config/company";
 
 export const geminiService = {
   /**
@@ -8,7 +9,7 @@ export const geminiService = {
   async generateHelpMeChoose(job: Job, goals: string[]): Promise<string> {
     const options = job.estimateData?.options || [];
     const prompt = `
-      You are a helpful sales assistant for Luxury Decking, a premium deck builder.
+      You are a helpful sales assistant for ${COMPANY.name}, a premium deck builder.
       The customer is looking at an estimate with the following options:
       ${options.map(o => `- ${o.name}: ${o.title}. Price: $${o.price}. Features: ${o.features.join(', ')}`).join('\n')}
 
@@ -38,7 +39,7 @@ export const geminiService = {
    */
   async answerObjection(job: Job, question: string): Promise<string> {
     const prompt = `
-      You are a helpful sales assistant for Luxury Decking.
+      You are a helpful sales assistant for ${COMPANY.name}.
       A customer has a question or concern about their deck estimate: "${question}"
       
       Context about the project:
@@ -71,7 +72,7 @@ export const geminiService = {
    */
   async generateFollowUpDraft(job: Job, engagement?: PortalEngagement): Promise<string> {
     const prompt = `
-      You are an AI sales copilot for Luxury Decking. 
+      You are an AI sales copilot for ${COMPANY.name}. 
       Draft a professional follow-up message (SMS or Email style) for the following lead:
       - Customer: ${job.clientName}
       - Lifecycle Stage: ${job.lifecycleStage}
@@ -242,7 +243,7 @@ export const geminiService = {
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     const prompt = `
-      You are an AI project manager for Luxury Decking. 
+      You are an AI project manager for ${COMPANY.name}. 
       Summarize the key events and milestones for this project from start to finish.
       
       Project: ${job.jobNumber} - ${job.clientName}

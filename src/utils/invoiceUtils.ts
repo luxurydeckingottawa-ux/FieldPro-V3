@@ -1,4 +1,15 @@
 import { Invoice, InvoiceType, Job } from '../types';
+import { COMPANY } from '../config/company';
+
+/** Escape HTML special characters to prevent XSS in document.write output */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 export function generateInvoiceNumber(existingInvoices: Invoice[]): string {
   const year = new Date().getFullYear();
@@ -69,11 +80,20 @@ export function printInvoice(invoice: Invoice): void {
       ? `<div style="display:inline-block;padding:4px 12px;background:#fef3c7;color:#92400e;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;">SENT -- AWAITING PAYMENT</div>`
       : `<div style="display:inline-block;padding:4px 12px;background:#f3f4f6;color:#374151;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;">DRAFT</div>`;
 
+  // SECURITY: Escape all user-sourced fields before HTML interpolation
+  const safeName = escapeHtml(invoice.customerName || '');
+  const safePhone = escapeHtml(invoice.customerPhone || '');
+  const safeEmail = escapeHtml(invoice.customerEmail || '');
+  const safeJobTitle = escapeHtml(invoice.jobTitle || '');
+  const safeJobAddress = escapeHtml(invoice.jobAddress || '');
+  const safeDescription = escapeHtml(invoice.description || '');
+  const safeInvNum = escapeHtml(invoice.invoiceNumber || '');
+
   const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>${invoice.invoiceNumber} \u2014 Luxury Decking</title>
+<title>${safeInvNum} \u2014 ${COMPANY.name}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111; background: #fff; padding: 60px; max-width: 800px; margin: 0 auto; }
@@ -108,11 +128,11 @@ export function printInvoice(invoice: Invoice): void {
 <body>
 <div class="header">
   <div>
-    <div class="company-name">Luxury Decking</div>
-    <div class="company-sub">Ottawa, ON \u00b7 luxurydecking.ca \u00b7 (613) 707-3060</div>
+    <div class="company-name">${COMPANY.name}</div>
+    <div class="company-sub">${COMPANY.fullAddress} \u00b7 ${COMPANY.website} \u00b7 ${COMPANY.phone}</div>
   </div>
   <div class="invoice-label">
-    <div class="invoice-number">${invoice.invoiceNumber}</div>
+    <div class="invoice-number">${safeInvNum}</div>
     <div class="invoice-date">Issued: ${formatDate(invoice.issuedDate)}</div>
     ${invoice.dueDate ? `<div class="invoice-date">Due: ${formatDate(invoice.dueDate)}</div>` : ''}
   </div>
@@ -121,14 +141,14 @@ export function printInvoice(invoice: Invoice): void {
 <div class="billing-section">
   <div class="billing-block">
     <h4>Bill To</h4>
-    <p class="name">${invoice.customerName}</p>
-    ${invoice.customerPhone ? `<p>${invoice.customerPhone}</p>` : ''}
-    ${invoice.customerEmail ? `<p>${invoice.customerEmail}</p>` : ''}
+    <p class="name">${safeName}</p>
+    ${invoice.customerPhone ? `<p>${safePhone}</p>` : ''}
+    ${invoice.customerEmail ? `<p>${safeEmail}</p>` : ''}
   </div>
   <div class="billing-block">
     <h4>Project</h4>
-    <p class="name">${invoice.jobTitle}</p>
-    ${invoice.jobAddress ? `<p>${invoice.jobAddress}</p>` : ''}
+    <p class="name">${safeJobTitle}</p>
+    ${invoice.jobAddress ? `<p>${safeJobAddress}</p>` : ''}
   </div>
   <div class="billing-block" style="text-align:right;">
     <h4>Status</h4>
@@ -143,8 +163,8 @@ export function printInvoice(invoice: Invoice): void {
   <tbody>
     <tr>
       <td>
-        <strong>${invoice.description}</strong><br>
-        <span style="font-size:12px;color:#666;">${invoice.jobTitle} \u2014 ${invoice.jobAddress || 'Ottawa, ON'}</span>
+        <strong>${safeDescription}</strong><br>
+        <span style="font-size:12px;color:#666;">${safeJobTitle} \u2014 ${safeJobAddress || COMPANY.fullAddress}</span>
       </td>
       <td>${formatCurrency(invoice.subtotal)}</td>
     </tr>
@@ -157,13 +177,13 @@ export function printInvoice(invoice: Invoice): void {
   <div class="totals-row total"><span>TOTAL</span><span>${formatCurrency(invoice.total)}</span></div>
 </div>
 
-${invoice.notes ? `<div style="margin-top:32px;padding:16px;background:#f9fafb;border-radius:8px;font-size:13px;color:#555;"><strong>Notes:</strong> ${invoice.notes}</div>` : ''}
+${invoice.notes ? `<div style="margin-top:32px;padding:16px;background:#f9fafb;border-radius:8px;font-size:13px;color:#555;"><strong>Notes:</strong> ${escapeHtml(invoice.notes)}</div>` : ''}
 
 <div class="status-section">${statusBadge}</div>
 
 <div class="footer">
-  Luxury Decking \u00b7 Ottawa, ON \u00b7 (613) 707-3060 \u00b7 jack@luxurydecking.ca<br>
-  Thank you for choosing Luxury Decking. Payment is due upon receipt unless otherwise agreed.
+  ${COMPANY.name} \u00b7 ${COMPANY.fullAddress} \u00b7 ${COMPANY.phone} \u00b7 ${COMPANY.email}<br>
+  Thank you for choosing ${COMPANY.name}. Payment is due upon receipt unless otherwise agreed.
 </div>
 </body>
 </html>`;

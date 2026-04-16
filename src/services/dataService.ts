@@ -11,7 +11,7 @@
 
 import { supabase, isSupabaseConfigured, LUXURY_DECKING_ORG_ID } from '../lib/supabase';
 import { safeSetItem, safeGetItem } from '../utils/storage';
-import { Job, EstimatorIntake, ChatSession, User } from '../types';
+import { Job, EstimatorIntake, ChatSession, User, Invoice, Customer } from '../types';
 import { APP_USERS } from '../constants';
 
 // ============================================================
@@ -181,6 +181,114 @@ export function rowToJob(row: Record<string, any>): Job {
     siteNotes: [],
     files: [], // loaded separately from job_files table
   } as Job;
+}
+
+// ============================================================
+// INVOICE converters
+// ============================================================
+
+function invoiceToRow(invoice: Invoice): Record<string, any> {
+  return {
+    id: invoice.id,
+    org_id: LUXURY_DECKING_ORG_ID,
+    job_id: invoice.jobId,
+    invoice_number: invoice.invoiceNumber,
+    customer_name: invoice.customerName,
+    customer_phone: invoice.customerPhone || null,
+    customer_email: invoice.customerEmail || null,
+    job_title: invoice.jobTitle,
+    job_address: invoice.jobAddress,
+    type: invoice.type,
+    status: invoice.status,
+    subtotal: invoice.subtotal,
+    hst_rate: invoice.hstRate,
+    hst_amount: invoice.hstAmount,
+    total: invoice.total,
+    description: invoice.description,
+    issued_date: invoice.issuedDate || null,
+    due_date: invoice.dueDate || null,
+    paid_date: invoice.paidDate || null,
+    notes: invoice.notes || null,
+    created_at: invoice.createdAt || new Date().toISOString(),
+  };
+}
+
+function rowToInvoice(row: Record<string, any>): Invoice {
+  return {
+    id: row.id,
+    invoiceNumber: row.invoice_number,
+    jobId: row.job_id,
+    customerName: row.customer_name,
+    customerPhone: row.customer_phone,
+    customerEmail: row.customer_email,
+    jobTitle: row.job_title,
+    jobAddress: row.job_address,
+    type: row.type,
+    status: row.status,
+    subtotal: Number(row.subtotal),
+    hstRate: Number(row.hst_rate),
+    hstAmount: Number(row.hst_amount),
+    total: Number(row.total),
+    description: row.description,
+    issuedDate: row.issued_date,
+    dueDate: row.due_date,
+    paidDate: row.paid_date,
+    notes: row.notes,
+    createdAt: row.created_at,
+  };
+}
+
+// ============================================================
+// CUSTOMER converters
+// ============================================================
+
+function customerToRow(customer: Customer): Record<string, any> {
+  return {
+    id: customer.id,
+    org_id: LUXURY_DECKING_ORG_ID,
+    first_name: customer.firstName,
+    last_name: customer.lastName,
+    display_name: customer.displayName,
+    company: customer.company || null,
+    email: customer.email || null,
+    phone: customer.phone || null,
+    home_phone: customer.homePhone || null,
+    customer_type: customer.customerType,
+    status: customer.status,
+    addresses: customer.addresses || [],
+    tags: customer.tags || [],
+    notes: customer.notes || '',
+    lead_source: customer.leadSource || null,
+    lifetime_value: customer.lifetimeValue || 0,
+    last_service_date: customer.lastServiceDate || null,
+    hcp_id: customer.hcpId || null,
+    do_not_service: customer.doNotService || false,
+    created_at: customer.createdAt || new Date().toISOString(),
+  };
+}
+
+function rowToCustomer(row: Record<string, any>): Customer {
+  return {
+    id: row.id,
+    firstName: row.first_name || '',
+    lastName: row.last_name || '',
+    displayName: row.display_name || '',
+    phone: row.phone || '',
+    homePhone: row.home_phone,
+    email: row.email || '',
+    company: row.company,
+    customerType: row.customer_type || 'homeowner',
+    addresses: row.addresses || [],
+    tags: row.tags || [],
+    notes: row.notes || '',
+    leadSource: row.lead_source,
+    lifetimeValue: Number(row.lifetime_value) || 0,
+    lastServiceDate: row.last_service_date,
+    hcpId: row.hcp_id,
+    createdAt: row.created_at,
+    status: row.status || 'cold_lead',
+    doNotService: row.do_not_service || false,
+  };
 }
 
 // ============================================================
@@ -404,6 +512,26 @@ export const dataService = {
         nurtureSequence: 'nurture_sequence', nurtureStep: 'nurture_step',
         nurtureStatus: 'nurture_status', postProjectStatus: 'post_project_status',
         dripCampaign: 'drip_campaign',
+        // Fields previously missing from keyMap (added per SCOUT/ATLAS audit D-01)
+        digitalWorkOrder: 'digital_work_order',
+        needsJobSetup: 'needs_job_setup',
+        liveEstimate: 'live_estimate',
+        calculatorSelections: 'calculator_selections',
+        calculatorDimensions: 'calculator_dimensions',
+        customerSignature: 'customer_signature',
+        customerSignatureCloudinaryUrl: 'customer_signature_cloudinary_url',
+        contractPdfUrl: 'contract_pdf_url',
+        contractSignedDate: 'contract_signed_date',
+        depositRequestedDate: 'deposit_requested_date',
+        invoices: 'invoices',
+        jobFiles: 'job_files_json',
+        description: 'description',
+        acceptedPackageTier: 'accepted_package_tier',
+        acceptedMonthlyPayment: 'accepted_monthly_payment',
+        declinedReason: 'declined_reason',
+        notes: 'notes',
+        siteNotes: 'site_notes',
+        officeNotes: 'office_notes',
       };
 
       for (const [camelKey, value] of Object.entries(updates)) {
@@ -428,6 +556,20 @@ export const dataService = {
     }
     
     // localStorage: handled by the caller saving the full jobs array
+  },
+
+  async deleteJob(jobId: string): Promise<void> {
+    if (isSupabaseConfigured()) {
+      const { error } = await supabase!
+        .from('jobs')
+        .delete()
+        .eq('id', jobId);
+      if (error) {
+        console.error('Failed to delete job:', error);
+        throw new Error(`Supabase delete failed: ${error.message}`);
+      }
+    }
+    // localStorage: handled by the caller filtering the jobs array
   },
 
   /**
@@ -715,5 +857,232 @@ export const dataService = {
       };
     }
     return null;
+  },
+
+  // ----- INVOICES -----
+
+  async loadInvoices(): Promise<Invoice[]> {
+    if (isSupabaseConfigured()) {
+      const { data, error } = await supabase!
+        .from('invoices')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to load invoices from Supabase:', error);
+        return [];
+      }
+
+      return (data || []).map(rowToInvoice);
+    }
+
+    // localStorage fallback
+    try {
+      const saved = safeGetItem('fieldpro_invoices_v1');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error('Failed to parse invoices from localStorage:', e);
+      return [];
+    }
+  },
+
+  async createInvoice(invoice: Invoice): Promise<Invoice> {
+    if (isSupabaseConfigured()) {
+      const row = invoiceToRow(invoice);
+      const { data, error } = await supabase!
+        .from('invoices')
+        .insert(row)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to create invoice:', error);
+        return invoice; // return the original on failure so UI still works
+      }
+
+      return rowToInvoice(data);
+    }
+
+    // localStorage fallback
+    const existing = await this.loadInvoices();
+    existing.unshift(invoice);
+    safeSetItem('fieldpro_invoices_v1', JSON.stringify(existing));
+    return invoice;
+  },
+
+  async updateInvoice(invoiceId: string, updates: Partial<Invoice>): Promise<void> {
+    if (isSupabaseConfigured()) {
+      const row: Record<string, any> = {};
+      const keyMap: Record<string, string> = {
+        invoiceNumber: 'invoice_number',
+        jobId: 'job_id',
+        customerName: 'customer_name',
+        customerPhone: 'customer_phone',
+        customerEmail: 'customer_email',
+        jobTitle: 'job_title',
+        jobAddress: 'job_address',
+        type: 'type',
+        status: 'status',
+        subtotal: 'subtotal',
+        hstRate: 'hst_rate',
+        hstAmount: 'hst_amount',
+        total: 'total',
+        description: 'description',
+        issuedDate: 'issued_date',
+        dueDate: 'due_date',
+        paidDate: 'paid_date',
+        notes: 'notes',
+      };
+
+      for (const [camelKey, value] of Object.entries(updates)) {
+        const snakeKey = keyMap[camelKey];
+        if (snakeKey) {
+          row[snakeKey] = value;
+        }
+      }
+
+      if (Object.keys(row).length > 0) {
+        const { error } = await supabase!
+          .from('invoices')
+          .update(row)
+          .eq('id', invoiceId);
+
+        if (error) {
+          console.error('Failed to update invoice:', error);
+          throw new Error(`Supabase invoice update failed: ${error.message}`);
+        }
+      }
+      return;
+    }
+
+    // localStorage fallback
+    const existing = await this.loadInvoices();
+    const idx = existing.findIndex(i => i.id === invoiceId);
+    if (idx !== -1) {
+      existing[idx] = { ...existing[idx], ...updates };
+      safeSetItem('fieldpro_invoices_v1', JSON.stringify(existing));
+    }
+  },
+
+  async deleteInvoice(invoiceId: string): Promise<void> {
+    if (isSupabaseConfigured()) {
+      const { error } = await supabase!
+        .from('invoices')
+        .delete()
+        .eq('id', invoiceId);
+      if (error) {
+        console.error('Failed to delete invoice:', error);
+        throw new Error(`Supabase invoice delete failed: ${error.message}`);
+      }
+      return;
+    }
+
+    // localStorage fallback
+    const existing = await this.loadInvoices();
+    const filtered = existing.filter(i => i.id !== invoiceId);
+    safeSetItem('fieldpro_invoices_v1', JSON.stringify(filtered));
+  },
+
+  // ----- CUSTOMERS -----
+
+  async loadCustomers(): Promise<Customer[]> {
+    if (isSupabaseConfigured()) {
+      const { data, error } = await supabase!
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to load customers from Supabase:', error);
+        return [];
+      }
+
+      return (data || []).map(rowToCustomer);
+    }
+
+    // localStorage fallback
+    try {
+      const saved = safeGetItem('fieldpro_customers_v1');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error('Failed to parse customers from localStorage:', e);
+      return [];
+    }
+  },
+
+  async createCustomer(customer: Customer): Promise<Customer> {
+    if (isSupabaseConfigured()) {
+      const row = customerToRow(customer);
+      const { data, error } = await supabase!
+        .from('customers')
+        .insert(row)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to create customer:', error);
+        return customer;
+      }
+
+      return rowToCustomer(data);
+    }
+
+    // localStorage fallback
+    const existing = await this.loadCustomers();
+    existing.unshift(customer);
+    safeSetItem('fieldpro_customers_v1', JSON.stringify(existing));
+    return customer;
+  },
+
+  async updateCustomer(customerId: string, updates: Partial<Customer>): Promise<void> {
+    if (isSupabaseConfigured()) {
+      const row: Record<string, any> = {};
+      const keyMap: Record<string, string> = {
+        firstName: 'first_name',
+        lastName: 'last_name',
+        displayName: 'display_name',
+        company: 'company',
+        email: 'email',
+        phone: 'phone',
+        homePhone: 'home_phone',
+        customerType: 'customer_type',
+        status: 'status',
+        addresses: 'addresses',
+        tags: 'tags',
+        notes: 'notes',
+        leadSource: 'lead_source',
+        lifetimeValue: 'lifetime_value',
+        lastServiceDate: 'last_service_date',
+        doNotService: 'do_not_service',
+      };
+
+      for (const [camelKey, value] of Object.entries(updates)) {
+        const snakeKey = keyMap[camelKey];
+        if (snakeKey) {
+          row[snakeKey] = value;
+        }
+      }
+
+      if (Object.keys(row).length > 0) {
+        const { error } = await supabase!
+          .from('customers')
+          .update(row)
+          .eq('id', customerId);
+
+        if (error) {
+          console.error('Failed to update customer:', error);
+          throw new Error(`Supabase customer update failed: ${error.message}`);
+        }
+      }
+      return;
+    }
+
+    // localStorage fallback
+    const existing = await this.loadCustomers();
+    const idx = existing.findIndex(c => c.id === customerId);
+    if (idx !== -1) {
+      existing[idx] = { ...existing[idx], ...updates };
+      safeSetItem('fieldpro_customers_v1', JSON.stringify(existing));
+    }
   },
 };

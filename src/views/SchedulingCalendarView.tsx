@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Job, ScheduleStatus } from '../types';
-import { 
-  format, 
-  startOfMonth, 
-  endOfMonth, 
-  eachDayOfInterval, 
-  isSameDay, 
-  addMonths, 
-  subMonths, 
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  addMonths,
+  subMonths,
   isWithinInterval,
   parseISO,
   startOfWeek,
@@ -27,7 +27,8 @@ import {
   CalendarDays,
   ClipboardList,
   MapPin,
-  MessageSquare
+  MessageSquare,
+  GripVertical
 } from 'lucide-react';
 import { ForecastReviewStatus, PipelineStage } from '../types';
 
@@ -48,10 +49,12 @@ const CREW_COLORS: Record<string, string> = {
   'default': 'bg-gray-500'
 };
 
-const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, onSelectJob, onNewAppointment, onSendMessage }) => {
+const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, onSelectJob, onUpdateSchedule, onNewAppointment, onSendMessage }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedCrew, setSelectedCrew] = useState<string>('all');
   const [calendarMode, setCalendarMode] = useState<'crew' | 'appointments'>('crew');
+  const [draggedJobId, setDraggedJobId] = useState<string | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -144,6 +147,75 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
 
     return alerts;
   }, [jobs]);
+
+  // Drag-and-drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, jobId: string) => {
+    setDraggedJobId(jobId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', jobId);
+    const el = e.currentTarget as HTMLElement;
+    el.style.opacity = '0.4';
+  }, []);
+
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    const el = e.currentTarget as HTMLElement;
+    el.style.opacity = '1';
+    setDraggedJobId(null);
+    setDragOverDate(null);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, dateStr: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverDate(dateStr);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverDate(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, dateStr: string) => {
+    e.preventDefault();
+    setDragOverDate(null);
+    if (!draggedJobId) return;
+
+    const droppedJob = jobs.find(j => j.id === draggedJobId);
+    if (!droppedJob) { setDraggedJobId(null); return; }
+
+    if (calendarMode === 'crew') {
+      // Crew Planner: move the plannedStartDate to the drop target day.
+      // handleUpdateSchedule in App.tsx auto-computes plannedFinishDate from
+      // start + duration, so we only need to send plannedStartDate.
+      const oldStart = droppedJob.plannedStartDate;
+      if (oldStart && format(parseISO(oldStart), 'yyyy-MM-dd') === dateStr) {
+        // Dropped on same day, no-op
+        setDraggedJobId(null);
+        return;
+      }
+      onUpdateSchedule(draggedJobId, { plannedStartDate: dateStr });
+    } else {
+      // Appointments: move the scheduledDate to the drop target day,
+      // preserving the original time portion if one exists.
+      const oldDate = droppedJob.scheduledDate;
+      if (oldDate) {
+        const oldD = new Date(oldDate);
+        if (isSameDay(oldD, parseISO(dateStr))) {
+          setDraggedJobId(null);
+          return;
+        }
+        // Preserve time if the original had a time component
+        if (oldDate.includes('T')) {
+          const timePart = oldDate.split('T')[1];
+          onUpdateSchedule(draggedJobId, { scheduledDate: `${dateStr}T${timePart}` });
+        } else {
+          onUpdateSchedule(draggedJobId, { scheduledDate: dateStr });
+        }
+      } else {
+        onUpdateSchedule(draggedJobId, { scheduledDate: dateStr });
+      }
+    }
+    setDraggedJobId(null);
+  }, [draggedJobId, jobs, calendarMode, onUpdateSchedule]);
 
   return (
     <div className="flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen">
@@ -276,6 +348,8 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
           <div className="grid grid-cols-7 border-t border-l border-[var(--border-color)] rounded-3xl overflow-hidden shadow-2xl">
             {calendarDays.map((day, i) => {
               const isCurrentMonth = isSameDay(startOfMonth(day), monthStart);
+              const dayStr = format(day, 'yyyy-MM-dd');
+              const isDragOver = dragOverDate === dayStr;
               const dayJobs = filteredJobs.filter(job => {
                 const start = parseISO(job.plannedStartDate!);
                 const end = parseISO(job.plannedFinishDate!);
@@ -283,11 +357,16 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
               });
 
               return (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
+                  onDragOver={(e) => handleDragOver(e, dayStr)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, dayStr)}
                   className={`min-h-[160px] p-3 border-r border-b border-[var(--border-color)] transition-all ${
                     isCurrentMonth ? 'bg-transparent' : 'bg-[var(--text-primary)]/[0.01] opacity-20'
-                  } ${isSameDay(day, new Date()) ? 'bg-[var(--brand-gold)]/[0.02]' : ''}`}
+                  } ${isSameDay(day, new Date()) ? 'bg-[var(--brand-gold)]/[0.02]' : ''} ${
+                    isDragOver ? 'bg-[var(--brand-gold)]/[0.08] border-[var(--brand-gold)]/40 ring-2 ring-inset ring-[var(--brand-gold)]/30' : ''
+                  }`}
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex flex-col gap-1">
@@ -299,19 +378,26 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     {dayJobs.map(job => {
                       const isStart = isSameDay(day, parseISO(job.plannedStartDate!));
                       const isSub = job.assignedCrewOrSubcontractor?.toLowerCase().includes('sub');
-                      
+                      const isDragging = draggedJobId === job.id;
+
                       return (
-                        <div 
+                        <div
                           key={job.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, job.id)}
+                          onDragEnd={handleDragEnd}
                           onClick={() => onSelectJob(job)}
-                          className={`group relative p-2 rounded-xl cursor-pointer transition-all hover:scale-[1.02] active:scale-95 ${getCrewColor(job.assignedCrewOrSubcontractor)} text-black shadow-xl border border-black/10`}
+                          className={`group relative p-2 rounded-xl cursor-grab active:cursor-grabbing transition-all hover:scale-[1.02] active:scale-95 ${getCrewColor(job.assignedCrewOrSubcontractor)} text-black shadow-xl border border-black/10 ${
+                            isDragging ? 'opacity-40 ring-2 ring-[var(--brand-gold)]' : ''
+                          }`}
                         >
                           <div className="flex items-center justify-between gap-2">
+                            <GripVertical className="w-3 h-3 opacity-30 group-hover:opacity-70 shrink-0 transition-opacity" />
                             <div className="text-[10px] font-black uppercase leading-tight truncate flex-1 flex items-center gap-1.5">
                               {isSub ? <Truck className="w-3 h-3 opacity-70" /> : <Hammer className="w-3 h-3 opacity-70" />}
                               {job.clientName}
@@ -445,36 +531,58 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
             <div className="grid grid-cols-7 border-t border-l border-[var(--border-color)] rounded-2xl overflow-hidden shadow-lg">
               {calendarDays.map((day, i) => {
                 const isCurrentMonth = isSameDay(startOfMonth(day), monthStart);
+                const apptDayStr = format(day, 'yyyy-MM-dd');
+                const isApptDragOver = dragOverDate === apptDayStr;
                 const dayAppointments = appointmentJobs.filter(j => {
                   if (!j.scheduledDate) return false;
                   return isSameDay(new Date(j.scheduledDate), day);
                 });
                 const isToday = isSameDay(day, new Date());
                 return (
-                  <div key={i} className={`group border-r border-b border-[var(--border-color)] min-h-[110px] p-2 transition-colors ${
-                    !isCurrentMonth ? 'bg-[var(--bg-secondary)]/30 opacity-40' : isToday ? 'bg-[var(--brand-gold)]/5' : 'bg-[var(--bg-primary)]'
-                  }`}>
+                  <div
+                    key={i}
+                    onDragOver={(e) => handleDragOver(e, apptDayStr)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, apptDayStr)}
+                    className={`group border-r border-b border-[var(--border-color)] min-h-[110px] p-2 transition-colors ${
+                      !isCurrentMonth ? 'bg-[var(--bg-secondary)]/30 opacity-40' : isToday ? 'bg-[var(--brand-gold)]/5' : 'bg-[var(--bg-primary)]'
+                    } ${isApptDragOver ? 'bg-[var(--brand-gold)]/[0.08] ring-2 ring-inset ring-[var(--brand-gold)]/30' : ''}`}
+                  >
                     <div className="flex items-center justify-between mb-1">
                       <span className={`text-xs font-bold ${isToday ? 'text-[var(--brand-gold)]' : 'text-[var(--text-secondary)]'}`}>{format(day, 'd')}</span>
                       {isToday && <span className="text-[7px] font-bold text-[var(--brand-gold)] uppercase">Today</span>}
                     </div>
                     <div className="space-y-1">
-                      {dayAppointments.map(appt => (
-                        <button key={appt.id} onClick={() => onSelectJob(appt)}
-                          className="w-full text-left p-1.5 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg hover:bg-[var(--brand-gold)]/20 transition-colors group/chip">
-                          <p className="text-[10px] font-bold text-[var(--text-primary)] truncate group-hover/chip:text-[var(--brand-gold)]">{appt.clientName}</p>
-                          {appt.scheduledDate && appt.scheduledDate.includes('T') && (
-                            <p className="text-[9px] text-[var(--brand-gold)]/70">
-                              {(() => {
-                                const d = new Date(appt.scheduledDate);
-                                const h = d.getHours(); const m = d.getMinutes();
-                                return `${h > 12 ? h - 12 : h}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
-                              })()}
-                              {appt.assignedCrewOrSubcontractor ? ` · ${appt.assignedCrewOrSubcontractor.split(' ')[0]}` : ''}
-                            </p>
-                          )}
-                        </button>
-                      ))}
+                      {dayAppointments.map(appt => {
+                        const isApptDragging = draggedJobId === appt.id;
+                        return (
+                          <div
+                            key={appt.id}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, appt.id)}
+                            onDragEnd={handleDragEnd}
+                            onClick={() => onSelectJob(appt)}
+                            className={`w-full text-left p-1.5 bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 rounded-lg hover:bg-[var(--brand-gold)]/20 transition-colors cursor-grab active:cursor-grabbing ${
+                              isApptDragging ? 'opacity-40 ring-2 ring-[var(--brand-gold)]' : ''
+                            }`}
+                          >
+                            <div className="flex items-center gap-1">
+                              <GripVertical className="w-2.5 h-2.5 opacity-30 hover:opacity-70 shrink-0 transition-opacity" />
+                              <p className="text-[10px] font-bold text-[var(--text-primary)] truncate hover:text-[var(--brand-gold)]">{appt.clientName}</p>
+                            </div>
+                            {appt.scheduledDate && appt.scheduledDate.includes('T') && (
+                              <p className="text-[9px] text-[var(--brand-gold)]/70 ml-3.5">
+                                {(() => {
+                                  const d = new Date(appt.scheduledDate);
+                                  const h = d.getHours(); const m = d.getMinutes();
+                                  return `${h > 12 ? h - 12 : h}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+                                })()}
+                                {appt.assignedCrewOrSubcontractor ? ` · ${appt.assignedCrewOrSubcontractor.split(' ')[0]}` : ''}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
                       {onNewAppointment && (
                         <button onClick={() => onNewAppointment(format(day, 'yyyy-MM-dd'))}
                           className="w-full mt-1 text-center text-[9px] font-black text-gray-600 hover:text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/5 rounded py-0.5 transition-colors opacity-0 group-hover:opacity-100">

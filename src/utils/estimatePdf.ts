@@ -4,6 +4,7 @@
  * Returns a persistent base64 data URI (survives page reloads).
  */
 import { jsPDF } from 'jspdf';
+import { COMPANY } from '../config/company';
 
 // ─── Brand colours ────────────────────────────────────────────────────────────
 type RGB = [number, number, number];
@@ -126,30 +127,26 @@ export async function generateEstimatePDF(data: EstimatePDFData): Promise<string
     doc.addImage(logoResult.dataUrl, 'PNG', M, y + (22 - logoH) / 2, logoW, logoH);
   } else {
     // Text fallback
-    tc(doc, GOLD);
-    doc.setFontSize(6.5);
-    doc.setFont('helvetica', 'bold');
-    doc.text('LUXURY', M, y + 4);
     tc(doc, BLACK);
     doc.setFontSize(15);
     doc.setFont('helvetica', 'bold');
-    doc.text('DECKING', M, y + 10);
+    doc.text(COMPANY.name.toUpperCase(), M, y + 10);
     tc(doc, GRAY);
     doc.setFontSize(6.5);
     doc.setFont('helvetica', 'normal');
-    doc.text('ESTIMATOR', M + 26, y + 10);
+    doc.text('ESTIMATOR', M + doc.getTextWidth(COMPANY.name.toUpperCase()) + 3, y + 10);
   }
 
   // Contact info — right aligned
   tc(doc, BLACK);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
-  doc.text('Luxury Decking', PW - M, y + 4, { align: 'right' });
+  doc.text(COMPANY.name, PW - M, y + 4, { align: 'right' });
   tc(doc, GRAY);
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
-  doc.text('613-707-3060 | admin@luxurydecking.ca', PW - M, y + 9.5, { align: 'right' });
-  doc.text('www.luxurydecking.ca', PW - M, y + 14.5, { align: 'right' });
+  doc.text(`${COMPANY.phone} | ${COMPANY.email}`, PW - M, y + 9.5, { align: 'right' });
+  doc.text(`www.${COMPANY.website}`, PW - M, y + 14.5, { align: 'right' });
 
   y += 22;
 
@@ -412,7 +409,7 @@ export async function generateEstimatePDF(data: EstimatePDFData): Promise<string
   doc.setFontSize(6.5);
   doc.setFont('helvetica', 'bold');
   doc.text('CLIENT AUTHORIZATION SIGNATURE', M + sigW / 2, y + 4, { align: 'center' });
-  doc.text('LUXURY DECKING REPRESENTATIVE', PW - M - sigW / 2, y + 4, { align: 'center' });
+  doc.text(`${COMPANY.name.toUpperCase()} REPRESENTATIVE`, PW - M - sigW / 2, y + 4, { align: 'center' });
 
   // ── FOOTER ────────────────────────────────────────────────────────────────────
   const footerY = PH - 8;
@@ -422,7 +419,7 @@ export async function generateEstimatePDF(data: EstimatePDFData): Promise<string
   tc(doc, GRAY);
   doc.setFontSize(6.5);
   doc.setFont('helvetica', 'normal');
-  doc.text('luxurydecking.ca', M, footerY);
+  doc.text(COMPANY.website, M, footerY);
   doc.text(`${String(doc.getCurrentPageInfo().pageNumber)}/${String(doc.getNumberOfPages())}`, PW - M, footerY, { align: 'right' });
 
   // datauristring = "data:application/pdf;filename=generated.pdf;base64,<b64>"

@@ -5,6 +5,8 @@
  * Used by the drip campaign engine to send automated follow-ups.
  */
 
+import { COMPANY } from '../config/company';
+
 const internalSecret = import.meta.env.VITE_INTERNAL_API_SECRET as string | undefined;
 
 interface SendEmailParams {
@@ -38,7 +40,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendResult> {
         subject: params.subject,
         textBody: params.body,
         htmlBody: params.htmlBody || formatPlainTextToHtml(params.body),
-        replyTo: params.replyTo || 'info@luxurydecking.ca',
+        replyTo: params.replyTo || COMPANY.email,
       }),
     });
 
@@ -98,7 +100,7 @@ export async function sendCampaignTouch(params: {
   if ((params.channel === 'email' || params.channel === 'sms+email') && params.email) {
     results.emailResult = await sendEmail({
       to: params.email,
-      subject: params.subject || 'Luxury Decking',
+      subject: params.subject || COMPANY.name,
       body: params.emailBody,
     });
   }
@@ -128,7 +130,7 @@ function formatPlainTextToHtml(text: string): string {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px 20px; color: #333; line-height: 1.6;">
       <div style="border-bottom: 2px solid #C4A432; padding-bottom: 20px; margin-bottom: 25px;">
-        <img src="https://fieldprov3.netlify.app/assets/logo-black.png" alt="Luxury Decking" style="height: 40px;" />
+        <img src="https://fieldprov3.netlify.app/assets/logo-black.png" alt="${COMPANY.name}" style="height: 40px;" />
       </div>
       <p style="margin: 0 0 16px 0;">${bodyHtml}</p>
     </div>

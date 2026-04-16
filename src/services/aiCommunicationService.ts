@@ -1,6 +1,7 @@
 import { Job, ChatMessage } from "../types";
 import { PIPELINE_STAGES } from "../constants";
 import { getAI } from "../lib/ai";
+import { COMPANY } from "../config/company";
 
 export type ToneAction = 'professional' | 'shorter' | 'warmer' | 'clearer' | 'concise' | 'grammar';
 
@@ -12,7 +13,7 @@ export const aiCommunicationService = {
     const stageLabel = PIPELINE_STAGES[job.pipelineStage]?.label || "Current Stage";
     
     const prompt = `
-      You are an AI communication assistant for "Luxury Decking", a premium deck contractor.
+      You are an AI communication assistant for "${COMPANY.name}", a premium deck contractor.
       Draft a professional, clear, and calm ${type} message for the following job:
       
       Client: ${job.clientName}
@@ -129,7 +130,7 @@ export const aiCommunicationService = {
     if (!lastClientMessage) return "";
 
     const prompt = `
-      You are an AI assistant for "Luxury Decking".
+      You are an AI assistant for "${COMPANY.name}".
       Suggest a professional reply to the client's last message: "${lastClientMessage.text}"
       
       Job Context:

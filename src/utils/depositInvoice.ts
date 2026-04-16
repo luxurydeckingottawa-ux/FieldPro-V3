@@ -3,6 +3,8 @@
  * Generates a 30% deposit invoice as an HTML blob URL.
  */
 
+import { COMPANY } from '../config/company';
+
 interface DepositInvoiceData {
   jobNumber: string;
   clientName: string;
@@ -56,9 +58,9 @@ td { padding: 12px 0; font-size: 14px; border-bottom: 1px solid #f3f4f6; }
 </style></head><body>
 <div class="header">
   <div>
-    <h1>Luxury Decking</h1>
-    <p>Premium Custom Deck Builder | Ottawa, Ontario</p>
-    <p>613-707-3060 | admin@luxurydecking.ca</p>
+    <h1>${COMPANY.name}</h1>
+    <p>${COMPANY.tagline} | ${COMPANY.fullAddress}</p>
+    <p>${COMPANY.phone} | ${COMPANY.email}</p>
   </div>
   <div class="invoice-badge">Deposit Invoice</div>
 </div>
@@ -105,7 +107,7 @@ td { padding: 12px 0; font-size: 14px; border-bottom: 1px solid #f3f4f6; }
 
 <div class="payment-box">
   <h3>Payment Instructions</h3>
-  <p>Please send your deposit via e-Transfer to: <strong>admin@luxurydecking.ca</strong></p>
+  <p>Please send your deposit via e-Transfer to: <strong>${COMPANY.email}</strong></p>
   <p style="margin-top:8px;">Payment is due within 7 days to secure your build slot. Upon receipt, your project will move into the planning and scheduling phase.</p>
 </div>
 
@@ -122,8 +124,8 @@ td { padding: 12px 0; font-size: 14px; border-bottom: 1px solid #f3f4f6; }
 </div>
 
 <div class="footer">
-  <p>Luxury Decking | Ottawa, Ontario | 613-707-3060 | luxurydecking.ca</p>
-  <p>Thank you for choosing Luxury Decking.</p>
+  <p>${COMPANY.name} | ${COMPANY.fullAddress} | ${COMPANY.phone} | ${COMPANY.website}</p>
+  <p>Thank you for choosing ${COMPANY.name}.</p>
 </div>
 </body></html>`;
 

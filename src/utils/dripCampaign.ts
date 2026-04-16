@@ -2,7 +2,7 @@
  * Drip Campaign Engine
  * 
  * Manages automated follow-up sequences for leads and estimates.
- * All templates from the Luxury Decking CRM Pipeline Follow-Up Master System.
+ * All templates from the ${COMPANY_NAME} CRM Pipeline Follow-Up Master System.
  * 
  * Two campaign types:
  * 1. LEAD_FOLLOW_UP: 7 touches from new lead to estimate booked
@@ -58,13 +58,17 @@ export interface ScheduledMessage {
 // TEMPLATE HELPERS
 // ============================================================
 
-const PRICING_PAGE = 'https://luxurydecking.ca/pricing';
-const INSTAQUOTE_LINK = 'https://luxurydecking.ca/instaquote';
-const PROCESS_PAGE = 'https://luxurydecking.ca/our-process';
-const MATERIALS_PAGE = 'https://luxurydecking.ca/materials';
-const PHONE = '613-707-3060';
-const EMAIL = 'info@luxurydecking.ca';
-const WEBSITE = 'luxurydecking.ca';
+// TODO (SaaS): Pull these from org_settings when multi-tenant.
+// For now, centralized here instead of scattered across templates.
+import { COMPANY } from '../config/company';
+const COMPANY_NAME = COMPANY.name;
+const PRICING_PAGE = `https://${COMPANY.website}/pricing`;
+const INSTAQUOTE_LINK = `https://${COMPANY.website}/instaquote`;
+const PROCESS_PAGE = `https://${COMPANY.website}/our-process`;
+const MATERIALS_PAGE = `https://${COMPANY.website}/materials`;
+const PHONE = COMPANY.phone;
+const EMAIL = COMPANY.email;
+const WEBSITE = COMPANY.website;
 
 function portalLink(job: Job): string {
   const token = job.customerPortalToken || '';
@@ -76,7 +80,7 @@ function projectType(job: Job): string {
 }
 
 function sig(): string {
-  return `\nAngela\nLuxury Decking\n${PHONE} | ${EMAIL} | ${WEBSITE}`;
+  return `\nAngela\n${COMPANY_NAME}\n${PHONE} | ${EMAIL} | ${WEBSITE}`;
 }
 
 // ============================================================
@@ -93,7 +97,7 @@ export function getLeadTouches(job: Job): CampaignTouch[] {
       channel: 'sms',
       delayDays: 0,
       delayMinutes: 0,
-      smsTemplate: `Hi ${name}, this is Angela from Luxury Decking. Thank you for reaching out about your deck project. We will be in touch shortly to learn more about what you have in mind. In the meantime, feel free to explore our transparent pricing packages here: ${PRICING_PAGE}. Talk soon!`,
+      smsTemplate: `Hi ${name}, this is Angela from ${COMPANY_NAME}. Thank you for reaching out about your deck project. We will be in touch shortly to learn more about what you have in mind. In the meantime, feel free to explore our transparent pricing packages here: ${PRICING_PAGE}. Talk soon!`,
       emailTemplate: '',
     },
     {
@@ -102,16 +106,16 @@ export function getLeadTouches(job: Job): CampaignTouch[] {
       channel: 'email',
       delayDays: 0,
       delayMinutes: 15,
-      subject: 'Your Deck Project Inquiry - Luxury Decking',
+      subject: 'Your Deck Project Inquiry - ${COMPANY_NAME}',
       smsTemplate: '',
-      emailTemplate: `Hi ${name},\n\nThank you for reaching out to Luxury Decking about your project.\n\nHere are a few things that might be helpful as you plan:\n\n- See our transparent pricing packages by size and tier: ${PRICING_PAGE}\n- Get an instant price range with our online estimator: ${INSTAQUOTE_LINK}\n- Learn about our process from consultation to completion: ${PROCESS_PAGE}\n\nWe are one of Ottawa's only deck builders that publishes pricing online because we believe you deserve clarity before you commit to anything. No mystery quotes, no guesswork.\n\nWhen is a good time to connect? You can reply here, call us at ${PHONE}, or text us back.\n\nLooking forward to helping with your project.${sig()}`,
+      emailTemplate: `Hi ${name},\n\nThank you for reaching out to ${COMPANY_NAME} about your project.\n\nHere are a few things that might be helpful as you plan:\n\n- See our transparent pricing packages by size and tier: ${PRICING_PAGE}\n- Get an instant price range with our online estimator: ${INSTAQUOTE_LINK}\n- Learn about our process from consultation to completion: ${PROCESS_PAGE}\n\nWe are one of Ottawa's only deck builders that publishes pricing online because we believe you deserve clarity before you commit to anything. No mystery quotes, no guesswork.\n\nWhen is a good time to connect? You can reply here, call us at ${PHONE}, or text us back.\n\nLooking forward to helping with your project.${sig()}`,
     },
     {
       id: 'lead-t4-sms',
       touchNumber: 4,
       channel: 'sms',
       delayDays: 1,
-      smsTemplate: `Hi ${name}, it is Angela from Luxury Decking. Just following up on your deck project inquiry. No rush at all. When would be a convenient time to chat? You can also get an instant price range anytime here: ${INSTAQUOTE_LINK}`,
+      smsTemplate: `Hi ${name}, it is Angela from ${COMPANY_NAME}. Just following up on your deck project inquiry. No rush at all. When would be a convenient time to chat? You can also get an instant price range anytime here: ${INSTAQUOTE_LINK}`,
       emailTemplate: '',
     },
     {
@@ -129,7 +133,7 @@ export function getLeadTouches(job: Job): CampaignTouch[] {
       channel: 'sms+email',
       delayDays: 7,
       subject: 'Should I close your file?',
-      smsTemplate: `Hi ${name}, just one last check-in from Luxury Decking. If the timing is not right or you have gone another direction, completely understood. If your project is still on your radar, we are here whenever you are ready. Just reply or call ${PHONE}.`,
+      smsTemplate: `Hi ${name}, just one last check-in from ${COMPANY_NAME}. If the timing is not right or you have gone another direction, completely understood. If your project is still on your radar, we are here whenever you are ready. Just reply or call ${PHONE}.`,
       emailTemplate: `Hi ${name},\n\nI have reached out a few times and have not heard back, which usually means one of three things:\n\n1. Life got busy and this is not a priority right now\n2. You have decided to go a different direction\n3. You are still thinking about it but have not had a chance to reply\n\nAny of those is perfectly fine. If your deck project comes back up, we would love to help. You can always reach us at ${PHONE} or ${EMAIL}, or get a quick price range online anytime: ${INSTAQUOTE_LINK}\n\nWishing you all the best with your project.${sig()}`,
     },
     {
@@ -157,8 +161,8 @@ function getEstimateTouch1(job: Job): CampaignTouch {
     channel: 'sms+email',
     delayDays: 0,
     delayMinutes: 180, // 3 hours after estimate sent
-    subject: 'Your Luxury Decking estimate is ready',
-    smsTemplate: `Hi ${name}, your estimate for your ${pType} has been sent to your inbox. You can view it, compare options, and explore different packages right from the portal. Let me know if you have any questions. - Angela, Luxury Decking`,
+    subject: 'Your ${COMPANY_NAME} estimate is ready',
+    smsTemplate: `Hi ${name}, your estimate for your ${pType} has been sent to your inbox. You can view it, compare options, and explore different packages right from the portal. Let me know if you have any questions. - Angela, ${COMPANY_NAME}`,
     emailTemplate: `Hi ${name},\n\nThank you for taking the time to meet with us about your deck project. Your personalized estimate is now ready to view in your portal.\n\nInside your estimate, you can:\n- Review the full project scope and specifications\n- Compare package tiers (Silver, Gold, Platinum, Diamond)\n- See exactly what is included at each level\n- Explore optional upgrades and add-ons\n\nTake your time reviewing everything. If you have any questions about materials, timelines, or the process, we are happy to walk through it with you.\n\nView Your Estimate: ${portalLink(job)}${sig()}`,
   };
 }
@@ -215,7 +219,7 @@ function getEstimateTouchDay7(job: Job, tier: EngagementTier): CampaignTouch {
     },
     WARM: {
       subject: 'How we are different from other quotes you might be comparing',
-      email: `Hi ${name},\n\nIf you are comparing estimates from different builders right now, here are a few things that set Luxury Decking apart:\n\n- Transparent pricing: you can see exactly what is included at every tier, no hidden costs or vague allowances\n- We bring a mobile showroom to your consultation so you can see and touch actual materials before committing\n- Every project is built to the same structural standard regardless of which package you choose\n- We include a complimentary LED deck lighting kit ($750 value) this season\n\nI am not going to try to pressure you into a decision. I just want to make sure you have the full picture. If you want to revisit your estimate: ${link}${sig()}`,
+      email: `Hi ${name},\n\nIf you are comparing estimates from different builders right now, here are a few things that set ${COMPANY_NAME} apart:\n\n- Transparent pricing: you can see exactly what is included at every tier, no hidden costs or vague allowances\n- We bring a mobile showroom to your consultation so you can see and touch actual materials before committing\n- Every project is built to the same structural standard regardless of which package you choose\n- We include a complimentary LED deck lighting kit ($750 value) this season\n\nI am not going to try to pressure you into a decision. I just want to make sure you have the full picture. If you want to revisit your estimate: ${link}${sig()}`,
       sms: `Hi ${name}, just sent a follow-up email about your deck estimate with some info that might help if you are comparing options. Let me know if you have any questions. - Angela`,
     },
     COOL: {

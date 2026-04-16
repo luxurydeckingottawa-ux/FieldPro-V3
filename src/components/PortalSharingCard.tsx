@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Job } from '../types';
+import { COMPANY } from '../config/company';
 import {
   Users, ExternalLink, MessageSquare, Mail, Copy, Check
 } from 'lucide-react';
@@ -24,12 +25,12 @@ const PortalSharingCard: React.FC<PortalSharingCardProps> = ({ job, allJobs, isE
   };
 
   const sharePortalLink = (type: 'sms' | 'email') => {
-    const message = `Hi ${job.clientName}, here is your project portal link for your Luxury Decking project: ${portalUrl}`;
+    const message = `Hi ${job.clientName}, here is your project portal link for your ${COMPANY.name} project: ${portalUrl}`;
     if (type === 'sms') {
       window.location.href = `sms:${job.clientPhone || ''}?body=${encodeURIComponent(message)}`;
     } else {
       const mailLink = document.createElement('a');
-      mailLink.href = `mailto:${job.clientEmail || ''}?subject=${encodeURIComponent('Your Luxury Decking Project Portal')}&body=${encodeURIComponent(message)}`;
+      mailLink.href = `mailto:${job.clientEmail || ''}?subject=${encodeURIComponent(`Your ${COMPANY.name} Project Portal`)}&body=${encodeURIComponent(message)}`;
       mailLink.click();
     }
   };

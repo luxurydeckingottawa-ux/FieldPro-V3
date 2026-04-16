@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, Role } from '../types';
 import { APP_USERS } from '../constants';
-import { Shield, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { isSupabaseConfigured } from '../lib/supabase';
 
@@ -38,15 +38,15 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
         return;
       }
 
-      // Dev-only fallback: local APP_USERS (never runs in production since Supabase is always configured there)
+      // Dev-only fallback: email-only mock login (no passwords in bundle)
       if (import.meta.env.DEV) {
         const mockUser = APP_USERS.find(
-          u => u.email.toLowerCase() === emailVal.toLowerCase() && u.password === pwVal
+          u => u.email.toLowerCase() === emailVal.toLowerCase()
         );
-        if (mockUser) {
+        if (mockUser && pwVal.length > 0) {
           onLogin(mockUser);
         } else {
-          setError('Invalid email or password.');
+          setError('Invalid email. Enter any password to continue in dev mode.');
         }
       } else {
         setError('Authentication service unavailable. Please contact the administrator.');
@@ -62,11 +62,11 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
     <div className="min-h-screen bg-[var(--bg-secondary)] flex flex-col items-center justify-center p-4 transition-colors duration-300">
       <div className="w-full max-w-md bg-[var(--bg-primary)] rounded-2xl shadow-xl p-8 border border-[var(--border-color)]">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-[#C4A432] rounded-xl flex items-center justify-center mb-4 shadow-lg">
-            <Shield className="text-white w-8 h-8" />
+          <div className="w-16 h-16 bg-[var(--brand-black)] rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-[var(--brand-gold)]/15">
+            <img src="/assets/logo-white.png" alt="FieldPro" className="w-10 h-10 object-contain" />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Luxury Decking</h1>
-          <p className="text-[var(--text-secondary)]">Field Pro & Operations Portal</p>
+          <h1 className="text-2xl font-display tracking-tight text-[var(--text-primary)]">FieldPro</h1>
+          <p className="text-sm font-heading text-[var(--brand-gold)] mt-1">Luxury Decking</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
