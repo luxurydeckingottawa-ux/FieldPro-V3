@@ -3,6 +3,7 @@ import { Maximize2, Minimize2 } from 'lucide-react';
 import { loadPriceBook } from '../utils/priceBook';
 import ShowroomGlobalStyle from './showroom/ShowroomGlobalStyle';
 import ShowroomTopNav from './showroom/ShowroomTopNav';
+import FramingVisualizer from './showroom/FramingVisualizer';
 import {
   TIER_TO_ITEM_ID,
   PRICING_DATA,
@@ -1739,6 +1740,28 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                     </button>
                   </div>
                 )}
+                {activeCategory === 'framing' ? (
+                  <FramingVisualizer
+                    selectedOption={selections.framing}
+                    dimensions={dimensions}
+                    onSelectOption={(optionId) => {
+                      if (optionId === '__deselect__') {
+                        setSelections({ ...selections, framing: null });
+                        return;
+                      }
+                      const opt = (PRICING_DATA.find((c) => c.id === 'framing')?.options ?? [])
+                        .find((o) => o.id === optionId);
+                      if (!opt) return;
+                      handleOptionClick('framing', opt);
+                    }}
+                    getImpactValue={(optionId) => {
+                      const opt = (PRICING_DATA.find((c) => c.id === 'framing')?.options ?? [])
+                        .find((o) => o.id === optionId);
+                      if (!opt) return 0;
+                      return getOptionImpactValue('framing', opt);
+                    }}
+                  />
+                ) : (
                 <div
                   style={{
                     display: 'grid',
@@ -2270,6 +2293,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                     );
                   })}
                 </div>
+                )}
 
                 {/* FIX 5 — bottom chip strip removed; itemized list now lives under the price plaque */}
               </div>
