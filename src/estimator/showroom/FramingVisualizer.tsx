@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { PricingTier, Dimensions } from '../EstimatorCalculatorView';
 
 /* ------------------------------------------------------------------ */
@@ -12,269 +12,110 @@ interface FramingOption {
   advantage: string;
   description: string;
   joistCount: number;
-  joistHeight: number; // visual height multiplier (1 = 2x8, 1.28 = 2x10)
+  heightMul: number;
   material: 'wood' | 'fiberglass';
   badge: string | null;
   priceDelta: number;
 }
 
-const FRAMING_OPTIONS: FramingOption[] = [
-  {
-    id: 'standard',
-    pricingId: null,
-    name: '2\u00d78 PT \u00b7 16" OC',
-    advantage: 'Ontario Building Code standard. Included with every deck.',
-    description: 'Standard pressure-treated 2\u00d78 framing at 16-inch on-centre spacing. Meets Ontario Building Code for residential decks up to 14-foot spans. Included with every project.',
-    joistCount: 11,
-    joistHeight: 1,
-    material: 'wood',
-    badge: 'INCLUDED',
-    priceDelta: 0,
-  },
-  {
-    id: '2x8_12oc',
-    pricingId: 'upgrade_2x8_12',
-    name: '2\u00d78 PT \u00b7 12" OC',
-    advantage: '33% more joists \u2014 reduces bounce underfoot.',
-    description: 'Closer joist spacing eliminates flex and bounce, especially with composite decking. Recommended for hot tubs, outdoor kitchens, or diagonal board patterns.',
-    joistCount: 15,
-    joistHeight: 1,
-    material: 'wood',
-    badge: null,
-    priceDelta: 1.95,
-  },
-  {
-    id: '2x10_16oc',
-    pricingId: 'upgrade_2x10_16',
-    name: '2\u00d710 PT \u00b7 16" OC',
-    advantage: '28% deeper joists \u2014 longer spans, less flex.',
-    description: 'Larger 2\u00d710 joists span further without mid-span support. Ideal for elevated decks or spans over 14 feet.',
-    joistCount: 11,
-    joistHeight: 1.28,
-    material: 'wood',
-    badge: null,
-    priceDelta: 4.49,
-  },
-  {
-    id: '2x10_12oc',
-    pricingId: 'upgrade_2x10_12',
-    name: '2\u00d710 PT \u00b7 12" OC',
-    advantage: 'Maximum wood frame \u2014 zero bounce.',
-    description: 'The strongest conventional wood frame. Deeper joists at tighter spacing \u2014 feels like a concrete patio underfoot.',
-    joistCount: 15,
-    joistHeight: 1.28,
-    material: 'wood',
-    badge: null,
-    priceDelta: 6.49,
-  },
-  {
-    id: 'fiberglass',
-    pricingId: 'fiberglass_framing',
-    name: 'Fiberglass Composite',
-    advantage: 'Will not rot, warp, or split. Lifetime warranty.',
-    description: 'Owens Corning fiberglass composite joists. Immune to moisture, insects, and UV. Zero maintenance for the life of the structure.',
-    joistCount: 11,
-    joistHeight: 1.28,
-    material: 'fiberglass',
-    badge: 'PREMIUM',
-    priceDelta: 29.95,
-  },
+const OPTIONS: FramingOption[] = [
+  { id: 'std', pricingId: null, name: '2\u00d78 PT \u00b7 16" OC', advantage: 'Ontario Building Code standard. Included with every deck.', description: 'Standard pressure-treated 2\u00d78 framing at 16-inch on-centre spacing. Meets Ontario Building Code for residential decks up to 14-foot spans. Included with every project.', joistCount: 11, heightMul: 1, material: 'wood', badge: 'INCLUDED', priceDelta: 0 },
+  { id: '8-12', pricingId: 'upgrade_2x8_12', name: '2\u00d78 PT \u00b7 12" OC', advantage: '33% more joists \u2014 reduces bounce underfoot.', description: 'Closer joist spacing eliminates flex and bounce, especially with composite decking. Recommended for hot tubs, outdoor kitchens, or diagonal board patterns.', joistCount: 15, heightMul: 1, material: 'wood', badge: null, priceDelta: 1.95 },
+  { id: '10-16', pricingId: 'upgrade_2x10_16', name: '2\u00d710 PT \u00b7 16" OC', advantage: '28% deeper joists \u2014 longer spans, less flex.', description: 'Larger 2\u00d710 joists span further without mid-span support. Ideal for elevated decks or spans over 14 feet.', joistCount: 11, heightMul: 1.3, material: 'wood', badge: null, priceDelta: 4.49 },
+  { id: '10-12', pricingId: 'upgrade_2x10_12', name: '2\u00d710 PT \u00b7 12" OC', advantage: 'Maximum wood frame \u2014 zero bounce.', description: 'The strongest conventional wood frame. Deeper joists at tighter spacing \u2014 feels like a concrete patio underfoot.', joistCount: 15, heightMul: 1.3, material: 'wood', badge: null, priceDelta: 6.49 },
+  { id: 'fg', pricingId: 'fiberglass_framing', name: 'Fiberglass Composite', advantage: 'Will not rot, warp, or split. Lifetime warranty.', description: 'Owens Corning fiberglass composite joists. Immune to moisture, insects, and UV. Zero maintenance for the life of the structure.', joistCount: 11, heightMul: 1.3, material: 'fiberglass', badge: 'PREMIUM', priceDelta: 29.95 },
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Colours                                                            */
+/*  Wood grain CSS gradient (repeating pattern)                        */
 /* ------------------------------------------------------------------ */
 
-const WOOD_TOP = '#C4A87A';
-const WOOD_FRONT = '#9B7E56';
-const WOOD_SIDE = '#7D6544';
-const WOOD_DARK = '#6B5740';
-const FG_TOP = '#5A9E7A';
-const FG_FRONT = '#3F7D5D';
-const FG_SIDE = '#2E6B4A';
-const POST_COLOR = '#8B7355';
-const POST_SIDE = '#6B5740';
-const BRACKET_COLOR = '#9BA5AF';
+const woodGrain = (base: string, light: string, dark: string) =>
+  `repeating-linear-gradient(
+    90deg,
+    ${base} 0px, ${base} 3px,
+    ${light} 3px, ${light} 5px,
+    ${base} 5px, ${base} 11px,
+    ${dark} 11px, ${dark} 12px,
+    ${base} 12px, ${base} 18px,
+    ${light} 18px, ${light} 19px,
+    ${base} 19px, ${base} 24px
+  )`;
 
-/* ------------------------------------------------------------------ */
-/*  3D helpers — perspective-style isometric                           */
-/* ------------------------------------------------------------------ */
-
-const ANG = Math.PI / 5.5; // ~33 deg — slightly steeper for better depth
-const CX = Math.cos(ANG);
-const SX = Math.sin(ANG);
-
-function iso(x: number, y: number, z: number): [number, number] {
-  return [
-    CX * x - CX * y,
-    SX * x + SX * y - z,
-  ];
-}
-
-function pt(x: number, y: number, z: number, ox: number, oy: number): string {
-  const [px, py] = iso(x, y, z);
-  return `${(ox + px).toFixed(1)},${(oy + py).toFixed(1)}`;
-}
+const WOOD_TOP_BG = woodGrain('#C9A96E', '#D4B87A', '#B89858');
+const WOOD_FRONT_BG = woodGrain('#9B7E52', '#A68A5E', '#8B6E42');
+const WOOD_SIDE_BG = '#7D6544';
+const FG_TOP_BG = woodGrain('#4FA87A', '#5AB888', '#3F9868');
+const FG_FRONT_BG = woodGrain('#3A7D5D', '#448D6A', '#306D4D');
+const FG_SIDE_BG = '#2E6B4A';
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
 /* ------------------------------------------------------------------ */
 
-interface FramingVisualizerProps {
+interface Props {
   selectedOption: PricingTier | null;
   dimensions: Dimensions;
-  onSelectOption: (optionId: string) => void;
-  getImpactValue: (optionId: string) => number;
+  onSelectOption: (id: string) => void;
+  getImpactValue: (id: string) => number;
 }
 
 /* ------------------------------------------------------------------ */
-/*  Main Component                                                     */
+/*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-const FramingVisualizer: React.FC<FramingVisualizerProps> = ({
-  selectedOption,
-  dimensions,
-  onSelectOption,
-  getImpactValue,
-}) => {
+const FramingVisualizer: React.FC<Props> = ({ selectedOption, dimensions, onSelectOption, getImpactValue }) => {
   const activeId = selectedOption?.id ?? null;
-  const activeOption = FRAMING_OPTIONS.find((o) => o.pricingId === activeId) ?? FRAMING_OPTIONS[0];
+  const active = OPTIONS.find(o => o.pricingId === activeId) ?? OPTIONS[0];
 
-  // Description crossfade
-  const [displayDesc, setDisplayDesc] = useState(activeOption.description);
-  const [descVisible, setDescVisible] = useState(true);
-
+  const [desc, setDesc] = useState(active.description);
+  const [vis, setVis] = useState(true);
   useEffect(() => {
-    setDescVisible(false);
-    const t = setTimeout(() => {
-      setDisplayDesc(activeOption.description);
-      setDescVisible(true);
-    }, 150);
+    setVis(false);
+    const t = setTimeout(() => { setDesc(active.description); setVis(true); }, 140);
     return () => clearTimeout(t);
-  }, [activeOption.description]);
+  }, [active.description]);
 
-  const handleSelect = (opt: FramingOption) => {
-    if (opt.pricingId === null) {
-      if (activeId !== null) onSelectOption('__deselect__');
-    } else {
-      onSelectOption(opt.pricingId);
-    }
+  const select = (o: FramingOption) => {
+    if (o.pricingId === null) { if (activeId !== null) onSelectOption('__deselect__'); }
+    else onSelectOption(o.pricingId);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, minHeight: 0 }}>
-      {/* Split: SVG left, cards right */}
       <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0 }}>
-
-        {/* LEFT: 3D Frame */}
+        {/* 3D Frame */}
         <div style={{
-          flex: '1 1 62%',
-          minWidth: 0,
-          background: 'rgba(255,255,255,0.015)',
-          borderRadius: 10,
-          border: '1px solid rgba(212,168,83,0.08)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 12,
-          overflow: 'hidden',
+          flex: '1 1 62%', minWidth: 0, background: 'rgba(255,255,255,0.015)',
+          borderRadius: 10, border: '1px solid rgba(212,168,83,0.08)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 16, overflow: 'hidden', perspective: 900,
         }}>
-          <FrameSVG
-            joistCount={activeOption.joistCount}
-            heightMul={activeOption.joistHeight}
-            material={activeOption.material}
-          />
+          <Frame3D count={active.joistCount} hMul={active.heightMul} mat={active.material} />
         </div>
 
-        {/* RIGHT: Option Cards */}
-        <div style={{
-          flex: '0 0 320px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          overflowY: 'auto',
-          minHeight: 0,
-        }}>
-          {FRAMING_OPTIONS.map((opt) => {
-            const isActive = opt.pricingId === activeId || (opt.pricingId === null && activeId === null);
-            const impact = opt.pricingId ? getImpactValue(opt.pricingId) : 0;
-
+        {/* Cards */}
+        <div style={{ flex: '0 0 310px', display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto', minHeight: 0 }}>
+          {OPTIONS.map(o => {
+            const on = o.pricingId === activeId || (o.pricingId === null && activeId === null);
+            const imp = o.pricingId ? getImpactValue(o.pricingId) : 0;
             return (
-              <button
-                key={opt.id}
-                onClick={() => handleSelect(opt)}
-                aria-pressed={isActive}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 14px',
-                  borderRadius: 8,
-                  border: 'none',
-                  borderLeft: isActive ? '3px solid #D4A853' : '3px solid transparent',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  fontFamily: 'inherit',
-                  height: 68,
-                  flexShrink: 0,
-                  transition: 'all 200ms ease',
-                  background: isActive ? 'rgba(212,168,83,0.07)' : 'rgba(255,255,255,0.02)',
-                }}
-              >
-                {/* Name + advantage */}
+              <button key={o.id} onClick={() => select(o)} aria-pressed={on} style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                borderRadius: 8, border: 'none', borderLeft: on ? '3px solid #D4A853' : '3px solid transparent',
+                cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', height: 68, flexShrink: 0,
+                transition: 'all 200ms ease',
+                background: on ? 'rgba(212,168,83,0.07)' : 'rgba(255,255,255,0.02)',
+              }}>
                 <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                    <span style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: isActive ? '#E8E0D4' : 'rgba(232,224,212,0.6)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}>
-                      {opt.name}
-                    </span>
-                    {opt.badge && (
-                      <span style={{
-                        fontSize: 7,
-                        fontWeight: 800,
-                        letterSpacing: 1,
-                        padding: '2px 6px',
-                        borderRadius: 3,
-                        textTransform: 'uppercase' as const,
-                        whiteSpace: 'nowrap',
-                        flexShrink: 0,
-                        background: opt.badge === 'PREMIUM' ? 'rgba(74,139,107,0.3)' : 'rgba(212,168,83,0.15)',
-                        color: opt.badge === 'PREMIUM' ? '#6BCB9B' : '#D4A853',
-                      }}>
-                        {opt.badge}
-                      </span>
-                    )}
+                    <span style={{ fontSize: 12, fontWeight: 700, color: on ? '#E8E0D4' : 'rgba(232,224,212,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.name}</span>
+                    {o.badge && <span style={{ fontSize: 7, fontWeight: 800, letterSpacing: 1, padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase' as const, whiteSpace: 'nowrap', flexShrink: 0, background: o.badge === 'PREMIUM' ? 'rgba(74,139,107,0.3)' : 'rgba(212,168,83,0.15)', color: o.badge === 'PREMIUM' ? '#6BCB9B' : '#D4A853' }}>{o.badge}</span>}
                   </div>
-                  <div style={{
-                    fontSize: 10,
-                    lineHeight: '14px',
-                    color: isActive ? 'rgba(212,168,83,0.65)' : 'rgba(232,224,212,0.3)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical' as const,
-                  }}>
-                    {opt.advantage}
-                  </div>
+                  <div style={{ fontSize: 10, lineHeight: '14px', color: on ? 'rgba(212,168,83,0.65)' : 'rgba(232,224,212,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{o.advantage}</div>
                 </div>
-
-                {/* Price */}
-                <div style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: isActive ? '#D4A853' : 'rgba(212,168,83,0.35)',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  textAlign: 'right',
-                }}>
-                  {opt.priceDelta === 0 ? 'Included' : impact > 0 ? `+$${Math.round(impact).toLocaleString()}` : `+$${opt.priceDelta.toFixed(2)}/sf`}
+                <div style={{ fontSize: 11, fontWeight: 700, color: on ? '#D4A853' : 'rgba(212,168,83,0.35)', whiteSpace: 'nowrap', flexShrink: 0, textAlign: 'right' }}>
+                  {o.priceDelta === 0 ? 'Included' : imp > 0 ? `+$${Math.round(imp).toLocaleString()}` : `+$${o.priceDelta.toFixed(2)}/sf`}
                 </div>
               </button>
             );
@@ -282,24 +123,9 @@ const FramingVisualizer: React.FC<FramingVisualizerProps> = ({
         </div>
       </div>
 
-      {/* BELOW: Description */}
-      <div style={{
-        padding: '10px 16px',
-        background: 'rgba(255,255,255,0.02)',
-        borderRadius: 8,
-        border: '1px solid rgba(212,168,83,0.05)',
-        minHeight: 40,
-      }}>
-        <p style={{
-          fontSize: 11,
-          color: 'rgba(232,224,212,0.5)',
-          lineHeight: 1.5,
-          margin: 0,
-          transition: 'opacity 150ms ease',
-          opacity: descVisible ? 1 : 0,
-        }}>
-          {displayDesc}
-        </p>
+      {/* Description */}
+      <div style={{ padding: '10px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid rgba(212,168,83,0.05)', minHeight: 40 }}>
+        <p style={{ fontSize: 11, color: 'rgba(232,224,212,0.5)', lineHeight: 1.5, margin: 0, transition: 'opacity 140ms ease', opacity: vis ? 1 : 0 }}>{desc}</p>
       </div>
     </div>
   );
@@ -308,216 +134,178 @@ const FramingVisualizer: React.FC<FramingVisualizerProps> = ({
 export default FramingVisualizer;
 
 /* ================================================================== */
-/*  FrameSVG — Realistic isometric deck frame                         */
+/*  Frame3D — CSS 3D transformed deck frame                           */
 /* ================================================================== */
 
-interface FrameSVGProps {
-  joistCount: number;
-  heightMul: number; // 1 = 2x8, 1.28 = 2x10
-  material: 'wood' | 'fiberglass';
-}
+interface Frame3DProps { count: number; hMul: number; mat: 'wood' | 'fiberglass'; }
 
-const FrameSVG: React.FC<FrameSVGProps> = ({ joistCount, heightMul, material }) => {
-  const isGlass = material === 'fiberglass';
-  const topC = isGlass ? FG_TOP : WOOD_TOP;
-  const frontC = isGlass ? FG_FRONT : WOOD_FRONT;
-  const sideC = isGlass ? FG_SIDE : WOOD_SIDE;
+const Frame3D: React.FC<Frame3DProps> = ({ count, hMul, mat }) => {
+  const isG = mat === 'fiberglass';
+  const topBg = isG ? FG_TOP_BG : WOOD_TOP_BG;
+  const frontBg = isG ? FG_FRONT_BG : WOOD_FRONT_BG;
+  const sideBg = isG ? FG_SIDE_BG : WOOD_SIDE_BG;
 
-  // Frame dimensions (isometric units)
-  const W = 220;    // frame width (left-right)
-  const D = 160;    // frame depth (front-back)
-  const JW = 3.5;   // joist width (1.5" actual but scaled for visibility)
-  const JH = 14 * heightMul; // joist height — scales for 2x8 vs 2x10
-  const BH = 16;    // beam height (slightly bigger than joists)
-  const BW = 5;     // beam width
-  const PW = 8;     // post width
-  const PH = 28;    // post height below beam
+  // Dimensions in px (the whole thing is inside a CSS 3D perspective container)
+  const W = 400;   // frame width
+  const D = 280;   // frame depth
+  const jW = 8;    // joist width
+  const jH = Math.round(18 * hMul); // joist height — scales for 2x8 vs 2x10
+  const beamH = 22;
+  const beamW = 12;
+  const postW = 14;
+  const postH = 40;
 
-  // SVG canvas
-  const svgW = 600;
-  const svgH = 420;
-  const ox = svgW / 2 + 10;
-  const oy = svgH * 0.55;
+  // 15 joist positions
+  const MAX = 15;
+  const slots = useMemo(() => {
+    const arr: number[] = [];
+    for (let i = 0; i < MAX; i++) arr.push(((i + 1) / (MAX + 1)) * W);
+    return arr;
+  }, []);
 
-  // 15 joist slots, evenly spaced
-  const MAX_J = 15;
-  const jSlots: number[] = [];
-  for (let i = 0; i < MAX_J; i++) {
-    jSlots.push(((i + 1) / (MAX_J + 1)) * W);
-  }
+  const visible = useMemo(() => {
+    const s = new Set<number>();
+    if (count >= MAX) { for (let i = 0; i < MAX; i++) s.add(i); }
+    else { for (let i = 0; i < count; i++) s.add(Math.round((i * (MAX - 1)) / (count - 1))); }
+    return s;
+  }, [count]);
 
-  // Which are visible
-  const vis = new Set<number>();
-  if (joistCount >= MAX_J) {
-    for (let i = 0; i < MAX_J; i++) vis.add(i);
-  } else {
-    for (let i = 0; i < joistCount; i++) {
-      vis.add(Math.round((i * (MAX_J - 1)) / (joistCount - 1)));
-    }
-  }
-
-  // Beam at midspan
   const beamY = D * 0.48;
+  const posts = [W * 0.05, W * 0.35, W * 0.65, W * 0.95];
 
-  // Posts under beam (4 posts evenly spaced)
-  const postPositions = [W * 0.05, W * 0.35, W * 0.65, W * 0.95];
-
-  // Draw an isometric box
-  const box = (
-    bx: number, by: number, bz: number,
-    w: number, d: number, h: number,
-    tc: string, fc: string, sc: string,
-    op: number, k: string,
-  ) => {
-    const top = [
-      pt(bx, by, bz + h, ox, oy), pt(bx + w, by, bz + h, ox, oy),
-      pt(bx + w, by + d, bz + h, ox, oy), pt(bx, by + d, bz + h, ox, oy),
-    ].join(' ');
-    const front = [
-      pt(bx, by, bz, ox, oy), pt(bx + w, by, bz, ox, oy),
-      pt(bx + w, by, bz + h, ox, oy), pt(bx, by, bz + h, ox, oy),
-    ].join(' ');
-    const side = [
-      pt(bx + w, by, bz, ox, oy), pt(bx + w, by + d, bz, ox, oy),
-      pt(bx + w, by + d, bz + h, ox, oy), pt(bx + w, by, bz + h, ox, oy),
-    ].join(' ');
-    return (
-      <g key={k} style={{ opacity: op, transition: 'opacity 300ms ease, fill 300ms ease' }}>
-        <polygon points={front} fill={fc} stroke="rgba(0,0,0,0.15)" strokeWidth={0.5} />
-        <polygon points={side} fill={sc} stroke="rgba(0,0,0,0.12)" strokeWidth={0.3} />
-        <polygon points={top} fill={tc} stroke="rgba(0,0,0,0.08)" strokeWidth={0.3} />
-      </g>
-    );
-  };
-
-  // Small bracket at joist-to-beam connection
-  const bracket = (jx: number, k: string, op: number) => {
-    const bSize = 3;
-    const bz = 0;
-    const by2 = beamY - BW / 2 - 0.5;
-    const pts = [
-      pt(jx - bSize / 2, by2, bz, ox, oy),
-      pt(jx + bSize / 2, by2, bz, ox, oy),
-      pt(jx + bSize / 2, by2, bz + JH * 0.6, ox, oy),
-      pt(jx - bSize / 2, by2, bz + JH * 0.6, ox, oy),
-    ].join(' ');
-    return <polygon key={k} points={pts} fill={BRACKET_COLOR} opacity={op * 0.5} style={{ transition: 'opacity 300ms ease' }} />;
-  };
+  // Lumber piece component — a 3D box using CSS transforms
+  const Lumber: React.FC<{
+    x: number; y: number; z: number;
+    w: number; d: number; h: number;
+    top: string; front: string; side: string;
+    op?: number; k: string;
+  }> = ({ x, y, z, w, d, h, top, front, side, op = 1, k }) => (
+    <div key={k} style={{
+      position: 'absolute',
+      left: x, top: y - z - h,
+      width: w, height: h,
+      opacity: op,
+      transition: 'opacity 300ms ease, height 300ms ease, top 300ms ease',
+      transformStyle: 'preserve-3d' as const,
+    }}>
+      {/* Front face */}
+      <div style={{
+        position: 'absolute', width: w, height: h,
+        background: front,
+        borderBottom: '1px solid rgba(0,0,0,0.2)',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+        boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.15)',
+      }} />
+      {/* Top face — skewed to create 3D depth illusion */}
+      <div style={{
+        position: 'absolute', width: w, height: Math.round(d * 0.35),
+        background: top,
+        transform: 'skewX(-40deg)',
+        transformOrigin: 'bottom left',
+        top: -Math.round(d * 0.35) + 1,
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.08)',
+      }} />
+      {/* Right side face */}
+      <div style={{
+        position: 'absolute',
+        right: -Math.round(d * 0.18),
+        top: -Math.round(d * 0.35) + 1,
+        width: Math.round(d * 0.18),
+        height: h + Math.round(d * 0.35) - 1,
+        background: side,
+        transform: 'skewY(-50deg)',
+        transformOrigin: 'top left',
+        borderRight: '1px solid rgba(0,0,0,0.15)',
+      }} />
+    </div>
+  );
 
   return (
-    <svg viewBox={`0 0 ${svgW} ${svgH}`} width="100%" style={{ maxHeight: '100%' }}>
+    <div style={{
+      position: 'relative',
+      width: W + 100,
+      height: D * 0.5 + jH + postH + beamH + 60,
+      margin: '0 auto',
+      transform: 'scale(0.85)',
+      transformOrigin: 'center center',
+    }}>
       {/* Ground shadow */}
-      <ellipse
-        cx={ox}
-        cy={oy + 55}
-        rx={200}
-        ry={30}
-        fill="rgba(0,0,0,0.15)"
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: '10%',
+        width: '80%',
+        height: 20,
+        background: 'radial-gradient(ellipse, rgba(0,0,0,0.25) 0%, transparent 70%)',
+        borderRadius: '50%',
+      }} />
+
+      {/* Posts (behind everything) */}
+      {posts.map((px, i) => (
+        <Lumber key={`p${i}`} k={`p${i}`}
+          x={px + 20} y={D * 0.5 + jH + beamH + postH} z={0}
+          w={postW} d={postW} h={postH}
+          top={WOOD_TOP_BG} front={WOOD_FRONT_BG} side={WOOD_SIDE_BG}
+        />
+      ))}
+
+      {/* Beam */}
+      <Lumber k="beam"
+        x={10} y={D * 0.5 + jH + beamH} z={0}
+        w={W + 40} d={beamW} h={beamH}
+        top={isG ? FG_TOP_BG : woodGrain('#8B7355', '#9B8365', '#7B6545')}
+        front={isG ? FG_FRONT_BG : woodGrain('#6B5740', '#7B6750', '#5B4730')}
+        side={isG ? FG_SIDE_BG : '#5A4830'}
       />
 
-      {/* House wall silhouette */}
-      {(() => {
-        const wallH = JH + 80;
-        const pts = [
-          pt(0, D, 0, ox, oy), pt(0, D, wallH, ox, oy),
-          pt(W, D, wallH, ox, oy), pt(W, D, 0, ox, oy),
-        ].join(' ');
-        return <polygon points={pts} fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.04)" strokeWidth={0.5} />;
-      })()}
+      {/* Ledger (back) */}
+      <Lumber k="ledger"
+        x={20} y={D * 0.5 + jH - 8} z={0}
+        w={W} d={10} h={jH}
+        top={woodGrain('#8B7A5A', '#9B8A6A', '#7B6A4A')}
+        front={woodGrain('#6B5A3A', '#7B6A4A', '#5B4A2A')}
+        side="#5A4835"
+      />
 
-      {/* Posts under beam (drawn first — behind everything) */}
-      {postPositions.map((px, i) =>
-        box(px - PW / 2, beamY - PW / 2, -(PH + BH), PW, PW, PH, POST_COLOR, POST_SIDE, WOOD_DARK, 1, `post-${i}`)
-      )}
+      {/* Joists — all 15 slots */}
+      {slots.map((jx, i) => (
+        <Lumber key={`j${i}`} k={`j${i}`}
+          x={jx + 20 - jW / 2}
+          y={D * 0.5 + jH}
+          z={0}
+          w={jW} d={D} h={jH}
+          top={topBg} front={frontBg} side={sideBg}
+          op={visible.has(i) ? 1 : 0}
+        />
+      ))}
 
-      {/* Beam (perpendicular to joists, under them) */}
-      {box(-4, beamY - BW / 2, -BH, W + 8, BW, BH, isGlass ? FG_TOP : WOOD_DARK, isGlass ? FG_FRONT : '#5A4830', isGlass ? FG_SIDE : '#4A3A25', 1, 'beam')}
+      {/* End joists */}
+      <Lumber k="eL" x={20 - jW} y={D * 0.5 + jH} z={0} w={jW} d={D} h={jH} top={topBg} front={frontBg} side={sideBg} />
+      <Lumber k="eR" x={W + 20} y={D * 0.5 + jH} z={0} w={jW} d={D} h={jH} top={topBg} front={frontBg} side={sideBg} />
 
-      {/* Ledger board (back edge — always wood, attached to house) */}
-      {box(0, D - 3, 0, W, 3, JH, '#7D6544', '#5A4A35', '#4A3B28', 1, 'ledger')}
+      {/* Rim joist (front) */}
+      <Lumber k="rim"
+        x={20 - jW} y={D * 0.5 + jH + 8} z={0}
+        w={W + jW * 2} d={10} h={jH}
+        top={topBg} front={frontBg} side={sideBg}
+      />
 
-      {/* Interior joists — all 15 slots rendered */}
-      {jSlots.map((jx, i) => {
-        const op = vis.has(i) ? 1 : 0;
-        return (
-          <React.Fragment key={`j-${i}`}>
-            {box(jx - JW / 2, 0, 0, JW, D, JH, topC, frontC, sideC, op, `joist-${i}`)}
-            {bracket(jx, `br-${i}`, op)}
-          </React.Fragment>
-        );
-      })}
-
-      {/* End joists (left + right) */}
-      {box(-JW, 0, 0, JW, D, JH, topC, frontC, sideC, 1, 'end-L')}
-      {box(W, 0, 0, JW, D, JH, topC, frontC, sideC, 1, 'end-R')}
-
-      {/* Rim joist / header (front edge) */}
-      {box(-JW, -3, 0, W + JW * 2, 3, JH, topC, frontC, sideC, 1, 'rim')}
-
-      {/* Blocking between joists at beam line */}
-      {jSlots.map((jx, i) => {
-        if (!vis.has(i)) return null;
-        // Find next visible joist
-        let nextIdx = -1;
-        for (let n = i + 1; n < MAX_J; n++) {
-          if (vis.has(n)) { nextIdx = n; break; }
-        }
-        if (nextIdx < 0) return null;
-        const nx = jSlots[nextIdx];
-        const bx = jx + JW / 2 + 0.5;
-        const bw = nx - JW / 2 - 0.5 - bx;
-        if (bw <= 1) return null;
-        return box(bx, beamY - 1, 0, bw, 2, JH * 0.7, topC, frontC, sideC, 0.6, `blk-${i}`);
-      })}
-
-      {/* Spacing dimension line */}
-      {(() => {
-        const spacing = joistCount >= 15 ? '12"' : '16"';
-        // Pick two adjacent visible joists near the front for the label
-        let j1 = -1, j2 = -1;
-        for (let i = 0; i < MAX_J; i++) {
-          if (vis.has(i)) {
-            if (j1 < 0) { j1 = i; } else if (j2 < 0) { j2 = i; break; }
-          }
-        }
-        if (j1 < 0 || j2 < 0) return null;
-        const x1 = jSlots[j1];
-        const x2 = jSlots[j2];
-        const mid = (x1 + x2) / 2;
-        const [lx, ly] = iso(mid, -16, JH + 6);
-        return (
-          <text
-            x={ox + lx}
-            y={oy + ly}
-            textAnchor="middle"
-            fill="rgba(212,168,83,0.4)"
-            fontSize={10}
-            fontWeight={600}
-            fontFamily="'DM Sans', sans-serif"
-            letterSpacing={0.5}
-          >
-            {spacing} on centre
-          </text>
-        );
-      })()}
-
-      {/* Joist count label */}
-      {(() => {
-        const [lx, ly] = iso(W / 2, -10, JH + 20);
-        return (
-          <text
-            x={ox + lx}
-            y={oy + ly}
-            textAnchor="middle"
-            fill="rgba(232,224,212,0.3)"
-            fontSize={9}
-            fontWeight={500}
-            fontFamily="'DM Sans', sans-serif"
-          >
-            {joistCount + 2} joists total
-          </text>
-        );
-      })()}
-    </svg>
+      {/* Spacing label */}
+      <div style={{
+        position: 'absolute',
+        bottom: -4,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'rgba(212,168,83,0.4)',
+        letterSpacing: 0.5,
+        fontFamily: "'DM Sans', sans-serif",
+        whiteSpace: 'nowrap',
+      }}>
+        {count >= 15 ? '12"' : '16"'} on centre \u00b7 {count + 2} joists
+      </div>
+    </div>
   );
 };
