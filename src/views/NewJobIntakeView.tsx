@@ -62,7 +62,7 @@ const NewJobIntakeView: React.FC<NewJobIntakeViewProps> = ({ onSave, onCancel, i
     setError(null);
 
     const newJob: Job = {
-      id: `j-${Date.now()}`,
+      id: crypto.randomUUID(),
       ...formData,
       currentStage: 0,
       status: JobStatus.SCHEDULED,

@@ -548,6 +548,7 @@ export const dataService = {
         liveEstimate: 'live_estimate',
         calculatorSelections: 'calculator_selections',
         calculatorDimensions: 'calculator_dimensions',
+        calculatorOptions: 'calculator_options',
         customerSignature: 'customer_signature',
         customerSignatureCloudinaryUrl: 'customer_signature_cloudinary_url',
         contractPdfUrl: 'contract_pdf_url',

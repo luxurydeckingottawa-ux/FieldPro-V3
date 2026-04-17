@@ -368,7 +368,10 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         setSelectedJob(jobForModal);
       }
     } else {
-      const newJobId = `j-est-${Date.now()}`;
+      // Use crypto.randomUUID() — Supabase jobs.id is UUID PRIMARY KEY.
+      // The old j-est-${Date.now()} format was rejected by Postgres UUID type,
+      // silently failing the INSERT and causing estimates to vanish on next login.
+      const newJobId = crypto.randomUUID();
       const newJob: Job = {
         id: newJobId,
         jobNumber: `EST-${new Date().getFullYear()}-${String(data.estimateNumber).padStart(3, '0')}`,
@@ -406,7 +409,6 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
       };
       setJobs(prev => [newJob, ...prev]);
       setSelectedJob(newJob);
-      // D-02: Persist to Supabase — was missing, new jobs from calculator vanished on refresh
       dataService.createJob(newJob).catch(err => console.error('[handleEstimateAccepted] Failed to persist new job:', err));
     }
   }, [calculatorSourceJobId, handleUpdateJob, jobs]);
@@ -540,8 +542,52 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         updatedAt: now,
       });
     } else {
-      const newJobId = `j-est-${Date.now()}`;
+      // ── NEW JOB from estimator ──────────────────────────────────────────
+      // CRITICAL: use crypto.randomUUID() not `j-est-${Date.now()}`.
+      // Supabase jobs.id is UUID PRIMARY KEY — a text ID like j-est-1716... fails
+      // the INSERT silently (.catch only logs). The job lands in localStorage only
+      // and disappears the next time loadJobs() from Supabase replaces local state.
+      const newJobId = crypto.randomUUID();
       portalToken = crypto.randomUUID();
+      targetJobId = newJobId; // set early so estimateData uses it below
+
+      // Build estimateData HERE (before createJob) to avoid the race condition
+      // where handleUpdateJob({ estimateData }) fires an UPDATE before the INSERT
+      // has been acknowledged by Supabase. Including estimateData in the initial
+      // payload means it's persisted atomically with the rest of the job.
+      // eslint-disable-next-line prefer-const
+      let earlyUpdatedOptions: EstimateOption[];
+      if (data.allOptions && data.allOptions.length > 0) {
+        earlyUpdatedOptions = data.allOptions.map((opt, idx) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const impacts = (opt.pricingSummary?.impacts ?? []) as any[];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const nonZeroImpacts = impacts.filter((imp: any) => Math.round(imp.value) !== 0);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const impactItems = nonZeroImpacts.map((imp: any, i: number) => {
+            const match = imp.label.match(/\(([^)]+)\)\s*$/);
+            return { id: `opt-${opt.id}-item-${Date.now()}-${i}`, label: match ? imp.label.replace(/\s*\([^)]+\)\s*$/, '').trim() : imp.label, quantity: match ? match[1] : '', value: Math.round(imp.value) };
+          });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const optSum = impactItems.reduce((s: number, it: any) => s + it.value, 0);
+          const optBase = Math.round(opt.pricingSummary.subTotal - optSum);
+          const optSqft = Math.round(opt.dimensions?.sqft ?? 0);
+          const optItems = optBase > 0 ? [{ id: `opt-${opt.id}-item-base-${Date.now()}`, label: 'Base Deck Construction', quantity: optSqft > 0 ? `${optSqft} sqft` : '', value: optBase }, ...impactItems] : impactItems;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const sel = (opt.selections ?? {}) as Record<string, any>;
+          const deckingName = sel.decking?.name ? `${sel.decking.brand ? sel.decking.brand + ' ' : ''}${sel.decking.name}` : 'Standard Decking';
+          const framingName = sel.framing?.name || '2×8 PT @ 16" OC (Standard)';
+          const railingName = sel.railing?.name ? `${sel.railing.brand ? sel.railing.brand + ' ' : ''}${sel.railing.name}` : 'No Railing';
+          const foundationName = sel.foundation?.name || 'Concrete Deck Blocks (Standard)';
+          const deckStr = deckingName.toLowerCase();
+          const materialWarranty = /azek|timbertech/.test(deckStr) ? '50-Year Material' : /fiberon|trex|clubhouse|eva-?last/.test(deckStr) ? '25-Year Material' : /cedar/.test(deckStr) ? '10-Year Natural Wood' : '5-Year PT Lumber';
+          return { id: `opt-${opt.id}-${Date.now()}-${idx}`, name: opt.name, title: opt.activePackage ? `${opt.activePackage.size} ${opt.activePackage.level} Package` : `Custom Estimate #${data.estimateNumber}-${opt.id}`, description: nonZeroImpacts.map(i => i.label).slice(0, 3).join(' · ') || 'Custom deck build', price: Math.round(opt.pricingSummary.finalTotal), features: nonZeroImpacts.map(i => i.label), differences: [], itemizedItems: optItems, keyFeatures: { decking: deckingName, framing: framingName, railing: railingName, foundation: foundationName, materialWarranty, workmanshipWarranty: '5-Year Workmanship Warranty', addOns: [] } };
+        });
+      } else {
+        earlyUpdatedOptions = [{ id: `opt-${Date.now()}`, name: data.activePackage ? `${data.activePackage.level}` : 'Custom', title: data.activePackage ? `${data.activePackage.size} ${data.activePackage.level} Package` : `Custom Estimate #${data.estimateNumber}`, description: acceptedBuildSummary.scopeSummary || '', price: totalAmount, features: data.pricingSummary.impacts?.filter((imp: any) => Math.round(imp.value) !== 0)?.map((imp: any) => imp.label) || [], differences: [] }];
+      }
+      const earlyEstimateData: EstimateData = { options: earlyUpdatedOptions, addOns: [] };
+
       const newJob: Job = {
         id: newJobId,
         jobNumber: `EST-${new Date().getFullYear()}-${String(data.estimateNumber).padStart(3, '0')}`,
@@ -574,6 +620,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         estimateAmount,
         acceptedBuildSummary,
         liveEstimate,
+        estimateData: earlyEstimateData,   // ← included in initial INSERT, no race
         calculatorSelections: data.selections,
         calculatorDimensions: data.dimensions,
         calculatorOptions: data.allOptions && data.allOptions.length > 0
@@ -614,15 +661,13 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         },
       };
       setJobs(prev => [newJob, ...prev]);
-      dataService.createJob(newJob).catch(err => console.error('Failed to persist estimate job:', err));
-      targetJobId = newJobId;
+      dataService.createJob(newJob).catch(err => console.error('[handleEstimateSaved] Failed to persist estimate job:', err));
       createdNewJob = newJob;
     }
 
     // Build and persist estimateData for portal multi-option view.
-    // When the estimator sent `allOptions` with >1 entry, persist ALL
-    // options as a clean snapshot (replacing any previously-saved options
-    // for this estimate). Otherwise fall back to single-option merge logic.
+    // For NEW jobs, estimateData was already included in the createJob payload above.
+    // For EXISTING jobs, we re-compute and update via handleUpdateJob.
     const existingJob = jobs.find(j => j.id === targetJobId);
     let updatedOptions: EstimateOption[];
 
@@ -748,7 +793,12 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
       options: updatedOptions,
       addOns: existingJob?.estimateData?.addOns || [],
     };
-    handleUpdateJob(targetJobId!, { estimateData });
+    // For NEW jobs estimateData was already baked into the createJob payload above —
+    // skip the redundant UPDATE to avoid a race condition where UPDATE fires before
+    // the INSERT is acknowledged by Supabase.
+    if (!createdNewJob) {
+      handleUpdateJob(targetJobId!, { estimateData });
+    }
 
     // Send HTML estimate email (or fallback to mailto if no email on file)
     const portalUrl = `${window.location.origin}?portal=${portalToken}`;

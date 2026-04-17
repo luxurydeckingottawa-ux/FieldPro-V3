@@ -271,15 +271,61 @@ const TIER_ORDER: Record<TierKey, number> = {
 const tierOrder = (t: TierKey | null): number =>
   t === null ? 4 : TIER_ORDER[t];
 
+// Explicit ID→tier map matching the Material Matrix (MATERIALS array).
+// The old price-threshold function was wrong — GoodLife Weekender (Δ$16) was
+// classified as 'elite' when it's actually 'select'. Now every product is
+// mapped directly so the badge matches the real brand tier hierarchy.
+const OPTION_TIER_MAP: Record<string, TierKey> = {
+  // ── Decking ──────────────────────────────────────────────────────────────
+  pt_wood_decking:             'select',
+  cedar_decking:               'select',
+  // Fiberon
+  fiberon_goodlife_weekender:  'select',
+  fiberon_goodlife_escapes:    'select',
+  fiberon_sanctuary:           'premium',
+  fiberon_concordia:           'elite',
+  fiberon_paramount:           'elite',
+  fiberon_promenade:           'elite',
+  // TimberTech
+  tt_prime:                    'select',
+  tt_prime_plus:               'select',
+  tt_terrain:                  'premium',
+  tt_reserve:                  'elite',
+  tt_legacy:                   'signature',
+  // AZEK
+  azek_harvest:                'elite',
+  azek_landmark:               'elite',
+  azek_vintage:                'signature',
+  // ClubHouse
+  woodbridge_pvc:              'premium',
+  // Eva-Last
+  eva_infinity:                'select',
+  eva_apex:                    'signature',
+  eva_pioneer:                 'signature',
+  // ── Skirting (mirrors the decking tier of the matching line) ─────────────
+  skirt_lattice:               'select',
+  skirt_wood:                  'select',
+  skirt_cedar:                 'select',
+  skirt_pvc:                   'select',
+  skirt_fiberon_gl:            'select',       // matches GoodLife Weekender/Escapes
+  skirt_fiberon_sanctuary:     'premium',      // matches Sanctuary
+  skirt_fiberon_concordia:     'elite',        // matches Concordia/Paramount/Promenade
+  skirt_tt_prime:              'select',       // matches Prime/Prime+/Terrain
+  skirt_tt_legacy:             'elite',        // matches Reserve/Legacy
+  skirt_azek_harvest:          'elite',        // matches Harvest
+  skirt_azek_vintage:          'signature',    // matches Landmark/Vintage
+  skirt_eva_infinity:          'select',       // matches Infinity
+  skirt_eva_apex:              'signature',    // matches Apex/Pioneer
+};
+
 const getTierFromPrice = (
   category: string,
-  priceDelta: number
+  _priceDelta: number,
+  optionId?: string
 ): TierKey | null => {
   if (category !== 'decking' && category !== 'skirting') return null;
-  if (priceDelta < 5) return 'select';
-  if (priceDelta < 15) return 'premium';
-  if (priceDelta < 30) return 'elite';
-  return 'signature';
+  if (optionId && OPTION_TIER_MAP[optionId]) return OPTION_TIER_MAP[optionId];
+  return null; // unknown option → no badge rather than wrong badge
 };
 
 const fmtCAD = (n: number) =>
@@ -489,6 +535,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
   onRenameOption,
   onDeleteOption,
   optionTotals,
+  onGenerateGoodBetterBest,
 }) => {
   const [panelOpen, setPanelOpen] = useState<boolean>(true);
   // ROUND 6 FIX 3 — Sort-by-tier toggle. Persists across category changes
@@ -779,8 +826,8 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
     sortByTier && tierSortable
       ? [...activeOptions].sort(
           (a, b) =>
-            tierOrder(getTierFromPrice(activeCategory, a.priceDelta)) -
-            tierOrder(getTierFromPrice(activeCategory, b.priceDelta))
+            tierOrder(getTierFromPrice(activeCategory, a.priceDelta, a.id)) -
+            tierOrder(getTierFromPrice(activeCategory, b.priceDelta, b.id))
         )
       : activeOptions;
   const activeDecking = selections.decking;
@@ -821,6 +868,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
           else if (v === 'matrix') setView?.('materialMatrix');
         }}
         onExit={onExit}
+        onGenerateGoodBetterBest={onGenerateGoodBetterBest}
       />
 
       {/* ══ MAIN CONTENT ══ */}
@@ -1974,7 +2022,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                         : lightingQuantities[opt.id] || 0;
                     // FIX 3 — tier classification label (null for categories without a
                     // clear price range, e.g. railing uses componentized pricing).
-                    const tier = getTierFromPrice(activeCategory, opt.priceDelta);
+                    const tier = getTierFromPrice(activeCategory, opt.priceDelta, opt.id);
                     // ROUND 10 FIX 4 — warranty badge only renders on the
                     // extended 10-year warranty card within the protection
                     // category. If the category grows to multiple tiers

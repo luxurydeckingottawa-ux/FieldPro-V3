@@ -30,6 +30,8 @@ interface ShowroomTopNavProps {
   isFullScreen?: boolean;
   /** Optional fullscreen toggle. Renders the ⛶ icon when provided. */
   toggleFullScreen?: () => void;
+  /** When provided, renders the "Good / Better / Best" generator button in the left zone. */
+  onGenerateGoodBetterBest?: () => void;
 }
 
 const TABS: { id: ShowroomView; label: string }[] = [
@@ -44,6 +46,7 @@ const ShowroomTopNav: React.FC<ShowroomTopNavProps> = ({
   onExit,
   isFullScreen,
   toggleFullScreen,
+  onGenerateGoodBetterBest,
 }) => {
   return (
     <div
@@ -60,7 +63,7 @@ const ShowroomTopNav: React.FC<ShowroomTopNavProps> = ({
         borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}
     >
-      {/* Left: exit */}
+      {/* Left: exit + Good/Better/Best */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {onExit && (
           <button
@@ -89,6 +92,48 @@ const ShowroomTopNav: React.FC<ShowroomTopNavProps> = ({
             }}
           >
             {'\u2039'} Exit Showroom
+          </button>
+        )}
+
+        {onGenerateGoodBetterBest && (
+          <button
+            onClick={onGenerateGoodBetterBest}
+            title="Auto-generate Option A (Wood), B (Composite), C (PVC) from current dimensions. Update railings manually after."
+            style={{
+              padding: '8px 14px',
+              borderRadius: 4,
+              border: '1px solid #c4a432',
+              background: 'rgba(196,164,50,0.10)',
+              color: '#c4a432',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'background 0.15s, box-shadow 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(196,164,50,0.22)';
+              e.currentTarget.style.boxShadow = '0 0 0 1px #c4a432';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(196,164,50,0.10)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            {/* Trophy icon */}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/>
+              <path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/>
+              <path d="M4 22h16"/>
+              <path d="M10 14.66V17c0 .55-.47 1-1.05 1h-.05a2 2 0 0 0-1.9 2H17a2 2 0 0 0-1.9-2h-.05c-.58 0-1.05-.45-1.05-1v-2.34"/>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/>
+            </svg>
+            Good / Better / Best
           </button>
         )}
       </div>

@@ -211,6 +211,8 @@ export interface ShowroomEstimatorProps {
   onDeleteOption?: (id: string) => void;
   /** finalTotal per option id, computed by parent so OptionTabs can show live totals for all tabs. */
   optionTotals?: Record<string, number>;
+  /** Fires when user clicks "Generate Good / Better / Best" */
+  onGenerateGoodBetterBest?: () => void;
 }
 
 export interface PackageSelection {
@@ -1475,6 +1477,11 @@ const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDi
   // Printing state
   const [matrixPrintData, setMatrixPrintData] = useState<{ materials: Material[], size: DeckSize, railings: boolean, mode: 'single' | 'compare' } | null>(null);
   const [packagesPrintData, setPackagesPrintData] = useState<{ size: PackageSize, railings: boolean } | null>(null);
+
+  // Accept Quote option-selection modal
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [acceptSelectedIds, setAcceptSelectedIds] = useState<string[]>([]);
+  const [pendingAcceptClient, setPendingAcceptClient] = useState<{ name: string; address: string } | null>(null);
 useEffect(() => {
   const handleAfterPrint = () => {
     document.documentElement.removeAttribute('data-print');
@@ -1629,6 +1636,89 @@ useEffect(() => {
       return filtered;
     });
   }, [activeOptionId]);
+
+  // ── Good / Better / Best Generator ────────────────────────────────────────
+  // Finds a specific PricingTier from the global PRICING_DATA catalogue.
+  const findTier = (categoryId: string, tierId: string): PricingTier | null => {
+    const cat = PRICING_DATA.find(c => c.id === categoryId);
+    return cat?.options.find(o => o.id === tierId) ?? null;
+  };
+
+  const handleGenerateGoodBetterBest = useCallback(() => {
+    // Warn the user if they already have more than one option set up
+    if (options.length > 1) {
+      const ok = window.confirm(
+        `This will replace your current ${options.length} options with the Good / Better / Best presets.\n\nContinue?`
+      );
+      if (!ok) return;
+    }
+
+    // Source all dimensions / lighting / railing from the currently active option
+    const base = options.find(o => o.id === activeOptionId) ?? options[0];
+    const baseDims    = { ...base.dimensions };
+    const baseSel     = base.selections;
+    const baseLighting = { ...base.lightingQuantities };
+    const basePackage  = base.activePackage;
+
+    // Resolve the tier objects we'll slot in
+    const woodDecking      = findTier('decking',    'pt_wood_decking');
+    const escapesDecking   = findTier('decking',    'fiberon_goodlife_escapes');
+    const woodbridgeDecking = findTier('decking',   'woodbridge_pvc');
+    const helical          = findTier('foundation', 'helical');
+    const framing2x10_12   = findTier('framing',    'upgrade_2x10_12');
+
+    // Switch to helical on the composite/PVC options if footings are entered
+    const useHelical = baseDims.footingsCount > 0 && helical != null;
+
+    // ── Option A: GOOD — Pressure Treated Wood ────────────────────────────
+    const optionA: EstimateOptionSnapshot = {
+      id: 'A',
+      name: 'Option A — Good (Wood)',
+      dimensions: baseDims,
+      selections: {
+        ...baseSel,
+        decking: woodDecking ?? baseSel.decking,
+        // Foundation and framing stay as the user had them for the wood option
+      },
+      lightingQuantities: baseLighting,
+      activePackage: basePackage,
+    };
+
+    // ── Option B: BETTER — Fiberon GoodLife Escapes + helical if footings ─
+    const optionB: EstimateOptionSnapshot = {
+      id: 'B',
+      name: 'Option B — Better (Composite)',
+      dimensions: baseDims,
+      selections: {
+        ...baseSel,
+        decking: escapesDecking ?? baseSel.decking,
+        foundation: useHelical ? helical : baseSel.foundation,
+        // Railing intentionally kept the same — must be updated manually
+        // because composite builds use component-based (posts + sections) pricing
+      },
+      lightingQuantities: baseLighting,
+      activePackage: basePackage,
+    };
+
+    // ── Option C: BEST — Woodbridge PVC + 2×10@12" framing + helical ─────
+    const optionC: EstimateOptionSnapshot = {
+      id: 'C',
+      name: 'Option C — Best (PVC)',
+      dimensions: baseDims,
+      selections: {
+        ...baseSel,
+        decking: woodbridgeDecking ?? baseSel.decking,
+        framing: framing2x10_12   ?? baseSel.framing,
+        foundation: useHelical ? helical : baseSel.foundation,
+        // Railing intentionally kept the same — must be updated manually
+      },
+      lightingQuantities: baseLighting,
+      activePackage: basePackage,
+    };
+
+    setOptions([optionA, optionB, optionC]);
+    setActiveOptionId('A');
+  }, [options, activeOptionId]); // eslint-disable-line react-hooks/exhaustive-deps
   // ──────────────────────────────────────────────────────────────────────
 
 const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages') => {
@@ -1715,34 +1805,65 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
     }
     setClientInfo({ name, address });
 
-    // Same allOptions structure as handleSaveEstimate — lets the acceptance
-    // flow preserve every option on the job, even if the customer will pick
-    // just one to accept. lightingQuantities included for full state restore.
-    const allOptions = options.map((opt) => ({
-      id: opt.id,
-      name: opt.name,
-      selections: opt.selections,
-      dimensions: opt.dimensions,
-      lightingQuantities: opt.lightingQuantities,
-      pricingSummary: computePricingSummary(
-        opt.dimensions,
-        opt.selections,
-        opt.lightingQuantities,
-        opt.activePackage,
-      ),
-      activePackage: opt.activePackage,
-    }));
+    // If there's only one option, skip the modal and accept directly.
+    if (options.length <= 1) {
+      handleConfirmAccept([options[0]?.id ?? 'A'], { name, address });
+      return;
+    }
 
-    // Fire callback to open AcceptanceModal in Field Pro
+    // Multiple options — show the selection modal. Default: all options pre-checked.
+    setPendingAcceptClient({ name, address });
+    setAcceptSelectedIds(options.map((o) => o.id));
+    setShowAcceptModal(true);
+  };
+
+  /** Called when user confirms which options to accept in the modal. */
+  const handleConfirmAccept = (
+    selectedIds: string[],
+    clientOverride?: { name: string; address: string },
+  ) => {
+    const client = clientOverride ?? pendingAcceptClient ?? clientInfo;
+
+    const allOptions = options
+      .filter((opt) => selectedIds.includes(opt.id))
+      .map((opt) => ({
+        id: opt.id,
+        name: opt.name,
+        selections: opt.selections,
+        dimensions: opt.dimensions,
+        lightingQuantities: opt.lightingQuantities,
+        pricingSummary: computePricingSummary(
+          opt.dimensions,
+          opt.selections,
+          opt.lightingQuantities,
+          opt.activePackage,
+        ),
+        activePackage: opt.activePackage,
+      }));
+
+    // Primary option = first selected (drives legacy single-option fields)
+    const primary = options.find((o) => o.id === selectedIds[0]);
+    const primarySummary = primary
+      ? computePricingSummary(
+          primary.dimensions,
+          primary.selections,
+          primary.lightingQuantities,
+          primary.activePackage,
+        )
+      : pricingSummary;
+
+    setShowAcceptModal(false);
+    setPendingAcceptClient(null);
+
     if (onEstimateAccepted) {
       onEstimateAccepted({
-        clientName: name,
-        clientAddress: address,
+        clientName: client.name,
+        clientAddress: client.address,
         estimateNumber,
-        selections: calcSelections,
-        dimensions: calcDimensions,
-        pricingSummary,
-        activePackage,
+        selections: primary?.selections ?? calcSelections,
+        dimensions: primary?.dimensions ?? calcDimensions,
+        pricingSummary: primarySummary,
+        activePackage: primary?.activePackage ?? activePackage,
         allOptions,
       });
     }
@@ -1889,6 +2010,7 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
             onRenameOption={handleRenameOption}
             onDeleteOption={handleDeleteOption}
             optionTotals={optionTotals}
+            onGenerateGoodBetterBest={handleGenerateGoodBetterBest}
           />
         )}
         {view === 'packages' && (
@@ -2378,6 +2500,144 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
               <div className="print-sig-line">Client Review Signature</div>
               <div className="print-sig-line">Sales Consultant Signature</div>
            </div>
+        </div>
+      )}
+
+      {/* ── Accept Quote — Option Selection Modal ─────────────────────────── */}
+      {showAcceptModal && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.72)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAcceptModal(false); }}
+        >
+          <div style={{
+            background: '#111', border: '1px solid #c4a432',
+            borderRadius: '12px', width: '100%', maxWidth: '480px',
+            overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.8)',
+          }}>
+            {/* Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1a1600 0%, #2a2000 100%)',
+              borderBottom: '1px solid #c4a43233',
+              padding: '20px 24px',
+            }}>
+              <div style={{ fontSize: '0.7rem', letterSpacing: '0.15em', color: '#c4a432', fontWeight: 700, marginBottom: '4px' }}>
+                ACCEPT ESTIMATE
+              </div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+                Which option(s) is the customer accepting?
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#999', marginTop: '4px' }}>
+                Select one or more — an option could be an add-on or separate scope.
+              </div>
+            </div>
+
+            {/* Option list */}
+            <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {options.map((opt) => {
+                const summary = computePricingSummary(opt.dimensions, opt.selections, opt.lightingQuantities, opt.activePackage);
+                const total = Math.round(summary.finalTotal ?? summary.subTotal ?? 0);
+                const isChecked = acceptSelectedIds.includes(opt.id);
+                return (
+                  <label
+                    key={opt.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '14px',
+                      padding: '14px 16px',
+                      background: isChecked ? 'rgba(196,164,50,0.10)' : 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${isChecked ? '#c4a432' : '#2a2a2a'}`,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {
+                        setAcceptSelectedIds(prev =>
+                          prev.includes(opt.id)
+                            ? prev.filter(id => id !== opt.id)
+                            : [...prev, opt.id]
+                        );
+                      }}
+                      style={{ width: '18px', height: '18px', accentColor: '#c4a432', cursor: 'pointer', flexShrink: 0 }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem' }}>
+                        <span style={{ color: '#c4a432', marginRight: '6px' }}>{opt.id}.</span>
+                        {opt.name}
+                      </div>
+                      {total > 0 && (
+                        <div style={{ fontSize: '0.8rem', color: '#bbb', marginTop: '2px' }}>
+                          ${total.toLocaleString()} <span style={{ color: '#666' }}>+ HST</span>
+                        </div>
+                      )}
+                    </div>
+                    {isChecked && (
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#c4a432', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+
+            {/* Combined total if multiple selected */}
+            {acceptSelectedIds.length > 1 && (() => {
+              const combinedTotal = options
+                .filter(o => acceptSelectedIds.includes(o.id))
+                .reduce((sum, opt) => {
+                  const s = computePricingSummary(opt.dimensions, opt.selections, opt.lightingQuantities, opt.activePackage);
+                  return sum + Math.round(s.finalTotal ?? s.subTotal ?? 0);
+                }, 0);
+              return (
+                <div style={{ padding: '0 24px 12px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#c4a432', fontWeight: 700 }}>
+                    Combined total: ${combinedTotal.toLocaleString()} + HST
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Footer buttons */}
+            <div style={{
+              padding: '16px 24px', borderTop: '1px solid #1f1f1f',
+              display: 'flex', gap: '10px', justifyContent: 'flex-end',
+            }}>
+              <button
+                onClick={() => setShowAcceptModal(false)}
+                style={{
+                  padding: '10px 20px', borderRadius: '6px',
+                  border: '1px solid #333', background: 'transparent',
+                  color: '#999', fontSize: '0.85rem', cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                disabled={acceptSelectedIds.length === 0}
+                onClick={() => handleConfirmAccept(acceptSelectedIds)}
+                style={{
+                  padding: '10px 24px', borderRadius: '6px',
+                  border: 'none',
+                  background: acceptSelectedIds.length > 0 ? '#c4a432' : '#333',
+                  color: acceptSelectedIds.length > 0 ? '#000' : '#666',
+                  fontSize: '0.85rem', fontWeight: 700, cursor: acceptSelectedIds.length > 0 ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.15s',
+                }}
+              >
+                Accept {acceptSelectedIds.length > 0 ? `Option${acceptSelectedIds.length > 1 ? 's' : ''} ${acceptSelectedIds.join(' + ')}` : '—'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
