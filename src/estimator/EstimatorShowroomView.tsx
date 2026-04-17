@@ -1993,7 +1993,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                               // decking grain textures keep their colour
                               // gradient for the fallback-on-404 case.
                               background: isLighting
-                                ? 'rgba(255,255,255,0.02)'
+                                ? 'rgba(255,255,255,0.92)'
                                 : `linear-gradient(135deg, ${opt.imageColor}, ${shade(
                                     opt.imageColor,
                                     -0.2
@@ -2203,6 +2203,19 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                           >
                             {opt.description}
                           </div>
+
+                          {/* Unit price always visible on lighting cards */}
+                          {isLighting && opt.priceDelta > 0 && (
+                            <div style={{
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: 'var(--lux-gold)',
+                              fontFamily: FONT_DISPLAY,
+                              marginTop: 4,
+                            }}>
+                              ${Math.round(opt.priceDelta).toLocaleString()} <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--est-text-secondary)' }}>each</span>
+                            </div>
+                          )}
 
                           {isQty ? (
                             <div
