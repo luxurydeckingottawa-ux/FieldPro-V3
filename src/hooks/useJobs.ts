@@ -21,7 +21,7 @@ import {
   LiveEstimate, LiveEstimateItem,
 } from '../types';
 import { createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS } from '../constants';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { dataService } from '../services/dataService';
 import { generateEstimatePDF } from '../utils/estimatePdf';
 import { sendSms, sendGoogleReviewSms, sendWarrantySms, sendWarrantyEmail, sendEstimateEmail } from '../utils/communications';
@@ -415,7 +415,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
 
   // ── Estimate Saved (save + send quote flow) ──────────────────────────────
 
-  const handleEstimateSaved = useCallback((data: EstimateSavedData) => {
+  const handleEstimateSaved = useCallback(async (data: EstimateSavedData) => {
     const now = new Date().toISOString();
     const totalAmount = Math.round(data.pricingSummary.finalTotal);
     const estimateAmount = Math.round(data.pricingSummary.subTotal);
@@ -487,6 +487,22 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     let targetJobId = calculatorSourceJobId;
     let portalToken = '';
     let createdNewJob: Job | null = null;
+
+    // ── Supabase existence check before UPDATE path ───────────────────────────
+    // If a job is in local state but NOT in Supabase (created with an old
+    // non-UUID ID before the UUID fix, or a previous INSERT failed silently),
+    // calling handleUpdateJob would update local state only — the Supabase
+    // UPDATE would hit 0 rows with no error. The job looks saved but disappears
+    // on the next page refresh when loadJobs() replaces local state from Supabase.
+    // Fix: verify the job exists in Supabase first. If not, fall through to the
+    // CREATE path so we always get a proper persisted record.
+    if (targetJobId && isSupabaseConfigured()) {
+      const existsInSupabase = await dataService.getJobById(targetJobId);
+      if (!existsInSupabase) {
+        console.warn(`[handleEstimateSaved] Job ${targetJobId} not found in Supabase — falling through to CREATE path to ensure persistence.`);
+        targetJobId = null; // triggers new job creation below
+      }
+    }
 
     if (targetJobId) {
       const existingJob = jobs.find(j => j.id === targetJobId);
@@ -661,7 +677,18 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         },
       };
       setJobs(prev => [newJob, ...prev]);
-      dataService.createJob(newJob).catch(err => console.error('[handleEstimateSaved] Failed to persist estimate job:', err));
+      const savedJob = await dataService.createJob(newJob);
+      if (!savedJob) {
+        // createJob returns null when Supabase INSERT fails (error is logged inside
+        // createJob). The job is in local state so it looks fine right now, but
+        // will vanish on the next page refresh when loadJobs() replaces local state.
+        // Log with enough context to diagnose via Supabase dashboard logs.
+        console.error(
+          '[handleEstimateSaved] createJob returned null — Supabase INSERT failed.',
+          'Job ID:', newJobId, '| Org ID:', newJob.org_id ?? 'MISSING',
+          '| estimateData present:', !!newJob.estimateData,
+        );
+      }
       createdNewJob = newJob;
     }
 
