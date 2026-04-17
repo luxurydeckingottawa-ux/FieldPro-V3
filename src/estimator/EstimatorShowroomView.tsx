@@ -7,6 +7,7 @@ import FramingVisualizer from './showroom/FramingVisualizer';
 import DeckPreview3D from './showroom/DeckPreview3D';
 import FoundationVisualizer from './showroom/FoundationVisualizer';
 import ProductGallery, { type GalleryImage } from './showroom/ProductGallery';
+import OptionTabs from './showroom/OptionTabs';
 import {
   TIER_TO_ITEM_ID,
   PRICING_DATA,
@@ -481,6 +482,12 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
   setView,
   isFullScreen,
   toggleFullScreen,
+  options,
+  activeOptionId,
+  onSelectOption,
+  onAddOption,
+  onRenameOption,
+  onDeleteOption,
 }) => {
   const [panelOpen, setPanelOpen] = useState<boolean>(true);
   // ROUND 6 FIX 3 — Sort-by-tier toggle. Persists across category changes
@@ -845,6 +852,25 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
               overflowY: 'auto',
             }}
           >
+            {/* Option Tabs — shown only if multi-option handlers are provided */}
+            {options && activeOptionId && onSelectOption && onAddOption && onRenameOption && onDeleteOption && (
+              <OptionTabs
+                options={options.map((o) => ({
+                  id: o.id,
+                  name: o.name,
+                  // For the active option, show live total. Others show 0 for now
+                  // (cross-tab pricing would require recomputing per option — future enhancement).
+                  totalPrice: o.id === activeOptionId ? pricingSummary.finalTotal : 0,
+                }))}
+                activeId={activeOptionId}
+                estimateNumber={estimateNumber}
+                onSelect={onSelectOption}
+                onAdd={onAddOption}
+                onRename={onRenameOption}
+                onDelete={onDeleteOption}
+              />
+            )}
+
             {/* Package base */}
             <div style={{ marginBottom: 14 }}>
               <div
@@ -1191,7 +1217,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                     fontWeight: 600,
                   }}
                 >
-                  ESTIMATE #{estimateNumber}
+                  ESTIMATE #{estimateNumber}{options && options.length > 1 && activeOptionId ? `-${activeOptionId}` : ''}
                 </div>
                 <div
                   style={{

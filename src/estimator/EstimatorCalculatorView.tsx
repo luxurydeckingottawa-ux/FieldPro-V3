@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { loadPriceBook } from '../utils/priceBook';
 import EstimatorShowroomView from './EstimatorShowroomView';
 import MaterialMatrixShowroom from './MaterialMatrixShowroom';
@@ -202,12 +202,34 @@ export interface ShowroomEstimatorProps {
   estimateNumber: number;
   activePackage: PackageSelection | null;
   setActivePackage: (pkg: PackageSelection | null) => void;
+  // Multi-option estimate
+  options?: EstimateOptionSnapshot[];
+  activeOptionId?: string;
+  onSelectOption?: (id: string) => void;
+  onAddOption?: (mode: 'fresh' | 'duplicate') => void;
+  onRenameOption?: (id: string, newName: string) => void;
+  onDeleteOption?: (id: string) => void;
 }
 
 export interface PackageSelection {
   size: PackageSize;
   level: PackageLevel;
   withRailings: boolean;
+}
+
+/**
+ * A single option snapshot within an estimate.
+ * Each estimate can have multiple options (A, B, C...) for the same customer,
+ * representing different material/design configurations. Client info is shared
+ * across all options (it's the same customer).
+ */
+export interface EstimateOptionSnapshot {
+  id: string;                                  // "A", "B", "C", ...
+  name: string;                                // "Option A" (user-renameable)
+  dimensions: Dimensions;
+  selections: CalculatorSelections;
+  lightingQuantities: Record<string, number>;
+  activePackage: PackageSelection | null;
 }
 
 // --- Configuration & Data ---
@@ -1162,19 +1184,68 @@ export interface EstimatorCalculatorProps {
 
 const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, initialSelections, onEstimateAccepted, onEstimateSaved, onExit }) => {
   const [view, setView] = useState<'calculator' | 'packages' | 'materialMatrix'>('calculator');
-  const [calcDimensions, setCalcDimensions] = useState<Dimensions>(() => ({
-    ...INITIAL_DIMENSIONS,
-    ...(initialDimensions || {})
-  }));
-  const [calcSelections, setCalcSelections] = useState(() => initialSelections ? { ...getInitialSelections(), ...initialSelections } : getInitialSelections());
-  const [lightingQuantities, setLightingQuantities] = useState<Record<string, number>>({});
+
+  // ── Multi-Option Estimate State ────────────────────────────────────────
+  // Each estimate can have multiple option snapshots (A, B, C...) for the
+  // same customer. Dimensions, selections, lighting, and activePackage are
+  // per-option. Client info is shared across all options.
+  const [options, setOptions] = useState<EstimateOptionSnapshot[]>(() => [{
+    id: 'A',
+    name: 'Option A',
+    dimensions: { ...INITIAL_DIMENSIONS, ...(initialDimensions || {}) },
+    selections: initialSelections ? { ...getInitialSelections(), ...initialSelections } : getInitialSelections(),
+    lightingQuantities: {},
+    activePackage: null,
+  }]);
+  const [activeOptionId, setActiveOptionId] = useState<string>('A');
+
+  // Derived: the currently-active option snapshot
+  const activeOption = options.find(o => o.id === activeOptionId) ?? options[0];
+
+  // Facades matching the old single-state signatures — reads come from the
+  // active option, writes update the active option in the options array.
+  const calcDimensions = activeOption.dimensions;
+  const calcSelections = activeOption.selections;
+  const lightingQuantities = activeOption.lightingQuantities;
+  const activePackage = activeOption.activePackage;
+
+  const setCalcDimensions: React.Dispatch<React.SetStateAction<Dimensions>> = useCallback((updater) => {
+    setOptions(opts => opts.map(o =>
+      o.id === activeOptionId
+        ? { ...o, dimensions: typeof updater === 'function' ? (updater as (p: Dimensions) => Dimensions)(o.dimensions) : updater }
+        : o
+    ));
+  }, [activeOptionId]);
+
+  const setCalcSelections: React.Dispatch<React.SetStateAction<CalculatorSelections>> = useCallback((updater) => {
+    setOptions(opts => opts.map(o =>
+      o.id === activeOptionId
+        ? { ...o, selections: typeof updater === 'function' ? (updater as (p: CalculatorSelections) => CalculatorSelections)(o.selections) : updater }
+        : o
+    ));
+  }, [activeOptionId]);
+
+  const setLightingQuantities: React.Dispatch<React.SetStateAction<Record<string, number>>> = useCallback((updater) => {
+    setOptions(opts => opts.map(o =>
+      o.id === activeOptionId
+        ? { ...o, lightingQuantities: typeof updater === 'function' ? (updater as (p: Record<string, number>) => Record<string, number>)(o.lightingQuantities) : updater }
+        : o
+    ));
+  }, [activeOptionId]);
+
+  const setActivePackage = useCallback((pkg: PackageSelection | null) => {
+    setOptions(opts => opts.map(o =>
+      o.id === activeOptionId ? { ...o, activePackage: pkg } : o
+    ));
+  }, [activeOptionId]);
+  // ──────────────────────────────────────────────────────────────────────
+
   const [clientInfo, setClientInfo] = useState(initialClientInfo || {name:'', address:''});
   const [calcActiveCategory, setCalcActiveCategory] = useState<string>('decking');
   const [pkgSize, setPkgSize] = useState<PackageSize>('12X12');
   const [pkgRailing, setPkgRailing] = useState<boolean>(false);
   const [pkgUpgrades, setPkgUpgrades] = useState<Record<PackageLevel, Set<string>>>({ SILVER: new Set(), GOLD: new Set(), PLATINUM: new Set(), DIAMOND: new Set() });
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
-  const [activePackage, setActivePackage] = useState<PackageSelection | null>(null);
   const [docMode, setDocMode] = useState<'estimate' | 'agreement'>('estimate');
   const [estimateNumber, setEstimateNumber] = useState<number>(() => {
     const saved = localStorage.getItem('luxury_decking_estimate_count');
@@ -1411,14 +1482,87 @@ useEffect(() => {
       const nextNum = estimateNumber + 1;
       localStorage.setItem('luxury_decking_estimate_count', nextNum.toString());
       setEstimateNumber(nextNum);
-      setActivePackage(null);
-      setCalcDimensions(INITIAL_DIMENSIONS);
-      setCalcSelections(getInitialSelections());
-      setLightingQuantities({});
+      // Reset to a single fresh Option A
+      setOptions([{
+        id: 'A',
+        name: 'Option A',
+        dimensions: INITIAL_DIMENSIONS,
+        selections: getInitialSelections(),
+        lightingQuantities: {},
+        activePackage: null,
+      }]);
+      setActiveOptionId('A');
       setClientInfo({name:'', address:''});
       setCalcActiveCategory('decking');
     }
   };
+
+  // ── Multi-Option Handlers ──────────────────────────────────────────────
+  /** Generate the next available option id: A, B, C, ..., Z, AA, AB, ... */
+  const nextOptionId = (existing: EstimateOptionSnapshot[]): string => {
+    const ids = new Set(existing.map(o => o.id));
+    for (let i = 0; i < 26; i++) {
+      const c = String.fromCharCode(65 + i);
+      if (!ids.has(c)) return c;
+    }
+    // Fallback: AA, AB, ...
+    for (let i = 0; i < 26; i++) {
+      for (let j = 0; j < 26; j++) {
+        const c = String.fromCharCode(65 + i) + String.fromCharCode(65 + j);
+        if (!ids.has(c)) return c;
+      }
+    }
+    return `X${Date.now()}`;
+  };
+
+  const handleAddOption = useCallback((mode: 'fresh' | 'duplicate') => {
+    setOptions(opts => {
+      const newId = nextOptionId(opts);
+      const source = opts.find(o => o.id === activeOptionId) ?? opts[0];
+      const newOption: EstimateOptionSnapshot = mode === 'duplicate'
+        ? {
+            id: newId,
+            name: `Option ${newId}`,
+            dimensions: { ...source.dimensions },
+            selections: { ...source.selections },
+            lightingQuantities: { ...source.lightingQuantities },
+            activePackage: source.activePackage,
+          }
+        : {
+            id: newId,
+            name: `Option ${newId}`,
+            dimensions: INITIAL_DIMENSIONS,
+            selections: getInitialSelections(),
+            lightingQuantities: {},
+            activePackage: null,
+          };
+      setActiveOptionId(newId);
+      return [...opts, newOption];
+    });
+  }, [activeOptionId]);
+
+  const handleSelectOption = useCallback((id: string) => {
+    setActiveOptionId(id);
+  }, []);
+
+  const handleRenameOption = useCallback((id: string, newName: string) => {
+    setOptions(opts => opts.map(o =>
+      o.id === id ? { ...o, name: newName } : o
+    ));
+  }, []);
+
+  const handleDeleteOption = useCallback((id: string) => {
+    setOptions(opts => {
+      if (opts.length <= 1) return opts; // never delete the last option
+      const filtered = opts.filter(o => o.id !== id);
+      // If deleting the active option, switch to the first remaining
+      if (activeOptionId === id) {
+        setActiveOptionId(filtered[0].id);
+      }
+      return filtered;
+    });
+  }, [activeOptionId]);
+  // ──────────────────────────────────────────────────────────────────────
 
 const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages') => {
   document.documentElement.setAttribute('data-print', mode);
@@ -1630,6 +1774,12 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
             setView={setView}
             isFullScreen={isFullScreen}
             toggleFullScreen={toggleFullScreen}
+            options={options}
+            activeOptionId={activeOptionId}
+            onSelectOption={handleSelectOption}
+            onAddOption={handleAddOption}
+            onRenameOption={handleRenameOption}
+            onDeleteOption={handleDeleteOption}
           />
         )}
         {view === 'packages' && (
