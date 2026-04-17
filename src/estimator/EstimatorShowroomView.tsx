@@ -4,6 +4,7 @@ import { loadPriceBook } from '../utils/priceBook';
 import ShowroomGlobalStyle from './showroom/ShowroomGlobalStyle';
 import ShowroomTopNav from './showroom/ShowroomTopNav';
 import FramingVisualizer from './showroom/FramingVisualizer';
+import DeckPreview3D from './showroom/DeckPreview3D';
 import FoundationVisualizer from './showroom/FoundationVisualizer';
 import ProductGallery, { type GalleryImage } from './showroom/ProductGallery';
 import {
@@ -1477,16 +1478,13 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                 minHeight: 0,
               }}
             >
-              {/* 3D Preview placeholder */}
-              {/* TODO: Jack will swap in real build photos later. For MVP we render
-                  the isometric SVG from the mockup and tint it with the currently
-                  selected decking material. */}
+              {/* 3D Deck Preview */}
               <div
                 style={{
                   flex: '0 0 45%',
                   borderRadius: 10,
                   border: '1px solid rgba(212,168,83,0.08)',
-                  background: 'rgba(255,255,255,0.02)',
+                  background: '#080808',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1494,75 +1492,30 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                   overflow: 'hidden',
                 }}
               >
+                <DeckPreview3D deckColor={getPreviewColor(activeDecking?.id)} />
+
+                {/* Visual approximation label */}
                 <div
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background:
-                      'linear-gradient(135deg, rgba(255,255,255,0.01), rgba(255,255,255,0.03))',
+                    position: 'absolute',
+                    top: 10,
+                    left: 0,
+                    right: 0,
+                    textAlign: 'center',
+                    pointerEvents: 'none',
                   }}
                 >
-                  {(() => {
-                    const previewColor = getPreviewColor(activeDecking?.id);
-                    return (
-                  <svg viewBox="0 0 400 300" style={{ width: '85%', opacity: 0.65 }}>
-                    <defs>
-                      <linearGradient id="dkSurface" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor={previewColor.primary} />
-                        <stop offset="100%" stopColor={previewColor.secondary} />
-                      </linearGradient>
-                    </defs>
-                    <rect x="80" y="30" width="240" height="90" fill="#2a2520" rx="2" />
-                    <rect x="170" y="45" width="40" height="55" fill="#1a1a2e" rx="1" stroke="#3a3530" strokeWidth="1" />
-                    <rect x="230" y="50" width="30" height="60" fill="#3a2a20" rx="1" stroke="#4a3a30" strokeWidth="1" />
-                    <polygon points="60,120 340,120 370,240 30,240" fill="url(#dkSurface)" />
-                    {[...Array(14)].map((_, i) => {
-                      const y = 125 + i * 8.5;
-                      const p = (y - 120) / 120;
-                      return (
-                        <line
-                          key={i}
-                          x1={60 - p * 30}
-                          y1={y}
-                          x2={340 + p * 30}
-                          y2={y}
-                          stroke="rgba(0,0,0,0.12)"
-                          strokeWidth={0.5 + p * 0.5}
-                        />
-                      );
-                    })}
-                    <polygon
-                      points="30,237 370,237 370,247 30,247"
-                      fill={previewColor.secondary}
-                    />
-                    <polygon
-                      points="160,240 240,240 248,260 152,260"
-                      fill={previewColor.primary}
-                      opacity="0.85"
-                    />
-                    <polygon
-                      points="152,260 248,260 255,278 145,278"
-                      fill={previewColor.secondary}
-                      opacity="0.75"
-                    />
-                  </svg>
-                    );
-                  })()}
-                  <div
+                  <span
                     style={{
-                      fontSize: 9,
+                      fontSize: 8,
                       letterSpacing: 2,
-                      color: 'rgba(212,168,83,0.3)',
+                      color: 'rgba(212,168,83,0.25)',
                       textTransform: 'uppercase',
-                      marginTop: 8,
+                      fontFamily: "'DM Sans', sans-serif",
                     }}
                   >
-                    VISUAL APPROXIMATION {'\u00B7'} RENDER IN PROGRESS
-                  </div>
+                    VISUAL APPROXIMATION
+                  </span>
                 </div>
 
                 {/* Decking material badge overlay */}
