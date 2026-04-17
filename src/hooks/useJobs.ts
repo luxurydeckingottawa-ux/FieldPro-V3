@@ -88,6 +88,22 @@ export interface EstimateAcceptedData {
   pricingSummary: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   activePackage: any;
+  /** All options for multi-option estimates. Each option carries its own
+   *  dimensions/selections/pricing so the customer portal can show them
+   *  side-by-side. When undefined or length === 1, legacy single-option
+   *  path is used. */
+  allOptions?: Array<{
+    id: string;
+    name: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    selections: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dimensions: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    pricingSummary: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    activePackage: any;
+  }>;
 }
 
 export type EstimateSavedData = EstimateAcceptedData;
@@ -522,29 +538,61 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
       createdNewJob = newJob;
     }
 
-    // Build and persist estimateData for portal multi-option view
+    // Build and persist estimateData for portal multi-option view.
+    // When the estimator sent `allOptions` with >1 entry, persist ALL
+    // options as a clean snapshot (replacing any previously-saved options
+    // for this estimate). Otherwise fall back to single-option merge logic.
     const existingJob = jobs.find(j => j.id === targetJobId);
-    const existingOptions: EstimateOption[] = existingJob?.estimateData?.options || [];
-    const newOptionName = data.activePackage ? `${data.activePackage.level}` : 'Custom';
-    const newOption: EstimateOption = {
-      id: `opt-${Date.now()}`,
-      name: newOptionName,
-      title: data.activePackage
-        ? `${data.activePackage.size} ${data.activePackage.level} Package`
-        : `Custom Estimate #${data.estimateNumber}`,
-      description: acceptedBuildSummary.scopeSummary || '',
-      price: totalAmount,
-      features: data.pricingSummary.impacts
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ?.filter((imp: any) => Math.round(imp.value) !== 0)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ?.map((imp: any) => imp.label) || [],
-      differences: [],
-    };
-    const updatedOptions = [
-      ...existingOptions.filter(o => o.name !== newOptionName),
-      newOption,
-    ];
+    let updatedOptions: EstimateOption[];
+
+    if (data.allOptions && data.allOptions.length > 1) {
+      // Multi-option estimate: map each option to an EstimateOption and
+      // replace the full options array. No dedup/merge since each option
+      // in the estimator is the source of truth.
+      updatedOptions = data.allOptions.map((opt, idx) => ({
+        id: `opt-${opt.id}-${Date.now()}-${idx}`,
+        name: opt.name,
+        title: opt.activePackage
+          ? `${opt.activePackage.size} ${opt.activePackage.level} Package`
+          : `Custom Estimate #${data.estimateNumber}-${opt.id}`,
+        description: opt.pricingSummary.impacts
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ?.filter((imp: any) => Math.round(imp.value) !== 0)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ?.map((imp: any) => imp.label).join(', ') || '',
+        price: Math.round(opt.pricingSummary.finalTotal),
+        features: opt.pricingSummary.impacts
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ?.filter((imp: any) => Math.round(imp.value) !== 0)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ?.map((imp: any) => imp.label) || [],
+        differences: [],
+      }));
+    } else {
+      // Single-option legacy path (also covers allOptions.length === 1)
+      const existingOptions: EstimateOption[] = existingJob?.estimateData?.options || [];
+      const newOptionName = data.activePackage ? `${data.activePackage.level}` : 'Custom';
+      const newOption: EstimateOption = {
+        id: `opt-${Date.now()}`,
+        name: newOptionName,
+        title: data.activePackage
+          ? `${data.activePackage.size} ${data.activePackage.level} Package`
+          : `Custom Estimate #${data.estimateNumber}`,
+        description: acceptedBuildSummary.scopeSummary || '',
+        price: totalAmount,
+        features: data.pricingSummary.impacts
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ?.filter((imp: any) => Math.round(imp.value) !== 0)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ?.map((imp: any) => imp.label) || [],
+        differences: [],
+      };
+      updatedOptions = [
+        ...existingOptions.filter(o => o.name !== newOptionName),
+        newOption,
+      ];
+    }
+
     const estimateData: EstimateData = {
       options: updatedOptions,
       addOns: existingJob?.estimateData?.addOns || [],

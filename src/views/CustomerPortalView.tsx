@@ -1331,46 +1331,56 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 </div>
               </div>
 
-              {/* Multi-Option Estimate Display */}
+              {/* Multi-Option Estimate Display — side-by-side grid for easy comparison */}
               {job.estimateData?.options && job.estimateData.options.length > 1 && !job.acceptedOptionId && (
                 <div className="space-y-3">
-                  <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest px-1">Choose Your Package</p>
-                  {job.estimateData.options.map((option) => (
-                    <div
-                      key={option.id}
-                      className={`p-5 rounded-2xl border transition-all ${
-                        option.isRecommended
-                          ? 'bg-[var(--brand-gold)]/5 border-[var(--brand-gold)]/30'
-                          : 'bg-white/[0.02] border-white/10'
-                      }`}
-                    >
-                      {option.isRecommended && (
-                        <div className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Recommended</div>
-                      )}
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
+                  <div className="flex items-center justify-between px-1">
+                    <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Compare Your Options</p>
+                    <p className="text-[9px] text-[var(--text-tertiary)]">{job.estimateData.options.length} options</p>
+                  </div>
+                  <div className={`grid gap-3 ${
+                    job.estimateData.options.length === 2
+                      ? 'grid-cols-1 md:grid-cols-2'
+                      : job.estimateData.options.length === 3
+                        ? 'grid-cols-1 md:grid-cols-3'
+                        : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                  }`}>
+                    {job.estimateData.options.map((option) => (
+                      <div
+                        key={option.id}
+                        className={`p-5 rounded-2xl border transition-all flex flex-col ${
+                          option.isRecommended
+                            ? 'bg-[var(--brand-gold)]/5 border-[var(--brand-gold)]/30'
+                            : 'bg-white/[0.02] border-white/10'
+                        }`}
+                      >
+                        {option.isRecommended && (
+                          <div className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-2">Recommended</div>
+                        )}
+                        <div className="mb-3">
                           <h3 className="text-sm font-black text-white">{option.title || option.name}</h3>
                           {option.description && (
-                            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{option.description}</p>
+                            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5 line-clamp-2">{option.description}</p>
                           )}
                         </div>
-                        <div className="text-right ml-4">
-                          <div className="text-lg font-black text-white">${option.price.toLocaleString()}</div>
-                          <div className="text-[8px] text-[var(--text-tertiary)]">+ HST</div>
+                        <div className="mb-4">
+                          <div className="text-2xl font-black text-white">${option.price.toLocaleString()}</div>
+                          <div className="text-[9px] text-[var(--text-tertiary)] mt-0.5">+ HST</div>
                         </div>
+                        {option.features && option.features.length > 0 && (
+                          <ul className="space-y-1.5 mb-4 flex-1">
+                            {option.features.slice(0, 6).map((f, i) => (
+                              <li key={i} className="flex items-start gap-2 text-[10px] text-[var(--text-secondary)]">
+                                <span className="text-[var(--brand-gold)] text-[10px] leading-none mt-0.5">+</span>
+                                <span>{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <p className="text-[9px] text-[var(--text-tertiary)] border-t border-white/5 pt-3 mt-auto">Contact us to select this package.</p>
                       </div>
-                      {option.features && option.features.length > 0 && (
-                        <ul className="space-y-1 mt-3">
-                          {option.features.slice(0, 4).map((f, i) => (
-                            <li key={i} className="flex items-center gap-2 text-[10px] text-[var(--text-secondary)]">
-                              <span className="text-[var(--brand-gold)] text-[8px]">+</span> {f}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      <p className="text-[9px] text-[var(--text-tertiary)] mt-3">Contact us to select this package.</p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
 

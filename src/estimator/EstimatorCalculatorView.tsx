@@ -1353,6 +1353,15 @@ export interface EstimatorCalculatorProps {
     dimensions: Dimensions;
     pricingSummary: PricingSummary;
     activePackage: PackageSelection | null;
+    /** All options for multi-option estimates. Each has its own pricing/dimensions. */
+    allOptions?: Array<{
+      id: string;
+      name: string;
+      selections: CalculatorSelections;
+      dimensions: Dimensions;
+      pricingSummary: PricingSummary;
+      activePackage: PackageSelection | null;
+    }>;
   }) => void;
   /** Called when user saves estimate and wants to send quote to client */
   onEstimateSaved?: (data: {
@@ -1363,6 +1372,14 @@ export interface EstimatorCalculatorProps {
     dimensions: Dimensions;
     pricingSummary: PricingSummary;
     activePackage: PackageSelection | null;
+    allOptions?: Array<{
+      id: string;
+      name: string;
+      selections: CalculatorSelections;
+      dimensions: Dimensions;
+      pricingSummary: PricingSummary;
+      activePackage: PackageSelection | null;
+    }>;
   }) => void;
   /** Called when user wants to exit back to Field Pro */
   onExit?: () => void;
@@ -1619,6 +1636,24 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
 
     setClientInfo({ name, address });
 
+    // Build allOptions array — every option with its own computed pricing.
+    // When there's only one option this is effectively the same as the single
+    // top-level payload; when there are multiple, the consumer (useJobs) uses
+    // this array to persist ALL options to the job's estimateData.
+    const allOptions = options.map((opt) => ({
+      id: opt.id,
+      name: opt.name,
+      selections: opt.selections,
+      dimensions: opt.dimensions,
+      pricingSummary: computePricingSummary(
+        opt.dimensions,
+        opt.selections,
+        opt.lightingQuantities,
+        opt.activePackage,
+      ),
+      activePackage: opt.activePackage,
+    }));
+
     // Fire callback to save estimate data and send quote to client
     if (onEstimateSaved) {
       // Increment and persist BEFORE firing callback (callback may navigate away, unmounting component)
@@ -1633,6 +1668,7 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
         dimensions: calcDimensions,
         pricingSummary,
         activePackage,
+        allOptions,
       });
     } else {
       // Fallback: print PDF if no callback
@@ -1659,6 +1695,23 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
     }
     setClientInfo({ name, address });
 
+    // Same allOptions structure as handleSaveEstimate — lets the acceptance
+    // flow preserve every option on the job, even if the customer will pick
+    // just one to accept.
+    const allOptions = options.map((opt) => ({
+      id: opt.id,
+      name: opt.name,
+      selections: opt.selections,
+      dimensions: opt.dimensions,
+      pricingSummary: computePricingSummary(
+        opt.dimensions,
+        opt.selections,
+        opt.lightingQuantities,
+        opt.activePackage,
+      ),
+      activePackage: opt.activePackage,
+    }));
+
     // Fire callback to open AcceptanceModal in Field Pro
     if (onEstimateAccepted) {
       onEstimateAccepted({
@@ -1668,7 +1721,8 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
         selections: calcSelections,
         dimensions: calcDimensions,
         pricingSummary,
-        activePackage
+        activePackage,
+        allOptions,
       });
     }
   };
