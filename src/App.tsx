@@ -1358,6 +1358,8 @@ const App: React.FC = () => {
   const [calculatorInitialDimensions, setCalculatorInitialDimensions] = useState<any>(undefined);
   const [calculatorInitialClientInfo, setCalculatorInitialClientInfo] = useState<{ name: string; address: string } | undefined>(undefined);
   const [calculatorInitialSelections, setCalculatorInitialSelections] = useState<any>(undefined);
+  /** Full options array for restoring a multi-option estimate when reopening from pipeline */
+  const [calculatorInitialOptions, setCalculatorInitialOptions] = useState<any[] | undefined>(undefined);
   // calculatorSourceJobId and setCalculatorSourceJobId are provided by useJobs()
   const [showCalculatorAcceptance, setShowCalculatorAcceptance] = useState(false);
   const [calculatorAcceptanceJob, setCalculatorAcceptanceJob] = useState<Job | null>(null);
@@ -1392,7 +1394,28 @@ const App: React.FC = () => {
 
   /** Open the calculator pre-filled from an existing job (e.g. from OfficeJobDetail) */
   const handleOpenEstimateForJob = useCallback(async (job: Job) => {
-    // 1. Restore dimensions — prefer saved calculatorDimensions, fall back to measureSheet
+    // ── Priority 1: restore from the full calculatorOptions array ──────────
+    // This is the modern path — set whenever an estimate is saved/accepted.
+    // It captures ALL options (A, B, C…) with their exact dimensions,
+    // selections, and lighting quantities so the estimator reopens exactly
+    // as it was left.
+    if (job.calculatorOptions && job.calculatorOptions.length > 0) {
+      setCalculatorInitialOptions(job.calculatorOptions);
+      // Still set client info and source job; clear legacy single-option state
+      setCalculatorInitialDimensions(undefined);
+      setCalculatorInitialSelections(undefined);
+      setCalculatorInitialClientInfo(jobToCalculatorClientInfo(job));
+      setCalculatorSourceJobId(job.id);
+      setSelectedJob(job);
+      navigateTo('estimator-calculator');
+      return;
+    }
+
+    // ── Priority 2: legacy single-option restore ───────────────────────────
+    // Used for estimates saved before calculatorOptions was introduced.
+    setCalculatorInitialOptions(undefined);
+
+    // Restore dimensions — prefer saved calculatorDimensions, fall back to measureSheet
     if (job.calculatorDimensions && Object.keys(job.calculatorDimensions).length > 0) {
       setCalculatorInitialDimensions(job.calculatorDimensions);
     } else {
@@ -1410,14 +1433,14 @@ const App: React.FC = () => {
       }
     }
 
-    // 2. Restore saved material/option selections from the last time this estimate was built
+    // Restore saved material/option selections from the last time this estimate was built
     if (job.calculatorSelections && Object.keys(job.calculatorSelections).length > 0) {
       setCalculatorInitialSelections(job.calculatorSelections);
     } else {
       setCalculatorInitialSelections(undefined);
     }
 
-    // 3. Client info + source job
+    // Client info + source job
     setCalculatorInitialClientInfo(jobToCalculatorClientInfo(job));
     setCalculatorSourceJobId(job.id);
     setSelectedJob(job);
@@ -1508,6 +1531,7 @@ const App: React.FC = () => {
       calculatorInitialDimensions={calculatorInitialDimensions}
       calculatorInitialClientInfo={calculatorInitialClientInfo}
       calculatorInitialSelections={calculatorInitialSelections}
+      calculatorInitialOptions={calculatorInitialOptions}
       calculatorSourceJobId={calculatorSourceJobId}
       showCalculatorAcceptance={showCalculatorAcceptance}
       setShowCalculatorAcceptance={setShowCalculatorAcceptance}

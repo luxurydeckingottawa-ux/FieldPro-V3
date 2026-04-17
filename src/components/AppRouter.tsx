@@ -138,6 +138,8 @@ export interface AppRouterProps {
   calculatorInitialDimensions: unknown;
   calculatorInitialClientInfo: { name: string; address: string } | undefined;
   calculatorInitialSelections: unknown;
+  /** Full options array for restoring a multi-option estimate on reopen */
+  calculatorInitialOptions?: unknown[];
   calculatorSourceJobId: string | null;
   showCalculatorAcceptance: boolean;
   setShowCalculatorAcceptance: React.Dispatch<React.SetStateAction<boolean>>;
@@ -204,6 +206,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
     handleOpenNewEstimate, handleOpenEstimateForJob, handlePushToEstimating,
     handleEstimateAcceptedLocal, handleEstimateSaved,
     calculatorInitialDimensions, calculatorInitialClientInfo, calculatorInitialSelections,
+    calculatorInitialOptions,
     calculatorSourceJobId,
     showCalculatorAcceptance, setShowCalculatorAcceptance, calculatorAcceptanceJob,
     portalLoading, onAcceptOption, onSignContract, onTrackEngagement, handleClosePortal,
@@ -251,9 +254,10 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
     return (
       <>
         <EstimatorCalculatorView
-          initialDimensions={calculatorInitialDimensions}
+          initialOptions={calculatorInitialOptions as any}
+          initialDimensions={calculatorInitialOptions ? undefined : calculatorInitialDimensions}
           initialClientInfo={calculatorInitialClientInfo}
-          initialSelections={calculatorInitialSelections}
+          initialSelections={calculatorInitialOptions ? undefined : calculatorInitialSelections}
           onEstimateAccepted={handleEstimateAcceptedLocal}
           onEstimateSaved={handleEstimateSaved}
           onExit={() => navigateTo(currentUser?.role === Role.ADMIN ? 'office-pipeline' : 'estimator-dashboard')}

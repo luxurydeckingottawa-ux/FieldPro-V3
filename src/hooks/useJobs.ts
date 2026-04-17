@@ -330,6 +330,23 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         acceptedBuildSummary,
         calculatorSelections: data.selections,
         calculatorDimensions: data.dimensions,
+        calculatorOptions: data.allOptions && data.allOptions.length > 0
+          ? data.allOptions.map(o => ({
+              id: o.id,
+              name: o.name,
+              selections: o.selections,
+              dimensions: o.dimensions,
+              lightingQuantities: (o as any).lightingQuantities ?? {},
+              activePackage: o.activePackage,
+            }))
+          : [{
+              id: 'A',
+              name: 'Option A',
+              selections: data.selections,
+              dimensions: data.dimensions,
+              lightingQuantities: {},
+              activePackage: data.activePackage,
+            }],
         pipelineStage: PipelineStage.EST_COMPLETED,
         estimateStatus: 'completed' as const,
         estimateSentDate: now,
@@ -421,22 +438,45 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         .join(', ')
     };
 
-    // Build liveEstimate from impacts
-    const liveEstimate: LiveEstimate = {
+    // Build liveEstimate from impacts + synthetic base-deck line item.
+    //
+    // The pricing engine adds the base deck cost (sqft × base price + steps +
+    // fascia) directly to subTotal without pushing an impact for it. As a
+    // result, the itemized estimate used to show only UPGRADES (footings,
+    // railings, privacy walls, etc.) with no line for the base deck itself.
+    //
+    // To fix, we synthesize a "Base Deck Construction" item equal to
+    // subTotal − sum(non-zero impacts). This preserves math (line items sum
+    // to subTotal) and makes the list read like an actual itemized estimate.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const impactItems: LiveEstimateItem[] = (data.pricingSummary.impacts ?? [])
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      items: (data.pricingSummary.impacts ?? [])
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((imp: any) => Math.round(imp.value) !== 0)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((imp: any, idx: number) => {
-          const match = imp.label.match(/\(([^)]+)\)\s*$/);
-          return {
-            id: `item-${Date.now()}-${idx}`,
-            label: match ? imp.label.replace(/\s*\([^)]+\)\s*$/, '').trim() : imp.label,
-            quantity: match ? match[1] : '',
-            value: Math.round(imp.value),
-          } as LiveEstimateItem;
-        }),
+      .filter((imp: any) => Math.round(imp.value) !== 0)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((imp: any, idx: number) => {
+        const match = imp.label.match(/\(([^)]+)\)\s*$/);
+        return {
+          id: `item-${Date.now()}-${idx}`,
+          label: match ? imp.label.replace(/\s*\([^)]+\)\s*$/, '').trim() : imp.label,
+          quantity: match ? match[1] : '',
+          value: Math.round(imp.value),
+        } as LiveEstimateItem;
+      });
+
+    const impactsSum = impactItems.reduce((s, it) => s + it.value, 0);
+    const baseCost = Math.round(data.pricingSummary.subTotal - impactsSum);
+    const sqft = Math.round((data.dimensions?.sqft ?? 0));
+    const baseItem: LiveEstimateItem | null = baseCost > 0
+      ? {
+          id: `item-base-${Date.now()}`,
+          label: 'Base Deck Construction',
+          quantity: sqft > 0 ? `${sqft} sqft` : '',
+          value: baseCost,
+        }
+      : null;
+
+    const liveEstimate: LiveEstimate = {
+      items: baseItem ? [baseItem, ...impactItems] : impactItems,
       discount: 0,
       discountNote: '',
       lastUpdated: now,
@@ -458,6 +498,27 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         liveEstimate,
         calculatorSelections: data.selections,
         calculatorDimensions: data.dimensions,
+        // Persist the full options array so the estimator can be fully
+        // restored when reopened from the pipeline. This captures every
+        // option (A, B, C…) with its exact dimensions, selections, and
+        // lighting — not just the active option.
+        calculatorOptions: data.allOptions && data.allOptions.length > 0
+          ? data.allOptions.map(o => ({
+              id: o.id,
+              name: o.name,
+              selections: o.selections,
+              dimensions: o.dimensions,
+              lightingQuantities: (o as any).lightingQuantities ?? {},
+              activePackage: o.activePackage,
+            }))
+          : [{
+              id: 'A',
+              name: 'Option A',
+              selections: data.selections,
+              dimensions: data.dimensions,
+              lightingQuantities: {},
+              activePackage: data.activePackage,
+            }],
         pipelineStage: PipelineStage.EST_SENT,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         estimateStatus: 'sent' as any,
@@ -513,6 +574,26 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         estimateAmount,
         acceptedBuildSummary,
         liveEstimate,
+        calculatorSelections: data.selections,
+        calculatorDimensions: data.dimensions,
+        calculatorOptions: data.allOptions && data.allOptions.length > 0
+          ? data.allOptions.map(o => ({
+              id: o.id,
+              name: o.name,
+              selections: o.selections,
+              dimensions: o.dimensions,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              lightingQuantities: (o as any).lightingQuantities ?? {},
+              activePackage: o.activePackage,
+            }))
+          : [{
+              id: 'A',
+              name: 'Option A',
+              selections: data.selections,
+              dimensions: data.dimensions,
+              lightingQuantities: {},
+              activePackage: data.activePackage,
+            }],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         estimateStatus: 'sent' as any,
         estimateSentDate: now,
@@ -549,25 +630,93 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
       // Multi-option estimate: map each option to an EstimateOption and
       // replace the full options array. No dedup/merge since each option
       // in the estimator is the source of truth.
-      updatedOptions = data.allOptions.map((opt, idx) => ({
-        id: `opt-${opt.id}-${Date.now()}-${idx}`,
-        name: opt.name,
-        title: opt.activePackage
-          ? `${opt.activePackage.size} ${opt.activePackage.level} Package`
-          : `Custom Estimate #${data.estimateNumber}-${opt.id}`,
-        description: opt.pricingSummary.impacts
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?.filter((imp: any) => Math.round(imp.value) !== 0)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?.map((imp: any) => imp.label).join(', ') || '',
-        price: Math.round(opt.pricingSummary.finalTotal),
-        features: opt.pricingSummary.impacts
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?.filter((imp: any) => Math.round(imp.value) !== 0)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?.map((imp: any) => imp.label) || [],
-        differences: [],
-      }));
+      updatedOptions = data.allOptions.map((opt, idx) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const impacts = (opt.pricingSummary?.impacts ?? []) as any[];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const nonZeroImpacts = impacts.filter((imp: any) => Math.round(imp.value) !== 0);
+        const featureLabels = nonZeroImpacts.map((imp) => imp.label);
+
+        // Build per-option itemized list (same shape as liveEstimate items).
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const impactItems = nonZeroImpacts.map((imp: any, i: number) => {
+          const match = imp.label.match(/\(([^)]+)\)\s*$/);
+          return {
+            id: `opt-${opt.id}-item-${Date.now()}-${i}`,
+            label: match ? imp.label.replace(/\s*\([^)]+\)\s*$/, '').trim() : imp.label,
+            quantity: match ? match[1] : '',
+            value: Math.round(imp.value),
+          };
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const optSum = impactItems.reduce((s: number, it: any) => s + it.value, 0);
+        const optBase = Math.round(opt.pricingSummary.subTotal - optSum);
+        const optSqft = Math.round(opt.dimensions?.sqft ?? 0);
+        const optItems = optBase > 0
+          ? [
+              {
+                id: `opt-${opt.id}-item-base-${Date.now()}`,
+                label: 'Base Deck Construction',
+                quantity: optSqft > 0 ? `${optSqft} sqft` : '',
+                value: optBase,
+              },
+              ...impactItems,
+            ]
+          : impactItems;
+
+        // Derive structured keyFeatures from the selections on this option.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sel = (opt.selections ?? {}) as Record<string, any>;
+        const deckingName = sel.decking?.name
+          ? `${sel.decking.brand ? sel.decking.brand + ' ' : ''}${sel.decking.name}`
+          : 'Standard Decking';
+        const framingName = sel.framing?.name || '2×8 PT @ 16" OC (Standard)';
+        const railingName = sel.railing?.name
+          ? `${sel.railing.brand ? sel.railing.brand + ' ' : ''}${sel.railing.name}`
+          : 'No Railing';
+        const foundationName = sel.foundation?.name || 'Concrete Deck Blocks (Standard)';
+
+        // Material warranty lookup based on decking brand
+        const deckingStr = deckingName.toLowerCase();
+        let materialWarranty = '5-Year Material';
+        if (/azek|timbertech/.test(deckingStr)) materialWarranty = '50-Year Material';
+        else if (/trex\s+transcend|trex\s+signature/.test(deckingStr)) materialWarranty = '50-Year Material';
+        else if (/fiberon|trex|clubhouse|eva-?last/.test(deckingStr)) materialWarranty = '25-Year Material';
+        else if (/cedar/.test(deckingStr)) materialWarranty = '10-Year Natural Wood';
+        else if (/pressure\s*treated|\bpt\b/.test(deckingStr)) materialWarranty = '5-Year PT Lumber';
+
+        // Collect add-ons from impact labels that don't match the main categories
+        const addOns: string[] = [];
+        for (const label of featureLabels) {
+          const l = label.toLowerCase();
+          if (/decking|framing|railing|foundation/.test(l)) continue;
+          if (/privacy|skirting|lighting|pergola|drink|cover|landscaping|extended|warranty/.test(l)) {
+            addOns.push(label);
+          }
+        }
+
+        return {
+          id: `opt-${opt.id}-${Date.now()}-${idx}`,
+          name: opt.name,
+          title: opt.activePackage
+            ? `${opt.activePackage.size} ${opt.activePackage.level} Package`
+            : `Custom Estimate #${data.estimateNumber}-${opt.id}`,
+          description: featureLabels.slice(0, 3).join(' · ') || 'Custom deck build',
+          price: Math.round(opt.pricingSummary.finalTotal),
+          features: featureLabels,
+          differences: [],
+          itemizedItems: optItems,
+          keyFeatures: {
+            decking: deckingName,
+            framing: framingName,
+            railing: railingName,
+            foundation: foundationName,
+            materialWarranty,
+            workmanshipWarranty: '5-Year Workmanship Warranty',
+            addOns,
+          },
+        };
+      });
     } else {
       // Single-option legacy path (also covers allOptions.length === 1)
       const existingOptions: EstimateOption[] = existingJob?.estimateData?.options || [];

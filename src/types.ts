@@ -410,6 +410,26 @@ export interface Job {
   // Calculator selections (materials, options chosen during estimating)
   calculatorSelections?: Record<string, string>;
   calculatorDimensions?: Record<string, number>;
+  /**
+   * Full estimator options array saved on every estimate save/accept.
+   * Restored when reopening the estimator from the pipeline so all options
+   * (A, B, C…) and their exact dimensions/selections/lighting come back.
+   * Supersedes the older calculatorSelections/calculatorDimensions fields
+   * (which only stored the active option).
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  calculatorOptions?: Array<{
+    id: string;
+    name: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    selections: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dimensions: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    lightingQuantities: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    activePackage: any;
+  }>;
 
   // Module: CRM / Nurture & Automation
   nurtureSequence?: NurtureSequence;
@@ -510,7 +530,7 @@ export interface Job {
 
 export interface EstimateOption {
   id: string;
-  name: string; // e.g. "Good", "Better", "Best"
+  name: string; // e.g. "Option A", "Option B"
   title: string;
   description: string;
   price: number;
@@ -519,6 +539,27 @@ export interface EstimateOption {
   warrantyInfo?: string;
   imageUrl?: string;
   isRecommended?: boolean;
+  /** Full itemized breakdown for this option — populated when saved from the
+   *  multi-option estimator. Allows the portal/detail view to show each
+   *  option's own line items (base deck + upgrades) instead of a single
+   *  shared liveEstimate for the whole job. */
+  itemizedItems?: Array<{
+    id: string;
+    label: string;
+    quantity: string;
+    value: number;
+  }>;
+  /** Structured key-feature values for the portal card presentation.
+   *  Derived at save time from the option's selections. */
+  keyFeatures?: {
+    decking?: string;
+    framing?: string;
+    railing?: string;
+    foundation?: string;
+    materialWarranty?: string;
+    workmanshipWarranty?: string;
+    addOns?: string[];
+  };
 }
 
 export interface EstimateAddOn {

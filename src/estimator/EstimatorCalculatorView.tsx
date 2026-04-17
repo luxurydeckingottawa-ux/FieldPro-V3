@@ -1344,6 +1344,12 @@ export interface EstimatorCalculatorProps {
   initialClientInfo?: { name: string; address: string };
   /** Restore previously saved selections (material/option choices) when reopening an estimate */
   initialSelections?: ReturnType<typeof getInitialSelections>;
+  /**
+   * Restore a full multi-option estimate when reopening.
+   * When provided, this takes precedence over initialDimensions / initialSelections,
+   * and all previously-built options (A, B, C…) are restored exactly as saved.
+   */
+  initialOptions?: EstimateOptionSnapshot[];
   /** Called when a quote is accepted - passes all estimate data back to Field Pro */
   onEstimateAccepted?: (data: {
     clientName: string;
@@ -1359,6 +1365,7 @@ export interface EstimatorCalculatorProps {
       name: string;
       selections: CalculatorSelections;
       dimensions: Dimensions;
+      lightingQuantities: Record<string, number>;
       pricingSummary: PricingSummary;
       activePackage: PackageSelection | null;
     }>;
@@ -1377,6 +1384,7 @@ export interface EstimatorCalculatorProps {
       name: string;
       selections: CalculatorSelections;
       dimensions: Dimensions;
+      lightingQuantities: Record<string, number>;
       pricingSummary: PricingSummary;
       activePackage: PackageSelection | null;
     }>;
@@ -1385,22 +1393,31 @@ export interface EstimatorCalculatorProps {
   onExit?: () => void;
 }
 
-const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, initialSelections, onEstimateAccepted, onEstimateSaved, onExit }) => {
+const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, initialSelections, initialOptions, onEstimateAccepted, onEstimateSaved, onExit }) => {
   const [view, setView] = useState<'calculator' | 'packages' | 'materialMatrix'>('calculator');
 
   // ── Multi-Option Estimate State ────────────────────────────────────────
   // Each estimate can have multiple option snapshots (A, B, C...) for the
   // same customer. Dimensions, selections, lighting, and activePackage are
   // per-option. Client info is shared across all options.
-  const [options, setOptions] = useState<EstimateOptionSnapshot[]>(() => [{
-    id: 'A',
-    name: 'Option A',
-    dimensions: { ...INITIAL_DIMENSIONS, ...(initialDimensions || {}) },
-    selections: initialSelections ? { ...getInitialSelections(), ...initialSelections } : getInitialSelections(),
-    lightingQuantities: {},
-    activePackage: null,
-  }]);
-  const [activeOptionId, setActiveOptionId] = useState<string>('A');
+  const [options, setOptions] = useState<EstimateOptionSnapshot[]>(() => {
+    // Prefer a saved multi-option snapshot (re-opening an existing estimate)
+    if (initialOptions && initialOptions.length > 0) {
+      return initialOptions;
+    }
+    // Fall back to seeding a single Option A from legacy props
+    return [{
+      id: 'A',
+      name: 'Option A',
+      dimensions: { ...INITIAL_DIMENSIONS, ...(initialDimensions || {}) },
+      selections: initialSelections ? { ...getInitialSelections(), ...initialSelections } : getInitialSelections(),
+      lightingQuantities: {},
+      activePackage: null,
+    }];
+  });
+  const [activeOptionId, setActiveOptionId] = useState<string>(() =>
+    initialOptions && initialOptions.length > 0 ? initialOptions[0].id : 'A'
+  );
 
   // Derived: the currently-active option snapshot
   const activeOption = options.find(o => o.id === activeOptionId) ?? options[0];
@@ -1640,11 +1657,14 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
     // When there's only one option this is effectively the same as the single
     // top-level payload; when there are multiple, the consumer (useJobs) uses
     // this array to persist ALL options to the job's estimateData.
+    // lightingQuantities is included so the full option state can be restored
+    // exactly when reopening the estimator from the pipeline.
     const allOptions = options.map((opt) => ({
       id: opt.id,
       name: opt.name,
       selections: opt.selections,
       dimensions: opt.dimensions,
+      lightingQuantities: opt.lightingQuantities,
       pricingSummary: computePricingSummary(
         opt.dimensions,
         opt.selections,
@@ -1697,12 +1717,13 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
 
     // Same allOptions structure as handleSaveEstimate — lets the acceptance
     // flow preserve every option on the job, even if the customer will pick
-    // just one to accept.
+    // just one to accept. lightingQuantities included for full state restore.
     const allOptions = options.map((opt) => ({
       id: opt.id,
       name: opt.name,
       selections: opt.selections,
       dimensions: opt.dimensions,
+      lightingQuantities: opt.lightingQuantities,
       pricingSummary: computePricingSummary(
         opt.dimensions,
         opt.selections,
