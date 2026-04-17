@@ -6,9 +6,9 @@ import * as THREE from 'three';
 /* ------------------------------------------------------------------ */
 /*  DeckPreview3D                                                      */
 /*                                                                     */
-/*  A React Three Fiber 3D scene showing a house with an attached      */
-/*  composite/wood deck. The deck board colour updates live based on    */
-/*  the active decking material selected in the Estimator Showroom.    */
+/*  Bright, architectural-quality 3D deck preview. Individual deck     */
+/*  boards with wood grain, aluminium-style railing, clean stairs,     */
+/*  and a simple house wall backdrop.                                  */
 /*                                                                     */
 /*  Units: 1 Three.js unit = 1 foot.                                   */
 /* ------------------------------------------------------------------ */
@@ -21,12 +21,6 @@ export interface DeckPreview3DProps {
 
 /* ----- Constants ----- */
 
-// House dimensions (feet)
-const HOUSE_W = 20;
-const HOUSE_D = 15;
-const HOUSE_WALL_H = 12;
-const ROOF_PEAK = 5;
-
 // Deck dimensions (feet)
 const DECK_W = 16;
 const DECK_D = 12;
@@ -37,28 +31,33 @@ const DECK_HEIGHT = 3;            // deck surface 3 feet off ground
 
 // Fascia
 const FASCIA_T = 1 / 12;         // 1 inch thick
-const FASCIA_H = 7.25 / 12;      // matches joist height visually
 
 // Stairs
 const STAIR_COUNT = 4;
-const STAIR_DEPTH = 11 / 12;     // 11 inch tread run
-const STAIR_RISE = DECK_HEIGHT / STAIR_COUNT;
+const STAIR_RISE = 7 / 12;       // 7 inches per step
+const STAIR_RUN = 10.5 / 12;     // 10.5 inches per tread
 const STAIR_W = 4;               // 4 foot wide stairs
 
-// Railing
-const POST_SIZE = 3.5 / 12;      // 4x4 actual = 3.5"
-const RAIL_H = 3;                 // 36 inch railing
-const POST_SPACING = 6;           // post every 6 feet
+// Railing (aluminium style)
+const POST_SIZE = 3.5 / 12;
+const RAIL_H = 3;                // 36 inches above deck
+const POST_SPACING = 6;
+const BALUSTER_SIZE = 0.75 / 12; // 0.75 inch square balusters
+const BALUSTER_SPACING = 4 / 12; // every 4 inches
+const RAIL_BAR = 1.5 / 12;      // top/bottom rail bar thickness
+const BOTTOM_RAIL_OFFSET = 3 / 12; // bottom rail 3 inches above deck
+const RAIL_COLOR = '#2A2A2A';
 
-// Colours
-const HOUSE_WALL = '#2A2520';
-const HOUSE_ROOF = '#1E1A16';
-const GLASS_COL = '#3A4A5A';
-const GROUND_COL = '#1A2A1A';
-const WINDOW_COL = '#2A3A4A';
+// House wall
+const WALL_W = 20;
+const WALL_H = 10;
+const WALL_COLOR = '#8A9A80';
+
+// Ground
+const GROUND_COLOR = '#2A2A2A';
 
 /* ------------------------------------------------------------------ */
-/*  Canvas wood texture (reused pattern from FramingVisualizer)        */
+/*  Canvas wood texture                                                */
 /* ------------------------------------------------------------------ */
 
 function createWoodTexture(baseHex: string): THREE.CanvasTexture {
@@ -71,20 +70,20 @@ function createWoodTexture(baseHex: string): THREE.CanvasTexture {
   ctx.fillRect(0, 0, 64, 256);
 
   const base = new THREE.Color(baseHex);
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 60; i++) {
     const y = Math.random() * 256;
-    const w = 0.4 + Math.random() * 1.2;
-    const lightness = (Math.random() - 0.5) * 0.10;
+    const w = 0.3 + Math.random() * 1.0;
+    const lightness = (Math.random() - 0.5) * 0.08;
     const c = base.clone();
     c.offsetHSL(0, 0, lightness);
     ctx.strokeStyle = `#${c.getHexString()}`;
     ctx.lineWidth = w;
-    ctx.globalAlpha = 0.25 + Math.random() * 0.35;
+    ctx.globalAlpha = 0.2 + Math.random() * 0.3;
     ctx.beginPath();
     ctx.moveTo(0, y + (Math.random() - 0.5) * 2);
     ctx.bezierCurveTo(
-      16, y + (Math.random() - 0.5) * 4,
-      48, y + (Math.random() - 0.5) * 4,
+      16, y + (Math.random() - 0.5) * 3,
+      48, y + (Math.random() - 0.5) * 3,
       64, y + (Math.random() - 0.5) * 2,
     );
     ctx.stroke();
@@ -98,132 +97,68 @@ function createWoodTexture(baseHex: string): THREE.CanvasTexture {
   return tex;
 }
 
-function makeBoardMaterial(
-  baseHex: string,
-  seed: number,
-  roughness = 0.7,
-): THREE.MeshStandardMaterial {
+function makeBoardMaterial(baseHex: string, seed: number): THREE.MeshStandardMaterial {
   const base = new THREE.Color(baseHex);
   const vary = ((seed * 7919) % 100) / 100;
-  base.offsetHSL(0, 0, (vary - 0.5) * 0.05);
+  base.offsetHSL(0, 0, (vary - 0.5) * 0.03); // +/- 3% lightness
   const hex = `#${base.getHexString()}`;
   const tex = createWoodTexture(hex);
   return new THREE.MeshStandardMaterial({
     map: tex,
     color: base,
-    roughness,
+    roughness: 0.7,
     metalness: 0,
   });
 }
 
 /* ------------------------------------------------------------------ */
-/*  House                                                              */
+/*  House wall (simple flat wall with siding lines)                    */
 /* ------------------------------------------------------------------ */
 
-const House: React.FC = () => {
+const HouseWall: React.FC = () => {
   const wallMat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: HOUSE_WALL, roughness: 0.95, metalness: 0 }),
-    [],
-  );
-  const roofMat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: HOUSE_ROOF, roughness: 0.92, metalness: 0 }),
-    [],
-  );
-  const glassMat = useMemo(
-    () => new THREE.MeshStandardMaterial({
-      color: GLASS_COL,
-      roughness: 0.1,
-      metalness: 0.15,
-      transparent: true,
-      opacity: 0.45,
-    }),
-    [],
-  );
-  const windowMat = useMemo(
-    () => new THREE.MeshStandardMaterial({
-      color: WINDOW_COL,
-      roughness: 0.15,
-      metalness: 0.1,
-      transparent: true,
-      opacity: 0.5,
-    }),
+    () => new THREE.MeshStandardMaterial({ color: WALL_COLOR, roughness: 0.85, metalness: 0 }),
     [],
   );
 
-  // House sits with its back wall at z = 0, extending forward (positive z)
-  // Deck attaches at the back (z=0, extending into negative z)
-  const cx = 0;
-  const wallCz = HOUSE_D / 2;
+  // Siding groove material (dark lines to simulate board-and-batten / lap siding)
+  const grooveMat = useMemo(
+    () => new THREE.MeshStandardMaterial({ color: '#707D6A', roughness: 0.9, metalness: 0 }),
+    [],
+  );
 
-  // Roof: two angled planes forming a peaked roof
-  const roofOverhang = 1;
-  const roofD = HOUSE_D + roofOverhang * 2;
-  const roofSlope = Math.atan2(ROOF_PEAK, HOUSE_W / 2);
-  const roofPanelW = (HOUSE_W / 2) / Math.cos(roofSlope) + roofOverhang;
-  const roofThickness = 0.3;
+  // Wall sits at z = 0, deck extends in -z direction
+  const grooveSpacing = 7 / 12; // groove every 7 inches
+  const grooveCount = Math.floor(WALL_H / grooveSpacing);
+  const grooves: React.ReactNode[] = [];
+  for (let i = 1; i < grooveCount; i++) {
+    const y = i * grooveSpacing;
+    grooves.push(
+      <mesh key={`groove-${i}`} position={[0, y, -0.26]} material={grooveMat}>
+        <boxGeometry args={[WALL_W, 0.5 / 12, 0.02]} />
+      </mesh>,
+    );
+  }
 
   return (
-    <group position={[cx, 0, wallCz]}>
-      {/* Walls */}
-      <mesh position={[0, HOUSE_WALL_H / 2, 0]} material={wallMat} castShadow receiveShadow>
-        <boxGeometry args={[HOUSE_W, HOUSE_WALL_H, HOUSE_D]} />
+    <group>
+      {/* Main wall */}
+      <mesh position={[0, WALL_H / 2, 0]} material={wallMat} receiveShadow>
+        <boxGeometry args={[WALL_W, WALL_H, 0.5]} />
       </mesh>
-
-      {/* Roof - left panel */}
-      <mesh
-        position={[-HOUSE_W / 4, HOUSE_WALL_H + ROOF_PEAK / 2, 0]}
-        rotation={[0, 0, roofSlope]}
-        material={roofMat}
-        castShadow
-      >
-        <boxGeometry args={[roofPanelW, roofThickness, roofD]} />
-      </mesh>
-      {/* Roof - right panel */}
-      <mesh
-        position={[HOUSE_W / 4, HOUSE_WALL_H + ROOF_PEAK / 2, 0]}
-        rotation={[0, 0, -roofSlope]}
-        material={roofMat}
-        castShadow
-      >
-        <boxGeometry args={[roofPanelW, roofThickness, roofD]} />
-      </mesh>
-
-      {/* Sliding glass door on back wall (z = -HOUSE_D/2, facing deck) */}
-      <mesh position={[0, 3.5, -HOUSE_D / 2 - 0.01]} material={glassMat}>
-        <boxGeometry args={[6, 6.5, 0.15]} />
-      </mesh>
-      {/* Door frame */}
-      <mesh position={[0, 3.5, -HOUSE_D / 2 - 0.02]}>
-        <boxGeometry args={[6.3, 6.8, 0.05]} />
-        <meshStandardMaterial color="#1A1510" roughness={0.9} />
-      </mesh>
-
-      {/* Window on right side wall (+x face) */}
-      <mesh position={[HOUSE_W / 2 + 0.01, 7, 0]} material={windowMat}>
-        <boxGeometry args={[0.15, 3, 4]} />
-      </mesh>
-      {/* Window frame */}
-      <mesh position={[HOUSE_W / 2 + 0.02, 7, 0]}>
-        <boxGeometry args={[0.05, 3.3, 4.3]} />
-        <meshStandardMaterial color="#1A1510" roughness={0.9} />
-      </mesh>
+      {/* Siding grooves */}
+      {grooves}
     </group>
   );
 };
-
-
 
 /* ------------------------------------------------------------------ */
 /*  Deck boards                                                        */
 /* ------------------------------------------------------------------ */
 
-interface DeckBoardsProps {
-  primary: string;
-}
-
-const DeckBoards: React.FC<DeckBoardsProps> = ({ primary }) => {
+const DeckBoards: React.FC<{ primary: string }> = ({ primary }) => {
   const stride = DECK_BOARD_W + DECK_GAP;
-  const boardCount = Math.floor(DECK_W / stride);
+  const boardCount = Math.floor(DECK_D / stride); // boards run left-right, counted front-to-back
 
   const materials = useMemo(
     () => Array.from({ length: boardCount }, (_, i) => makeBoardMaterial(primary, i)),
@@ -232,16 +167,17 @@ const DeckBoards: React.FC<DeckBoardsProps> = ({ primary }) => {
 
   const boards: React.ReactNode[] = [];
   for (let i = 0; i < boardCount; i++) {
-    const x = -DECK_W / 2 + DECK_BOARD_W / 2 + i * stride;
+    // Boards run left-right (along x), spaced front-to-back (along z)
+    const z = -(i * stride + DECK_BOARD_W / 2);
     boards.push(
       <mesh
         key={`board-${i}`}
-        position={[x, DECK_HEIGHT, -DECK_D / 2]}
+        position={[0, DECK_HEIGHT, z]}
         material={materials[i]}
         castShadow
         receiveShadow
       >
-        <boxGeometry args={[DECK_BOARD_W, DECK_BOARD_T, DECK_D]} />
+        <boxGeometry args={[DECK_W, DECK_BOARD_T, DECK_BOARD_W]} />
       </mesh>,
     );
   }
@@ -253,165 +189,201 @@ const DeckBoards: React.FC<DeckBoardsProps> = ({ primary }) => {
 /*  Fascia                                                             */
 /* ------------------------------------------------------------------ */
 
-interface FasciaProps {
-  secondary: string;
-}
-
-const Fascia: React.FC<FasciaProps> = ({ secondary }) => {
+const Fascia: React.FC<{ secondary: string }> = ({ secondary }) => {
   const mat = useMemo(
-    () => makeBoardMaterial(secondary, 200, 0.75),
+    () => makeBoardMaterial(secondary, 200),
     [secondary],
   );
-  const fasciaY = DECK_HEIGHT - FASCIA_H / 2;
+  const fasciaY = DECK_HEIGHT - DECK_BOARD_T / 2;
 
   return (
     <>
       {/* Front fascia */}
       <mesh position={[0, fasciaY, -DECK_D - FASCIA_T / 2]} material={mat} castShadow>
-        <boxGeometry args={[DECK_W, FASCIA_H, FASCIA_T]} />
+        <boxGeometry args={[DECK_W, DECK_BOARD_T, FASCIA_T]} />
       </mesh>
       {/* Left fascia */}
       <mesh position={[-DECK_W / 2 - FASCIA_T / 2, fasciaY, -DECK_D / 2]} material={mat} castShadow>
-        <boxGeometry args={[FASCIA_T, FASCIA_H, DECK_D]} />
+        <boxGeometry args={[FASCIA_T, DECK_BOARD_T, DECK_D]} />
       </mesh>
       {/* Right fascia */}
       <mesh position={[DECK_W / 2 + FASCIA_T / 2, fasciaY, -DECK_D / 2]} material={mat} castShadow>
-        <boxGeometry args={[FASCIA_T, FASCIA_H, DECK_D]} />
+        <boxGeometry args={[FASCIA_T, DECK_BOARD_T, DECK_D]} />
       </mesh>
     </>
   );
 };
 
 /* ------------------------------------------------------------------ */
-/*  Stairs                                                             */
+/*  Stairs (4 steps, centred on front, no railing)                     */
 /* ------------------------------------------------------------------ */
 
-interface StairsProps {
-  primary: string;
-  secondary: string;
-}
-
-const Stairs: React.FC<StairsProps> = ({ primary, secondary }) => {
+const Stairs: React.FC<{ primary: string; secondary: string }> = ({ primary, secondary }) => {
   const treadMats = useMemo(
     () => Array.from({ length: STAIR_COUNT }, (_, i) => makeBoardMaterial(primary, 300 + i)),
     [primary],
   );
   const stringerMat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: new THREE.Color(secondary).offsetHSL(0, 0, -0.08), roughness: 0.85 }),
+    () => new THREE.MeshStandardMaterial({
+      color: new THREE.Color(secondary).offsetHSL(0, 0, -0.08),
+      roughness: 0.85,
+      metalness: 0,
+    }),
     [secondary],
   );
 
   const steps: React.ReactNode[] = [];
   for (let i = 0; i < STAIR_COUNT; i++) {
     const y = DECK_HEIGHT - (i + 1) * STAIR_RISE + DECK_BOARD_T / 2;
-    const z = -DECK_D - FASCIA_T - i * STAIR_DEPTH - STAIR_DEPTH / 2;
+    const z = -DECK_D - (i + 1) * STAIR_RUN + STAIR_RUN / 2;
     steps.push(
       <mesh key={`tread-${i}`} position={[0, y, z]} material={treadMats[i]} castShadow receiveShadow>
-        <boxGeometry args={[STAIR_W, DECK_BOARD_T, STAIR_DEPTH]} />
+        <boxGeometry args={[STAIR_W, DECK_BOARD_T, STAIR_RUN]} />
       </mesh>,
     );
   }
 
-  // Stringers (sides of stairs)
+  // Stringers (two side boards)
   const stringerH = DECK_HEIGHT;
-  const stringerD = STAIR_COUNT * STAIR_DEPTH;
-  const stringerZ = -DECK_D - FASCIA_T - stringerD / 2;
+  const stringerD = STAIR_COUNT * STAIR_RUN;
+  const stringerZ = -DECK_D - stringerD / 2;
   const stringerX = STAIR_W / 2 + 0.05;
+  const stringerThick = 1.5 / 12;
 
   return (
     <>
       {steps}
-      {/* Left stringer */}
       <mesh position={[-stringerX, stringerH / 2, stringerZ]} material={stringerMat} castShadow>
-        <boxGeometry args={[FASCIA_T * 2, stringerH, stringerD]} />
+        <boxGeometry args={[stringerThick, stringerH, stringerD]} />
       </mesh>
-      {/* Right stringer */}
       <mesh position={[stringerX, stringerH / 2, stringerZ]} material={stringerMat} castShadow>
-        <boxGeometry args={[FASCIA_T * 2, stringerH, stringerD]} />
+        <boxGeometry args={[stringerThick, stringerH, stringerD]} />
       </mesh>
     </>
   );
 };
 
 /* ------------------------------------------------------------------ */
-/*  Railing                                                            */
+/*  Railing (aluminium style with balusters)                           */
 /* ------------------------------------------------------------------ */
 
-interface RailingProps {
-  secondary: string;
-}
-
-const Railing: React.FC<RailingProps> = ({ secondary }) => {
-  const postMat = useMemo(
+const Railing: React.FC = () => {
+  const metalMat = useMemo(
     () => new THREE.MeshStandardMaterial({
-      color: new THREE.Color(secondary).offsetHSL(0, 0, -0.12),
-      roughness: 0.8,
+      color: RAIL_COLOR,
+      roughness: 0.3,
+      metalness: 0.7,
     }),
-    [secondary],
-  );
-  const railMat = useMemo(
-    () => new THREE.MeshStandardMaterial({
-      color: new THREE.Color(secondary).offsetHSL(0, 0, -0.06),
-      roughness: 0.75,
-    }),
-    [secondary],
+    [],
   );
 
-  const railTopY = DECK_HEIGHT + RAIL_H;
-  const postTopY = DECK_HEIGHT + RAIL_H / 2;
+  const postH = RAIL_H;
+  const postBaseY = DECK_HEIGHT + postH / 2;
+  const topRailY = DECK_HEIGHT + RAIL_H;
+  const bottomRailY = DECK_HEIGHT + BOTTOM_RAIL_OFFSET;
+  const balusterH = RAIL_H - BOTTOM_RAIL_OFFSET - RAIL_BAR;
+  const balusterBaseY = bottomRailY + RAIL_BAR / 2 + balusterH / 2;
 
-  // Front railing (along z = -DECK_D)
-  const frontZ = -DECK_D;
-  const frontPostCount = Math.floor(DECK_W / POST_SPACING) + 1;
-  const frontPosts: React.ReactNode[] = [];
-  for (let i = 0; i < frontPostCount; i++) {
-    const x = -DECK_W / 2 + i * (DECK_W / (frontPostCount - 1));
-    // Skip posts in the stair opening area
-    if (Math.abs(x) < STAIR_W / 2 + 0.3) continue;
-    frontPosts.push(
-      <mesh key={`fp-${i}`} position={[x, postTopY, frontZ]} material={postMat} castShadow>
-        <boxGeometry args={[POST_SIZE, RAIL_H, POST_SIZE]} />
+  const elements: React.ReactNode[] = [];
+  let key = 0;
+
+  // Helper: add a railing section between two points
+  const addSection = (
+    x1: number, z1: number,
+    x2: number, z2: number,
+    addStartPost: boolean,
+    addEndPost: boolean,
+  ) => {
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+    const length = Math.sqrt(dx * dx + dz * dz);
+    const midX = (x1 + x2) / 2;
+    const midZ = (z1 + z2) / 2;
+    const angle = Math.atan2(dx, dz);
+
+    // Posts at start and end
+    if (addStartPost) {
+      elements.push(
+        <mesh key={key++} position={[x1, postBaseY, z1]} material={metalMat} castShadow>
+          <boxGeometry args={[POST_SIZE, postH, POST_SIZE]} />
+        </mesh>,
+      );
+    }
+    if (addEndPost) {
+      elements.push(
+        <mesh key={key++} position={[x2, postBaseY, z2]} material={metalMat} castShadow>
+          <boxGeometry args={[POST_SIZE, postH, POST_SIZE]} />
+        </mesh>,
+      );
+    }
+
+    // Intermediate posts every POST_SPACING
+    const postCount = Math.floor(length / POST_SPACING);
+    for (let i = 1; i < postCount + 1; i++) {
+      const t = (i * POST_SPACING) / length;
+      if (t >= 0.98) break;
+      const px = x1 + dx * t;
+      const pz = z1 + dz * t;
+      elements.push(
+        <mesh key={key++} position={[px, postBaseY, pz]} material={metalMat} castShadow>
+          <boxGeometry args={[POST_SIZE, postH, POST_SIZE]} />
+        </mesh>,
+      );
+    }
+
+    // Top rail
+    elements.push(
+      <mesh key={key++} position={[midX, topRailY, midZ]} rotation={[0, angle, 0]} material={metalMat}>
+        <boxGeometry args={[RAIL_BAR, RAIL_BAR, length]} />
       </mesh>,
     );
-  }
 
-  // Right side railing (along x = DECK_W/2)
-  const sideX = DECK_W / 2;
-  const sidePostCount = Math.floor(DECK_D / POST_SPACING) + 1;
-  const sidePosts: React.ReactNode[] = [];
-  for (let i = 0; i < sidePostCount; i++) {
-    const z = -i * (DECK_D / (sidePostCount - 1));
-    sidePosts.push(
-      <mesh key={`sp-${i}`} position={[sideX, postTopY, z]} material={postMat} castShadow>
-        <boxGeometry args={[POST_SIZE, RAIL_H, POST_SIZE]} />
+    // Bottom rail
+    elements.push(
+      <mesh key={key++} position={[midX, bottomRailY, midZ]} rotation={[0, angle, 0]} material={metalMat}>
+        <boxGeometry args={[RAIL_BAR, RAIL_BAR, length]} />
       </mesh>,
     );
-  }
 
-  // Top rail bar thickness
-  const railBarSize = 1.5 / 12; // 1.5 inch
+    // Balusters along the section
+    const balusterCount = Math.floor(length / BALUSTER_SPACING);
+    for (let i = 1; i < balusterCount; i++) {
+      const t = i / balusterCount;
+      const bx = x1 + dx * t;
+      const bz = z1 + dz * t;
+      elements.push(
+        <mesh key={key++} position={[bx, balusterBaseY, bz]} material={metalMat}>
+          <boxGeometry args={[BALUSTER_SIZE, balusterH, BALUSTER_SIZE]} />
+        </mesh>,
+      );
+    }
+  };
 
-  return (
-    <>
-      {frontPosts}
-      {sidePosts}
+  const halfW = DECK_W / 2;
+  const halfStair = STAIR_W / 2;
 
-      {/* Front top rail (with gap for stairs) */}
-      {/* Left section */}
-      <mesh position={[-(DECK_W / 2 + STAIR_W / 2) / 2, railTopY, frontZ]} material={railMat}>
-        <boxGeometry args={[(DECK_W / 2 - STAIR_W / 2), railBarSize, railBarSize]} />
-      </mesh>
-      {/* Right section */}
-      <mesh position={[(DECK_W / 2 + STAIR_W / 2) / 2, railTopY, frontZ]} material={railMat}>
-        <boxGeometry args={[(DECK_W / 2 - STAIR_W / 2), railBarSize, railBarSize]} />
-      </mesh>
+  // Front railing - left section (from left corner to stair opening)
+  addSection(-halfW, -DECK_D, -halfStair - 0.1, -DECK_D, true, true);
+  // Front railing - right section (from stair opening to right corner)
+  addSection(halfStair + 0.1, -DECK_D, halfW, -DECK_D, true, true);
+  // Left side railing
+  addSection(-halfW, 0, -halfW, -DECK_D, false, false); // corner posts already placed
+  // Right side railing
+  addSection(halfW, 0, halfW, -DECK_D, false, false);
 
-      {/* Right side top rail */}
-      <mesh position={[sideX, railTopY, -DECK_D / 2]} material={railMat}>
-        <boxGeometry args={[railBarSize, railBarSize, DECK_D]} />
-      </mesh>
-    </>
+  // Add corner posts for left and right side (at house wall end)
+  elements.push(
+    <mesh key={key++} position={[-halfW, postBaseY, 0]} material={metalMat} castShadow>
+      <boxGeometry args={[POST_SIZE, postH, POST_SIZE]} />
+    </mesh>,
   );
+  elements.push(
+    <mesh key={key++} position={[halfW, postBaseY, 0]} material={metalMat} castShadow>
+      <boxGeometry args={[POST_SIZE, postH, POST_SIZE]} />
+    </mesh>,
+  );
+
+  return <>{elements}</>;
 };
 
 /* ------------------------------------------------------------------ */
@@ -420,86 +392,82 @@ const Railing: React.FC<RailingProps> = ({ secondary }) => {
 
 const Ground: React.FC = () => {
   const mat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: GROUND_COL, roughness: 0.95, metalness: 0 }),
+    () => new THREE.MeshStandardMaterial({ color: GROUND_COLOR, roughness: 0.95, metalness: 0 }),
     [],
   );
-
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow material={mat}>
-      <planeGeometry args={[60, 60]} />
+      <planeGeometry args={[80, 80]} />
     </mesh>
   );
 };
 
 /* ------------------------------------------------------------------ */
-/*  Scene (assembled)                                                  */
+/*  Scene assembly                                                     */
 /* ------------------------------------------------------------------ */
 
-interface SceneContentProps {
-  primary: string;
-  secondary: string;
-}
-
-const SceneContent: React.FC<SceneContentProps> = ({ primary, secondary }) => {
-  return (
-    <group>
-      <House />
-      <DeckBoards primary={primary} />
-      <Fascia secondary={secondary} />
-      <Stairs primary={primary} secondary={secondary} />
-      <Railing secondary={secondary} />
-      <Ground />
-    </group>
-  );
-};
+const SceneContent: React.FC<{ primary: string; secondary: string }> = ({ primary, secondary }) => (
+  <group>
+    <HouseWall />
+    <DeckBoards primary={primary} />
+    <Fascia secondary={secondary} />
+    <Stairs primary={primary} secondary={secondary} />
+    <Railing />
+    <Ground />
+  </group>
+);
 
 /* ------------------------------------------------------------------ */
 /*  Main export                                                        */
 /* ------------------------------------------------------------------ */
 
-const DeckPreview3D: React.FC<DeckPreview3DProps> = ({ deckColor }) => {
-  return (
-    <div style={{ width: '100%', height: '100%', background: '#080808', borderRadius: 10 }}>
-      <Canvas
-        shadows
-        camera={{ position: [12, 8, 14], fov: 35, near: 0.1, far: 200 }}
-        style={{ width: '100%', height: '100%' }}
-        gl={{
-          antialias: true,
-          alpha: false,
-          toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.1,
-        }}
-      >
-        <color attach="background" args={['#080808']} />
+const DeckPreview3D: React.FC<DeckPreview3DProps> = ({ deckColor }) => (
+  <div style={{ width: '100%', height: '100%', background: '#0A0A0A', borderRadius: 10 }}>
+    <Canvas
+      shadows
+      camera={{ position: [10, 9, 12], fov: 32, near: 0.1, far: 200 }}
+      style={{ width: '100%', height: '100%' }}
+      gl={{
+        antialias: true,
+        alpha: false,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.4,
+      }}
+    >
+      <color attach="background" args={['#0A0A0A']} />
 
-        {/* Lighting -- matches FramingVisualizer */}
-        <ambientLight intensity={0.35} />
-        <directionalLight
-          position={[8, 12, 10]}
-          intensity={1.8}
-          castShadow
-          shadow-mapSize={[2048, 2048]}
-          shadow-bias={-0.0002}
-        />
-        <directionalLight position={[-6, 8, -4]} intensity={0.4} color="#B0C0D0" />
+      {/* Bright outdoor lighting */}
+      <ambientLight intensity={0.8} />
+      <directionalLight
+        position={[10, 15, 8]}
+        intensity={2.5}
+        color="#FFFAF0"
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.0002}
+        shadow-camera-left={-15}
+        shadow-camera-right={15}
+        shadow-camera-top={15}
+        shadow-camera-bottom={-15}
+      />
+      <directionalLight position={[-5, 8, -3]} intensity={1.0} color="#E8EEF5" />
+      <hemisphereLight args={['#B0C0D0', '#3A3020', 0.6]} />
 
-        <SceneContent primary={deckColor.primary} secondary={deckColor.secondary} />
+      <SceneContent primary={deckColor.primary} secondary={deckColor.secondary} />
 
-        <OrbitControls
-          enableZoom
-          enablePan={false}
-          autoRotate
-          autoRotateSpeed={0.3}
-          minDistance={6}
-          maxDistance={20}
-          minPolarAngle={Math.PI / 8}
-          maxPolarAngle={Math.PI / 2.4}
-          target={[0, DECK_HEIGHT, -DECK_D / 2]}
-        />
-      </Canvas>
-    </div>
-  );
-};
+      <OrbitControls
+        enableZoom
+        enablePan={false}
+        autoRotate
+        autoRotateSpeed={0.3}
+        minDistance={5}
+        maxDistance={18}
+        minPolarAngle={Math.PI / 8}
+        maxPolarAngle={Math.PI / 2.4}
+        target={[0, 1.5, 0]}
+      />
+    </Canvas>
+  </div>
+);
 
 export default DeckPreview3D;
