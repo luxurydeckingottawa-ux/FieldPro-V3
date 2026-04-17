@@ -28,7 +28,7 @@ const OPTIONS: FoundationOption[] = [
     name: 'Concrete Deck Blocks',
     advantage: 'No digging required. Ready in an afternoon.',
     description:
-      'Precast concrete blocks sitting on grade. Standard for floating decks under 24" off the ground. Not code-compliant for attached decks -- subject to seasonal frost heave in Ottawa.',
+      'Precast concrete blocks sitting on grade. Standard for floating decks under 24" off the ground. Not code-compliant for attached decks.',
     badge: 'INCLUDED',
     priceDelta: 0,
     unit: 'included',
@@ -283,22 +283,12 @@ const BlocksSchematic: React.FC = () => {
       {/* Dimension: block base width */}
       <DimH x1={blockXs[0] - baseW / 2} x2={blockXs[0] + baseW / 2} y={gradeY + 16} label={'12"'} />
 
-      {/* Labels */}
-      <Label x={blockXs[1]} y={gradeY - blockH / 2} tx={blockXs[1] + 60} ty={gradeY - 60}
+      {/* Labels — spaced apart so they don't overlap */}
+      <Label x={blockXs[1]} y={gradeY - blockH / 2} tx={blockXs[1] + 70} ty={gradeY - 70}
         text="Precast Concrete Block" />
       <Label x={(blockXs[0] + blockXs[2]) / 2} y={gradeY - blockH - beamH / 2}
-        tx={(blockXs[0] + blockXs[2]) / 2 + 80} ty={gradeY - blockH - beamH - 30}
-        text="2x Beam" />
-
-      {/* Frost line is clearly BELOW the block (the problem) */}
-      <Label x={350} y={frostY} tx={90} ty={frostY + 35}
-        text="Block sits ABOVE frost line" anchor="start" />
-
-      {/* Note: no frost protection */}
-      <text x={350} y={410} textAnchor="middle" fill="rgba(232,224,212,0.25)"
-        style={{ fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontStyle: 'italic' }}>
-        Subject to seasonal frost heave - not code-compliant for attached decks
-      </text>
+        tx={(blockXs[0] + blockXs[2]) / 2 - 80} ty={gradeY - blockH - beamH - 45}
+        text="2x Beam" anchor="end" />
     </svg>
   );
 };
@@ -865,7 +855,9 @@ const FoundationVisualizer: React.FC<Props> = ({
                 fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              {active.id === 'namifix'
+              {active.id === 'blocks'
+                ? `${active.name} \u00b7 Included Standard`
+                : active.id === 'namifix'
                 ? `${active.name} \u00b7 ${dimensions.namiFixCount || 0} bracket${dimensions.namiFixCount === 1 ? '' : 's'} selected`
                 : `${active.name} \u00b7 ${dimensions.footingsCount || 0} footing${dimensions.footingsCount === 1 ? '' : 's'} \u00b7 ${active.unit}`}
             </span>
