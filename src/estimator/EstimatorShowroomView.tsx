@@ -1492,7 +1492,10 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                   overflow: 'hidden',
                 }}
               >
-                <DeckPreview3D deckColor={getPreviewColor(activeDecking?.id)} />
+                <DeckPreview3D
+                  deckColor={getPreviewColor(activeDecking?.id)}
+                  showRailing={Array.isArray(selections.railing) ? selections.railing.length > 0 : !!selections.railing}
+                />
 
                 {/* Visual approximation label */}
                 <div

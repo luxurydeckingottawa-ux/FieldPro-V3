@@ -17,6 +17,7 @@ import * as THREE from 'three';
 
 export interface DeckPreview3DProps {
   deckColor: { primary: string; secondary: string };
+  showRailing?: boolean;
 }
 
 /* ----- Constants ----- */
@@ -451,13 +452,13 @@ const Ground: React.FC = () => {
 /*  Scene assembly                                                     */
 /* ------------------------------------------------------------------ */
 
-const SceneContent: React.FC<{ primary: string; secondary: string }> = ({ primary, secondary }) => (
+const SceneContent: React.FC<{ primary: string; secondary: string; showRailing: boolean }> = ({ primary, secondary, showRailing }) => (
   <group>
     <HouseWall />
     <DeckBoards primary={primary} />
     <Fascia secondary={secondary} />
     <Stairs primary={primary} secondary={secondary} />
-    <Railing />
+    {showRailing && <Railing />}
     <Ground />
   </group>
 );
@@ -466,7 +467,7 @@ const SceneContent: React.FC<{ primary: string; secondary: string }> = ({ primar
 /*  Main export                                                        */
 /* ------------------------------------------------------------------ */
 
-const DeckPreview3D: React.FC<DeckPreview3DProps> = ({ deckColor }) => {
+const DeckPreview3D: React.FC<DeckPreview3DProps> = ({ deckColor, showRailing = true }) => {
   const [rotating, setRotating] = useState(true);
   const controlsRef = useRef<any>(null);
 
@@ -520,7 +521,7 @@ const DeckPreview3D: React.FC<DeckPreview3DProps> = ({ deckColor }) => {
         <directionalLight position={[-5, 8, -3]} intensity={1.0} color="#E8EEF5" />
         <hemisphereLight args={['#B0C0D0', '#3A3020', 0.6]} />
 
-        <SceneContent primary={deckColor.primary} secondary={deckColor.secondary} />
+        <SceneContent primary={deckColor.primary} secondary={deckColor.secondary} showRailing={showRailing ?? true} />
 
         <OrbitControls
           ref={controlsRef}
