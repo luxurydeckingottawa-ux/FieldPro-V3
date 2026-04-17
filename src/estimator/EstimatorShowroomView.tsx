@@ -5,6 +5,7 @@ import ShowroomGlobalStyle from './showroom/ShowroomGlobalStyle';
 import ShowroomTopNav from './showroom/ShowroomTopNav';
 import FramingVisualizer from './showroom/FramingVisualizer';
 import FoundationVisualizer from './showroom/FoundationVisualizer';
+import ProductGallery, { type GalleryImage } from './showroom/ProductGallery';
 import {
   TIER_TO_ITEM_ID,
   PRICING_DATA,
@@ -166,6 +167,53 @@ TIER_TO_TEXTURE_URL['skirt_azek_harvest']        = TIER_TO_TEXTURE_URL['azek_har
 TIER_TO_TEXTURE_URL['skirt_azek_vintage']        = TIER_TO_TEXTURE_URL['azek_vintage'];
 TIER_TO_TEXTURE_URL['skirt_eva_infinity']        = TIER_TO_TEXTURE_URL['eva_infinity'];
 TIER_TO_TEXTURE_URL['skirt_eva_apex']            = TIER_TO_TEXTURE_URL['eva_apex'];
+
+// Privacy wall product gallery images. Manufacturer CDN photos showing
+// the range of laser-cut patterns and colours each brand offers. Used
+// by the ProductGallery lightbox on privacy-category cards.
+export const PRIVACY_GALLERY_IMAGES: Record<string, GalleryImage[]> = {
+  // Sunbelly — 12 profiles in black/bronze/white. Images from CompositeDecDirect CDN.
+  privacy_sunbelly_combined: [
+    { url: 'https://compositedeckdirect.com/cdn/shop/products/High_tide_privacy_1.png?v=1659033554', label: 'Sunbelly High Tide - Black' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/products/Bronze_High_Tide.png?v=1656093821', label: 'Sunbelly High Tide - Bronze' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/products/Blurred_privacy_1.png?v=1659033554', label: 'Sunbelly Blurred Lines - Black' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/products/Bronze_Blurred_Lines.png?v=1656093821', label: 'Sunbelly Blurred Lines - Bronze' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/BLURRIER_LINES_black.jpg?v=1753375681', label: 'Sunbelly Blurrier Lines - Black' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/Bronze_Blurrier_Lines_Angle_with_Bronze_Posts.jpg?v=1753375726', label: 'Sunbelly Blurrier Lines - Bronze' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/BARCODE_PRIVACY_LEVEL_-_blk.jpg?v=1753375102', label: 'Sunbelly Barcode - Black' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/Bronze_Barcode_Angle_with_Bronze_Posts.jpg?v=1753375284', label: 'Sunbelly Barcode - Bronze' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/products/Planks_privacy_1.png?v=1659033554', label: 'Sunbelly Planks - Black' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/products/bronze_Planks.png?v=1656093818', label: 'Sunbelly Planks - Bronze' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/streamline_black.jpg?v=1753382522', label: 'Sunbelly Streamline - Black' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/streamline_bronze.jpg?v=1753382537', label: 'Sunbelly Streamline - Bronze' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/next_line_black.jpg?v=1753376133', label: 'Sunbelly Next Line - Black' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/next_line_bronze.jpg?v=1753376146', label: 'Sunbelly Next Line - Bronze' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/black_solid.jpg?v=1753382352', label: 'Sunbelly Solid - Black' },
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/bronze_solid.jpg?v=1753382369', label: 'Sunbelly Solid - Bronze' },
+  ],
+  // Hideaway — laser-cut aluminium panels. Images from hideawayscreen.com CDN.
+  hideaway_alum_10: [
+    { url: 'https://hideawayscreen.com/cdn/shop/files/hideaway-privacy-screen-black-privacy-screen-hexx-35161146392749.png?v=1752011775&width=2400', label: 'Hideaway Hexx' },
+    { url: 'https://hideawayscreen.com/cdn/shop/files/hideaway-privacy-screen-black-privacy-screen-branch-35161128829101.png?v=1752011763&width=2400', label: 'Hideaway Branch' },
+    { url: 'https://hideawayscreen.com/cdn/shop/files/Horizon_ef03771a-db20-4483-bbfb-d642690a84c8.png?v=1755708496&width=2400', label: 'Hideaway Horizon' },
+    { url: 'https://hideawayscreen.com/cdn/shop/files/hideaway-privacy-screen-black-privacy-screen-dash-35161142427821.png?v=1722798848&width=2400', label: 'Hideaway Dash' },
+    { url: 'https://hideawayscreen.com/cdn/shop/files/hideaway-privacy-screen-black-privacy-screen-maui-35161274974381.png?v=1722799116&width=2400', label: 'Hideaway Maui' },
+    { url: 'https://hideawayscreen.com/cdn/shop/files/hideaway-privacy-screen-black-privacy-screen-moderna-35161282445485.png?v=1722798774&width=2400', label: 'Hideaway Moderna' },
+    { url: 'https://hideawayscreen.com/cdn/shop/files/hideaway-privacy-screen-black-privacy-screen-river-rock-35161291292845.png?v=1722798950&width=2400', label: 'Hideaway River Rock' },
+    { url: 'https://hideawayscreen.com/cdn/shop/files/hideaway-privacy-screen-black-privacy-screen-breeze-35161137381549.png?v=1722799241&width=2400', label: 'Hideaway Breeze' },
+    { url: 'https://hideawayscreen.com/cdn/shop/files/Solid_bb31e867-dfb5-46d7-83a7-010f6e28e575.png?v=1721664866&width=2400', label: 'Hideaway Solid' },
+    { url: 'https://hideawayscreen.com/cdn/shop/files/hideaway-privacy-screen-black-privacy-screen-rain-35161287458989.png?v=1722799885&width=2400', label: 'Hideaway Rain' },
+    { url: 'https://hideawayscreen.com/cdn/shop/files/Morocco_a955ce53-ec2b-4a7a-b889-ce230a872850.png?v=1756859495&width=2400', label: 'Hideaway Morocco' },
+  ],
+  // Wood and PVC walls also get a small gallery so the button renders
+  // consistently across all privacy cards.
+  privacy_wood: [
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/black_solid.jpg?v=1753382352', label: 'Wood Privacy Wall - Standard' },
+  ],
+  privacy_pvc: [
+    { url: 'https://compositedeckdirect.com/cdn/shop/files/streamline_white.jpg?v=1753382551', label: 'PVC Privacy Wall - Horizontal' },
+  ],
+};
 
 // ROUND 6 FIX 1 — Tier badges now render as circular, physical-looking coin
 // stickers that mirror the 4-colour palette Jack uses on Luxury Decking's
@@ -437,6 +485,10 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
   // ROUND 6 FIX 3 — Sort-by-tier toggle. Persists across category changes
   // (Jack treats it as a preference, not a per-tab setting).
   const [sortByTier, setSortByTier] = useState<boolean>(false);
+  // Gallery lightbox state for privacy wall product cards.
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryProductName, setGalleryProductName] = useState('');
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const firstSpecInputRef = useRef<HTMLInputElement | null>(null);
 
   // Auto-focus the first input in the category-inputs strip when the category
@@ -2204,6 +2256,53 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                             {opt.description}
                           </div>
 
+                          {/* View Gallery button for privacy wall cards */}
+                          {activeCategory === 'privacy' &&
+                            PRIVACY_GALLERY_IMAGES[opt.id] &&
+                            PRIVACY_GALLERY_IMAGES[opt.id].length > 1 && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setGalleryProductName(opt.name);
+                                  setGalleryImages(
+                                    PRIVACY_GALLERY_IMAGES[opt.id]
+                                  );
+                                  setGalleryOpen(true);
+                                }}
+                                style={{
+                                  marginTop: 6,
+                                  padding: '4px 12px',
+                                  fontSize: 9,
+                                  fontWeight: 600,
+                                  fontFamily: FONT_BODY,
+                                  letterSpacing: 1.2,
+                                  textTransform: 'uppercase',
+                                  color: 'var(--lux-gold)',
+                                  background: 'transparent',
+                                  border: '1px solid rgba(212,168,83,0.45)',
+                                  borderRadius: 4,
+                                  cursor: 'pointer',
+                                  transition:
+                                    'border-color 0.2s, background 0.2s',
+                                  alignSelf: 'flex-start',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor =
+                                    '#D4A853';
+                                  e.currentTarget.style.background =
+                                    'rgba(212,168,83,0.08)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor =
+                                    'rgba(212,168,83,0.45)';
+                                  e.currentTarget.style.background =
+                                    'transparent';
+                                }}
+                              >
+                                View Gallery
+                              </button>
+                            )}
+
                           {/* Unit price always visible on lighting cards */}
                           {isLighting && opt.priceDelta > 0 && (
                             <div style={{
@@ -2336,6 +2435,14 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Privacy wall product gallery lightbox */}
+      <ProductGallery
+        isOpen={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
+        productName={galleryProductName}
+        images={galleryImages}
+      />
     </div>
   );
 };
