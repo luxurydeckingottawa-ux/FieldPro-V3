@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { generateGoodBetterBest, type EstimateOption, type GBBDimensions } from '../utils/goodBetterBest';
 import { loadPriceBook } from '../utils/priceBook';
 import EstimatorShowroomView from './EstimatorShowroomView';
 import MaterialMatrixShowroom from './MaterialMatrixShowroom';
@@ -185,12 +184,6 @@ export interface PricingSummary {
   impacts: PricingImpact[];
 }
 
-export interface SavedEstimateOption {
-  name: string;
-  price: number;
-  summary: string;
-}
-
 export interface ShowroomEstimatorProps {
   dimensions: Dimensions;
   setDimensions: React.Dispatch<React.SetStateAction<Dimensions>>;
@@ -205,17 +198,10 @@ export interface ShowroomEstimatorProps {
   resetCalculator: () => void;
   onSave: () => void;
   onAccept: () => void;
-  onGenerateGBB?: () => void;
   pricingSummary: PricingSummary;
   estimateNumber: number;
   activePackage: PackageSelection | null;
   setActivePackage: (pkg: PackageSelection | null) => void;
-  // Multi-option estimate (Good / Better / Best)
-  savedOptions: SavedEstimateOption[];
-  optionName: string;
-  setOptionName: React.Dispatch<React.SetStateAction<string>>;
-  onSaveOption: (name: string) => void;
-  onRemoveOption: (name: string) => void;
 }
 
 export interface PackageSelection {
@@ -878,472 +864,6 @@ const MaterialCard = ({ material, size, showRailings, railingCost, isSelected, o
   );
 };
 
-const CustomEstimator: React.FC<ShowroomEstimatorProps> = ({ dimensions, setDimensions, selections, setSelections, lightingQuantities, setLightingQuantities, clientInfo, setClientInfo, activeCategory, setActiveCategory, resetCalculator, onSave, onAccept, onGenerateGBB, pricingSummary, estimateNumber, activePackage, setActivePackage, savedOptions, optionName, setOptionName, onSaveOption, onRemoveOption }) => {
-
-  // Price book images — keyed by tier ID, populated from uploaded photos in Settings > Price Book
-  const priceBookImages = useMemo(() => {
-    const book = loadPriceBook();
-    const map = new Map<string, string>();
-    for (const [tierId, itemId] of Object.entries(TIER_TO_ITEM_ID)) {
-      const pbItem = book.items.find(i => i.id === itemId);
-      if (pbItem?.imageUrl) map.set(tierId, pbItem.imageUrl);
-    }
-    return map;
-  }, []);
-
-  const updateDim = (key: keyof Dimensions, val: string) => {
-    setDimensions(prev => ({ ...prev, [key]: parseInt(val) || 0 }));
-  };
-
-  const updateClientInfo = (key: keyof ClientInfo, val: string) => {
-    setClientInfo(prev => ({ ...prev, [key]: val }));
-  };
-
-  const getOptionImpactValue = (category: string, opt: PricingTier) => {
-    let impact = 0;
-    const isPT = selections.decking?.id === 'pt_wood_decking';
-    const isCedar = selections.decking?.id === 'cedar_decking';
-    const baseRailPrice = isCedar ? BASE_CEDAR_RAILING_PRICE : (isPT ? BASE_RAILING_PRICE : 0);
-
-    switch (category) {
-      case 'design': 
-        if (opt.calculationType === 'percentage') return pricingSummary.fixedSubTotal * opt.priceDelta;
-        impact = opt.priceDelta; 
-        break;
-      case 'pergolas': impact = opt.priceDelta; break;
-      case 'foundation': 
-        if (opt.id === 'nami_fix') {
-           impact = dimensions.namiFixCount * opt.priceDelta;
-        } else {
-           impact = opt.priceDelta * dimensions.footingsCount;
-           if (dimensions.namiFixCount === 0 && ['sonotube', 'helical', 'pylex_screws'].includes(opt.id)) {
-             impact += dimensions.ledgerLF * COSTS.ledgerPerLF;
-           }
-        }
-        break;
-      case 'framing': impact = opt.priceDelta * dimensions.sqft; break;
-      case 'decking': 
-        const deckingImpact = (opt.priceDelta - BASELINES.deckingPriceDelta) * dimensions.sqft;
-        const stepsImpact = ((opt.stepPrice || BASE_STEP_PRICE) - BASELINES.stepPrice) * dimensions.steps;
-        const fasciaImpact = ((opt.fasciaPrice || COSTS.fasciaPerLF) - BASELINES.fasciaPrice) * dimensions.fasciaLF;
-        impact = deckingImpact + stepsImpact + fasciaImpact;
-        break;
-      case 'railing':
-        if (opt.calculationType === 'aluminum_component') {
-          const alumTotal = (dimensions.alumPosts * COSTS.alumPost) + 
-                           (dimensions.alumSection6 * COSTS.alum6) + 
-                           (dimensions.alumSection8 * COSTS.alum8) +
-                           (dimensions.alumStair6 * COSTS.alumStair6) +
-                           (dimensions.alumStair8 * COSTS.alumStair8);
-          impact = alumTotal - (baseRailPrice * dimensions.railingLF);
-        } else if (opt.calculationType === 'aluminum_glass_component') {
-          const glassTotal = (dimensions.alumPosts * COSTS.alumPost) + 
-                             (dimensions.glassSection6 * COSTS.glassSection6) + 
-                             (dimensions.glassPanelsLF * COSTS.glassPanelsLF);
-          impact = glassTotal - (baseRailPrice * dimensions.railingLF);
-        } else if (opt.calculationType === 'frameless_glass_component') {
-          const framelessTotal = (dimensions.framelessSections * COSTS.framelessSection) + 
-                                 (dimensions.framelessLF * COSTS.framelessLF);
-          impact = framelessTotal - (baseRailPrice * dimensions.railingLF);
-        } else if (opt.calculationType === 'lump_sum') {
-          impact = opt.priceDelta - (baseRailPrice * dimensions.railingLF);
-        } else if (opt.id === 'alum_drink_rail') {
-          impact = opt.priceDelta * dimensions.drinkRailLF;
-        } else {
-          const currentPrice = BASE_RAILING_PRICE + opt.priceDelta;
-          impact = (currentPrice - baseRailPrice) * dimensions.railingLF;
-        }
-        break;
-      case 'skirting': impact = opt.priceDelta * dimensions.skirtingSqFt; break;
-      case 'accessories': 
-        impact = opt.priceDelta * (lightingQuantities[opt.id] || 0);
-        break;
-      case 'privacy': 
-        if (opt.id === 'privacy_sunbelly_combined') {
-           impact = (dimensions.privacyPosts * COSTS.privacyPost) + (dimensions.privacyScreens * COSTS.privacyScreen);
-        } else {
-          impact = dimensions.privacyLF * opt.priceDelta; 
-        }
-        break;
-      case 'extras': 
-        if (opt.calculationType === 'sqft_add') impact = opt.priceDelta * dimensions.sqft;
-        else if (opt.calculationType === 'lf_border_add') impact = opt.priceDelta * dimensions.borderLF;
-        else if (opt.calculationType === 'river_wash_sqft') impact = opt.priceDelta * dimensions.riverWashSqFt;
-        else if (opt.calculationType === 'mulch_sqft') impact = opt.priceDelta * dimensions.mulchSqFt;
-        else if (opt.calculationType === 'stepping_stones_qty') impact = opt.priceDelta * dimensions.steppingStonesCount;
-        else impact = opt.priceDelta;
-        break;
-      case 'protection':
-        if (opt.calculationType === 'percentage') {
-          return pricingSummary.fixedSubTotal * opt.priceDelta;
-        }
-        break;
-    }
-    return impact;
-  };
-
-  const handleOptionClick = (category: string, opt: PricingTier) => {
-    if (category === 'extras' || category === 'design' || category === 'protection' || category === 'privacy') {
-      const isSelected = selections[category].some((e: PricingTier) => e.id === opt.id);
-      let updatedSelections = isSelected 
-        ? selections[category].filter((e: PricingTier) => e.id !== opt.id) 
-        : [...selections[category], opt];
-
-      // Mutually exclusive border logic for extras
-      if (!isSelected && opt.calculationType === 'lf_border_add') {
-        updatedSelections = updatedSelections.filter((e: PricingTier) => e.calculationType !== 'lf_border_add' || e.id === opt.id);
-      }
-
-      setSelections({...selections, [category]: updatedSelections});
-      return;
-    }
-    if (category === 'railing' && opt.id === 'alum_drink_rail') {
-      if (!(dimensions.drinkRailLF > 0)) {
-        setDimensions(prev => ({ ...prev, drinkRailLF: 1 }));
-      }
-      return;
-    }
-    if (category === 'accessories') {
-      if (!(lightingQuantities[opt.id] > 0)) {
-        setLightingQuantities(prev => ({ ...prev, [opt.id]: 1 }));
-      }
-      return;
-    }
-    if (category === 'foundation' && opt.id === 'nami_fix') {
-      setDimensions(prev => ({ ...prev, namiFixCount: prev.namiFixCount > 0 ? 0 : 1 }));
-      return;
-    }
-    setSelections({...selections, [category]: selections[category]?.id === opt.id ? null : opt});
-  };
-
-  const handleQtyChange = (id: string, delta: number) => {
-    setLightingQuantities(prev => ({
-      ...prev,
-      [id]: Math.max(0, (prev[id] || 0) + delta)
-    }));
-  };
-
-  const [packageDraft, setPackageDraft] = useState<PackageSelection>({
-    size: '12X12',
-    level: 'GOLD',
-    withRailings: true
-  });
-
-  const applyShowroomPackage = () => {
-    setActivePackage({...packageDraft});
-    
-    // Auto-update dimensions to standard package sizes
-    const dims: Record<PackageSize, {sq:number, r:number, f:number, s:number, fl:number, ll:number}> = {
-      '12X12': {sq:144, r:36, f:4, s:2, fl:48, ll:12},
-      '12X16': {sq:192, r:44, f:6, s:2, fl:56, ll:16},
-      '12X20': {sq:240, r:52, f:6, s:2, fl:64, ll:20},
-      '16X16': {sq:256, r:48, f:6, s:2, fl:64, ll:16},
-      '16X20': {sq:320, r:56, f:8, s:2, fl:72, ll:20},
-      '20X20': {sq:400, r:60, f:9, s:2, fl:80, ll:20}
-    };
-    const d = dims[packageDraft.size];
-    setDimensions(prev => ({
-      ...prev,
-      sqft: d.sq,
-      railingLF: packageDraft.withRailings ? d.r : 0,
-      footingsCount: d.f,
-      steps: d.s,
-      fasciaLF: d.fl,
-      ledgerLF: d.ll
-    }));
-
-    // Reset base components to match package level
-    const deckOpts = PRICING_DATA.find(c => c.id === 'decking')?.options || [];
-    const railOpts = PRICING_DATA.find(c => c.id === 'railing')?.options || [];
-    
-    let targetDeckId = 'pt_wood_decking';
-    let targetRailId = packageDraft.withRailings ? 'pt_wood_railing' : null;
-
-    if (packageDraft.level === 'GOLD') targetDeckId = 'fiberon_goodlife_weekender';
-    if (packageDraft.level === 'PLATINUM') targetDeckId = 'fiberon_sanctuary';
-    if (packageDraft.level === 'DIAMOND') targetDeckId = 'fiberon_concordia';
-
-    if (packageDraft.withRailings && packageDraft.level !== 'SILVER') {
-        targetRailId = packageDraft.level === 'DIAMOND' ? 'frameless_glass' : 'fortress_al13_pkg';
-    }
-
-    setSelections(prev => ({
-      ...prev,
-      decking: deckOpts.find(o => o.id === targetDeckId) || null,
-      railing: targetRailId ? railOpts.find(o => o.id === targetRailId) : null,
-      extras: packageDraft.level === 'PLATINUM' || packageDraft.level === 'DIAMOND' 
-        ? PRICING_DATA.find(c=>c.id==='extras')?.options.filter(o => ['joist_guard', 'fabric_stone'].includes(o.id)) || []
-        : []
-    }));
-  };
-
-  return (
-    <div className="app-container">
-      <div className="control-panel">
-        <div className="control-section">
-          <h3>Showroom Package Price</h3>
-          <div className="input-group">
-            <label>Package Base</label>
-            <select 
-              value={packageDraft.size} 
-              onChange={e => setPackageDraft({...packageDraft, size: e.target.value as PackageSize})}
-            >
-              {Object.keys(PACKAGE_PRICING).map(s => <option key={s} value={s}>{s} Series</option>)}
-            </select>
-          </div>
-          <div className="input-grid">
-            <div className="input-group">
-              <label>Level</label>
-              <select 
-                value={packageDraft.level} 
-                onChange={e => setPackageDraft({...packageDraft, level: e.target.value as PackageLevel})}
-              >
-                <option value="SILVER">Silver</option>
-                <option value="GOLD">Gold</option>
-                <option value="PLATINUM">Platinum</option>
-                <option value="DIAMOND">Diamond</option>
-              </select>
-            </div>
-            <div className="input-group">
-              <label>Railings</label>
-              <select 
-                value={packageDraft.withRailings ? 'yes' : 'no'} 
-                onChange={e => setPackageDraft({...packageDraft, withRailings: e.target.value === 'yes'})}
-              >
-                <option value="yes">With Railings</option>
-                <option value="no">No Railings</option>
-              </select>
-            </div>
-          </div>
-          <button className="action-btn" style={{marginTop:'8px', background:'var(--gold)', color:'black'}} onClick={applyShowroomPackage}>Apply Package Base</button>
-        </div>
-
-        <div className="control-section">
-          <h3>Estimate Prepared For</h3>
-          <div className="input-group"><label>Client Name</label><input type="text" value={clientInfo.name} onChange={e => updateClientInfo('name', e.target.value)} /></div>
-          <div className="input-group"><label>Install Address</label><input type="text" value={clientInfo.address} onChange={e => updateClientInfo('address', e.target.value)} /></div>
-        </div>
-
-        <div className="control-section">
-          <h3>Deck Specs</h3>
-          <div className="input-grid">
-            <div className="input-group"><label>Sq Ft</label><input type="number" value={dimensions.sqft || ''} onChange={e => updateDim('sqft', e.target.value)} /></div>
-            <div className="input-group"><label>Ledger LF</label><input type="number" value={dimensions.ledgerLF || ''} onChange={e => updateDim('ledgerLF', e.target.value)} /></div>
-            <div className="input-group"><label>Fascia LF</label><input type="number" value={dimensions.fasciaLF || ''} onChange={e => updateDim('fasciaLF', e.target.value)} /></div>
-            <div className="input-group"><label>Footings</label><input type="number" value={dimensions.footingsCount || ''} onChange={e => updateDim('footingsCount', e.target.value)} /></div>
-            <div className="input-group" style={{gridColumn:'span 2'}}><label>Steps (qty)</label><input type="number" value={dimensions.steps || ''} onChange={e => updateDim('steps', e.target.value)} /></div>
-          </div>
-        </div>
-        <div className="control-section">
-          <h3>Rails & Options</h3>
-          <div className="input-grid">
-            <div className="input-group"><label>Railing LF</label><input type="number" value={dimensions.railingLF || ''} onChange={e => updateDim('railingLF', e.target.value)} /></div>
-            <div className="input-group"><label>Drink Rail LF</label><input type="number" value={dimensions.drinkRailLF || ''} onChange={e => updateDim('drinkRailLF', e.target.value)} /></div>
-            <div className="input-group"><label>Alum Posts</label><input type="number" value={dimensions.alumPosts || ''} onChange={e => updateDim('alumPosts', e.target.value)} /></div>
-            <div className="input-group"><label>6' Alum Sect</label><input type="number" value={dimensions.alumSection6 || ''} onChange={e => updateDim('alumSection6', e.target.value)} /></div>
-            <div className="input-group"><label>8' Alum Sect</label><input type="number" value={dimensions.alumSection8 || ''} onChange={e => updateDim('alumSection8', e.target.value)} /></div>
-            <div className="input-group"><label>6' Stair Sect</label><input type="number" value={dimensions.alumStair6 || ''} onChange={e => updateDim('alumStair6', e.target.value)} /></div>
-            <div className="input-group"><label>8' Stair Sect</label><input type="number" value={dimensions.alumStair8 || ''} onChange={e => updateDim('alumStair8', e.target.value)} /></div>
-            <div className="input-group"><label>6' Glass Sect</label><input type="number" value={dimensions.glassSection6 || ''} onChange={e => updateDim('glassSection6', e.target.value)} /></div>
-            <div className="input-group"><label>Glass Panels LF</label><input type="number" value={dimensions.glassPanelsLF || ''} onChange={e => updateDim('glassPanelsLF', e.target.value)} /></div>
-            <div className="input-group"><label>Frameless Sect</label><input type="number" value={dimensions.framelessSections || ''} onChange={e => updateDim('framelessSections', e.target.value)} /></div>
-            <div className="input-group"><label>Frameless LF</label><input type="number" value={dimensions.framelessLF || ''} onChange={e => updateDim('framelessLF', e.target.value)} /></div>
-          </div>
-        </div>
-        <div className="control-section">
-          <h3>Privacy Components</h3>
-          <div className="input-grid">
-            <div className="input-group"><label>Privacy LF (Wood/PVC)</label><input type="number" value={dimensions.privacyLF || ''} onChange={e => updateDim('privacyLF', e.target.value)} /></div>
-            <div className="input-group"><label>Privacy Posts (Alum)</label><input type="number" value={dimensions.privacyPosts || ''} onChange={e => updateDim('privacyPosts', e.target.value)} /></div>
-            <div className="input-group" style={{gridColumn:'span 2'}}><label>Privacy Screens (Sunbelly)</label><input type="number" value={dimensions.privacyScreens || ''} onChange={e => updateDim('privacyScreens', e.target.value)} /></div>
-          </div>
-        </div>
-        <div className="control-section">
-          <h3>Site & Finish</h3>
-          <div className="input-grid">
-            <div className="input-group"><label>Demo SF</label><input type="number" value={dimensions.demoSqFt || ''} onChange={e => updateDim('demoSqFt', e.target.value)} /></div>
-            <div className="input-group"><label>Skirting SF</label><input type="number" value={dimensions.skirtingSqFt || ''} onChange={e => updateDim('skirtingSqFt', e.target.value)} /></div>
-            <div className="input-group"><label>Border LF</label><input type="number" value={dimensions.borderLF || ''} onChange={e => updateDim('borderLF', e.target.value)} /></div>
-            <div className="input-group"><label>Riv Wash SF</label><input type="number" value={dimensions.riverWashSqFt || ''} onChange={e => updateDim('riverWashSqFt', e.target.value)} /></div>
-            <div className="input-group"><label>Mulch SF</label><input type="number" value={dimensions.mulchSqFt || ''} onChange={e => updateDim('mulchSqFt', e.target.value)} /></div>
-            <div className="input-group"><label>Stones Qty</label><input type="number" value={dimensions.steppingStonesCount || ''} onChange={e => updateDim('steppingStonesCount', e.target.value)} /></div>
-          </div>
-        </div>
-        <div className="control-section">
-          <button className="action-btn" onClick={onSave}>⎙ Save Estimate, Send Quote</button>
-          <button className="accept-btn" onClick={onAccept}>✓ Accept Quote</button>
-          {onGenerateGBB && (
-            <button className="action-btn" onClick={onGenerateGBB} style={{ background: 'linear-gradient(135deg, #2c3e50, #34495e)', border: '1px solid #4a6785' }}>
-              ★ Good / Better / Best
-            </button>
-          )}
-          <button className="reset-btn" onClick={resetCalculator}>Reset Estimator</button>
-        </div>
-
-        {/* Save as Named Estimate Option */}
-        <div className="control-section">
-          <div className="mt-4 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-            <div className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-3">Save as Estimate Option</div>
-            <div className="flex gap-2 mb-3">
-              {(['Good', 'Better', 'Best'] as const).map(tier => (
-                <button
-                  key={tier}
-                  onClick={() => setOptionName(tier)}
-                  className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
-                    optionName === tier
-                      ? 'bg-[var(--brand-gold)]/20 border-[var(--brand-gold)]/40 text-[var(--brand-gold)]'
-                      : 'bg-white/[0.03] border-white/10 text-[var(--text-tertiary)] hover:text-white'
-                  }`}
-                >
-                  {tier}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-black text-white">
-                ${Math.round(pricingSummary.subTotal).toLocaleString()}
-                <span className="text-[9px] text-[var(--text-tertiary)] ml-1 font-normal">+ HST</span>
-              </div>
-              <button
-                onClick={() => onSaveOption(optionName)}
-                disabled={savedOptions.some(o => o.name === optionName) || savedOptions.length >= 3}
-                className="px-3 py-1.5 bg-[var(--brand-gold)]/10 hover:bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)] transition-all disabled:opacity-40"
-              >
-                {savedOptions.some(o => o.name === optionName) ? 'Saved' : 'Save Option'}
-              </button>
-            </div>
-          </div>
-
-          {/* Saved Options Summary */}
-          {savedOptions.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {savedOptions.map(opt => (
-                <div key={opt.name} className="flex items-center justify-between px-3 py-2 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
-                  <span className="text-[10px] font-bold text-emerald-400">{opt.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-white font-black">${opt.price.toLocaleString()}</span>
-                    <button
-                      onClick={() => onRemoveOption(opt.name)}
-                      className="text-[var(--text-tertiary)] hover:text-red-400 transition-colors text-sm leading-none"
-                    >
-                      x
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="display-stage">
-        <div className="stage-header">
-          <Logo darkBg={true} />
-          <div style={{textAlign:'right'}}>
-            <div style={{fontSize:'0.65rem', color:'var(--gold)', fontWeight:800, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'2px'}}>Estimate #{estimateNumber}</div>
-            <div style={{color:'#fff', fontWeight:700, fontSize:'0.9rem'}}>{clientInfo.name || 'Valued Client'}</div>
-            <div style={{color:'#aaa', fontSize:'0.75rem', marginTop:'2px'}}>{clientInfo.address || 'Project Address'}</div>
-          </div>
-        </div>
-        <div className="stage-content">
-          {activePackage && (
-            <div className="package-active-banner">
-              <span>Showroom Package Active: {activePackage.size} {activePackage.level}</span>
-              <button onClick={() => setActivePackage(null)}>Reset to Custom Build</button>
-            </div>
-          )}
-          <div className="category-nav">{PRICING_DATA.map(c => (<div key={c.id} className={`nav-item ${activeCategory === c.id ? 'active' : ''}`} onClick={() => setActiveCategory(c.id)}>{c.title}</div>))}</div>
-          <div className="options-grid">
-            {PRICING_DATA.find(c => c.id === activeCategory)?.options.map(opt => {
-              const impact = getOptionImpactValue(activeCategory, opt);
-              const isSelected = activeCategory === 'accessories' 
-                ? (lightingQuantities[opt.id] > 0)
-                : (opt.id === 'nami_fix' 
-                  ? dimensions.namiFixCount > 0 
-                  : (opt.id === 'alum_drink_rail'
-                    ? dimensions.drinkRailLF > 0
-                    : (Array.isArray(selections[activeCategory]) 
-                        ? selections[activeCategory].some((e: PricingTier) => e.id === opt.id) 
-                        : selections[activeCategory]?.id === opt.id)));
-              
-              const priceLabel = impact === 0 ? 'Included' : (impact > 0 ? `+ $${Math.round(impact).toLocaleString()}` : `- $${Math.round(Math.abs(impact)).toLocaleString()}`);
-
-              return (
-                <div key={opt.id} className={`option-card ${isSelected ? 'selected' : ''}`} onClick={() => handleOptionClick(activeCategory, opt)}>
-                  <div className="card-visual" style={{
-                    background: priceBookImages.has(opt.id)
-                      ? `url(${priceBookImages.get(opt.id)}) center/cover no-repeat`
-                      : opt.imageColor,
-                    position: 'relative'
-                  }}>
-                    {(activeCategory === 'accessories' || opt.calculationType === 'quantity') && (
-                      <div style={{ 
-                        position: 'absolute', 
-                        top: '8px', 
-                        left: '8px', 
-                        background: 'rgba(0,0,0,0.7)', 
-                        backdropFilter: 'blur(4px)', 
-                        padding: '3px 8px', 
-                        borderRadius: '4px', 
-                        fontSize: '0.7rem', 
-                        fontWeight: 800, 
-                        color: 'var(--gold)', 
-                        border: '1px solid rgba(212, 175, 55, 0.3)',
-                        zIndex: 10
-                      }}>
-                        ${opt.priceDelta.toLocaleString()}{opt.unit ? ` / ${opt.unit}` : ''}
-                      </div>
-                    )}
-                  </div>
-                  <div className="card-body">
-                    <div className="card-brand">{opt.brand}</div><div className="card-title">{opt.name}</div><div className="card-desc">{opt.description}</div>
-                    
-                    {opt.calculationType === 'quantity' || opt.id === 'nami_fix' ? (
-                      <div className="quantity-control" onClick={(e) => e.stopPropagation()}>
-                        <button className="qty-btn" onClick={() => {
-                          if (opt.id === 'nami_fix') setDimensions(prev => ({...prev, namiFixCount: Math.max(0, prev.namiFixCount - 1)}));
-                          else if (opt.id === 'alum_drink_rail') setDimensions(prev => ({...prev, drinkRailLF: Math.max(0, prev.drinkRailLF - 1)}));
-                          else handleQtyChange(opt.id, -1);
-                        }}>-</button>
-                        <span className="qty-val">{opt.id === 'nami_fix' ? dimensions.namiFixCount : (opt.id === 'alum_drink_rail' ? dimensions.drinkRailLF : (lightingQuantities[opt.id] || 0))}</span>
-                        <button className="qty-btn" onClick={() => {
-                          if (opt.id === 'nami_fix') setDimensions(prev => ({...prev, namiFixCount: prev.namiFixCount + 1}));
-                          else if (opt.id === 'alum_drink_rail') setDimensions(prev => ({...prev, drinkRailLF: prev.drinkRailLF + 1}));
-                          else handleQtyChange(opt.id, 1);
-                        }}>+</button>
-                      </div>
-                    ) : (
-                      <div className={`card-price ${impact < 0 ? 'savings' : ''}`}>{priceLabel}</div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="stage-footer">
-          <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
-            <div style={{color:'#aaa', fontSize:'1rem', textTransform:'uppercase', fontWeight: 700, letterSpacing: '2px'}}>Total Project Investment</div>
-            <div className="total-value">${Math.round(pricingSummary.subTotal).toLocaleString()}<span style={{fontSize:'1.2rem', color:'#777', marginLeft:'12px', fontWeight: 600}}>+ HST</span></div>
-            {pricingSummary.impacts.length > 0 && (
-              <div className="impact-breakdown">
-                {pricingSummary.impacts.map((imp: PricingImpact, idx: number) => (
-                  <div key={idx} className="impact-row">
-                    <span className="truncate pr-4">{imp.label}</span>
-                    <span className={`impact-value shrink-0 ${imp.value < 0 ? 'savings' : ''}`}>{imp.value < 0 ? '-' : '+'}${Math.round(Math.abs(imp.value)).toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div style={{textAlign:'right', minWidth: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', paddingTop: '10px'}}>
-            <div style={{color:'#3498db', fontSize:'2.4rem', fontWeight:800}}>${pricingSummary.monthly}/mo</div>
-            <div style={{color:'#555', fontSize:'0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px'}}>Financing Available O.A.C</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const PackageShowcase: React.FC<PackageShowcaseProps> = ({ size, setSize, railing, setRailing, selectedUpgrades, setSelectedUpgrades, onPrint }) => {
   const toggleUpgrade = (level: PackageLevel, uid: string) => {
@@ -1641,7 +1161,7 @@ export interface EstimatorCalculatorProps {
 }
 
 const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDimensions, initialClientInfo, initialSelections, onEstimateAccepted, onEstimateSaved, onExit }) => {
-  const [view, setView] = useState<'calculator' | 'packages' | 'materialMatrix' | 'gbb'>('calculator');
+  const [view, setView] = useState<'calculator' | 'packages' | 'materialMatrix'>('calculator');
   const [calcDimensions, setCalcDimensions] = useState<Dimensions>(() => ({
     ...INITIAL_DIMENSIONS,
     ...(initialDimensions || {})
@@ -1660,10 +1180,6 @@ const EstimatorCalculatorView: React.FC<EstimatorCalculatorProps> = ({ initialDi
     const saved = localStorage.getItem('luxury_decking_estimate_count');
     return saved ? parseInt(saved) : 2601;
   });
-
-  // Multi-option estimate state (Good / Better / Best)
-  const [savedOptions, setSavedOptions] = useState<SavedEstimateOption[]>([]);
-  const [optionName, setOptionName] = useState<string>('Good');
 
   // Printing state
   const [matrixPrintData, setMatrixPrintData] = useState<{ materials: Material[], size: DeckSize, railings: boolean, mode: 'single' | 'compare' } | null>(null);
@@ -1950,32 +1466,6 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
     }
   };
 
-  const handleSaveOption = (name: string) => {
-    if (savedOptions.length >= 3) return;
-    if (savedOptions.some(o => o.name === name)) return;
-    const newOption: SavedEstimateOption = {
-      name,
-      price: Math.round(pricingSummary.subTotal),
-      summary: `${name} package — $${Math.round(pricingSummary.subTotal).toLocaleString()}`,
-    };
-    setSavedOptions(prev => [...prev, newOption]);
-    if (onEstimateSaved) {
-      onEstimateSaved({
-        clientName: clientInfo.name,
-        clientAddress: clientInfo.address,
-        estimateNumber,
-        selections: calcSelections,
-        dimensions: calcDimensions,
-        pricingSummary,
-        activePackage,
-      });
-    }
-  };
-
-  const handleRemoveOption = (name: string) => {
-    setSavedOptions(prev => prev.filter(o => o.name !== name));
-  };
-
   const handleAcceptQuote = () => {
     let name = clientInfo.name;
     let address = clientInfo.address;
@@ -2004,14 +1494,6 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
         activePackage
       });
     }
-  };
-
-  const handleGenerateGBB = () => {
-    if (calcDimensions.sqft < 1) {
-      alert('Please enter deck dimensions before generating options.');
-      return;
-    }
-    setView('gbb');
   };
 
   const handleMatrixPrint = (materials: Material[], size: DeckSize, railings: boolean, mode: 'single' | 'compare') => {
@@ -2088,7 +1570,7 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
     <div className="estimator-calculator-root">
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
       {/* Showroom views (calculator + materialMatrix) render their own shared
-          top nav. Packages + Good/Better/Best still use the legacy main-nav. */}
+          top nav. Packages still uses the legacy main-nav. */}
       {view !== 'calculator' && view !== 'materialMatrix' && (
         <div className="main-nav">
           {onExit && (
@@ -2097,7 +1579,6 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
             </button>
           )}
           <button className={`nav-btn ${view === 'calculator' ? 'active' : ''}`} onClick={() => setView('calculator')}>Estimator</button>
-          <button className={`nav-btn ${view === 'gbb' ? 'active' : ''}`} onClick={() => setView('gbb')}>Good / Better / Best</button>
           <button className={`nav-btn ${view === 'packages' ? 'active' : ''}`} onClick={() => setView('packages')}>Showroom Packages</button>
           <button className={`nav-btn ${view === 'materialMatrix' ? 'active' : ''}`} onClick={() => setView('materialMatrix')}>Material Matrix</button>
 
@@ -2125,103 +1606,6 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
         {/* Legacy rollback: keep StandaloneMaterialMatrix reachable as dead code
             in case the new Material Matrix Showroom needs to be reverted fast. */}
         {false && <StandaloneMaterialMatrix onPrintRequest={handleMatrixPrint} />}
-        {view === 'gbb' && (
-          <div style={{ flex: 1, overflow: 'auto', padding: '2rem', background: '#f8f9fa' }}>
-            {(() => {
-              const gbbDims: GBBDimensions = {
-                sqft: calcDimensions.sqft || 0,
-                footingsCount: calcDimensions.footingsCount || 0,
-                steps: calcDimensions.steps || 0,
-                fasciaLF: calcDimensions.fasciaLF || 0,
-                railingLF: calcDimensions.railingLF || 0,
-                alumPosts: calcDimensions.alumPosts || 0,
-                alumSection6: calcDimensions.alumSection6 || 0,
-              };
-
-              if (gbbDims.sqft < 1) {
-                return (
-                  <div style={{ textAlign: 'center', padding: '4rem 2rem', color: '#666' }}>
-                    <p style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem' }}>No Dimensions Entered</p>
-                    <p style={{ fontSize: '0.9rem' }}>Go to the Estimator tab and enter deck dimensions first, then come back here.</p>
-                    <button onClick={() => setView('calculator')} style={{ marginTop: '1.5rem', padding: '0.75rem 2rem', background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}>
-                      Go to Estimator
-                    </button>
-                  </div>
-                );
-              }
-
-              const options = generateGoodBetterBest(gbbDims);
-              return (
-                <div>
-                  <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1a1a2e', margin: 0 }}>Your Custom Deck Options</h2>
-                    <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-                      {Math.round(gbbDims.sqft)} sq ft deck with {gbbDims.footingsCount} footings | {clientInfo.name || 'Client'} | {clientInfo.address || 'Address'}
-                    </p>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
-                    {options.map((opt) => (
-                      <div key={opt.id} style={{
-                        background: '#fff',
-                        borderRadius: '16px',
-                        border: opt.recommended ? '2px solid #1a1a2e' : '1px solid #e5e7eb',
-                        overflow: 'hidden',
-                        position: 'relative',
-                        boxShadow: opt.recommended ? '0 8px 32px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.06)',
-                      }}>
-                        {opt.recommended && (
-                          <div style={{ background: '#1a1a2e', color: '#fff', textAlign: 'center', padding: '8px', fontSize: '11px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase' }}>
-                            Most Popular Choice
-                          </div>
-                        )}
-                        <div style={{ padding: '2rem' }}>
-                          <p style={{ fontSize: '11px', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>{opt.tierLabel}</p>
-                          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1a1a2e', margin: '0 0 8px 0', lineHeight: 1.2 }}>{opt.title}</h3>
-                          <p style={{ fontSize: '0.85rem', color: '#666', lineHeight: 1.5, marginBottom: '1.5rem' }}>{opt.description}</p>
-                          
-                          <div style={{ marginBottom: '0.5rem' }}>
-                            <span style={{ fontSize: '2.2rem', fontWeight: 800, color: '#1a1a2e' }}>${opt.priceWithTax.toLocaleString()}</span>
-                            <span style={{ fontSize: '0.85rem', color: '#999', marginLeft: '6px' }}>inc. tax</span>
-                          </div>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '6px 12px', marginBottom: '1.5rem' }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#059669' }}>ESTIMATED ${opt.monthlyFinancing}/MO</span>
-                          </div>
-
-                          <div style={{ marginBottom: '1.5rem' }}>
-                            <h4 style={{ fontSize: '12px', fontWeight: 800, color: '#1a1a2e', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Key Features</h4>
-                            {opt.features.map((f, i) => (
-                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#f0fdf4', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                  <span style={{ color: '#059669', fontSize: '12px', fontWeight: 700 }}>✓</span>
-                                </div>
-                                <span style={{ fontSize: '0.85rem', color: '#374151' }}>{f}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '1rem' }}>
-                            <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Considerations</h4>
-                            {opt.considerations.map((c, i) => (
-                              <p key={i} style={{ fontSize: '0.8rem', color: '#9ca3af', marginBottom: '4px', lineHeight: 1.4 }}>• {c}</p>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-                    <button onClick={() => window.print()} style={{ padding: '0.75rem 2rem', background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', marginRight: '1rem' }}>
-                      Print Comparison
-                    </button>
-                    <button onClick={() => setView('calculator')} style={{ padding: '0.75rem 2rem', background: '#fff', color: '#1a1a2e', border: '1px solid #d1d5db', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}>
-                      Back to Estimator
-                    </button>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        )}
         {view === 'calculator' && (
           <EstimatorShowroomView
             dimensions={calcDimensions}
@@ -2237,16 +1621,10 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
             resetCalculator={resetCalculator}
             onSave={handleSaveEstimate}
             onAccept={handleAcceptQuote}
-            onGenerateGBB={handleGenerateGBB}
             pricingSummary={pricingSummary}
             estimateNumber={estimateNumber}
             activePackage={activePackage}
             setActivePackage={setActivePackage}
-            savedOptions={savedOptions}
-            optionName={optionName}
-            setOptionName={setOptionName}
-            onSaveOption={handleSaveOption}
-            onRemoveOption={handleRemoveOption}
             onExit={onExit}
             view={view}
             setView={setView}

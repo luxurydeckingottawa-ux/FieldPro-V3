@@ -968,9 +968,9 @@ export interface MaterialMatrixShowroomProps {
   isFullScreen?: boolean;
   toggleFullScreen?: () => void;
   /** Current parent-managed view tab so the shared top nav stays in sync. */
-  view?: 'calculator' | 'packages' | 'materialMatrix' | 'gbb';
+  view?: 'calculator' | 'packages' | 'materialMatrix';
   /** Parent setter so tab clicks in the shared nav route cleanly. */
-  setView?: (v: 'calculator' | 'packages' | 'materialMatrix' | 'gbb') => void;
+  setView?: (v: 'calculator' | 'packages' | 'materialMatrix') => void;
 }
 
 const MaterialMatrixShowroom: React.FC<MaterialMatrixShowroomProps> = ({

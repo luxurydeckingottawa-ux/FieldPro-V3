@@ -59,12 +59,11 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
     }
   };
 
-  // Generate real GBB options from job data when available
+  // Derive a single honest estimate option from job data when no options are stored
   const estimateData = useMemo(() => {
     if (job.estimateData) return job.estimateData;
-    
+
     // If we have an actual estimate amount, show it as a single honest option
-    // Do NOT fabricate fake Good/Better/Best tiers — customers will ask about options that don't exist
     const totalAmount = job.totalAmount || job.estimateAmount || 0;
     if (totalAmount > 0 && job.acceptedBuildSummary) {
       const summary = job.acceptedBuildSummary;

@@ -414,8 +414,8 @@ const EstimatorScopedStyle: React.FC = () => (
 
 interface ExtendedProps extends ShowroomEstimatorProps {
   onExit?: () => void;
-  view?: 'calculator' | 'packages' | 'materialMatrix' | 'gbb';
-  setView?: (v: 'calculator' | 'packages' | 'materialMatrix' | 'gbb') => void;
+  view?: 'calculator' | 'packages' | 'materialMatrix';
+  setView?: (v: 'calculator' | 'packages' | 'materialMatrix') => void;
   isFullScreen?: boolean;
   toggleFullScreen?: () => void;
 }
