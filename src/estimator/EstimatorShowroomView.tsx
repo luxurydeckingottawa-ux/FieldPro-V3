@@ -488,6 +488,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
   onAddOption,
   onRenameOption,
   onDeleteOption,
+  optionTotals,
 }) => {
   const [panelOpen, setPanelOpen] = useState<boolean>(true);
   // ROUND 6 FIX 3 — Sort-by-tier toggle. Persists across category changes
@@ -858,9 +859,9 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                 options={options.map((o) => ({
                   id: o.id,
                   name: o.name,
-                  // For the active option, show live total. Others show 0 for now
-                  // (cross-tab pricing would require recomputing per option — future enhancement).
-                  totalPrice: o.id === activeOptionId ? pricingSummary.finalTotal : 0,
+                  // Live totals come from the parent's optionTotals map (computed once
+                  // per options change). Falls back to 0 if not provided.
+                  totalPrice: optionTotals?.[o.id] ?? 0,
                 }))}
                 activeId={activeOptionId}
                 estimateNumber={estimateNumber}
@@ -1460,6 +1461,94 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Floating options summary — only when panel collapsed + multiple options */}
+          {!panelOpen && options && options.length > 1 && activeOptionId && onSelectOption && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 24px 0',
+                flexShrink: 0,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 8,
+                  letterSpacing: 1.8,
+                  color: 'rgba(212,168,83,0.5)',
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
+                  marginRight: 4,
+                }}
+              >
+                Options
+              </div>
+              {options.map((o) => {
+                const isActive = o.id === activeOptionId;
+                return (
+                  <button
+                    key={o.id}
+                    onClick={() => onSelectOption(o.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '4px 10px 4px 4px',
+                      borderRadius: 14,
+                      border: `1px solid ${isActive ? 'rgba(212,168,83,0.6)' : 'rgba(255,255,255,0.08)'}`,
+                      background: isActive ? 'rgba(212,168,83,0.08)' : 'rgba(0,0,0,0.35)',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      transition: 'all 180ms ease',
+                      backdropFilter: 'blur(6px)',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        background: isActive ? 'var(--lux-gold)' : 'rgba(255,255,255,0.06)',
+                        color: isActive ? '#0A0A0A' : 'rgba(232,224,212,0.5)',
+                        fontSize: 9,
+                        fontWeight: 800,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {o.id}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        color: isActive ? '#E8E0D4' : 'rgba(232,224,212,0.55)',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {o.name}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        color: isActive ? 'var(--lux-gold)' : 'rgba(212,168,83,0.4)',
+                        fontWeight: 700,
+                        marginLeft: 4,
+                      }}
+                    >
+                      {optionTotals && optionTotals[o.id] > 0
+                        ? `$${Math.round(optionTotals[o.id]).toLocaleString()}`
+                        : '\u2014'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* ── Middle: tabs + (preview + products) + chips ── */}
           <div

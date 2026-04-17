@@ -209,6 +209,8 @@ export interface ShowroomEstimatorProps {
   onAddOption?: (mode: 'fresh' | 'duplicate') => void;
   onRenameOption?: (id: string, newName: string) => void;
   onDeleteOption?: (id: string) => void;
+  /** finalTotal per option id, computed by parent so OptionTabs can show live totals for all tabs. */
+  optionTotals?: Record<string, number>;
 }
 
 export interface PackageSelection {
@@ -1149,6 +1151,190 @@ const StandaloneMaterialMatrix: React.FC<{
   );
 };
 
+// --- Pricing Computation (Pure Function) ---
+//
+// Extracted from the in-component useMemo so we can compute totals for any
+// option snapshot (not just the active one). This lets the OptionTabs UI
+// show live totals for every option without switching tabs. No behavior
+// change — logic is identical to the original useMemo body.
+export function computePricingSummary(
+  dimensions: Dimensions,
+  selections: CalculatorSelections,
+  lightingQuantities: Record<string, number>,
+  activePackage: PackageSelection | null
+): PricingSummary {
+  const impacts: PricingImpact[] = [];
+  let subTotal = 0;
+
+  const BASE_DECKING_ID = 'fiberon_goodlife_weekender';
+  const BASE_RAILING_ID = 'pt_wood_railing';
+
+  if (activePackage) {
+    const pkgPrice = activePackage.withRailings
+      ? PACKAGE_PRICING[activePackage.size].withRailing[activePackage.level]
+      : PACKAGE_PRICING[activePackage.size].noRailing[activePackage.level];
+
+    subTotal += pkgPrice;
+    impacts.push({ label: `Showroom Package: ${activePackage.size} ${activePackage.level}`, value: pkgPrice });
+  } else {
+      const baseDeckingItem = PRICING_DATA.find(c => c.id === 'decking')?.options.find(o => o.id === BASE_DECKING_ID);
+      const selectedDeckingItem = selections.decking;
+
+      const baseDeckingTotal = dimensions.sqft * (BASE_SQFT_PRICE + (baseDeckingItem?.priceDelta || 0));
+      const baseStepsTotal = dimensions.steps * (baseDeckingItem?.stepPrice || BASE_STEP_PRICE);
+      const baseFasciaTotal = dimensions.fasciaLF * (baseDeckingItem?.fasciaPrice || COSTS.fasciaPerLF);
+      const standardTotal = baseDeckingTotal + baseStepsTotal + baseFasciaTotal;
+
+      subTotal += standardTotal;
+
+      if (selectedDeckingItem && selectedDeckingItem.id !== BASE_DECKING_ID) {
+         const selectedDeckingTotal = dimensions.sqft * (BASE_SQFT_PRICE + selectedDeckingItem.priceDelta);
+         const selectedStepsTotal = dimensions.steps * (selectedDeckingItem.stepPrice || BASE_STEP_PRICE);
+         const selectedFasciaTotal = dimensions.fasciaLF * (selectedDeckingItem.fasciaPrice || COSTS.fasciaPerLF);
+         const upgradedTotal = selectedDeckingTotal + selectedStepsTotal + selectedFasciaTotal;
+
+         const delta = upgradedTotal - standardTotal;
+         subTotal += delta;
+         impacts.push({ label: `Upgrade: ${selectedDeckingItem.name}`, value: delta });
+      }
+
+      let railingTotal = 0;
+      const isPTDeck = selectedDeckingItem?.id === 'pt_wood_decking';
+      const isCedarDeck = selectedDeckingItem?.id === 'cedar_decking';
+      const baseRailPrice = isPTDeck ? BASE_RAILING_PRICE : (isCedarDeck ? BASE_CEDAR_RAILING_PRICE : 0);
+
+      if (selections.railing) {
+        if (selections.railing.calculationType === 'aluminum_component') {
+            railingTotal = (dimensions.alumPosts * COSTS.alumPost) +
+                           (dimensions.alumSection6 * COSTS.alum6) +
+                           (dimensions.alumSection8 * COSTS.alum8) +
+                           (dimensions.alumStair6 * COSTS.alumStair6) +
+                           (dimensions.alumStair8 * COSTS.alumStair8);
+        } else if (selections.railing.calculationType === 'aluminum_glass_component') {
+            railingTotal = (dimensions.alumPosts * COSTS.alumPost) + (dimensions.glassSection6 * COSTS.glassSection6) + (dimensions.glassPanelsLF * COSTS.glassPanelsLF);
+        } else if (selections.railing.calculationType === 'frameless_glass_component') {
+            railingTotal = (dimensions.framelessSections * COSTS.framelessSection) + (dimensions.framelessLF * COSTS.framelessLF);
+        } else if (selections.railing.calculationType === 'lump_sum') {
+            railingTotal = selections.railing.priceDelta;
+        } else {
+            const currentPrice = BASE_RAILING_PRICE + selections.railing.priceDelta;
+            railingTotal = dimensions.railingLF * currentPrice;
+        }
+
+        if (selections.railing.id !== BASE_RAILING_ID && railingTotal > 0) {
+            const railQty = dimensions.railingLF > 0 ? ` (${dimensions.railingLF} LF)` : '';
+            impacts.push({ label: `Railings: ${selections.railing.name}${railQty}`, value: railingTotal });
+        }
+      } else if (baseRailPrice > 0) {
+        railingTotal = dimensions.railingLF * baseRailPrice;
+      }
+      subTotal += railingTotal;
+  }
+
+  const drinkRailItem = PRICING_DATA.find(c => c.id === 'railing')?.options.find(o => o.id === 'alum_drink_rail');
+  const drinkRailTotal = (dimensions.drinkRailLF || 0) * (drinkRailItem?.priceDelta || 0);
+  if (drinkRailTotal > 0) {
+    subTotal += drinkRailTotal;
+    impacts.push({ label: `AL13 Drink Rail (${dimensions.drinkRailLF} LF)`, value: drinkRailTotal });
+  }
+
+  const foundationOpt = selections.foundation;
+  if (foundationOpt) {
+    let foundationImpact = foundationOpt.priceDelta * dimensions.footingsCount;
+    const pileCount = dimensions.footingsCount > 0 ? `${dimensions.footingsCount}x` : '';
+    let label = pileCount ? `${foundationOpt.name} (${pileCount})` : foundationOpt.name;
+
+    // Traditional footings require ledger prep unless Namifix is used
+    if (dimensions.namiFixCount === 0 && ['sonotube', 'helical', 'pylex_screws'].includes(foundationOpt.id)) {
+      const ledgerCost = dimensions.ledgerLF * COSTS.ledgerPerLF;
+      foundationImpact += ledgerCost;
+      label = pileCount
+        ? `${foundationOpt.name} (${pileCount}, incl. Ledger Prep)`
+        : `${foundationOpt.name} (incl. Ledger Prep)`;
+    }
+
+    if (foundationImpact > 0) {
+      subTotal += foundationImpact;
+      impacts.push({ label: label, value: foundationImpact });
+    }
+  }
+
+  const namiFixItem = PRICING_DATA.find(c => c.id === 'foundation')?.options.find(o => o.id === 'nami_fix');
+  const namiFixTotal = dimensions.namiFixCount * (namiFixItem?.priceDelta || 0);
+  if (namiFixTotal > 0) {
+    subTotal += namiFixTotal;
+    impacts.push({ label: `Namifix-NP2 Brackets (x${dimensions.namiFixCount})`, value: namiFixTotal });
+  }
+
+  const framingPrice = selections.framing?.priceDelta || 0;
+  const framingTotal = dimensions.sqft * framingPrice;
+  if (framingTotal > 0) {
+      subTotal += framingTotal;
+      impacts.push({ label: `Framing Upgrade (${dimensions.sqft} sqft)`, value: framingTotal });
+  }
+
+  const skirtingTotal = dimensions.skirtingSqFt * (selections.skirting?.priceDelta || 0);
+  if (skirtingTotal > 0) { subTotal += skirtingTotal; impacts.push({ label: `Skirting (${dimensions.skirtingSqFt} sqft)`, value: skirtingTotal }); }
+
+  selections.privacy.forEach((p: PricingTier) => {
+    let pTotal = 0;
+    if (p.id === 'privacy_sunbelly_combined') {
+       pTotal = (dimensions.privacyPosts * COSTS.privacyPost) + (dimensions.privacyScreens * COSTS.privacyScreen);
+    } else {
+       pTotal = dimensions.privacyLF * p.priceDelta;
+    }
+    if (pTotal > 0) { subTotal += pTotal; impacts.push({ label: p.name, value: pTotal }); }
+  });
+
+  const lightingCategory = PRICING_DATA.find(c => c.id === 'accessories');
+  if (lightingCategory) {
+    lightingCategory.options.forEach(opt => {
+      const qty = lightingQuantities[opt.id] || 0;
+      if (qty > 0) {
+        const cost = qty * opt.priceDelta;
+        subTotal += cost;
+        impacts.push({ label: `${qty}x ${opt.name}`, value: cost });
+      }
+    });
+  }
+
+  if (selections.pergolas) { subTotal += selections.pergolas.priceDelta; impacts.push({ label: selections.pergolas.name, value: selections.pergolas.priceDelta }); }
+
+  selections.extras.forEach((e: PricingTier) => {
+    let cost = 0;
+    if (e.calculationType === 'sqft_add') cost = e.priceDelta * dimensions.sqft;
+    else if (e.calculationType === 'lf_border_add') cost = e.priceDelta * dimensions.borderLF;
+    else if (e.calculationType === 'river_wash_sqft') cost = e.priceDelta * dimensions.riverWashSqFt;
+    else if (e.calculationType === 'mulch_sqft') cost = e.priceDelta * dimensions.mulchSqFt;
+    else if (e.calculationType === 'stepping_stones_qty') cost = e.priceDelta * dimensions.steppingStonesCount;
+    else cost = e.priceDelta;
+
+    if (cost > 0) { subTotal += cost; impacts.push({ label: e.name, value: cost }); }
+  });
+
+  const fixedSubTotal = subTotal;
+
+  selections.design.forEach((d: PricingTier) => {
+    if (d.calculationType === 'percentage') {
+      const cost = fixedSubTotal * d.priceDelta;
+      subTotal += cost;
+      impacts.push({ label: d.name, value: cost });
+    } else {
+        subTotal += d.priceDelta; impacts.push({ label: d.name, value: d.priceDelta });
+    }
+  });
+
+  selections.protection.forEach((p: PricingTier) => {
+    if (p.calculationType === 'percentage') {
+      const cost = fixedSubTotal * p.priceDelta;
+      subTotal += cost;
+      impacts.push({ label: p.name, value: cost });
+    }
+  });
+
+  return { fixedSubTotal, subTotal, hst: subTotal * HST_RATE, finalTotal: subTotal * (1 + HST_RATE), monthly: Math.round(subTotal * FINANCING_FACTOR), impacts };
+}
+
 // --- App Root ---
 
 export interface EstimatorCalculatorProps {
@@ -1304,178 +1490,25 @@ useEffect(() => {
     }
   }, [calcSelections.decking]);
 
-  const pricingSummary = useMemo(() => {
-    const impacts: PricingImpact[] = [];
-    let subTotal = 0;
+  const pricingSummary = useMemo(
+    () => computePricingSummary(calcDimensions, calcSelections, lightingQuantities, activePackage),
+    [calcDimensions, calcSelections, lightingQuantities, activePackage]
+  );
 
-    const BASE_DECKING_ID = 'fiberon_goodlife_weekender';
-    const BASE_RAILING_ID = 'pt_wood_railing';
-
-    if (activePackage) {
-      const pkgPrice = activePackage.withRailings 
-        ? PACKAGE_PRICING[activePackage.size].withRailing[activePackage.level]
-        : PACKAGE_PRICING[activePackage.size].noRailing[activePackage.level];
-      
-      subTotal += pkgPrice;
-      impacts.push({ label: `Showroom Package: ${activePackage.size} ${activePackage.level}`, value: pkgPrice });
-    } else {
-        const baseDeckingItem = PRICING_DATA.find(c => c.id === 'decking')?.options.find(o => o.id === BASE_DECKING_ID);
-        const selectedDeckingItem = calcSelections.decking;
-
-        const baseDeckingTotal = calcDimensions.sqft * (BASE_SQFT_PRICE + (baseDeckingItem?.priceDelta || 0));
-        const baseStepsTotal = calcDimensions.steps * (baseDeckingItem?.stepPrice || BASE_STEP_PRICE);
-        const baseFasciaTotal = calcDimensions.fasciaLF * (baseDeckingItem?.fasciaPrice || COSTS.fasciaPerLF);
-        const standardTotal = baseDeckingTotal + baseStepsTotal + baseFasciaTotal;
-
-        subTotal += standardTotal;
-
-        if (selectedDeckingItem && selectedDeckingItem.id !== BASE_DECKING_ID) {
-           const selectedDeckingTotal = calcDimensions.sqft * (BASE_SQFT_PRICE + selectedDeckingItem.priceDelta);
-           const selectedStepsTotal = calcDimensions.steps * (selectedDeckingItem.stepPrice || BASE_STEP_PRICE);
-           const selectedFasciaTotal = calcDimensions.fasciaLF * (selectedDeckingItem.fasciaPrice || COSTS.fasciaPerLF);
-           const upgradedTotal = selectedDeckingTotal + selectedStepsTotal + selectedFasciaTotal;
-           
-           const delta = upgradedTotal - standardTotal;
-           subTotal += delta;
-           impacts.push({ label: `Upgrade: ${selectedDeckingItem.name}`, value: delta });
-        }
-
-        let railingTotal = 0;
-        const isPTDeck = selectedDeckingItem?.id === 'pt_wood_decking';
-        const isCedarDeck = selectedDeckingItem?.id === 'cedar_decking';
-        let baseRailPrice = isPTDeck ? BASE_RAILING_PRICE : (isCedarDeck ? BASE_CEDAR_RAILING_PRICE : 0);
-        
-        if (calcSelections.railing) {
-          if (calcSelections.railing.calculationType === 'aluminum_component') {
-              railingTotal = (calcDimensions.alumPosts * COSTS.alumPost) + 
-                             (calcDimensions.alumSection6 * COSTS.alum6) + 
-                             (calcDimensions.alumSection8 * COSTS.alum8) +
-                             (calcDimensions.alumStair6 * COSTS.alumStair6) +
-                             (calcDimensions.alumStair8 * COSTS.alumStair8);
-          } else if (calcSelections.railing.calculationType === 'aluminum_glass_component') {
-              railingTotal = (calcDimensions.alumPosts * COSTS.alumPost) + (calcDimensions.glassSection6 * COSTS.glassSection6) + (calcDimensions.glassPanelsLF * COSTS.glassPanelsLF);
-          } else if (calcSelections.railing.calculationType === 'frameless_glass_component') {
-              railingTotal = (calcDimensions.framelessSections * COSTS.framelessSection) + (calcDimensions.framelessLF * COSTS.framelessLF);
-          } else if (calcSelections.railing.calculationType === 'lump_sum') {
-              railingTotal = calcSelections.railing.priceDelta;
-          } else {
-              const currentPrice = BASE_RAILING_PRICE + calcSelections.railing.priceDelta;
-              railingTotal = calcDimensions.railingLF * currentPrice;
-          }
-          
-          if (calcSelections.railing.id !== BASE_RAILING_ID && railingTotal > 0) {
-              const railQty = calcDimensions.railingLF > 0 ? ` (${calcDimensions.railingLF} LF)` : '';
-              impacts.push({ label: `Railings: ${calcSelections.railing.name}${railQty}`, value: railingTotal });
-          }
-        } else if (baseRailPrice > 0) {
-          railingTotal = calcDimensions.railingLF * baseRailPrice;
-        }
-        subTotal += railingTotal;
-    }
-
-    const drinkRailItem = PRICING_DATA.find(c => c.id === 'railing')?.options.find(o => o.id === 'alum_drink_rail');
-    const drinkRailTotal = (calcDimensions.drinkRailLF || 0) * (drinkRailItem?.priceDelta || 0);
-    if (drinkRailTotal > 0) {
-      subTotal += drinkRailTotal;
-      impacts.push({ label: `AL13 Drink Rail (${calcDimensions.drinkRailLF} LF)`, value: drinkRailTotal });
-    }
-
-    const foundationOpt = calcSelections.foundation;
-    if (foundationOpt) {
-      let foundationImpact = foundationOpt.priceDelta * calcDimensions.footingsCount;
-      const pileCount = calcDimensions.footingsCount > 0 ? `${calcDimensions.footingsCount}x` : '';
-      let label = pileCount ? `${foundationOpt.name} (${pileCount})` : foundationOpt.name;
-
-      // Traditional footings require ledger prep unless Namifix is used
-      if (calcDimensions.namiFixCount === 0 && ['sonotube', 'helical', 'pylex_screws'].includes(foundationOpt.id)) {
-        const ledgerCost = calcDimensions.ledgerLF * COSTS.ledgerPerLF;
-        foundationImpact += ledgerCost;
-        label = pileCount
-          ? `${foundationOpt.name} (${pileCount}, incl. Ledger Prep)`
-          : `${foundationOpt.name} (incl. Ledger Prep)`;
-      }
-      
-      if (foundationImpact > 0) {
-        subTotal += foundationImpact;
-        impacts.push({ label: label, value: foundationImpact });
-      }
-    }
-
-    const namiFixItem = PRICING_DATA.find(c => c.id === 'foundation')?.options.find(o => o.id === 'nami_fix');
-    const namiFixTotal = calcDimensions.namiFixCount * (namiFixItem?.priceDelta || 0);
-    if (namiFixTotal > 0) {
-      subTotal += namiFixTotal;
-      impacts.push({ label: `Namifix-NP2 Brackets (x${calcDimensions.namiFixCount})`, value: namiFixTotal });
-    }
-
-    const framingPrice = calcSelections.framing?.priceDelta || 0;
-    const framingTotal = calcDimensions.sqft * framingPrice;
-    if (framingTotal > 0) {
-        subTotal += framingTotal;
-        impacts.push({ label: `Framing Upgrade (${calcDimensions.sqft} sqft)`, value: framingTotal });
-    }
-
-    const skirtingTotal = calcDimensions.skirtingSqFt * (calcSelections.skirting?.priceDelta || 0);
-    if (skirtingTotal > 0) { subTotal += skirtingTotal; impacts.push({ label: `Skirting (${calcDimensions.skirtingSqFt} sqft)`, value: skirtingTotal }); }
-
-    calcSelections.privacy.forEach((p: PricingTier) => {
-      let pTotal = 0;
-      if (p.id === 'privacy_sunbelly_combined') {
-         pTotal = (calcDimensions.privacyPosts * COSTS.privacyPost) + (calcDimensions.privacyScreens * COSTS.privacyScreen);
-      } else {
-         pTotal = calcDimensions.privacyLF * p.priceDelta;
-      }
-      if (pTotal > 0) { subTotal += pTotal; impacts.push({ label: p.name, value: pTotal }); }
+  // Compute finalTotal for every option so OptionTabs can show live totals
+  // for all tabs (not just the active one). Pure derivation from `options`.
+  const optionTotals = useMemo<Record<string, number>>(() => {
+    const result: Record<string, number> = {};
+    options.forEach(opt => {
+      result[opt.id] = computePricingSummary(
+        opt.dimensions,
+        opt.selections,
+        opt.lightingQuantities,
+        opt.activePackage
+      ).finalTotal;
     });
-
-    const lightingCategory = PRICING_DATA.find(c => c.id === 'accessories');
-    if (lightingCategory) {
-      lightingCategory.options.forEach(opt => {
-        const qty = lightingQuantities[opt.id] || 0;
-        if (qty > 0) {
-          const cost = qty * opt.priceDelta;
-          subTotal += cost;
-          impacts.push({ label: `${qty}x ${opt.name}`, value: cost });
-        }
-      });
-    }
-
-    if (calcSelections.pergolas) { subTotal += calcSelections.pergolas.priceDelta; impacts.push({ label: calcSelections.pergolas.name, value: calcSelections.pergolas.priceDelta }); }
-
-    calcSelections.extras.forEach((e: PricingTier) => {
-      let cost = 0;
-      if (e.calculationType === 'sqft_add') cost = e.priceDelta * calcDimensions.sqft;
-      else if (e.calculationType === 'lf_border_add') cost = e.priceDelta * calcDimensions.borderLF;
-      else if (e.calculationType === 'river_wash_sqft') cost = e.priceDelta * calcDimensions.riverWashSqFt;
-      else if (e.calculationType === 'mulch_sqft') cost = e.priceDelta * calcDimensions.mulchSqFt;
-      else if (e.calculationType === 'stepping_stones_qty') cost = e.priceDelta * calcDimensions.steppingStonesCount;
-      else cost = e.priceDelta;
-      
-      if (cost > 0) { subTotal += cost; impacts.push({ label: e.name, value: cost }); }
-    });
-
-    const fixedSubTotal = subTotal;
-
-    calcSelections.design.forEach((d: PricingTier) => {
-      if (d.calculationType === 'percentage') {
-        const cost = fixedSubTotal * d.priceDelta;
-        subTotal += cost;
-        impacts.push({ label: d.name, value: cost });
-      } else {
-          subTotal += d.priceDelta; impacts.push({ label: d.name, value: d.priceDelta });
-      }
-    });
-
-    calcSelections.protection.forEach((p: PricingTier) => {
-      if (p.calculationType === 'percentage') {
-        const cost = fixedSubTotal * p.priceDelta;
-        subTotal += cost;
-        impacts.push({ label: p.name, value: cost });
-      }
-    });
-
-    return { fixedSubTotal, subTotal, hst: subTotal * HST_RATE, finalTotal: subTotal * (1 + HST_RATE), monthly: Math.round(subTotal * FINANCING_FACTOR), impacts };
-  }, [calcDimensions, calcSelections, lightingQuantities, activePackage]);
+    return result;
+  }, [options]);
 
   const resetCalculator = () => {
     if (confirm('Reset this estimate?')) {
@@ -1780,6 +1813,7 @@ const setPrintContext = (mode: 'estimate' | 'agreement' | 'matrix' | 'packages')
             onAddOption={handleAddOption}
             onRenameOption={handleRenameOption}
             onDeleteOption={handleDeleteOption}
+            optionTotals={optionTotals}
           />
         )}
         {view === 'packages' && (
