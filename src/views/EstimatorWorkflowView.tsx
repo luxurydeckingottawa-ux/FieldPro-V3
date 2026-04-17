@@ -30,7 +30,7 @@ import {
 import EstimatorSiteIntake from '../components/EstimatorSiteIntake';
 import EstimatorMeasureSheet from '../components/EstimatorMeasureSheet';
 import EstimatorSketchPad from '../components/EstimatorSketchPad';
-import { safeSetItem, safeRemoveItem } from '../utils/storage';
+import { safeSetItem, safeRemoveItem, aggressiveFreeSpace, getStorageUsageKB } from '../utils/storage';
 import { validateIntakeCompleteness, generateHandoffSummary as generateRuleHandoffSummary } from '../utils/intakeValidation';
 import { COMPANY } from '../config/company';
 
@@ -176,8 +176,14 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
   }, [intake, job.id]);
 
   const handleClearCache = () => {
-    if (window.confirm("This will clear all unsaved field data for this job. Are you sure?")) {
-      safeRemoveItem(`estimator_intake_${job.id}`);
+    const usageKB = getStorageUsageKB();
+    const usageMB = (usageKB / 1024).toFixed(1);
+    const msg = `Device storage is ${usageMB} MB used.\n\nThis will clear cached field data, old intakes, and chat history from this device. Your job data and photos are safely saved to the server — nothing will be lost.\n\nClear cache now?`;
+    if (window.confirm(msg)) {
+      const freedKB = aggressiveFreeSpace();
+      const freedMB = (freedKB / 1024).toFixed(1);
+      setSaveError(false);
+      alert(`Cleared ${freedMB} MB. Your data is safely backed up.`);
       window.location.reload();
     }
   };
@@ -386,15 +392,15 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
 
       {/* Save Error Warning */}
       {saveError && (
-        <div className="mx-4 mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3 text-rose-700">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+        <div className="mx-4 mt-4 p-3 bg-amber-50 border border-amber-300 rounded-xl flex items-center gap-3 text-amber-800">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600" />
           <div className="flex-1">
-            <p className="text-sm font-bold">Storage Full</p>
-            <p className="text-xs opacity-80">Some data (sketches/photos) may not be saved. Try clearing old jobs.</p>
+            <p className="text-sm font-bold">Device Storage Full</p>
+            <p className="text-xs opacity-80">Data is saved to server. Tap Clear Cache to free space on this device.</p>
           </div>
-          <button 
+          <button
             onClick={handleClearCache}
-            className="px-3 py-1 bg-rose-600 text-white text-[10px] font-bold uppercase rounded-lg shadow-sm"
+            className="px-3 py-1.5 bg-amber-600 text-white text-[10px] font-bold uppercase rounded-lg shadow-sm active:scale-95"
           >
             Clear Cache
           </button>

@@ -1147,8 +1147,11 @@ const App: React.FC = () => {
       console.error('Failed to save intake:', err);
     });
 
-    // Also keep localStorage as a local cache for offline support
-    localStorage.setItem(`estimator_intake_${intake.jobId}`, JSON.stringify(intake));
+    // Also keep localStorage as a local cache for offline support.
+    // IMPORTANT: use safeSetItem (never bare localStorage.setItem) so a
+    // QuotaExceededError doesn't crash the callback chain and prevent
+    // navigation to the estimator / pipeline stage transitions.
+    safeSetItem(`estimator_intake_${intake.jobId}`, JSON.stringify(intake));
     
     // Update the job in state WITH the estimatorIntake data
     const marketingSource = intake.checklist?.marketingSource || '';

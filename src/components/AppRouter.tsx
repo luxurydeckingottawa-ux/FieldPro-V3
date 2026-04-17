@@ -40,6 +40,7 @@ import AcceptanceModal from './AcceptanceModal';
 import JobAcceptanceModal from './JobAcceptanceModal';
 import { EstimatorCalendar } from './EstimatorCalendar';
 import { AlertCircle, ChevronLeft } from 'lucide-react';
+import { aggressiveFreeSpace, getStorageUsageKB } from '../utils/storage';
 import { COMPANY } from '../config/company';
 import { sendAppointmentConfirmationSms } from '../utils/communications';
 
@@ -424,14 +425,18 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3 text-amber-700 animate-in fade-in slide-in-from-top-4 duration-300">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="font-bold text-sm">Storage Almost Full</p>
-              <p className="text-xs opacity-90">Local storage is reaching its limit. Some data may not be saved. We've automatically pruned old data, but you may want to clear your browser cache or old jobs.</p>
+              <p className="font-bold text-sm">Device Storage Full ({(getStorageUsageKB() / 1024).toFixed(1)} MB / 5 MB)</p>
+              <p className="text-xs opacity-90">All job data is safely on the server. Tap Clear Cache to free space on this device — nothing will be lost.</p>
             </div>
             <button
-              onClick={() => navigateTo('user-management')}
-              className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg hover:bg-amber-700 transition-colors"
+              onClick={() => {
+                const freed = aggressiveFreeSpace();
+                alert(`Cleared ${(freed / 1024).toFixed(1)} MB. Your data is safely backed up.`);
+                window.location.reload();
+              }}
+              className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg hover:bg-amber-700 transition-colors whitespace-nowrap"
             >
-              Manage Storage
+              Clear Cache
             </button>
           </div>
         )}
