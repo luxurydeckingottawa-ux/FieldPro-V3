@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -29,8 +29,9 @@ const DECK_BOARD_T = 1 / 12;     // 1 inch thick
 const DECK_GAP = (3 / 16) / 12;  // 3/16 inch gap
 const DECK_HEIGHT = 3;            // deck surface 3 feet off ground
 
-// Fascia
-const FASCIA_T = 1 / 12;         // 1 inch thick
+// Frame / Fascia — the rim joist is a 2x8 (7.25" deep)
+const RIM_DEPTH = 7.25 / 12;    // 7.25 inches in feet
+const FASCIA_T = 1 / 12;         // 1 inch thick fascia board over the rim
 
 // Stairs
 const STAIR_COUNT = 4;
@@ -194,21 +195,23 @@ const Fascia: React.FC<{ secondary: string }> = ({ secondary }) => {
     () => makeBoardMaterial(secondary, 200),
     [secondary],
   );
-  const fasciaY = DECK_HEIGHT - DECK_BOARD_T / 2;
+  // Fascia hangs below the deck surface — top aligns with deck top, extends RIM_DEPTH down
+  const fasciaTopY = DECK_HEIGHT;
+  const fasciaCenterY = fasciaTopY - RIM_DEPTH / 2;
 
   return (
     <>
       {/* Front fascia */}
-      <mesh position={[0, fasciaY, -DECK_D - FASCIA_T / 2]} material={mat} castShadow>
-        <boxGeometry args={[DECK_W, DECK_BOARD_T, FASCIA_T]} />
+      <mesh position={[0, fasciaCenterY, -DECK_D - FASCIA_T / 2]} material={mat} castShadow>
+        <boxGeometry args={[DECK_W + FASCIA_T * 2, RIM_DEPTH, FASCIA_T]} />
       </mesh>
       {/* Left fascia */}
-      <mesh position={[-DECK_W / 2 - FASCIA_T / 2, fasciaY, -DECK_D / 2]} material={mat} castShadow>
-        <boxGeometry args={[FASCIA_T, DECK_BOARD_T, DECK_D]} />
+      <mesh position={[-DECK_W / 2 - FASCIA_T / 2, fasciaCenterY, -DECK_D / 2]} material={mat} castShadow>
+        <boxGeometry args={[FASCIA_T, RIM_DEPTH, DECK_D + FASCIA_T]} />
       </mesh>
       {/* Right fascia */}
-      <mesh position={[DECK_W / 2 + FASCIA_T / 2, fasciaY, -DECK_D / 2]} material={mat} castShadow>
-        <boxGeometry args={[FASCIA_T, DECK_BOARD_T, DECK_D]} />
+      <mesh position={[DECK_W / 2 + FASCIA_T / 2, fasciaCenterY, -DECK_D / 2]} material={mat} castShadow>
+        <boxGeometry args={[FASCIA_T, RIM_DEPTH, DECK_D + FASCIA_T]} />
       </mesh>
     </>
   );
@@ -421,53 +424,86 @@ const SceneContent: React.FC<{ primary: string; secondary: string }> = ({ primar
 /*  Main export                                                        */
 /* ------------------------------------------------------------------ */
 
-const DeckPreview3D: React.FC<DeckPreview3DProps> = ({ deckColor }) => (
-  <div style={{ width: '100%', height: '100%', background: '#0A0A0A', borderRadius: 10 }}>
-    <Canvas
-      shadows
-      camera={{ position: [10, 9, 12], fov: 32, near: 0.1, far: 200 }}
-      style={{ width: '100%', height: '100%' }}
-      gl={{
-        antialias: true,
-        alpha: false,
-        toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.4,
-      }}
-    >
-      <color attach="background" args={['#0A0A0A']} />
+const DeckPreview3D: React.FC<DeckPreview3DProps> = ({ deckColor }) => {
+  const [rotating, setRotating] = useState(true);
+  const controlsRef = useRef<any>(null);
 
-      {/* Bright outdoor lighting */}
-      <ambientLight intensity={0.8} />
-      <directionalLight
-        position={[10, 15, 8]}
-        intensity={2.5}
-        color="#FFFAF0"
-        castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-bias={-0.0002}
-        shadow-camera-left={-15}
-        shadow-camera-right={15}
-        shadow-camera-top={15}
-        shadow-camera-bottom={-15}
-      />
-      <directionalLight position={[-5, 8, -3]} intensity={1.0} color="#E8EEF5" />
-      <hemisphereLight args={['#B0C0D0', '#3A3020', 0.6]} />
+  const zoomIn = () => {
+    const el = document.querySelector('.deck-preview-canvas canvas');
+    if (el) el.dispatchEvent(new WheelEvent('wheel', { deltaY: -200, bubbles: true }));
+  };
+  const zoomOut = () => {
+    const el = document.querySelector('.deck-preview-canvas canvas');
+    if (el) el.dispatchEvent(new WheelEvent('wheel', { deltaY: 200, bubbles: true }));
+  };
 
-      <SceneContent primary={deckColor.primary} secondary={deckColor.secondary} />
+  const btnStyle: React.CSSProperties = {
+    width: 30, height: 30, borderRadius: 6,
+    border: '1px solid rgba(212,168,83,0.25)',
+    background: 'rgba(0,0,0,0.55)', color: 'rgba(212,168,83,0.7)',
+    fontSize: 15, cursor: 'pointer', display: 'flex',
+    alignItems: 'center', justifyContent: 'center',
+    fontWeight: 700, lineHeight: 1, backdropFilter: 'blur(4px)',
+  };
 
-      <OrbitControls
-        enableZoom
-        enablePan={false}
-        autoRotate
-        autoRotateSpeed={0.3}
-        minDistance={5}
-        maxDistance={18}
-        minPolarAngle={Math.PI / 8}
-        maxPolarAngle={Math.PI / 2.4}
-        target={[0, 1.5, 0]}
-      />
-    </Canvas>
-  </div>
-);
+  return (
+    <div style={{ width: '100%', height: '100%', background: '#0A0A0A', borderRadius: 10, position: 'relative' }} className="deck-preview-canvas">
+      <Canvas
+        shadows
+        camera={{ position: [10, 9, 12], fov: 32, near: 0.1, far: 200 }}
+        style={{ width: '100%', height: '100%' }}
+        gl={{
+          antialias: true,
+          alpha: false,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.4,
+        }}
+      >
+        <color attach="background" args={['#0A0A0A']} />
+
+        {/* Bright outdoor lighting */}
+        <ambientLight intensity={0.8} />
+        <directionalLight
+          position={[10, 15, 8]}
+          intensity={2.5}
+          color="#FFFAF0"
+          castShadow
+          shadow-mapSize={[2048, 2048]}
+          shadow-bias={-0.0002}
+          shadow-camera-left={-15}
+          shadow-camera-right={15}
+          shadow-camera-top={15}
+          shadow-camera-bottom={-15}
+        />
+        <directionalLight position={[-5, 8, -3]} intensity={1.0} color="#E8EEF5" />
+        <hemisphereLight args={['#B0C0D0', '#3A3020', 0.6]} />
+
+        <SceneContent primary={deckColor.primary} secondary={deckColor.secondary} />
+
+        <OrbitControls
+          ref={controlsRef}
+          enableZoom
+          enablePan={false}
+          autoRotate={rotating}
+          autoRotateSpeed={0.3}
+          minDistance={4}
+          maxDistance={22}
+          minPolarAngle={Math.PI / 8}
+          maxPolarAngle={Math.PI / 2.4}
+          target={[0, 1.5, 0]}
+        />
+      </Canvas>
+
+      {/* Zoom + Pause controls */}
+      <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', flexDirection: 'column', gap: 4, zIndex: 10 }}>
+        <button onClick={zoomIn} style={btnStyle} title="Zoom in">+</button>
+        <button onClick={zoomOut} style={btnStyle} title="Zoom out">{'\u2212'}</button>
+        <button onClick={() => setRotating(r => !r)} style={{ ...btnStyle, fontSize: 12 }} title={rotating ? 'Pause rotation' : 'Resume rotation'}>
+          {rotating ? '\u23F8' : '\u25B6'}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default DeckPreview3D;

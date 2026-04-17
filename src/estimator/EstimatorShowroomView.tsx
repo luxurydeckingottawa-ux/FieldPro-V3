@@ -62,12 +62,12 @@ const CATEGORY_LABELS: Record<string, string> = {
 const TIER_TO_PREVIEW_COLOR: Record<string, { primary: string; secondary: string }> = {
   // Natural wood
   pt_wood_decking:             { primary: '#9E8B6E', secondary: '#8A7A5E' },
-  cedar_decking:               { primary: '#C27A3A', secondary: '#A8652E' },
+  cedar_decking:               { primary: '#A8805A', secondary: '#8E6B48' },
   // Fiberon
-  fiberon_goodlife_weekender:  { primary: '#7B8B5E', secondary: '#6B7B4E' },
+  fiberon_goodlife_weekender:  { primary: '#8B7A60', secondary: '#7A6950' },
   fiberon_goodlife_escapes:    { primary: '#8B7565', secondary: '#7B6555' },
   fiberon_sanctuary:           { primary: '#6B5B4B', secondary: '#5B4B3B' },
-  fiberon_concordia:           { primary: '#5A6B7B', secondary: '#4A5B6B' },
+  fiberon_concordia:           { primary: '#7A6B58', secondary: '#6A5B48' },
   fiberon_paramount:           { primary: '#B09878', secondary: '#9A8268' },
   fiberon_promenade:           { primary: '#8A7155', secondary: '#6F5A42' },
   // TimberTech
