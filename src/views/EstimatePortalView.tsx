@@ -458,11 +458,19 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             className="max-w-3xl"
           >
             <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-              Hello, {job.clientName.split(' ')[0]}
+              {job.clientName ? `Hello, ${job.clientName.split(' ')[0]}` : 'Welcome to Your Project'}
             </h2>
             <p className="text-xl text-slate-600 leading-relaxed">
-              Thank you for the opportunity to quote your outdoor project at <span className="font-semibold text-slate-900">{job.projectAddress}</span>. 
-              We've prepared three tailored options to help you find the perfect balance of aesthetics, maintenance, and value.
+              Thank you for the opportunity to quote your outdoor project{job.projectAddress ? <> at <span className="font-semibold text-slate-900">{job.projectAddress}</span></> : ''}.
+              {' '}
+              {(() => {
+                const count = estimateData.options.length;
+                if (count === 0) return `We've prepared your personalized quote below.`;
+                if (count === 1) return `We've prepared your personalized quote to help you find the perfect balance of aesthetics, maintenance, and value.`;
+                const words = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+                const wordCount = count <= 10 ? words[count - 1] : count.toString();
+                return `We've prepared ${wordCount} tailored options to help you find the perfect balance of aesthetics, maintenance, and value.`;
+              })()}
             </p>
           </div>
         </div>
