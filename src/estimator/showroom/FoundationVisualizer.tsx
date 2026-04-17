@@ -39,7 +39,7 @@ const OPTIONS: FoundationOption[] = [
     name: 'Concrete Footings (48")',
     advantage: 'Below frost line -- rock-solid, code-compliant.',
     description:
-      '10" sonotube poured 48" below grade with concrete bell footing. Full frost heave protection. Required by Ontario Building Code for any attached deck. The proven standard.',
+      '10" sonotube poured 48" below grade with post bracket. Full frost heave protection. Required by Ontario Building Code for any attached deck. The proven standard.',
     badge: null,
     priceDelta: 279,
     unit: 'per footing',
@@ -312,8 +312,6 @@ const SonotubeSchematic: React.FC = () => {
   // 48" below grade = 96px
   const tubeDepth = 96;
   const tubeW = 20; // 10" diameter = 20px
-  const bellW = 48; // 24" bell = 48px
-  const bellH = 16; // 8" thick = 16px
   const bracketH = 8;
   const bracketW = 14;
   const postW = 8; // 4x4 post = ~8px (3.5" actual)
@@ -329,15 +327,12 @@ const SonotubeSchematic: React.FC = () => {
     <svg viewBox="0 0 700 450" width="100%" height="100%" style={{ display: 'block' }}>
       <rect width={700} height={450} fill={C.bg} />
 
-      <EarthGradient gradeY={gradeY} depth={tubeDepth + bellH + 40} />
+      <EarthGradient gradeY={gradeY} depth={tubeDepth + 40} />
       <GradeLine y={gradeY} />
       <FrostLine y={frostY} />
 
       {tubeXs.map((cx, i) => {
         const tubeX = cx - tubeW / 2;
-        const bellX = cx - bellW / 2;
-        const tubeBot = gradeY + tubeDepth;
-
         return (
           <g key={i}>
             {/* Sonotube (rectangle in cross-section) */}
@@ -350,10 +345,6 @@ const SonotubeSchematic: React.FC = () => {
                 cy={gradeY + 12 + si * 10}
                 r={0.7} fill="rgba(160,160,160,0.1)" />
             ))}
-
-            {/* Bell footing at bottom */}
-            <rect x={bellX} y={tubeBot} width={bellW} height={bellH}
-              fill={C.concrete} stroke={C.concreteStroke} strokeWidth={1.2} rx={2} />
 
             {/* Post bracket on top */}
             <rect x={cx - bracketW / 2} y={gradeY - bracketH} width={bracketW} height={bracketH}
@@ -383,15 +374,11 @@ const SonotubeSchematic: React.FC = () => {
       {/* Dimensions */}
       <DimV x={tubeXs[0] - 48} y1={gradeY} y2={gradeY + tubeDepth} label={'48"'} />
       <DimH x1={tubeXs[0] - tubeW / 2} x2={tubeXs[0] + tubeW / 2}
-        y={gradeY + tubeDepth + bellH + 22} label={'10" DIA'} />
-      <DimH x1={tubeXs[0] - bellW / 2} x2={tubeXs[0] + bellW / 2}
-        y={gradeY + tubeDepth + bellH + 38} label={'24" BELL'} />
+        y={gradeY + tubeDepth + 22} label={'10" DIA'} />
 
       {/* Labels */}
       <Label x={tubeXs[1]} y={gradeY + tubeDepth / 2}
-        tx={tubeXs[1] + 50} ty={gradeY + 20} text="Sonotube Form" />
-      <Label x={tubeXs[1]} y={gradeY + tubeDepth + bellH / 2}
-        tx={tubeXs[1] + 65} ty={gradeY + tubeDepth + bellH + 10} text="Concrete Bell Footing" />
+        tx={tubeXs[1] + 50} ty={gradeY + 20} text="Sonotube Form (Poured Concrete)" />
       <Label x={tubeXs[2]} y={gradeY - bracketH / 2}
         tx={tubeXs[2] + 30} ty={gradeY - bracketH - 20} text="Post Bracket" />
     </svg>
@@ -739,6 +726,33 @@ const FoundationVisualizer: React.FC<Props> = ({
   const activeId = selectedOption?.id ?? null;
   const active = OPTIONS.find((o) => o.pricingId === activeId) ?? OPTIONS[0];
 
+  // Zoom & pan state
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const dragStart = React.useRef({ x: 0, y: 0, px: 0, py: 0 });
+
+  // Reset zoom/pan when switching options
+  useEffect(() => { setZoom(1); setPan({ x: 0, y: 0 }); }, [active.id]);
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setZoom(z => Math.min(3, Math.max(0.5, z - e.deltaY * 0.001)));
+  };
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setDragging(true);
+    dragStart.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
+  };
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!dragging) return;
+    setPan({
+      x: dragStart.current.px + (e.clientX - dragStart.current.x),
+      y: dragStart.current.py + (e.clientY - dragStart.current.y),
+    });
+  };
+  const handleMouseUp = () => setDragging(false);
+
   const [desc, setDesc] = useState(active.description);
   const [vis, setVis] = useState(true);
 
@@ -790,17 +804,45 @@ const FoundationVisualizer: React.FC<Props> = ({
             overflow: 'hidden',
             minHeight: 360,
             position: 'relative',
+            cursor: dragging ? 'grabbing' : 'grab',
           }}
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
           <div
             style={{
               width: '100%',
               height: '100%',
-              transition: 'opacity 300ms ease',
+              transition: dragging ? 'none' : 'opacity 300ms ease, transform 200ms ease',
               opacity: svgVis ? 1 : 0,
+              transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+              transformOrigin: 'center center',
             }}
           >
             <SchematicComponent />
+          </div>
+
+          {/* Zoom buttons */}
+          <div style={{
+            position: 'absolute', top: 12, right: 12,
+            display: 'flex', flexDirection: 'column', gap: 4, zIndex: 10,
+          }}>
+            {[{ label: '+', delta: 0.3 }, { label: '\u2212', delta: -0.3 }, { label: '\u21BA', delta: 0 }].map((btn) => (
+              <button key={btn.label} onClick={() => {
+                if (btn.delta === 0) { setZoom(1); setPan({ x: 0, y: 0 }); }
+                else setZoom(z => Math.min(3, Math.max(0.5, z + btn.delta)));
+              }} style={{
+                width: 28, height: 28, borderRadius: 6,
+                border: '1px solid rgba(212,168,83,0.2)',
+                background: 'rgba(0,0,0,0.6)', color: 'rgba(212,168,83,0.7)',
+                fontSize: 15, cursor: 'pointer', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700, lineHeight: 1,
+              }}>{btn.label}</button>
+            ))}
           </div>
 
           {/* Overlay label */}
@@ -948,28 +990,41 @@ const FoundationVisualizer: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Description */}
+      {/* Description — prominent info card */}
       <div
         style={{
-          padding: '10px 16px',
-          background: 'rgba(255,255,255,0.02)',
-          borderRadius: 8,
-          border: '1px solid rgba(212,168,83,0.05)',
-          minHeight: 40,
+          padding: '14px 20px',
+          background: 'rgba(212,168,83,0.04)',
+          borderRadius: 10,
+          border: '1px solid rgba(212,168,83,0.12)',
+          minHeight: 48,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 12,
+          transition: 'opacity 140ms ease',
+          opacity: vis ? 1 : 0,
         }}
       >
-        <p
-          style={{
-            fontSize: 11,
-            color: 'rgba(232,224,212,0.5)',
-            lineHeight: 1.5,
-            margin: 0,
-            transition: 'opacity 140ms ease',
-            opacity: vis ? 1 : 0,
-          }}
-        >
-          {desc}
-        </p>
+        <div style={{
+          width: 3, minHeight: 32, borderRadius: 2,
+          background: 'rgba(212,168,83,0.4)', flexShrink: 0, marginTop: 2,
+        }} />
+        <div>
+          <div style={{
+            fontSize: 12, fontWeight: 700, color: '#D4A853',
+            marginBottom: 4, letterSpacing: 0.3,
+            fontFamily: "'DM Sans', sans-serif",
+          }}>
+            {active.name}
+          </div>
+          <p style={{
+            fontSize: 12, color: 'rgba(232,224,212,0.6)',
+            lineHeight: 1.6, margin: 0,
+            fontFamily: "'DM Sans', sans-serif",
+          }}>
+            {desc}
+          </p>
+        </div>
       </div>
     </div>
   );
