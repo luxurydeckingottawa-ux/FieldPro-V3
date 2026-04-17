@@ -1890,7 +1890,7 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                     // (80px strip + stepper row + description) so nothing
                     // clips. Other strip categories stay at 170px; non-strip
                     // categories at 140px.
-                    const cardMinHeight = isLighting ? 180 : hasImageStrip ? 170 : 140;
+                    const cardMinHeight = isLighting ? 210 : hasImageStrip ? 170 : 140;
                     const isQty =
                       isLighting ||
                       opt.calculationType === 'quantity' ||
@@ -2303,19 +2303,6 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                               </button>
                             )}
 
-                          {/* Unit price always visible on lighting cards */}
-                          {isLighting && opt.priceDelta > 0 && (
-                            <div style={{
-                              fontSize: 13,
-                              fontWeight: 700,
-                              color: 'var(--lux-gold)',
-                              fontFamily: FONT_DISPLAY,
-                              marginTop: 4,
-                            }}>
-                              ${Math.round(opt.priceDelta).toLocaleString()} <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--est-text-secondary)' }}>each</span>
-                            </div>
-                          )}
-
                           {isQty ? (
                             <div
                               onClick={(e) => e.stopPropagation()}
@@ -2323,14 +2310,26 @@ const EstimatorShowroomView: React.FC<ExtendedProps> = ({
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 8,
-                                // ROUND 5 FIX — push stepper row to the bottom
-                                // of the card so it is always visible (primary
-                                // gripe on lighting cards in Round 4).
                                 marginTop: 'auto',
                                 paddingTop: 8,
                                 minWidth: 0,
                               }}
                             >
+                              {/* Unit price on the left for lighting cards */}
+                              {isLighting && opt.priceDelta > 0 && (
+                                <div style={{
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  color: 'var(--lux-gold)',
+                                  fontFamily: FONT_DISPLAY,
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
+                                  marginRight: 'auto',
+                                }}>
+                                  ${Math.round(opt.priceDelta)}
+                                  <span style={{ fontSize: 8, fontWeight: 500, color: 'var(--est-text-secondary)', marginLeft: 2 }}>ea</span>
+                                </div>
+                              )}
                               <button
                                 onClick={() => {
                                   if (opt.id === 'nami_fix')
