@@ -42,11 +42,26 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
   const [expandedTouchId, setExpandedTouchId] = useState<string | null>(null);
   const [touchSentFeedback, setTouchSentFeedback] = useState<string | null>(null);
 
+  // ── Multi-option switcher ─────────────────────────────────────────────────
+  // When the estimate has multiple options (A, B, C…) the user can switch
+  // between them and the itemized breakdown updates to match.
+  const estimateOptions = job.estimateData?.options ?? [];
+  const hasMultipleOptions = estimateOptions.length > 1;
+  const [selectedOptionIdx, setSelectedOptionIdx] = useState(0);
+  const selectedOption = estimateOptions[selectedOptionIdx] ?? null;
+
+  // Resolve the items to show: prefer per-option itemizedItems (richer data),
+  // fall back to liveEstimate.items for legacy single-option estimates.
+  const resolvedItems: LiveEstimateItem[] = useMemo(() => {
+    if (selectedOption?.itemizedItems && selectedOption.itemizedItems.length > 0) {
+      return selectedOption.itemizedItems;
+    }
+    return job.liveEstimate?.items ?? [];
+  }, [selectedOption, job.liveEstimate]);
+
   // Live Itemized Estimate state
   const [editingEstimate, setEditingEstimate] = useState(false);
-  const [liveItems, setLiveItems] = useState<LiveEstimateItem[]>(
-    () => job.liveEstimate?.items ?? []
-  );
+  const [liveItems, setLiveItems] = useState<LiveEstimateItem[]>(() => resolvedItems);
   const [liveDiscount, setLiveDiscount] = useState<number>(
     () => job.liveEstimate?.discount ?? 0
   );
@@ -54,12 +69,13 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
     () => job.liveEstimate?.discountNote ?? ''
   );
 
-  // Sync live estimate state when job prop changes
+  // Sync live estimate state when job or selected option changes
   useEffect(() => {
-    setLiveItems(job.liveEstimate?.items ?? []);
+    setLiveItems(resolvedItems);
     setLiveDiscount(job.liveEstimate?.discount ?? 0);
     setDiscountNote(job.liveEstimate?.discountNote ?? '');
-  }, [job.id, job.liveEstimate]);
+    setEditingEstimate(false);
+  }, [job.id, job.liveEstimate, selectedOptionIdx]);
 
   // Campaign queue: get engagement-adapted touches for this job
   const campaignTouches = useMemo(() => {
@@ -476,12 +492,93 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               </div>
             </div>
 
-            {/* ── LIVE ITEMIZED ESTIMATE ────────────────────────────────────── */}
-            {(job.liveEstimate || (job.acceptedBuildSummary?.addOns && job.acceptedBuildSummary.addOns.length > 0)) && (
+            {/* ── OPTIONS SUMMARY (multi-option estimates only) ─────────────── */}
+            {hasMultipleOptions && (
               <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-color)]">
+                <div className="px-5 py-3 border-b border-[var(--border-color)]">
                   <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
-                    <DollarSign className="w-3.5 h-3.5 text-[var(--brand-gold)]" /> Itemized Estimate
+                    <BarChart3 className="w-3.5 h-3.5 text-[var(--brand-gold)]" /> Estimate Options
+                    <span className="ml-auto text-[9px] font-normal normal-case tracking-normal text-[var(--text-secondary)]">
+                      {estimateOptions.length} options prepared
+                    </span>
+                  </h2>
+                </div>
+                <div className="divide-y divide-[var(--border-color)]">
+                  {estimateOptions.map((opt, idx) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setSelectedOptionIdx(idx)}
+                      className={`w-full flex items-center justify-between px-5 py-3.5 transition-all text-left ${
+                        selectedOptionIdx === idx
+                          ? 'bg-[var(--brand-gold)]/8'
+                          : 'hover:bg-[var(--bg-secondary)]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black border-2 ${
+                          selectedOptionIdx === idx
+                            ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black'
+                            : 'bg-[var(--bg-secondary)] border-[var(--border-color)] text-[var(--text-secondary)]'
+                        }`}>
+                          {String.fromCharCode(65 + idx)}
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">{opt.name}</p>
+                          {opt.title && opt.title !== opt.name && (
+                            <p className="text-[10px] text-[var(--text-secondary)]">{opt.title}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-[var(--text-primary)]">${opt.price.toLocaleString()}</p>
+                        <p className="text-[10px] text-[var(--text-secondary)]">inc. tax</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── LIVE ITEMIZED ESTIMATE ────────────────────────────────────── */}
+            {(job.liveEstimate || estimateOptions.length > 0 || (job.acceptedBuildSummary?.addOns && job.acceptedBuildSummary.addOns.length > 0)) && (
+              <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
+
+                {/* Option switcher tabs — only shown when there are 2+ options */}
+                {hasMultipleOptions && (
+                  <div className="px-5 pt-4 pb-0">
+                    <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-2">Options</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {estimateOptions.map((opt, idx) => (
+                        <button
+                          key={opt.id}
+                          onClick={() => setSelectedOptionIdx(idx)}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all border ${
+                            selectedOptionIdx === idx
+                              ? 'bg-[var(--brand-gold)] text-black border-[var(--brand-gold)]'
+                              : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--brand-gold)]/40'
+                          }`}
+                        >
+                          <span className="w-5 h-5 rounded-full bg-black/10 flex items-center justify-center text-[9px] font-black">
+                            {String.fromCharCode(65 + idx)}
+                          </span>
+                          {opt.name}
+                          {opt.price > 0 && (
+                            <span className={`ml-1 ${selectedOptionIdx === idx ? 'text-black/70' : 'text-[var(--brand-gold)]'}`}>
+                              ${opt.price.toLocaleString()}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-color)] mt-3">
+                  <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                    <DollarSign className="w-3.5 h-3.5 text-[var(--brand-gold)]" />
+                    {hasMultipleOptions
+                      ? `Itemized Estimate — ${selectedOption?.name ?? `Option ${String.fromCharCode(65 + selectedOptionIdx)}`}`
+                      : 'Itemized Estimate'}
                   </h2>
                   <div className="flex items-center gap-2">
                     {!editingEstimate ? (
@@ -494,7 +591,7 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     ) : (
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => { setEditingEstimate(false); setLiveItems(job.liveEstimate?.items ?? []); setLiveDiscount(job.liveEstimate?.discount ?? 0); setDiscountNote(job.liveEstimate?.discountNote ?? ''); }}
+                          onClick={() => { setEditingEstimate(false); setLiveItems(resolvedItems); setLiveDiscount(job.liveEstimate?.discount ?? 0); setDiscountNote(job.liveEstimate?.discountNote ?? ''); }}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:border-red-500/40 transition-all text-[10px] font-bold text-red-400 uppercase tracking-widest"
                         >
                           <X className="w-3 h-3" /> Cancel

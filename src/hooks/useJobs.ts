@@ -626,10 +626,12 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     const existingJob = jobs.find(j => j.id === targetJobId);
     let updatedOptions: EstimateOption[];
 
-    if (data.allOptions && data.allOptions.length > 1) {
-      // Multi-option estimate: map each option to an EstimateOption and
-      // replace the full options array. No dedup/merge since each option
-      // in the estimator is the source of truth.
+    if (data.allOptions && data.allOptions.length > 0) {
+      // Multi-option estimate path — used for ALL saves now (single or multi).
+      // Builds rich EstimateOption objects with itemizedItems + keyFeatures
+      // for every option. Replaces the full options array (estimator is source
+      // of truth). The old single-option legacy path below is only a fallback
+      // when allOptions is missing entirely (pre-migration data).
       updatedOptions = data.allOptions.map((opt, idx) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const impacts = (opt.pricingSummary?.impacts ?? []) as any[];
@@ -789,10 +791,21 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
       }
     })();
 
-    // Navigate to estimate detail
+    // Navigate to estimate detail.
+    // IMPORTANT: spread estimateData into selectedJob so the detail view and
+    // portal see all options immediately — the jobs[] state update is async
+    // and selectedJob must reflect the save outcome before navigation.
     const updatedJob = createdNewJob ?? jobs.find(j => j.id === targetJobId);
     if (updatedJob) {
-      setSelectedJob({ ...updatedJob, totalAmount, estimateAmount, acceptedBuildSummary, liveEstimate, pipelineStage: PipelineStage.EST_SENT });
+      setSelectedJob({
+        ...updatedJob,
+        totalAmount,
+        estimateAmount,
+        acceptedBuildSummary,
+        liveEstimate,
+        estimateData,          // ← critical: ensures all options are visible immediately
+        pipelineStage: PipelineStage.EST_SENT,
+      });
     }
     navigateTo('estimate-detail', targetJobId);
   }, [calculatorSourceJobId, handleUpdateJob, jobs, navigateTo]);
