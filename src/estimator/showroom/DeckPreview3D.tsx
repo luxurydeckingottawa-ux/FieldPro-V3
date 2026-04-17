@@ -221,49 +221,91 @@ const Fascia: React.FC<{ secondary: string }> = ({ secondary }) => {
 /*  Stairs (4 steps, centred on front, no railing)                     */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Realistic deck stairs built piece by piece:
+ *
+ * Real deck stair anatomy:
+ * - STRINGERS: diagonal 2x12 boards (sawtooth-cut) running from deck to ground
+ *   on each side. They support the treads. Built as a series of steps.
+ * - TREADS: deck boards (same material as deck surface), 2 boards per step
+ *   with a small gap, overhanging the riser by ~1 inch (nosing)
+ * - RISERS: open (no riser boards) — standard for composite/wood decks
+ * - The stringer is 1.5" thick, approx 11.25" wide (2x12 actual)
+ *
+ * We build each stringer as a sawtooth profile using individual boxes for
+ * each step's horizontal + vertical cut, which reads better than a flat slab.
+ */
 const Stairs: React.FC<{ primary: string; secondary: string }> = ({ primary, secondary }) => {
   const treadMats = useMemo(
-    () => Array.from({ length: STAIR_COUNT }, (_, i) => makeBoardMaterial(primary, 300 + i)),
+    () => Array.from({ length: STAIR_COUNT * 2 }, (_, i) => makeBoardMaterial(primary, 300 + i)),
     [primary],
   );
   const stringerMat = useMemo(
     () => new THREE.MeshStandardMaterial({
-      color: new THREE.Color(secondary).offsetHSL(0, 0, -0.08),
-      roughness: 0.85,
+      color: new THREE.Color(secondary).offsetHSL(0, 0, -0.1),
+      roughness: 0.82,
       metalness: 0,
     }),
     [secondary],
   );
 
-  const steps: React.ReactNode[] = [];
+  const STRINGER_THICK = 1.5 / 12;  // 1.5 inches
+  const STRINGER_W = 11.25 / 12;    // 2x12 actual width
+  const TREAD_BOARD_W = 5.5 / 12;   // same as deck boards
+  const TREAD_OVERHANG = 1 / 12;    // 1 inch nosing past riser
+  const TREAD_GAP = (3 / 16) / 12;  // gap between the 2 tread boards
+  const stringerX = STAIR_W / 2 + STRINGER_THICK / 2;
+
+  const elements: React.ReactNode[] = [];
+
   for (let i = 0; i < STAIR_COUNT; i++) {
-    const y = DECK_HEIGHT - (i + 1) * STAIR_RISE + DECK_BOARD_T / 2;
-    const z = -DECK_D - (i + 1) * STAIR_RUN + STAIR_RUN / 2;
-    steps.push(
-      <mesh key={`tread-${i}`} position={[0, y, z]} material={treadMats[i]} castShadow receiveShadow>
-        <boxGeometry args={[STAIR_W, DECK_BOARD_T, STAIR_RUN]} />
-      </mesh>,
-    );
+    const stepTopY = DECK_HEIGHT - (i + 1) * STAIR_RISE;
+    const stepFrontZ = -DECK_D - i * STAIR_RUN;
+
+    // Two tread boards per step (running left-right across the stair width)
+    for (let b = 0; b < 2; b++) {
+      const boardZ = stepFrontZ - TREAD_OVERHANG - TREAD_BOARD_W / 2 - b * (TREAD_BOARD_W + TREAD_GAP);
+      elements.push(
+        <mesh key={`tread-${i}-${b}`}
+          position={[0, stepTopY + DECK_BOARD_T / 2, boardZ]}
+          material={treadMats[i * 2 + b]} castShadow receiveShadow>
+          <boxGeometry args={[STAIR_W + STRINGER_THICK * 2, DECK_BOARD_T, TREAD_BOARD_W]} />
+        </mesh>
+      );
+    }
+
+    // Stringer steps — horizontal platform + vertical riser for each side
+    // Horizontal part (the "run" cut of the sawtooth)
+    const horizY = stepTopY - STRINGER_W / 2;
+    const horizZ = stepFrontZ - STAIR_RUN / 2;
+    for (const side of [-1, 1]) {
+      elements.push(
+        <mesh key={`str-h-${i}-${side}`}
+          position={[side * stringerX, horizY, horizZ]}
+          material={stringerMat} castShadow>
+          <boxGeometry args={[STRINGER_THICK, STRINGER_W, STAIR_RUN]} />
+        </mesh>
+      );
+    }
   }
 
-  // Stringers (two side boards)
-  const stringerH = DECK_HEIGHT;
-  const stringerD = STAIR_COUNT * STAIR_RUN;
-  const stringerZ = -DECK_D - stringerD / 2;
-  const stringerX = STAIR_W / 2 + 0.05;
-  const stringerThick = 1.5 / 12;
+  // Bottom landing pad — a final riser section reaching the ground
+  const bottomY = (DECK_HEIGHT - STAIR_COUNT * STAIR_RISE) / 2;
+  const bottomH = DECK_HEIGHT - STAIR_COUNT * STAIR_RISE;
+  const bottomZ = -DECK_D - STAIR_COUNT * STAIR_RUN + STAIR_RUN / 2;
+  if (bottomH > 0.05) {
+    for (const side of [-1, 1]) {
+      elements.push(
+        <mesh key={`str-bot-${side}`}
+          position={[side * stringerX, bottomY, bottomZ]}
+          material={stringerMat} castShadow>
+          <boxGeometry args={[STRINGER_THICK, bottomH, STAIR_RUN]} />
+        </mesh>
+      );
+    }
+  }
 
-  return (
-    <>
-      {steps}
-      <mesh position={[-stringerX, stringerH / 2, stringerZ]} material={stringerMat} castShadow>
-        <boxGeometry args={[stringerThick, stringerH, stringerD]} />
-      </mesh>
-      <mesh position={[stringerX, stringerH / 2, stringerZ]} material={stringerMat} castShadow>
-        <boxGeometry args={[stringerThick, stringerH, stringerD]} />
-      </mesh>
-    </>
-  );
+  return <>{elements}</>;
 };
 
 /* ------------------------------------------------------------------ */
@@ -450,7 +492,7 @@ const DeckPreview3D: React.FC<DeckPreview3DProps> = ({ deckColor }) => {
     <div style={{ width: '100%', height: '100%', background: '#0A0A0A', borderRadius: 10, position: 'relative' }} className="deck-preview-canvas">
       <Canvas
         shadows
-        camera={{ position: [10, 9, 12], fov: 32, near: 0.1, far: 200 }}
+        camera={{ position: [14, 11, 16], fov: 35, near: 0.1, far: 200 }}
         style={{ width: '100%', height: '100%' }}
         gl={{
           antialias: true,
@@ -486,8 +528,8 @@ const DeckPreview3D: React.FC<DeckPreview3DProps> = ({ deckColor }) => {
           enablePan={false}
           autoRotate={rotating}
           autoRotateSpeed={0.3}
-          minDistance={4}
-          maxDistance={22}
+          minDistance={3}
+          maxDistance={35}
           minPolarAngle={Math.PI / 8}
           maxPolarAngle={Math.PI / 2.4}
           target={[0, 1.5, 0]}
