@@ -676,138 +676,29 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
                 </div>
               </div>
 
-              {/* AI Handoff Summary */}
-              <div className="bg-white p-6 rounded-3xl border border-[var(--border-color)] shadow-lg shadow-[var(--brand-gold)]/5 space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-[var(--brand-gold)]">
-                    <Sparkles className="w-6 h-6" />
-                    <h3 className="text-lg font-bold">AI Estimate Handoff</h3>
-                  </div>
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    onSave(intake);
+                    handleStatusChange('completed');
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98]"
+                >
+                  Submit to Office
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+                {onPushToEstimating && (
                   <button
-                    onClick={handleGenerateHandoff}
-                    disabled={isGeneratingHandoff}
-                    className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)] text-white rounded-xl text-sm font-bold hover:bg-[var(--brand-gold-dark)] transition-all disabled:opacity-50"
+                    onClick={() => {
+                      onSave(intake);
+                      onPushToEstimating(intake);
+                    }}
+                    className="flex items-center gap-2 px-6 py-3 bg-[var(--brand-gold)] text-white rounded-xl font-bold hover:bg-[var(--brand-gold-dark)] transition-all shadow-lg active:scale-[0.98]"
                   >
-                    {isGeneratingHandoff ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4" />
-                    )}
-                    {intake.aiInsights?.handoff ? 'Regenerate' : 'Generate Summary'}
+                    Open in Estimator
+                    <ArrowRight className="w-5 h-5" />
                   </button>
-                </div>
-
-                {intake.aiInsights?.handoff ? (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">Key Measurements</p>
-                        <ul className="space-y-1">
-                          {(intake.aiInsights.handoff.keyMeasurements || []).map((m, i) => (
-                            <li key={`measure-${i}`} className="text-sm flex items-center gap-2">
-                              <div className="w-1 h-1 bg-[var(--brand-gold)] rounded-full" />
-                              {m}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">Site Conditions</p>
-                        <ul className="space-y-1">
-                          {(intake.aiInsights.handoff.siteConditions || []).map((c, i) => (
-                            <li key={`condition-${i}`} className="text-sm flex items-center gap-2">
-                              <div className="w-1 h-1 bg-[var(--brand-gold)] rounded-full" />
-                              {c}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">Constraints & Upgrades</p>
-                      <div className="flex flex-wrap gap-2">
-                        {(intake.aiInsights.handoff.constraints || []).map((c, i) => (
-                          <span key={`constraint-${i}`} className="px-2 py-1 bg-rose-50 text-rose-700 text-[10px] font-bold uppercase rounded border border-rose-100">
-                            {c}
-                          </span>
-                        ))}
-                        {(intake.aiInsights.handoff.upgrades || []).map((u, i) => (
-                          <span key={`upgrade-${i}`} className="px-2 py-1 bg-[var(--brand-gold)]/5 text-[#8B7520] text-[10px] font-bold uppercase rounded border border-[var(--brand-gold)]/10">
-                            {u}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {(intake.aiInsights.handoff.missingItems?.length > 0) && (
-                      <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          Missing Items to Verify
-                        </p>
-                        <ul className="space-y-1">
-                          {(intake.aiInsights.handoff.missingItems || []).map((item, i) => (
-                            <li key={`missing-${i}`} className="text-sm text-amber-900 flex items-center gap-2">
-                              <div className="w-1 h-1 bg-amber-600 rounded-full" />
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    <div className="pt-4 border-t border-[var(--border-color)] flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-12 h-2 bg-gray-100 rounded-full overflow-hidden text-[0px]">
-                          <div 
-                            className="h-full bg-[var(--brand-gold)] transition-all duration-1000" 
-                            style={{ width: `${intake.aiInsights.handoff.overallCompletion}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] font-bold text-[var(--brand-gold)] uppercase">
-                          {intake.aiInsights.handoff.overallCompletion}% Complete
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          onSave(intake);
-                          handleStatusChange('completed');
-                        }}
-                        className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98]"
-                      >
-                        Submit to Office
-                        <ArrowRight className="w-5 h-5" />
-                      </button>
-                      {onPushToEstimating && (
-                        <button
-                          onClick={() => {
-                            onSave(intake);
-                            onPushToEstimating(intake);
-                          }}
-                          className="flex items-center gap-2 px-6 py-3 bg-[var(--brand-gold)] text-white rounded-xl font-bold hover:bg-[var(--brand-gold)] transition-all shadow-lg active:scale-[0.98]"
-                        >
-                          Open in Estimator
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-12 border-2 border-dashed border-[var(--border-color)] rounded-3xl flex flex-col items-center text-center gap-4">
-                    <Sparkles className="w-10 h-10 text-[var(--text-secondary)] opacity-20" />
-                    <div>
-                      <p className="font-bold text-[var(--text-primary)]">Ready for Handoff?</p>
-                      <p className="text-sm text-[var(--text-secondary)]">Generate an AI summary to clean up your site data for the estimating team.</p>
-                    </div>
-                    <button
-                      onClick={handleGenerateHandoff}
-                      disabled={isGeneratingHandoff}
-                      className="px-6 py-2 bg-[var(--brand-gold)] text-white rounded-xl text-sm font-bold hover:bg-[var(--brand-gold-dark)] transition-all disabled:opacity-50"
-                    >
-                      {isGeneratingHandoff ? 'Analyzing Site Data...' : 'Generate Handoff Summary'}
-                    </button>
-                  </div>
                 )}
               </div>
             </div>

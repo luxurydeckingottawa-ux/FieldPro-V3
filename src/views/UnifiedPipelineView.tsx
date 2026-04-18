@@ -19,15 +19,15 @@ interface UnifiedPipelineViewProps {
   onAutomationSettings?: () => void;
 }
 
-// Pipeline board definitions
+// Pipeline board definitions — lead stages aligned with drip campaign schedule
 const LEAD_COLUMNS = [
-  { id: PipelineStage.LEAD_IN, label: 'New Lead' },
-  { id: PipelineStage.FIRST_CONTACT, label: 'First Contact' },
-  { id: PipelineStage.SECOND_CONTACT, label: 'Second Contact' },
-  { id: PipelineStage.THIRD_CONTACT, label: 'Third Contact' },
-  { id: PipelineStage.LEAD_ON_HOLD, label: 'On Hold' },
-  { id: PipelineStage.LEAD_WON, label: 'Won' },
-  { id: PipelineStage.LEAD_LOST, label: 'Lost' },
+  { id: PipelineStage.LEAD_IN,         label: 'New Lead · D0'    },
+  { id: PipelineStage.FIRST_CONTACT,   label: '1st Contact · D1' },
+  { id: PipelineStage.SECOND_CONTACT,  label: '2nd Contact · D3' },
+  { id: PipelineStage.THIRD_CONTACT,   label: '3rd Contact · D7' },
+  { id: PipelineStage.LEAD_ON_HOLD,    label: 'Re-Engage · D30'  },
+  { id: PipelineStage.LEAD_WON,        label: 'Won'              },
+  { id: PipelineStage.LEAD_LOST,       label: 'Lead Lost'        },
 ];
 
 const ESTIMATE_COLUMNS = [

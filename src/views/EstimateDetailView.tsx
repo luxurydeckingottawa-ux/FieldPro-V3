@@ -134,13 +134,13 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
 
   const getStageLabel = (stage: PipelineStage) => {
     const labels: Record<string, string> = {
-      [PipelineStage.LEAD_IN]: 'New Lead',
-      [PipelineStage.FIRST_CONTACT]: 'First Contact',
-      [PipelineStage.SECOND_CONTACT]: 'Second Contact',
-      [PipelineStage.THIRD_CONTACT]: 'Third Contact',
-      [PipelineStage.LEAD_ON_HOLD]: 'On Hold',
+      [PipelineStage.LEAD_IN]: 'New Lead · D0',
+      [PipelineStage.FIRST_CONTACT]: '1st Contact · D1',
+      [PipelineStage.SECOND_CONTACT]: '2nd Contact · D3',
+      [PipelineStage.THIRD_CONTACT]: '3rd Contact · D7',
+      [PipelineStage.LEAD_ON_HOLD]: 'Re-Engage · D30',
       [PipelineStage.LEAD_WON]: 'Won',
-      [PipelineStage.LEAD_LOST]: 'Lost',
+      [PipelineStage.LEAD_LOST]: 'Lead Lost',
       [PipelineStage.EST_UNSCHEDULED]: 'Unscheduled',
       [PipelineStage.EST_SCHEDULED]: 'Scheduled',
       [PipelineStage.EST_IN_PROGRESS]: 'In Progress',
