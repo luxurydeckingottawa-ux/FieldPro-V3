@@ -487,6 +487,8 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     let targetJobId = calculatorSourceJobId;
     let portalToken = '';
     let createdNewJob: Job | null = null;
+    let supabaseBaseJob: Job | null = null; // captured from existence check for later upsert
+    let estimateJobUpdates: Partial<Job> = {}; // populated in existing-job path for upsert
 
     // ── Supabase existence check before UPDATE path ───────────────────────────
     // If a job is in local state but NOT in Supabase (created with an old
@@ -497,8 +499,8 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     // Fix: verify the job exists in Supabase first. If not, fall through to the
     // CREATE path so we always get a proper persisted record.
     if (targetJobId && isSupabaseConfigured()) {
-      const existsInSupabase = await dataService.getJobById(targetJobId);
-      if (!existsInSupabase) {
+      supabaseBaseJob = await dataService.getJobById(targetJobId);
+      if (!supabaseBaseJob) {
         console.warn(`[handleEstimateSaved] Job ${targetJobId} not found in Supabase — falling through to CREATE path to ensure persistence.`);
         targetJobId = null; // triggers new job creation below
       }
@@ -507,7 +509,8 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     if (targetJobId) {
       const existingJob = jobs.find(j => j.id === targetJobId);
       portalToken = existingJob?.customerPortalToken || crypto.randomUUID();
-      handleUpdateJob(targetJobId, {
+      // Capture updates for the authoritative upsert below (estimateData added later)
+      estimateJobUpdates = {
         clientName: data.clientName,
         projectAddress: data.clientAddress,
         totalAmount,
@@ -556,7 +559,8 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
           sentMessages: [{ touchId: 'est-fu1-day0', channel: 'email' as const, sentAt: now, engagementTier: 'COLD' }],
         },
         updatedAt: now,
-      });
+      };
+      handleUpdateJob(targetJobId, estimateJobUpdates);
     } else {
       // ── NEW JOB from estimator ──────────────────────────────────────────
       // CRITICAL: use crypto.randomUUID() not `j-est-${Date.now()}`.
@@ -825,6 +829,29 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     // the INSERT is acknowledged by Supabase.
     if (!createdNewJob) {
       handleUpdateJob(targetJobId!, { estimateData });
+      // Authoritative upsert — sends the COMPLETE merged job to Supabase.
+      // This guarantees persistence even if the handleUpdateJob UPDATE silently
+      // hits 0 rows (which happens when Supabase returns success but no row
+      // was matched, e.g. RLS blocks without error or concurrent state issue).
+      // The upsert result confirms whether the write landed.
+      if (supabaseBaseJob) {
+        const mergedJob: Job = {
+          ...supabaseBaseJob,
+          ...(estimateJobUpdates as Partial<Job>),
+          estimateData,
+          updatedAt: now,
+        };
+        const upsertResult = await dataService.upsertJob(mergedJob);
+        if (!upsertResult) {
+          console.error(
+            '[handleEstimateSaved] upsertJob failed for existing job. Job ID:', targetJobId,
+            '| pipeline_stage in merged job:', mergedJob.pipelineStage,
+            '| estimateData present:', !!mergedJob.estimateData,
+          );
+        } else {
+          console.log('[handleEstimateSaved] upsertJob succeeded for job', targetJobId, '— pipeline_stage:', upsertResult.pipelineStage);
+        }
+      }
     }
 
     // Send HTML estimate email (or fallback to mailto if no email on file)

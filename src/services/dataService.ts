@@ -499,6 +499,23 @@ export const dataService = {
     return job;
   },
 
+  async upsertJob(job: Job): Promise<Job | null> {
+    if (isSupabaseConfigured()) {
+      const row = jobToRow(job);
+      const { data, error } = await supabase!
+        .from('jobs')
+        .upsert(row, { onConflict: 'id' })
+        .select()
+        .single();
+      if (error) {
+        console.error('[upsertJob] Supabase upsert failed:', error);
+        return null;
+      }
+      return data ? rowToJob(data as Record<string, unknown>) : null;
+    }
+    return job;
+  },
+
   async updateJob(jobId: string, updates: Partial<Job>): Promise<void> {
     if (isSupabaseConfigured()) {
       // Convert only the provided updates to snake_case
