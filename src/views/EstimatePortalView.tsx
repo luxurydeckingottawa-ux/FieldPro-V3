@@ -18,6 +18,15 @@ import {
   resolveDeckingFromSelection,
   groupCatalogByBrand,
 } from '../data/deckingCatalog';
+import {
+  ProofWall,
+  ReverseRiskStack,
+  BuildDayCommitment,
+  PaymentScheduleTimeline,
+  CompareQuotesChecklist,
+  ShareWithPartner,
+} from '../components/portal/PortalSections';
+import { useCurrentSection } from '../hooks/useInView';
 
 export interface CustomerDeckingSwapPayload {
   optionId: string;
@@ -28,6 +37,63 @@ export interface CustomerDeckingSwapPayload {
   toBrand?: string;
   priceImpact: number;
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// Scroll-Aware Sticky Nav
+// ════════════════════════════════════════════════════════════════════════════
+// Three zones map to IDs on the page. IntersectionObserver flips the active
+// zone as the user scrolls; a gold underline slides between the active link.
+
+const NAV_ZONES: Array<{ id: string; label: string; sectionIds: string[] }> = [
+  { id: 'zone-proposal',   label: 'Your Proposal', sectionIds: ['options', 'financing', 'comparison', 'payment-schedule'] },
+  { id: 'zone-why-us',     label: 'Why Choose Us', sectionIds: ['proof-wall', 'risk-stack', 'objection-center', 'compare-checklist'] },
+  { id: 'zone-our-process', label: 'Our Process',  sectionIds: ['process-journey', 'build-day', 'commitment-closer'] },
+];
+
+const ScrollAwareNav: React.FC<{ isAccepted: boolean }> = ({ isAccepted }) => {
+  // Flatten all section ids in page order, then map back to zone.
+  const allIds = React.useMemo(() => NAV_ZONES.flatMap(z => z.sectionIds), []);
+  const active = useCurrentSection(allIds);
+  const activeZoneId = React.useMemo(() => {
+    if (!active) return NAV_ZONES[0].id;
+    const zone = NAV_ZONES.find(z => z.sectionIds.includes(active));
+    return zone?.id || NAV_ZONES[0].id;
+  }, [active]);
+
+  const scrollTo = (e: React.MouseEvent, sectionId: string) => {
+    e.preventDefault();
+    const node = document.getElementById(sectionId);
+    if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <div className="hidden md:flex items-center gap-1">
+      {NAV_ZONES.map(zone => {
+        const isActive = zone.id === activeZoneId;
+        const firstSection = zone.sectionIds[0];
+        return (
+          <a
+            key={zone.id}
+            href={`#${firstSection}`}
+            onClick={(e) => scrollTo(e, firstSection)}
+            className={`relative text-sm font-semibold px-4 py-2 transition-colors ${
+              isActive ? 'text-slate-900' : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            {zone.id === 'zone-proposal' && isAccepted ? 'Project Summary' : zone.label}
+            {isActive && (
+              <span
+                className="absolute left-4 right-4 bottom-0 h-0.5 transition-all duration-300"
+                style={{ backgroundColor: '#D4A853' }}
+              />
+            )}
+          </a>
+        );
+      })}
+      <div className="h-6 w-px bg-slate-200 mx-3" />
+    </div>
+  );
+};
 
 interface EstimatePortalViewProps {
   job: Job;
@@ -50,6 +116,10 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
 }) => {
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(job.acceptedOptionId || null);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>(job.selectedAddOnIds || []);
+  // activeTab legacy — retained for back-compat; the portal is now a single
+  // scroll with scroll-aware nav. Reads true while the bottom tabs still call
+  // setActiveTab (kept for keyboard nav / reduced-motion fallback).
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTab, setActiveTab] = useState<'proposal' | 'why-us' | 'process'>('proposal');
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showContractSigning, setShowContractSigning] = useState(false);
@@ -581,25 +651,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             </div>
           </div>
           <div className="hidden md:flex items-center gap-6">
-            <button 
-              onClick={() => setActiveTab('proposal')}
-              className={`text-sm font-semibold transition-colors ${activeTab === 'proposal' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-              {isAccepted ? 'Project Summary' : 'Your Proposal'}
-            </button>
-            <button 
-              onClick={() => setActiveTab('why-us')}
-              className={`text-sm font-semibold transition-colors ${activeTab === 'why-us' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-              Why Choose Us
-            </button>
-            <button 
-              onClick={() => setActiveTab('process')}
-              className={`text-sm font-semibold transition-colors ${activeTab === 'process' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-              Our Process
-            </button>
-            <div className="h-6 w-px bg-slate-200" />
+            <ScrollAwareNav isAccepted={isAccepted} />
             <div className="flex items-center gap-2 text-slate-600">
               <Phone className="w-4 h-4" />
               <span className="text-sm font-medium">613-707-3060</span>
@@ -607,7 +659,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             {onClose && (
               <>
                 <div className="h-6 w-px bg-slate-200" />
-                <button 
+                <button
                   onClick={onClose}
                   className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold text-xs hover:bg-rose-100 transition-all border border-rose-100"
                 >
@@ -666,8 +718,8 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
           </div>
         </div>
 
-        {activeTab === 'proposal' && (
-          <div className="space-y-16">
+        {/* Single-scroll layout — every section has an `id` for scroll-aware nav */}
+        <div className="space-y-16">
             {isAccepted && (
               <div 
                 
@@ -727,7 +779,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
 
             {/* Option Comparison */}
             {!isAccepted ? (
-              <section>
+              <section id="options">
                 <div className="flex items-center justify-between mb-8">
                   <h3 className="text-2xl font-bold flex items-center gap-2">
                     <Sparkles className="w-6 h-6 text-amber-500" />
@@ -1330,10 +1382,8 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
 
             {/* Financing Badge */}
             {!isAccepted && (
-              <div 
-                
-                
-                
+              <div
+                id="financing"
                 className="bg-blue-50 border border-blue-100 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center justify-between gap-8 shadow-sm relative overflow-hidden group"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 blur-3xl -mr-32 -mt-32 transition-transform group-hover:scale-110" />
@@ -1370,7 +1420,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
 
             {/* Comparison Table Section */}
             {!isAccepted && (
-              <section className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+              <section id="comparison" className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
                 <div className="p-8 md:p-12 border-b border-slate-100 bg-slate-50/50">
                   <h3 className="text-2xl font-bold mb-2">Side-by-Side Comparison</h3>
                   <p className="text-slate-600">A clear look at the technical differences and long-term value of each option.</p>
@@ -1458,13 +1508,19 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
 
             {/* "Enhance Your Outdoor Living" section removed — per-option enhancements inside each card replace it */}
 
+            {/* ─── ASSET 07 · Payment Schedule Timeline (dynamic from selected option) ─── */}
+            {!isAccepted && <PaymentScheduleTimeline selectedTotal={calculateTotal()} />}
+
+            {/* ─── ASSET 10 · Proof Wall testimonial gallery ─── */}
+            {!isAccepted && <ProofWall companyName={COMPANY.name} />}
+
             {/* FAQ & AI Support Section */}
             <section className="mt-20">
               <AIObjectionHelper job={job} />
             </section>
 
             {/* Trust & Warranty Section */}
-            <section className="bg-slate-900 rounded-[2.5rem] p-8 md:p-16 text-white relative overflow-hidden">
+            <section id="built-for-life" className="bg-slate-900 rounded-[2.5rem] p-8 md:p-16 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 blur-[100px] -mr-48 -mt-48" />
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                 <div>
@@ -1513,8 +1569,11 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               </div>
             </section>
 
+            {/* ─── ASSET 05 · Reverse Risk Stack (six sealed commitments) ─── */}
+            {!isAccepted && <ReverseRiskStack />}
+
             {/* Objection Handling / FAQ Center */}
-            <section className="space-y-12">
+            <section id="objection-center" className="space-y-12">
               <div className="text-center max-w-2xl mx-auto">
                 <h3 className="text-3xl font-black mb-4">The Objection Center</h3>
                 <p className="text-slate-600">We know you have choices. Here is why homeowners choose {COMPANY.name} over the competition.</p>
@@ -1564,6 +1623,9 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               </div>
             </section>
 
+            {/* ─── ASSET 09 · Compare Quotes Interactive Checklist ─── */}
+            {!isAccepted && <CompareQuotesChecklist />}
+
             {/* Educational Snippets */}
             <section className="bg-blue-50 rounded-[2.5rem] p-8 md:p-12 border border-blue-100">
               <div className="flex flex-col md:flex-row gap-12 items-center">
@@ -1590,7 +1652,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             </section>
 
             {/* What Happens Next */}
-            <section className="py-16 bg-slate-50/50 rounded-[2.5rem] px-8 md:px-12 border border-slate-100">
+            <section id="journey-after-accept" className="py-16 bg-slate-50/50 rounded-[2.5rem] px-8 md:px-12 border border-slate-100">
               <div className="text-center mb-16">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/5 border border-slate-900/10 text-slate-900 text-[10px] font-bold uppercase tracking-widest mb-4">
                   <Sparkles className="w-3 h-3" />
@@ -1646,8 +1708,11 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               </div>
             </section>
 
+            {/* ─── ASSET 06 · Build Day Commitment (what build week actually looks like) ─── */}
+            {!isAccepted && <BuildDayCommitment />}
+
             {/* Our Commitment */}
-            <section className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200 text-center">
+            <section id="commitment-closer" className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200 text-center">
               <div className="max-w-2xl mx-auto">
                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
                   <ShieldCheck className="w-8 h-8 text-slate-900" />
@@ -1662,11 +1727,9 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 </div>
               </div>
             </section>
-          </div>
-        )}
 
-        {activeTab === 'why-us' && (
-          <div className="space-y-24 py-12">
+        {/* Legacy "Why Choose Us" content, now inline in single scroll */}
+        <div className="space-y-24 py-12">
             <div className="text-center max-w-3xl mx-auto">
               <h2 className="text-4xl font-black mb-6">The {COMPANY.name} Difference</h2>
               <p className="text-xl text-slate-600">We've spent years refining our process to ensure every project is a masterpiece of durability and design.</p>
@@ -1711,10 +1774,9 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               </div>
             </div>
           </div>
-        )}
 
-        {activeTab === 'process' && (
-          <div className="space-y-16 py-12">
+        {/* Legacy "Our Process" content (5-step build journey), inline */}
+        <div id="process-journey" className="space-y-16 py-12">
              <div className="text-center max-w-3xl mx-auto">
               <h2 className="text-4xl font-black mb-6">Our 5-Step Build Journey</h2>
               <p className="text-xl text-slate-600">A seamless transition from vision to reality, managed with precision at every stage.</p>
@@ -1743,7 +1805,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               ))}
             </div>
           </div>
-        )}
+        </div>
       </main>
 
       {/* Sticky Footer for Acceptance */}
@@ -1886,6 +1948,41 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
       <button className="fixed bottom-24 right-8 w-14 h-14 bg-white border border-slate-200 rounded-full shadow-xl flex items-center justify-center text-slate-900 hover:scale-110 transition-transform z-40">
         <MessageSquare className="w-6 h-6" />
       </button>
+
+      {/* ─── ASSET 08 · Send to Your Partner (floating secondary CTA + modal) ─── */}
+      {!isAccepted && (
+        <ShareWithPartner
+          clientFirstName={job.clientName ? job.clientName.split(' ')[0] : ''}
+          projectAddress={job.projectAddress || ''}
+          portalUrl={typeof window !== 'undefined' ? window.location.href : ''}
+          onShare={async (payload) => {
+            // Fire-and-forget send via existing Netlify function. Graceful degrade
+            // if the function isn't available — the UI still confirms so the
+            // prospect's experience isn't broken.
+            try {
+              await fetch('/.netlify/functions/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  to: payload.recipientEmail,
+                  subject: `Deck estimate for ${job.projectAddress || 'your project'} · Luxury Decking`,
+                  text: `${payload.message}\n\nView the proposal: ${payload.portalUrl}`,
+                }),
+              }).catch(() => { /* tolerate network failure */ });
+            } catch {
+              // best-effort
+            }
+            // Always record the share on engagement so the office sees it.
+            try {
+              onTrackEngagement?.({
+                lastInteraction: new Date().toISOString(),
+              });
+            } catch {
+              // best-effort
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
