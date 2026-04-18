@@ -53,7 +53,12 @@ export interface CustomerDeckingSwapPayload {
 // we fall back to a premium text-only treatment using brand colours.
 
 const BrandBadge: React.FC = () => {
+  // Source priority:
+  //   1. Uploaded logo from Business Settings (localStorage fieldpro_business_info)
+  //   2. /assets/logo-luxury-black.png — bundled official brand asset
+  //   3. Premium text fallback (only renders if neither above is available)
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [bundledLogoFailed, setBundledLogoFailed] = useState(false);
 
   useEffect(() => {
     try {
@@ -64,22 +69,34 @@ const BrandBadge: React.FC = () => {
         setLogoDataUrl(info.logoDataUrl);
       }
     } catch {
-      // Ignore localStorage errors — fall back to text treatment.
+      // Ignore localStorage errors — fall back below.
     }
   }, []);
 
+  // User-uploaded logo (Business Settings) wins when present.
   if (logoDataUrl) {
     return (
-      <div className="shrink-0 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-center w-[120px] h-[96px]">
+      <div className="shrink-0 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-center w-[140px] h-[96px]">
+        <img src={logoDataUrl} alt="Luxury Decking" className="w-full h-full object-contain" />
+      </div>
+    );
+  }
+
+  // Bundled brand asset. Shown to all customers regardless of browser state.
+  if (!bundledLogoFailed) {
+    return (
+      <div className="shrink-0 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-center w-[140px] h-[96px]">
         <img
-          src={logoDataUrl}
+          src="/assets/logo-luxury-black.png"
           alt="Luxury Decking"
           className="w-full h-full object-contain"
+          onError={() => setBundledLogoFailed(true)}
         />
       </div>
     );
   }
 
+  // Last-resort premium text badge.
   return (
     <div
       className="shrink-0 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-800 shadow-xl shadow-slate-900/20 px-5 py-4 flex flex-col items-center justify-center text-center"
@@ -88,12 +105,8 @@ const BrandBadge: React.FC = () => {
       <span className="text-[9px] font-bold uppercase tracking-[0.3em] mb-1" style={{ color: '#D4A853' }}>
         Est. Ottawa
       </span>
-      <span className="text-base font-black tracking-tight text-white leading-none">
-        LUXURY
-      </span>
-      <span className="text-sm font-light tracking-[0.2em] uppercase text-white/70 mt-0.5">
-        Decking
-      </span>
+      <span className="text-base font-black tracking-tight text-white leading-none">LUXURY</span>
+      <span className="text-sm font-light tracking-[0.2em] uppercase text-white/70 mt-0.5">Decking</span>
       <div className="mt-2 h-px w-8" style={{ backgroundColor: '#D4A853' }} />
     </div>
   );

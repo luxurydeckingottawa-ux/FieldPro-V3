@@ -443,22 +443,19 @@ export const PromiseShield: React.FC = () => {
                   />
                 ))}
                 <polygon points={centerHex} style={{ fill: NAVY, stroke: GOLD, strokeWidth: 1.5 }} />
-                {/* Center mark: gold logo image (falls back to text mark if the
-                    asset isn't present). Save /public/assets/logo-luxury-gold.png
-                    to activate. Sized to fit inside the 44-unit inner hex. */}
+                {/* Brand mark: the official gold logo lives in the inner hex.
+                    Sized ~75% of the hex width so it breathes inside the ring.
+                    preserveAspectRatio keeps the wide-aspect logo centred. */}
                 <image
                   href="/assets/logo-luxury-gold.png"
-                  x={160}
-                  y={180}
-                  width={80}
-                  height={40}
+                  x={154}
+                  y={178}
+                  width={92}
+                  height={44}
                   preserveAspectRatio="xMidYMid meet"
                   style={{ pointerEvents: 'none' }}
                 />
-                {/* Fallback text — hidden when the image loads over it.
-                    If the image 404s, the text stays visible. */}
-                <text x={200} y={198} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize={9} fill={GOLD} letterSpacing={1.5} opacity={0.15}>LUXURY</text>
-                <text x={200} y={212} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize={9} fill={GOLD} letterSpacing={1.5} opacity={0.15}>DECKING</text>
+                <title>Luxury Decking</title>
               </svg>
             </div>
 
