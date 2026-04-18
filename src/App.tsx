@@ -717,6 +717,11 @@ const App: React.FC = () => {
           updated.lastPartnerOpenAt = new Date().toISOString();
         }
 
+        // Append new PDF-download events (contractor comparison checklist).
+        if (engagement.pdfDownloads && engagement.pdfDownloads.length > 0) {
+          updated.pdfDownloads = [...(updated.pdfDownloads || []), ...engagement.pdfDownloads];
+        }
+
         // Calculate engagement heat
         const isRecentlyOpened = updated.lastOpenedAt && (Date.now() - new Date(updated.lastOpenedAt).getTime()) < 24 * 60 * 60 * 1000;
         let heat: 'cold' | 'warm' | 'hot' = 'cold';

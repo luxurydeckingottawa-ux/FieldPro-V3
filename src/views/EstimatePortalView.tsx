@@ -108,7 +108,7 @@ const BrandBadge: React.FC = () => {
 const NAV_ZONES: Array<{ id: string; label: string; sectionIds: string[] }> = [
   { id: 'zone-proposal',   label: 'Your Proposal', sectionIds: ['options', 'financing', 'comparison'] },
   { id: 'zone-why-us',     label: 'Why Choose Us', sectionIds: ['proof-wall', 'risk-stack', 'objection-center', 'compare-checklist'] },
-  { id: 'zone-our-process', label: 'Our Process',  sectionIds: ['journey-after-accept', 'process-journey', 'build-day', 'commitment-closer', 'payment-schedule'] },
+  { id: 'zone-our-process', label: 'Our Process',  sectionIds: ['journey-after-accept', 'build-day', 'commitment-closer', 'payment-schedule'] },
 ];
 
 const ScrollAwareNav: React.FC<{ isAccepted: boolean }> = ({ isAccepted }) => {
@@ -1548,7 +1548,13 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             )}
 
             {/* ─── Rebuild 02 · Comparison Meters replaces the old side-by-side table ─── */}
-            {!isAccepted && <ComparisonMeters />}
+            {!isAccepted && (
+              <ComparisonMeters
+                silverPrice={estimateData.options[0]?.price}
+                goldPrice={estimateData.options[1]?.price}
+                platinumPrice={estimateData.options[2]?.price}
+              />
+            )}
 
             {/* ─── Rebuild 01 · Cost-Over-Time slider (TCO crossover visualisation) ─── */}
             {!isAccepted && <CostSlider />}
@@ -1627,7 +1633,17 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             {/* ─── ASSET 09 / rebuild 04 · Contractor Questions (flip-card rail) ─── */}
             {!isAccepted && (
               <ContractorQuestions
-                onDownloadPDF={() =>
+                onDownloadPDF={() => {
+                  // Record the download on portal engagement so the office sees
+                  // this prospect is actively shopping around with our checklist
+                  // in hand — strong intent signal.
+                  try {
+                    onTrackEngagement?.({
+                      pdfDownloads: [{ document: 'contractor-checklist', downloadedAt: new Date().toISOString() }],
+                    });
+                  } catch {
+                    // best-effort
+                  }
                   generateContractorChecklistPDF({
                     items: [
                       { q: 'Joist spacing', ask: 'What spacing are you using on the joists?', why: 'Ontario Building Code minimum is 16 inch on-centre for most deck loads. Wider spacing is cheaper to build and bouncier to walk on.', our: 'Standard at 16 inch on-centre. 12 inch on-centre on our Platinum tier for rock-solid feel.' },
@@ -1641,8 +1657,8 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                       { q: 'Recent references', ask: 'Can you give me two references from completed decks in the last year, within a 30-minute drive?', why: 'New contractors and under-performers rarely have recent local references.', our: 'Three local references supplied on request. Most from within 20 minutes of your build address.' },
                       { q: 'Deck portfolio depth', ask: 'Can I see your last 10 to 15 completed decks?', why: 'Generalists (fencing / landscaping / pools) may only build a handful of decks per year. Specialists build deck after deck.', our: 'We only build decks. Our recent portfolio is available on our site and on Instagram.' },
                     ],
-                  })
-                }
+                  });
+                }}
               />
             )}
 
@@ -1774,36 +1790,8 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             {/* "Our Invisible Build Standards" section removed per owner request */}
           </div>
 
-        {/* Legacy "Our Process" content (5-step build journey), inline */}
-        <div id="process-journey" className="space-y-16 py-12">
-             <div className="text-center max-w-3xl mx-auto">
-              <h2 className="text-4xl font-black mb-6">Our 5-Step Build Journey</h2>
-              <p className="text-xl text-slate-600">A seamless transition from vision to reality, managed with precision at every stage.</p>
-            </div>
-
-            <div className="space-y-8">
-              {[
-                { title: 'Design & Permitting', desc: 'We handle all the paperwork and finalize your 3D design to ensure everything is perfect before we break ground.' },
-                { title: 'Material Logistics', desc: 'Materials are ordered and delivered to your site. We perform a quality check on every board that arrives.' },
-                { title: 'The Build Phase', desc: 'Our expert crew arrives and transforms your yard. We maintain a clean, safe, and professional job site.' },
-                { title: 'Quality Control', desc: 'Your Project Manager performs a 50-point inspection to ensure every detail meets our Luxury standards.' },
-                { title: 'Final Walkthrough', desc: 'We walk the project with you, explain maintenance, and hand over your warranty package.' }
-              ].map((step, i) => (
-                <div key={i} className="flex gap-8 group">
-                  <div className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
-                      {i + 1}
-                    </div>
-                    {i < 4 && <div className="w-0.5 h-full bg-slate-200 my-2" />}
-                  </div>
-                  <div className="pb-12">
-                    <h4 className="text-2xl font-bold mb-2 group-hover:text-slate-900 transition-colors">{step.title}</h4>
-                    <p className="text-slate-600 text-lg leading-relaxed max-w-2xl">{step.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* 5-Step Build Journey section removed — redundant with Journey After
+            Acceptance (same content, smaller). */}
         </div>
 
         {/* ─── ASSET 07 · Payment Schedule Timeline — placed at the very bottom so

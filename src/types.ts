@@ -637,6 +637,12 @@ export interface PortalEngagement {
    */
   partnerOpens?: number;
   lastPartnerOpenAt?: string;
+  /**
+   * Downloads of the Contractor Comparison Checklist PDF. Surfaced in the
+   * Proposal Engagement section so the office can see which prospects are
+   * actively using it to shop competitors — a strong intent signal.
+   */
+  pdfDownloads?: Array<{ document: 'contractor-checklist'; downloadedAt: string }>;
 }
 
 export enum PunchType {

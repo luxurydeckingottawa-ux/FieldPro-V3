@@ -104,16 +104,21 @@ const METRICS: MeterRow[] = [
   {
     label: 'Material warranty',
     direction: 'higher-is-better',
-    silver: { value: 'yrs rot only', big: '25', bar: 40 },
-    gold: { value: 'yrs full', big: '25', bar: 80 },
+    // Pressure-treated wood has no manufacturer material warranty.
+    // 0 years. Bar is 0 (red), visually honest.
+    silver: { value: 'No material warranty', big: '0', bar: 0 },
+    gold: { value: 'yrs full', big: '25', bar: 70 },
     platinum: { value: 'yrs full', big: '50', bar: 100 },
   },
   {
     label: 'Heat retention',
     direction: 'lower-is-better',
-    silver: { value: 'Cool', sub: 'natural', bar: 35 },
-    gold: { value: 'Moderate', sub: 'colour-dependent', bar: 55 },
-    platinum: { value: 'Warm', sub: 'cap-stock helps', bar: 65 },
+    // PVC cap-stock with heat-resistant pigments actually runs COOLER than
+    // composite in direct sun. Reordered so Silver (wood) ~= Platinum (cool
+    // PVC), with Composite as the warmest of the three.
+    silver: { value: 'Cool', sub: 'natural wood', bar: 35 },
+    gold: { value: 'Warm', sub: 'colour-dependent', bar: 65 },
+    platinum: { value: 'Cool', sub: 'heat-resistant PVC', bar: 40 },
   },
 ];
 
@@ -128,7 +133,11 @@ function barColour(direction: 'lower-is-better' | 'higher-is-better', value: num
   return GREEN;
 }
 
-export const ComparisonMeters: React.FC = () => {
+export const ComparisonMeters: React.FC<{
+  silverPrice?: number;
+  goldPrice?: number;
+  platinumPrice?: number;
+}> = ({ silverPrice, goldPrice, platinumPrice }) => {
   const [ref, inView] = useInView<HTMLDivElement>();
   const [revealedBars, setRevealedBars] = useState<boolean[]>(() => Array(METRICS.length * 3).fill(false));
 
@@ -151,7 +160,7 @@ export const ComparisonMeters: React.FC = () => {
   return (
     <section id="comparison" ref={ref} className="py-24 md:py-32 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: CREAM_DEEP }}>
       <div className="max-w-6xl mx-auto">
-        <SectionHead eyebrow="Material Comparison" subtitle="Four text rows become four visual ratios. Scannable in three seconds instead of thirty, and the eye reaches the verdict before the brain reaches for an argument.">
+        <SectionHead eyebrow="Material Comparison" subtitle="The four things homeowners ask us most, rendered as visual ratios. Maintenance time, expected lifespan, warranty coverage, and surface temperature on a hot day — compared side by side so you can see the trade-offs at a glance.">
           Comparison meters <em className="italic font-normal" style={{ color: GOLD }}>at a glance.</em>
         </SectionHead>
 
@@ -214,6 +223,38 @@ export const ComparisonMeters: React.FC = () => {
                 </div>
               </div>
             ))}
+
+            {/* Investment row — price side-by-side at the bottom so prospects
+                can tie each tier's ratios back to its price in one glance. */}
+            {(silverPrice || goldPrice || platinumPrice) && (
+              <div className="grid gap-10 items-start pt-6 mt-2 border-t" style={{ gridTemplateColumns: '200px 1fr', borderColor: '#e8e4d6' }}>
+                <div className="font-mono text-xs tracking-[0.1em] uppercase font-medium" style={{ color: INK }}>
+                  Investment
+                  <small className="block text-[10px] mt-1 font-normal tracking-[0.08em]" style={{ color: GREY_MID }}>
+                    Your quoted price
+                  </small>
+                </div>
+                <div className="grid grid-cols-3 gap-7">
+                  {[
+                    { key: 'silver', price: silverPrice, color: GREY_MID },
+                    { key: 'gold', price: goldPrice, color: GOLD },
+                    { key: 'platinum', price: platinumPrice, color: BLACK },
+                  ].map((t) => (
+                    <div key={t.key}>
+                      {t.price ? (
+                        <div className="font-heading font-medium leading-tight tabular-nums" style={{ color: t.color, fontSize: 26 }}>
+                          ${t.price.toLocaleString()}
+                        </div>
+                      ) : (
+                        <div className="font-mono text-xs uppercase tracking-widest" style={{ color: GREY_MID }}>
+                          See card above
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -274,7 +315,13 @@ interface ShieldSegment {
 }
 
 function buildShieldGeometry(): { segments: ShieldSegment[]; centerHex: string } {
-  const cx = 200, cy = 200, r = 160, labelR = 195, dotR = 192;
+  // Geometry radii:
+  //   r        inner segment radius (where the polygon edge lives)
+  //   labelR   radius for the segment text label (must sit clear of segment edge)
+  //   dotR     radius for the progress dot (pushed further out than labelR so
+  //            dots never overlap the label text — fixes the "dots on top of
+  //            the writing" bug flagged in owner feedback)
+  const cx = 200, cy = 200, r = 160, labelR = 188, dotR = 215;
   const startAngle = -Math.PI / 2 - Math.PI / 6;
   const segments: ShieldSegment[] = [];
   for (let i = 0; i < 6; i++) {
@@ -290,8 +337,10 @@ function buildShieldGeometry(): { segments: ShieldSegment[]; centerHex: string }
       points: `${cx},${cy} ${x1},${y1} ${x2},${y2}`,
       labelX: cx + labelR * Math.cos(mid),
       labelY: cy + labelR * Math.sin(mid) + 4,
-      dotX: cx + (r + 32) * Math.cos(mid),
-      dotY: cy + (r + 32) * Math.sin(mid),
+      // Dot radius pushed out to dotR (215) from the previous 192, so the
+      // dot sits WELL outside the label text rather than on top of it.
+      dotX: cx + dotR * Math.cos(mid),
+      dotY: cy + dotR * Math.sin(mid),
     });
   }
   const hR = 44;
@@ -394,8 +443,22 @@ export const PromiseShield: React.FC = () => {
                   />
                 ))}
                 <polygon points={centerHex} style={{ fill: NAVY, stroke: GOLD, strokeWidth: 1.5 }} />
-                <text x={200} y={198} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize={9} fill={GOLD} letterSpacing={1.5}>LUXURY</text>
-                <text x={200} y={212} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize={9} fill={GOLD} letterSpacing={1.5}>DECKING</text>
+                {/* Center mark: gold logo image (falls back to text mark if the
+                    asset isn't present). Save /public/assets/logo-luxury-gold.png
+                    to activate. Sized to fit inside the 44-unit inner hex. */}
+                <image
+                  href="/assets/logo-luxury-gold.png"
+                  x={160}
+                  y={180}
+                  width={80}
+                  height={40}
+                  preserveAspectRatio="xMidYMid meet"
+                  style={{ pointerEvents: 'none' }}
+                />
+                {/* Fallback text — hidden when the image loads over it.
+                    If the image 404s, the text stays visible. */}
+                <text x={200} y={198} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize={9} fill={GOLD} letterSpacing={1.5} opacity={0.15}>LUXURY</text>
+                <text x={200} y={212} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize={9} fill={GOLD} letterSpacing={1.5} opacity={0.15}>DECKING</text>
               </svg>
             </div>
 

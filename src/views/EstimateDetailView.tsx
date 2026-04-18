@@ -368,16 +368,16 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
 
                 {/* Share-with-partner activity (Asset 08 telemetry).
                     Shows each recipient the customer shared the proposal to,
-                    and how many times the partner-tagged link was opened.
-                    Counts are kept on portalEngagement so they ride alongside
-                    the rest of the engagement signals. */}
+                    how many times the partner-tagged link was opened, AND any
+                    downloads of the Contractor Comparison Checklist PDF. */}
                 {(job.portalEngagement.sharesSent && job.portalEngagement.sharesSent.length > 0) ||
-                 (job.portalEngagement.partnerOpens && job.portalEngagement.partnerOpens > 0) ? (
+                 (job.portalEngagement.partnerOpens && job.portalEngagement.partnerOpens > 0) ||
+                 (job.portalEngagement.pdfDownloads && job.portalEngagement.pdfDownloads.length > 0) ? (
                   <div className="mt-4 p-4 bg-[var(--bg-primary)]/50 rounded-lg border border-[var(--border-color)]">
                     <h4 className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-3 flex items-center gap-2">
-                      <Send className="w-3 h-3 text-[var(--brand-gold)]" /> Share Activity
+                      <Send className="w-3 h-3 text-[var(--brand-gold)]" /> Share & Intent Signals
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
                       <div>
                         <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Sent to Partner</p>
                         <p className="text-xl font-bold text-[var(--text-primary)]">
@@ -392,6 +392,13 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                           <span className="text-[9px] text-[var(--text-secondary)] uppercase ml-2 tracking-widest font-medium">
                             {job.portalEngagement.lastPartnerOpenAt ? `last: ${new Date(job.portalEngagement.lastPartnerOpenAt).toLocaleDateString('en-CA')}` : 'not yet'}
                           </span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Checklist PDF</p>
+                        <p className="text-xl font-bold text-[var(--brand-gold)]">
+                          {job.portalEngagement.pdfDownloads?.length || 0}
+                          <span className="text-[9px] text-[var(--text-secondary)] uppercase ml-2 tracking-widest font-medium">downloads</span>
                         </p>
                       </div>
                     </div>
