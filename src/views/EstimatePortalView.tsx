@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Job, PortalEngagement, CustomerLifecycle, DepositStatus, SoldWorkflowStatus } from '../types';
+import { Job, EstimateOption, PortalEngagement, CustomerLifecycle, DepositStatus, SoldWorkflowStatus } from '../types';
 import { COMPANY } from '../config/company';
 import { 
   Check, Info, Shield, 
@@ -33,6 +33,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showContractSigning, setShowContractSigning] = useState(false);
   const [startTime] = useState(Date.now());
+  const [viewDetailsOption, setViewDetailsOption] = useState<EstimateOption | null>(null);
 
   const isAccepted = job.lifecycleStage === CustomerLifecycle.WON_SOLD;
   const acceptedSummary = job.acceptedBuildSummary;
@@ -549,109 +550,253 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {estimateData.options.map((option, idx) => (
-                    <div
-                      key={option.id}
-                      
-                      
-                      
-                      onClick={() => handleOptionClick(option.id)}
-                      className={`relative cursor-pointer rounded-2xl border-2 transition-all duration-300 overflow-hidden flex flex-col ${
-                        selectedOptionId === option.id 
-                          ? 'border-slate-900 bg-white shadow-2xl scale-[1.02] z-10' 
-                          : 'border-slate-200 bg-white/50 hover:border-slate-300 hover:bg-white'
-                      }`}
-                    >
-                      {option.isRecommended && (
-                        <div className="absolute top-0 right-0 left-0 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest py-1.5 text-center">
-                          Most Popular Choice
-                        </div>
-                      )}
-                      
-                      <div className={`p-8 flex-grow ${option.isRecommended ? 'pt-10' : ''}`}>
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <span className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 block">
-                              {option.name}
-                            </span>
-                            <h4 className="text-xl font-bold">{option.title}</h4>
+                  {estimateData.options.map((option, idx) => {
+                    const isPreferred = estimateData.options.length >= 2 && idx === 1;
+                    const isSelected = selectedOptionId === option.id;
+
+                    // Compute sqft and footings from job calculator data
+                    const calOpt = (job.calculatorOptions?.find(o => o.id === option.id) as unknown as Record<string, Record<string, number>> | undefined);
+                    const sqft: number = calOpt?.dimensions?.sqft || (job.calculatorDimensions as unknown as Record<string, number> | undefined)?.sqft || 0;
+                    const footings: number = calOpt?.dimensions?.footingCount || (job.calculatorDimensions as unknown as Record<string, number> | undefined)?.footingCount || 0;
+
+                    // Build optional enhancements list
+                    const kf = option.keyFeatures;
+                    const allFeatureText = [...(option.features || []), ...(kf ? Object.values(kf).filter(v => typeof v === 'string') : [])].join(' ').toLowerCase();
+                    const enhancements: Array<{ name: string; price: number; description: string }> = [];
+
+                    if (footings > 0 && !(kf?.foundation?.toLowerCase().includes('helical') || kf?.foundation?.toLowerCase().includes('screw pile'))) {
+                      enhancements.push({ name: 'Helical Pile Upgrade', price: footings * 469, description: 'Permanent steel screw-pile foundation' });
+                    }
+                    if (sqft > 0 && !allFeatureText.includes('fabric') && !allFeatureText.includes('stone')) {
+                      enhancements.push({ name: 'Landscape Fabric & Stone', price: Math.round(sqft * 5.49), description: 'Under-deck weed barrier and decorative stone' });
+                    }
+                    if (sqft > 0 && !allFeatureText.includes('joist')) {
+                      enhancements.push({ name: 'JoistGuard Protection', price: Math.round(sqft * 2.49), description: 'Butyl joist tape on all framing members' });
+                    }
+                    if (sqft > 0 && !(kf?.framing?.includes('2\u00d710') && kf?.framing?.includes('12'))) {
+                      enhancements.push({ name: '2\u00d710 PT @ 12" OC Framing', price: Math.round(sqft * 6.49), description: 'Upgraded oversized joist framing package' });
+                    }
+                    if (!allFeatureText.includes('light')) {
+                      enhancements.push({ name: 'InLight 6-Light Package', price: 1249, description: 'Low-voltage LED stair and post cap lights' });
+                    }
+                    if (!allFeatureText.includes('10-year') && !allFeatureText.includes('extended')) {
+                      enhancements.push({ name: '10-Year Extended Warranty', price: Math.round(option.price * 0.05), description: 'Extended workmanship coverage for a decade of peace of mind' });
+                    }
+
+                    return (
+                      <div
+                        key={option.id}
+                        onClick={() => handleOptionClick(option.id)}
+                        className={`relative cursor-pointer rounded-2xl border-2 transition-all duration-300 overflow-hidden flex flex-col ${
+                          isPreferred
+                            ? isSelected
+                              ? 'border-[#D4A853] bg-white shadow-2xl scale-[1.03] z-10'
+                              : 'border-[#D4A853] bg-white shadow-xl scale-[1.03] z-10'
+                            : isSelected
+                              ? 'border-slate-900 bg-white shadow-2xl scale-[1.02] z-10'
+                              : 'border-slate-200 bg-white/50 hover:border-slate-300 hover:bg-white'
+                        }`}
+                      >
+                        {/* Most Popular banner */}
+                        {isPreferred ? (
+                          <div className="bg-[#D4A853] text-white text-[10px] font-bold uppercase tracking-widest py-2 text-center">
+                            &#9733; Most Popular Choice
                           </div>
-                          {selectedOptionId === option.id && (
-                            <div className="bg-slate-900 rounded-full p-1">
-                              <Check className="w-4 h-4 text-white" />
+                        ) : null}
+
+                        <div className={`p-8 flex-grow ${isPreferred ? 'pt-6' : ''}`}>
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <span className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 block">
+                                {option.name}
+                              </span>
+                              <h4 className="text-xl font-bold">{option.title}</h4>
                             </div>
+                            {isSelected && (
+                              <div className={`rounded-full p-1 ${isPreferred ? 'bg-[#D4A853]' : 'bg-slate-900'}`}>
+                                <Check className="w-4 h-4 text-white" />
+                              </div>
+                            )}
+                          </div>
+
+                          <p className="text-slate-600 text-sm mb-6 line-clamp-3">
+                            {option.description}
+                          </p>
+
+                          <div className="mb-6">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-3xl font-black text-slate-900">
+                                ${option.price.toLocaleString()}
+                              </span>
+                              <span className="text-slate-400 text-sm font-medium">inc. tax</span>
+                            </div>
+                            <div className="mt-2 flex items-center gap-2 text-blue-600 bg-blue-50/50 w-fit px-3 py-1 rounded-lg border border-blue-100/50">
+                              <Wallet size={12} className="shrink-0" />
+                              <span className="text-[11px] font-bold tracking-tight uppercase">
+                                Estimated ${calculateMonthlyEstimate(option.price).toLocaleString()}/mo
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Structured spec table */}
+                          {kf ? (
+                            <div className="space-y-3 mb-6">
+                              <p className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-2">Specifications</p>
+                              {kf.foundation && (
+                                <div className="flex gap-2 text-sm">
+                                  <span className="text-slate-400 font-medium w-24 shrink-0">Foundation</span>
+                                  <span className="text-slate-700 font-medium">{kf.foundation}</span>
+                                </div>
+                              )}
+                              {kf.framing && (
+                                <div className="flex gap-2 text-sm">
+                                  <span className="text-slate-400 font-medium w-24 shrink-0">Framing</span>
+                                  <span className="text-slate-700 font-medium">{kf.framing}</span>
+                                </div>
+                              )}
+                              {kf.decking && (
+                                <div className="flex gap-2 text-sm">
+                                  <span className="text-slate-400 font-medium w-24 shrink-0">Decking</span>
+                                  <span className="text-slate-700 font-medium">{kf.decking}</span>
+                                </div>
+                              )}
+                              {kf.railing && kf.railing !== 'No Railing' && (
+                                <div className="flex gap-2 text-sm">
+                                  <span className="text-slate-400 font-medium w-24 shrink-0">Railing</span>
+                                  <span className="text-slate-700 font-medium">{kf.railing}</span>
+                                </div>
+                              )}
+                              {kf.materialWarranty && (
+                                <div className="flex gap-2 text-sm">
+                                  <span className="text-slate-400 font-medium w-24 shrink-0">Mat. Warranty</span>
+                                  <span className="text-slate-700 font-medium">{kf.materialWarranty}</span>
+                                </div>
+                              )}
+                              <div className="flex gap-2 text-sm">
+                                <span className="text-slate-400 font-medium w-24 shrink-0">Workmanship</span>
+                                <span className="text-slate-700 font-medium">{kf.workmanshipWarranty || '5-Year Workmanship Warranty'}</span>
+                              </div>
+                              {kf.addOns && kf.addOns.length > 0 && (
+                                <div className="pt-2 border-t border-slate-100">
+                                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Included Add-Ons</p>
+                                  <ul className="space-y-1">
+                                    {kf.addOns.map((ao, i) => (
+                                      <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-[#D4A853] mt-0.5 shrink-0" />
+                                        <span>{ao}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="space-y-4 mb-6">
+                              <p className="text-xs font-bold text-slate-900 uppercase tracking-widest">Key Features</p>
+                              <ul className="space-y-3">
+                                {option.features.map((feature, i) => (
+                                  <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
+                                    <CheckCircle2 className="w-4 h-4 text-[var(--brand-gold)] mt-0.5 flex-shrink-0" />
+                                    <span>{feature}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Optional Enhancements */}
+                          {enhancements.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-slate-100">
+                              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Optional Enhancements</p>
+                              <ul className="space-y-2">
+                                {enhancements.map((enh, i) => (
+                                  <li key={i} className="flex items-center justify-between text-xs">
+                                    <span className="text-slate-600">{enh.name}</span>
+                                    <span className="font-bold" style={{ color: '#D4A853' }}>+${enh.price.toLocaleString()}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* View Details button */}
+                          {option.itemizedItems && option.itemizedItems.length > 0 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setViewDetailsOption(option); }}
+                              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              View Details
+                            </button>
                           )}
                         </div>
 
-                        <p className="text-slate-600 text-sm mb-6 line-clamp-3">
-                          {option.description}
-                        </p>
-
-                        <div className="mb-8">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-black text-slate-900">
-                              ${option.price.toLocaleString()}
-                            </span>
-                            <span className="text-slate-400 text-sm font-medium">inc. tax</span>
-                          </div>
-                          <div className="mt-2 flex items-center gap-2 text-blue-600 bg-blue-50/50 w-fit px-3 py-1 rounded-lg border border-blue-100/50">
-                            <Wallet size={12} className="shrink-0" />
-                            <span className="text-[11px] font-bold tracking-tight uppercase">
-                              Estimated ${calculateMonthlyEstimate(option.price).toLocaleString()}/mo
-                            </span>
-                          </div>
+                        <div className={`p-6 border-t ${isPreferred ? (isSelected ? 'bg-[#D4A853]' : 'border-[#D4A853]/30 bg-[#D4A853]/5') : (isSelected ? 'bg-slate-900' : 'bg-slate-50')}`}>
+                          <button className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${
+                            isPreferred
+                              ? isSelected
+                                ? 'bg-white text-[#D4A853]'
+                                : 'bg-[#D4A853] text-white'
+                              : isSelected
+                                ? 'bg-white text-slate-900'
+                                : 'bg-white border border-slate-200 text-slate-600'
+                          }`}>
+                            {isSelected ? 'Option Selected' : 'Select This Option'}
+                          </button>
                         </div>
-
-                        <div className="space-y-4">
-                          <p className="text-xs font-bold text-slate-900 uppercase tracking-widest">Key Features</p>
-                          <ul className="space-y-3">
-                            {option.features.map((feature, i) => (
-                              <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
-                                <CheckCircle2 className="w-4 h-4 text-[var(--brand-gold)] mt-0.5 flex-shrink-0" />
-                                <span>{feature}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        {(option as unknown as Record<string, string>).valueInsight && (
-                          <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-100">
-                            <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1 flex items-center gap-1">
-                              <Sparkles className="w-3 h-3" /> Value Insight
-                            </p>
-                            <p className="text-xs text-amber-900 font-medium leading-relaxed">
-                              {(option as unknown as Record<string, string>).valueInsight}
-                            </p>
-                          </div>
-                        )}
-
-                        {option.differences.length > 0 && (
-                          <div className="mt-8 pt-6 border-t border-slate-100">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Considerations</p>
-                            <ul className="space-y-2">
-                              {option.differences.map((diff, i) => (
-                                <li key={i} className="flex items-start gap-3 text-xs text-slate-500 italic">
-                                  <AlertCircle className="w-3.5 h-3.5 text-slate-300 mt-0.5 flex-shrink-0" />
-                                  <span>{diff}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
                       </div>
+                    );
+                  })}
+                </div>
 
-                      <div className={`p-6 border-t ${selectedOptionId === option.id ? 'bg-slate-900' : 'bg-slate-50'}`}>
-                        <button className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${
-                          selectedOptionId === option.id 
-                            ? 'bg-white text-slate-900' 
-                            : 'bg-white border border-slate-200 text-slate-600'
-                        }`}>
-                          {selectedOptionId === option.id ? 'Option Selected' : 'Select This Option'}
+                {/* View Details Modal */}
+                {viewDetailsOption && (
+                  <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+                    onClick={() => setViewDetailsOption(null)}
+                  >
+                    <div
+                      className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Sticky header */}
+                      <div className="sticky top-0 bg-white border-b border-slate-100 rounded-t-2xl px-6 py-4 flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{viewDetailsOption.name}</p>
+                          <h4 className="text-lg font-black text-slate-900">{viewDetailsOption.title}</h4>
+                        </div>
+                        <button
+                          onClick={() => setViewDetailsOption(null)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all shrink-0"
+                        >
+                          <X className="w-5 h-5" />
                         </button>
                       </div>
+
+                      {/* Scrollable itemized list */}
+                      <div className="overflow-y-auto px-6 py-4 flex-1">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Cost Breakdown</p>
+                        <ul className="space-y-3">
+                          {(viewDetailsOption.itemizedItems || []).map((item) => (
+                            <li key={item.id} className="flex items-baseline justify-between gap-4 text-sm">
+                              <span className="text-slate-600">
+                                {item.label}
+                                {item.quantity ? <span className="text-slate-400 text-xs ml-1">({item.quantity})</span> : null}
+                              </span>
+                              <span className="font-medium text-slate-900 shrink-0">${item.value.toLocaleString()}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Total footer */}
+                      <div className="border-t border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50 rounded-b-2xl">
+                        <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Total</span>
+                        <span className="text-2xl font-black text-slate-900">${viewDetailsOption.price.toLocaleString()}</span>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </section>
             ) : (
               /* Accepted Option Summary */

@@ -814,12 +814,11 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
 
         // Material warranty lookup based on decking brand
         const deckingStr = deckingName.toLowerCase();
-        let materialWarranty = '5-Year Material';
+        let materialWarranty = 'No Material Warranty';
         if (/azek|timbertech/.test(deckingStr)) materialWarranty = '50-Year Material';
         else if (/trex\s+transcend|trex\s+signature/.test(deckingStr)) materialWarranty = '50-Year Material';
         else if (/fiberon|trex|clubhouse|eva-?last/.test(deckingStr)) materialWarranty = '25-Year Material';
-        else if (/cedar/.test(deckingStr)) materialWarranty = '10-Year Natural Wood';
-        else if (/pressure\s*treated|\bpt\b/.test(deckingStr)) materialWarranty = '5-Year PT Lumber';
+        else if (/pressure.?treated|\bpt\b|cedar/.test(deckingStr)) materialWarranty = 'No Material Warranty';
 
         // Collect add-ons from impact labels that don't match the main categories
         const addOns: string[] = [];
