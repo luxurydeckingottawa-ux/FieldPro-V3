@@ -18,6 +18,7 @@ import {
   Hammer, Brush, Calendar, Send, X, Check, ChevronDown, Download, Quote,
 } from 'lucide-react';
 import { useInView, useCountUp } from '../../hooks/useInView';
+import { generateContractorChecklistPDF } from '../../utils/contractorChecklistPdf';
 
 const GOLD = '#D4A853';
 
@@ -622,11 +623,11 @@ export const CompareQuotesChecklist: React.FC = () => {
 
         <div className="mt-6 flex justify-center">
           <button
-            onClick={() => window.print()}
+            onClick={() => generateContractorChecklistPDF({ items: CHECKLIST_QUESTIONS })}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:border-[#D4A853] hover:text-[#D4A853] transition-all"
           >
             <Download className="w-4 h-4" />
-            Print or save as PDF
+            Download as PDF
           </button>
         </div>
       </div>

@@ -39,6 +39,61 @@ export interface CustomerDeckingSwapPayload {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// Brand Badge — loads uploaded logo from Business Settings or falls back
+// ════════════════════════════════════════════════════════════════════════════
+// The portal prefers the logo uploaded by the org via Business Settings
+// (localStorage key `fieldpro_business_info`, field `logoDataUrl`, base64).
+// When the logo is not set (new customer browser, first portal view, etc.)
+// we fall back to a premium text-only treatment using brand colours.
+
+const BrandBadge: React.FC = () => {
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('fieldpro_business_info');
+      if (!raw) return;
+      const info = JSON.parse(raw) as { logoDataUrl?: string };
+      if (info.logoDataUrl && typeof info.logoDataUrl === 'string') {
+        setLogoDataUrl(info.logoDataUrl);
+      }
+    } catch {
+      // Ignore localStorage errors — fall back to text treatment.
+    }
+  }, []);
+
+  if (logoDataUrl) {
+    return (
+      <div className="shrink-0 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-center w-[120px] h-[96px]">
+        <img
+          src={logoDataUrl}
+          alt="Luxury Decking"
+          className="w-full h-full object-contain"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="shrink-0 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-800 shadow-xl shadow-slate-900/20 px-5 py-4 flex flex-col items-center justify-center text-center"
+      style={{ minWidth: '120px', minHeight: '96px' }}
+    >
+      <span className="text-[9px] font-bold uppercase tracking-[0.3em] mb-1" style={{ color: '#D4A853' }}>
+        Est. Ottawa
+      </span>
+      <span className="text-base font-black tracking-tight text-white leading-none">
+        LUXURY
+      </span>
+      <span className="text-sm font-light tracking-[0.2em] uppercase text-white/70 mt-0.5">
+        Decking
+      </span>
+      <div className="mt-2 h-px w-8" style={{ backgroundColor: '#D4A853' }} />
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
 // Scroll-Aware Sticky Nav
 // ════════════════════════════════════════════════════════════════════════════
 // Three zones map to IDs on the page. IntersectionObserver flips the active
@@ -707,22 +762,11 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 })()}
               </p>
             </div>
-            {/* Luxury Decking brand badge — text-based so it renders cleanly on any device */}
-            <div
-              className="shrink-0 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-800 shadow-xl shadow-slate-900/20 px-5 py-4 flex flex-col items-center justify-center text-center"
-              style={{ minWidth: '120px', minHeight: '96px' }}
-            >
-              <span className="text-[9px] font-bold uppercase tracking-[0.3em] mb-1" style={{ color: '#D4A853' }}>
-                Est. Ottawa
-              </span>
-              <span className="text-base font-black tracking-tight text-white leading-none">
-                LUXURY
-              </span>
-              <span className="text-sm font-light tracking-[0.2em] uppercase text-white/70 mt-0.5">
-                Decking
-              </span>
-              <div className="mt-2 h-px w-8" style={{ backgroundColor: '#D4A853' }} />
-            </div>
+            {/* Brand badge — reads uploaded logo from Business Settings
+                (localStorage key `fieldpro_business_info`), falls back to a
+                premium text treatment. Once Supabase-backed org logos land,
+                this can switch to a job-scoped URL without touching the layout. */}
+            <BrandBadge />
           </div>
         </div>
 
@@ -829,7 +873,11 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     if (sqft > 0 && !allFeatureText.includes('joist')) {
                       enhancements.push({ key: 'joist_guard', name: 'JoistGuard Protection', price: Math.round(sqft * 2.49), description: 'Butyl joist tape on all framing members' });
                     }
-                    if (sqft > 0 && !(kf?.framing?.includes('2\u00d710') && kf?.framing?.includes('12'))) {
+                    // Skip the 2x10 @ 12" OC framing upgrade if it's already the option's framing.
+                    // Match variations: "2x10" / "2X10" / "2×10" and the "12" OC spec.
+                    const framingStr = (kf?.framing || '').toLowerCase().replace(/\s+/g, ' ');
+                    const already2x10_12 = /2\s*[x×]\s*10/.test(framingStr) && /12["']?\s*(oc|on[\s-]?centre|on[\s-]?center|\)|$)/.test(framingStr);
+                    if (sqft > 0 && !already2x10_12) {
                       enhancements.push({ key: 'framing_2x10_12', name: '2\u00d710 PT @ 12" OC Framing', price: Math.round(sqft * 6.49), description: 'Upgraded oversized joist framing package' });
                     }
                     if (!allFeatureText.includes('light')) {
@@ -1070,20 +1118,48 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 </div>
 
                 {/* View Details Modal */}
-                {viewDetailsOption && (
+                {viewDetailsOption && (() => {
+                  const opt = viewDetailsOption;
+                  const kf = opt.keyFeatures;
+                  const kfItems: Array<{ label: string; value: string }> = [];
+                  if (kf?.foundation) kfItems.push({ label: 'Foundation', value: kf.foundation });
+                  if (kf?.framing) kfItems.push({ label: 'Framing', value: kf.framing });
+                  if (kf?.decking) kfItems.push({ label: 'Decking', value: kf.decking });
+                  if (kf?.railing && !/^no\s+railing/i.test(kf.railing)) kfItems.push({ label: 'Railing', value: kf.railing });
+                  if (kf?.materialWarranty) kfItems.push({ label: 'Material warranty', value: kf.materialWarranty });
+                  kfItems.push({ label: 'Workmanship', value: kf?.workmanshipWarranty || '5-Year Workmanship Warranty' });
+
+                  // Rebrand "Base Deck Construction" → use the actual decking name
+                  // so customers see what they're paying for, not a generic label.
+                  const baseDeckLabel = kf?.decking
+                    ? `${kf.decking} build`
+                    : 'Deck construction';
+                  const rawItems = opt.itemizedItems || [];
+                  const renamedItems = rawItems.map((it) => ({
+                    ...it,
+                    label: /^base deck/i.test(it.label) ? baseDeckLabel : it.label,
+                  }));
+
+                  // HST: the option.price is already tax-inclusive. Extract it so we
+                  // can show the subtotal and HST separately (consistent with the
+                  // estimate PDF convention).
+                  const subTotal = Math.round(opt.price / 1.13);
+                  const hstAmount = opt.price - subTotal;
+
+                  return (
                   <div
                     className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
                     onClick={() => setViewDetailsOption(null)}
                   >
                     <div
-                      className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col"
+                      className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {/* Sticky header */}
                       <div className="sticky top-0 bg-white border-b border-slate-100 rounded-t-2xl px-6 py-4 flex items-start justify-between gap-4">
                         <div>
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{viewDetailsOption.name}</p>
-                          <h4 className="text-lg font-black text-slate-900">{viewDetailsOption.title}</h4>
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{opt.name}</p>
+                          <h4 className="text-lg font-black text-slate-900">{opt.title || 'Project details'}</h4>
                         </div>
                         <button
                           onClick={() => setViewDetailsOption(null)}
@@ -1093,30 +1169,61 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                         </button>
                       </div>
 
-                      {/* Scrollable itemized list */}
-                      <div className="overflow-y-auto px-6 py-4 flex-1">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Cost Breakdown</p>
-                        <ul className="space-y-3">
-                          {(viewDetailsOption.itemizedItems || []).map((item) => (
-                            <li key={item.id} className="flex items-baseline justify-between gap-4 text-sm">
-                              <span className="text-slate-600">
-                                {item.label}
-                                {item.quantity ? <span className="text-slate-400 text-xs ml-1">({item.quantity})</span> : null}
-                              </span>
-                              <span className="font-medium text-slate-900 shrink-0">${item.value.toLocaleString()}</span>
-                            </li>
-                          ))}
-                        </ul>
+                      {/* Scrollable content */}
+                      <div className="overflow-y-auto px-6 py-5 flex-1 space-y-6">
+                        {/* Specifications block */}
+                        {kfItems.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Specifications</p>
+                            <ul className="space-y-2 bg-slate-50 rounded-xl p-4 border border-slate-100">
+                              {kfItems.map((it, i) => (
+                                <li key={i} className="flex items-baseline justify-between gap-4 text-sm">
+                                  <span className="text-slate-500 font-medium w-28 shrink-0">{it.label}</span>
+                                  <span className="text-slate-800 font-medium text-right">{it.value}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Cost breakdown */}
+                        {renamedItems.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Cost Breakdown</p>
+                            <ul className="space-y-2.5">
+                              {renamedItems.map((item, i) => (
+                                <li key={item.id || i} className="flex items-baseline justify-between gap-4 text-sm py-1.5 border-b border-slate-50 last:border-0">
+                                  <span className="text-slate-700">
+                                    {item.label}
+                                    {item.quantity ? <span className="text-slate-400 text-xs ml-1.5">({item.quantity})</span> : null}
+                                  </span>
+                                  <span className="font-medium text-slate-900 shrink-0 tabular-nums">${item.value.toLocaleString()}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Total footer */}
-                      <div className="border-t border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50 rounded-b-2xl">
-                        <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Total</span>
-                        <span className="text-2xl font-black text-slate-900">${viewDetailsOption.price.toLocaleString()}</span>
+                      {/* Subtotal + HST + Total footer */}
+                      <div className="border-t border-slate-100 px-6 py-4 bg-slate-50 rounded-b-2xl space-y-1.5">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-500">Subtotal</span>
+                          <span className="text-slate-700 font-medium tabular-nums">${subTotal.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-500">HST (13%)</span>
+                          <span className="text-slate-700 font-medium tabular-nums">${hstAmount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-200">
+                          <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Total</span>
+                          <span className="text-2xl font-black text-slate-900 tabular-nums">${opt.price.toLocaleString()}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
 
                 {/* Decking Swap Modal */}
                 {swapModalOption && (() => {
@@ -1635,8 +1742,8 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     Icon: ShieldCheck,
                   },
                   {
-                    title: 'Site Finalization',
-                    desc: 'Our crew performs a technical site visit to laser-measure, confirm your material selections, and walk you through the detailed build plan before we break ground.',
+                    title: 'Production Prep',
+                    desc: 'We finalize design drawings and architectural documents, lock in material orders with our suppliers, confirm your crew and build slot, and prepare every detail of the project behind the scenes.',
                     Icon: Calendar,
                   },
                   {
