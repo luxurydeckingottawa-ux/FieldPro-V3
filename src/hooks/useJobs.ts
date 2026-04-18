@@ -490,19 +490,77 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     let supabaseBaseJob: Job | null = null; // captured from existence check for later upsert
     let estimateJobUpdates: Partial<Job> = {}; // populated in existing-job path for upsert
 
-    // ── Supabase existence check before UPDATE path ───────────────────────────
-    // If a job is in local state but NOT in Supabase (created with an old
-    // non-UUID ID before the UUID fix, or a previous INSERT failed silently),
-    // calling handleUpdateJob would update local state only — the Supabase
-    // UPDATE would hit 0 rows with no error. The job looks saved but disappears
-    // on the next page refresh when loadJobs() replaces local state from Supabase.
-    // Fix: verify the job exists in Supabase first. If not, fall through to the
-    // CREATE path so we always get a proper persisted record.
+    // ── Resolve the target job for Supabase persistence ──────────────────────
+    //
+    // Three cases based on the source job's ID format and Supabase state:
+    //
+    // CASE A — Old j-timestamp ID (created before Session 29 UUID fix):
+    //   The job is localStorage-only; Supabase rejects the non-UUID format.
+    //   Fix: assign a new UUID, INSERT the migrated job into Supabase, update
+    //   local state so the job now has a proper UUID. Then take the UPDATE path
+    //   with the migrated ID — no duplicate is created.
+    //
+    // CASE B — Valid UUID, found in Supabase:
+    //   Normal path. Use the Supabase row as the authoritative base for upsert.
+    //
+    // CASE C — Valid UUID, NOT found in Supabase (failed INSERT previously):
+    //   Don't create a duplicate. Use local state as the base for a fresh upsert.
+    //   If upsert succeeds the job lands in Supabase. If it fails again the job
+    //   stays local — at least no second phantom copy is created.
+
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
     if (targetJobId && isSupabaseConfigured()) {
-      supabaseBaseJob = await dataService.getJobById(targetJobId);
-      if (!supabaseBaseJob) {
-        console.warn(`[handleEstimateSaved] Job ${targetJobId} not found in Supabase — falling through to CREATE path to ensure persistence.`);
-        targetJobId = null; // triggers new job creation below
+      const idIsValidUUID = UUID_REGEX.test(targetJobId);
+
+      if (!idIsValidUUID) {
+        // ── CASE A: migrate old j-timestamp job to Supabase ─────────────────
+        const localJob = jobs.find(j => j.id === targetJobId);
+        if (localJob) {
+          const migratedId = crypto.randomUUID();
+          const migratedJob: Job = {
+            ...localJob,
+            id: migratedId,
+            customerPortalToken: localJob.customerPortalToken || crypto.randomUUID(),
+          };
+          console.log(`[handleEstimateSaved] CASE A — migrating old-format job "${targetJobId}" → "${migratedId}"`);
+          // Replace old ID in local state immediately (avoids phantom duplicate)
+          setJobs(prev => prev.map(j => j.id === targetJobId ? { ...j, id: migratedId } : j));
+          // Insert the full migrated record into Supabase
+          const inserted = await dataService.createJob(migratedJob);
+          if (inserted) {
+            supabaseBaseJob = inserted;
+            console.log('[handleEstimateSaved] CASE A migration INSERT succeeded for', migratedId);
+          } else {
+            // INSERT failed (logged inside createJob). Use local copy as base;
+            // the upsert below will try again with the full estimate payload.
+            supabaseBaseJob = migratedJob;
+            console.warn('[handleEstimateSaved] CASE A migration INSERT failed — will attempt upsert with estimate data');
+          }
+          targetJobId = migratedId;
+        } else {
+          // Old-format ID but job not even in local state — fall through to CREATE
+          console.warn(`[handleEstimateSaved] Old-format job ${targetJobId} not found in local state either — creating fresh`);
+          targetJobId = null;
+        }
+
+      } else {
+        // ── CASE B / C: valid UUID ───────────────────────────────────────────
+        supabaseBaseJob = await dataService.getJobById(targetJobId);
+        if (!supabaseBaseJob) {
+          // CASE C: UUID job not in Supabase — use local copy, no duplicate
+          const localJob = jobs.find(j => j.id === targetJobId);
+          if (localJob) {
+            supabaseBaseJob = localJob;
+            console.warn(`[handleEstimateSaved] CASE C — job ${targetJobId} not in Supabase, using local base for upsert`);
+          } else {
+            // Not in Supabase OR local state — create fresh
+            console.warn(`[handleEstimateSaved] Job ${targetJobId} not found anywhere — creating fresh`);
+            targetJobId = null;
+          }
+        } else {
+          console.log(`[handleEstimateSaved] CASE B — job ${targetJobId} found in Supabase, upsert will update`);
+        }
       }
     }
 
