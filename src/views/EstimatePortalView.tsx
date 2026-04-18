@@ -1367,73 +1367,133 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 })()}
               </section>
             ) : (
-              /* Accepted Option Summary */
+              /* Accepted Option Summary — Phase 2 chrome (locked palette, rounded-2xl) */
               <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
-                  <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm">
+                  <div className="portal-card-cream p-10">
                     <div className="flex items-center justify-between mb-8">
                       <div>
-                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Accepted Build Summary</span>
-                        <h3 className="text-3xl font-black text-slate-900">{acceptedSummary?.optionName || acceptedOption?.title}</h3>
+                        <span className="portal-eyebrow block mb-2" style={{ color: 'var(--portal-gold)' }}>
+                          Accepted Build Summary
+                        </span>
+                        <h3
+                          className="portal-display"
+                          style={{ color: 'var(--portal-ink)', fontSize: 32 }}
+                        >
+                          {acceptedSummary?.optionName || acceptedOption?.title}
+                        </h3>
                       </div>
-                      <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center">
-                        <Award className="w-8 h-8 text-slate-900" />
+                      <div
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0"
+                        style={{
+                          backgroundColor: 'rgba(212,168,83,0.08)',
+                          border: '1px solid rgba(212,168,83,0.25)',
+                        }}
+                      >
+                        <Award className="w-8 h-8" style={{ color: 'var(--portal-gold)' }} />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                       <div>
-                        <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-slate-900" />
+                        <h4
+                          className="portal-label mb-4 flex items-center gap-2"
+                          style={{ color: 'var(--portal-ink)' }}
+                        >
+                          <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--portal-gold)' }} />
                           Included Features
                         </h4>
                         <ul className="space-y-3">
                           {(acceptedSummary ? acceptedOption?.features : acceptedOption?.features)?.map((f, i) => (
-                            <li key={i} className="flex items-center gap-3 text-sm text-slate-600">
-                              <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                            <li
+                              key={i}
+                              className="portal-body flex items-center gap-3"
+                              style={{ color: 'var(--portal-ink-70)', fontSize: 14 }}
+                            >
+                              <div
+                                className="w-1.5 h-1.5 rounded-full shrink-0"
+                                style={{ backgroundColor: 'var(--portal-gold)' }}
+                              />
                               {f}
                             </li>
                           ))}
                         </ul>
                       </div>
                       <div>
-                        <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                          <Zap className="w-4 h-4 text-slate-900" />
+                        <h4
+                          className="portal-label mb-4 flex items-center gap-2"
+                          style={{ color: 'var(--portal-ink)' }}
+                        >
+                          <Zap className="w-4 h-4" style={{ color: 'var(--portal-gold)' }} />
                           Selected Upgrades
                         </h4>
                         <ul className="space-y-3">
                           {acceptedSummary ? (
                             acceptedSummary.addOns.map((a, i) => (
                               <li key={i} className="flex items-center justify-between text-sm">
-                                <span className="text-slate-600">{a.name}</span>
-                                <span className="font-bold text-slate-900">+${a.price.toLocaleString()}</span>
+                                <span className="portal-body" style={{ color: 'var(--portal-ink-70)', fontSize: 14 }}>{a.name}</span>
+                                <span className="portal-numeric" style={{ color: 'var(--portal-ink)', fontSize: 14 }}>
+                                  +${a.price.toLocaleString()}
+                                </span>
                               </li>
                             ))
                           ) : acceptedAddOns.length > 0 ? acceptedAddOns.map((a, i) => (
                             <li key={i} className="flex items-center justify-between text-sm">
-                              <span className="text-slate-600">{a.name}</span>
-                              <span className="font-bold text-slate-900">+${a.price.toLocaleString()}</span>
+                              <span className="portal-body" style={{ color: 'var(--portal-ink-70)', fontSize: 14 }}>{a.name}</span>
+                              <span className="portal-numeric" style={{ color: 'var(--portal-ink)', fontSize: 14 }}>
+                                +${a.price.toLocaleString()}
+                              </span>
                             </li>
                           )) : (
-                            <li className="text-sm text-slate-400 italic">No upgrades selected</li>
+                            <li
+                              className="portal-body italic"
+                              style={{ color: 'var(--portal-ink-50)', fontSize: 14 }}
+                            >
+                              No upgrades selected
+                            </li>
                           )}
                         </ul>
                       </div>
                     </div>
 
-                    <div className="mt-12 pt-8 border-t border-slate-100 flex items-center justify-between">
+                    <div
+                      className="mt-12 pt-8 flex items-center justify-between"
+                      style={{ borderTop: '1px solid rgba(10,31,61,0.08)' }}
+                    >
                       <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Contract Value</p>
+                        <p
+                          className="portal-eyebrow mb-2"
+                          style={{ color: 'var(--portal-ink-50)' }}
+                        >
+                          Total Contract Value
+                        </p>
                         <div className="flex items-baseline gap-3">
-                          <p className="text-3xl font-black text-slate-900">${(acceptedSummary?.totalPrice || calculateTotal()).toLocaleString()}</p>
-                          <div className="flex items-center gap-1.5 text-blue-600 font-bold text-sm">
+                          <p
+                            className="portal-numeric"
+                            style={{ color: 'var(--portal-navy)', fontSize: 32 }}
+                          >
+                            ${(acceptedSummary?.totalPrice || calculateTotal()).toLocaleString()}
+                          </p>
+                          <div
+                            className="flex items-center gap-1.5 portal-numeric"
+                            style={{ color: 'var(--portal-gold)', fontSize: 14 }}
+                          >
                             <Wallet size={14} />
                             <span>${calculateMonthlyEstimate(acceptedSummary?.totalPrice || calculateTotal()).toLocaleString()}/mo</span>
                           </div>
                         </div>
                       </div>
                       <div className="flex gap-3">
-                        <button className="px-6 py-3 bg-slate-50 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-100 transition-all flex items-center gap-2">
+                        <button
+                          className="px-6 py-3 rounded-2xl text-sm font-semibold transition-all flex items-center gap-2"
+                          style={{
+                            backgroundColor: 'rgba(10,31,61,0.04)',
+                            color: 'var(--portal-ink)',
+                            border: '1px solid rgba(10,31,61,0.08)',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(10,31,61,0.08)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(10,31,61,0.04)'; }}
+                        >
                           <FileText className="w-4 h-4" />
                           View Contract
                         </button>
@@ -1442,42 +1502,114 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white rounded-3xl p-8 border border-slate-200">
-                      <Clock className="w-8 h-8 text-blue-500 mb-4" />
-                      <h4 className="font-bold text-lg mb-2">Next Steps</h4>
-                      <div className="space-y-3">
-                        <p className="text-slate-600 text-sm leading-relaxed">
-                          {job.soldWorkflowStatus === SoldWorkflowStatus.ACCEPTED && "Our admin team is reviewing your project details to prepare your deposit invoice."}
-                          {job.soldWorkflowStatus === SoldWorkflowStatus.AWAITING_DEPOSIT && "Please review and pay the deposit invoice to secure your spot in our production queue."}
-                          {job.soldWorkflowStatus === SoldWorkflowStatus.DEPOSIT_RECEIVED && "Deposit received! We are now moving into permit applications and material procurement."}
-                          {job.soldWorkflowStatus === SoldWorkflowStatus.READY_FOR_SETUP && "Your project is fully approved and ready for site setup. We'll confirm your start date shortly."}
-                        </p>
+                    <div className="portal-card-cream p-8">
+                      <div
+                        className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
+                        style={{
+                          backgroundColor: 'rgba(212,168,83,0.08)',
+                          border: '1px solid rgba(212,168,83,0.25)',
+                        }}
+                      >
+                        <Clock className="w-5 h-5" style={{ color: 'var(--portal-gold)' }} />
                       </div>
+                      <p
+                        className="portal-eyebrow mb-2"
+                        style={{ color: 'var(--portal-gold)' }}
+                      >
+                        Next Steps
+                      </p>
+                      <h4
+                        className="portal-display mb-3"
+                        style={{ color: 'var(--portal-ink)', fontSize: 22 }}
+                      >
+                        What happens now.
+                      </h4>
+                      <p
+                        className="portal-body"
+                        style={{ color: 'var(--portal-ink-70)', fontSize: 14 }}
+                      >
+                        {job.soldWorkflowStatus === SoldWorkflowStatus.ACCEPTED && "Our admin team is reviewing your project details to prepare your deposit invoice."}
+                        {job.soldWorkflowStatus === SoldWorkflowStatus.AWAITING_DEPOSIT && "Please review and pay the deposit invoice to secure your spot in our production queue."}
+                        {job.soldWorkflowStatus === SoldWorkflowStatus.DEPOSIT_RECEIVED && "Deposit received. We are now moving into material procurement and build scheduling."}
+                        {job.soldWorkflowStatus === SoldWorkflowStatus.READY_FOR_SETUP && "Your project is fully approved and ready for site setup. We'll confirm your start date shortly."}
+                      </p>
                     </div>
-                    <div className="bg-white rounded-3xl p-8 border border-slate-200">
-                      <Receipt className="w-8 h-8 text-amber-500 mb-4" />
-                      <h4 className="font-bold text-lg mb-2">Payment Summary</h4>
-                      <div className="space-y-4">
+                    <div className="portal-card-cream p-8">
+                      <div
+                        className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
+                        style={{
+                          backgroundColor: 'rgba(212,168,83,0.08)',
+                          border: '1px solid rgba(212,168,83,0.25)',
+                        }}
+                      >
+                        <Receipt className="w-5 h-5" style={{ color: 'var(--portal-gold)' }} />
+                      </div>
+                      <p
+                        className="portal-eyebrow mb-2"
+                        style={{ color: 'var(--portal-gold)' }}
+                      >
+                        Payment Summary
+                      </p>
+                      <h4
+                        className="portal-display mb-4"
+                        style={{ color: 'var(--portal-ink)', fontSize: 22 }}
+                      >
+                        Deposit status.
+                      </h4>
+                      <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-500">Deposit Status</span>
-                          <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
-                            job.depositStatus === DepositStatus.RECEIVED ? 'bg-green-100 text-green-700' : 
-                            job.depositStatus === DepositStatus.REQUESTED ? 'bg-amber-100 text-amber-700' : 
-                            'bg-slate-100 text-slate-600'
-                          }`}>
+                          <span
+                            className="portal-body"
+                            style={{ color: 'var(--portal-ink-70)', fontSize: 13 }}
+                          >
+                            Deposit Status
+                          </span>
+                          <span
+                            className="portal-eyebrow px-2 py-1 rounded-lg"
+                            style={
+                              job.depositStatus === DepositStatus.RECEIVED
+                                ? { backgroundColor: 'rgba(212,168,83,0.12)', color: 'var(--portal-gold-dim)', border: '1px solid rgba(212,168,83,0.25)' }
+                                : job.depositStatus === DepositStatus.REQUESTED
+                                  ? { backgroundColor: 'rgba(212,168,83,0.08)', color: 'var(--portal-gold-dim)', border: '1px solid rgba(212,168,83,0.15)' }
+                                  : { backgroundColor: 'rgba(10,31,61,0.04)', color: 'var(--portal-ink-70)', border: '1px solid rgba(10,31,61,0.08)' }
+                            }
+                          >
                             {getDepositStatusLabel(job.depositStatus)}
                           </span>
                         </div>
                         {job.depositAmount && (
-                          <div className="flex justify-between items-center pt-2 border-t border-slate-50">
-                            <span className="text-sm text-slate-500">Deposit Amount</span>
-                            <span className="font-bold text-slate-900">${job.depositAmount.toLocaleString()}</span>
+                          <div
+                            className="flex justify-between items-center pt-2"
+                            style={{ borderTop: '1px solid rgba(10,31,61,0.06)' }}
+                          >
+                            <span
+                              className="portal-body"
+                              style={{ color: 'var(--portal-ink-70)', fontSize: 13 }}
+                            >
+                              Deposit Amount
+                            </span>
+                            <span
+                              className="portal-numeric"
+                              style={{ color: 'var(--portal-ink)', fontSize: 15 }}
+                            >
+                              ${job.depositAmount.toLocaleString()}
+                            </span>
                           </div>
                         )}
                         {job.depositReceivedDate && (
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-slate-500">Paid On</span>
-                            <span className="text-sm font-medium text-slate-900">{new Date(job.depositReceivedDate).toLocaleDateString()}</span>
+                            <span
+                              className="portal-body"
+                              style={{ color: 'var(--portal-ink-70)', fontSize: 13 }}
+                            >
+                              Paid On
+                            </span>
+                            <span
+                              className="portal-body"
+                              style={{ color: 'var(--portal-ink)', fontSize: 13 }}
+                            >
+                              {new Date(job.depositReceivedDate).toLocaleDateString()}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -1486,36 +1618,119 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 </div>
 
                 <div className="space-y-6">
-                  <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white">
-                    <h4 className="text-xl font-bold mb-6">Your Project Team</h4>
+                  <div
+                    className="portal-card-slate p-8"
+                    style={{ backgroundColor: 'var(--portal-slate-900)' }}
+                  >
+                    <p
+                      className="portal-eyebrow mb-2"
+                      style={{ color: 'var(--portal-gold-dim)' }}
+                    >
+                      Your Team
+                    </p>
+                    <h4
+                      className="portal-display mb-6"
+                      style={{ color: 'var(--portal-cream-92)', fontSize: 22 }}
+                    >
+                      Project team.
+                    </h4>
                     <div className="space-y-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center font-bold">MA</div>
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center"
+                          style={{
+                            backgroundColor: 'rgba(212,168,83,0.08)',
+                            border: '1px solid rgba(212,168,83,0.25)',
+                            color: 'var(--portal-gold)',
+                            fontFamily: "'Orbitron', sans-serif",
+                            fontWeight: 600,
+                            letterSpacing: '-0.02em',
+                          }}
+                        >
+                          MA
+                        </div>
                         <div>
-                          <p className="font-bold">Marcus Aurelius</p>
-                          <p className="text-xs text-slate-500">Project Manager</p>
+                          <p
+                            className="portal-body"
+                            style={{ color: 'var(--portal-cream-92)', fontWeight: 600, fontSize: 14 }}
+                          >
+                            Marcus Aurelius
+                          </p>
+                          <p
+                            className="portal-eyebrow mt-1"
+                            style={{ color: 'var(--portal-cream-50)', fontSize: 10 }}
+                          >
+                            Project Manager
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center font-bold text-blue-400">LD</div>
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center"
+                          style={{
+                            backgroundColor: 'rgba(212,168,83,0.08)',
+                            border: '1px solid rgba(212,168,83,0.25)',
+                            color: 'var(--portal-gold)',
+                            fontFamily: "'Orbitron', sans-serif",
+                            fontWeight: 600,
+                            letterSpacing: '-0.02em',
+                          }}
+                        >
+                          LD
+                        </div>
                         <div>
-                          <p className="font-bold">Office Support</p>
-                          <p className="text-xs text-slate-500">Permits & Admin</p>
+                          <p
+                            className="portal-body"
+                            style={{ color: 'var(--portal-cream-92)', fontWeight: 600, fontSize: 14 }}
+                          >
+                            Office Support
+                          </p>
+                          <p
+                            className="portal-eyebrow mt-1"
+                            style={{ color: 'var(--portal-cream-50)', fontSize: 10 }}
+                          >
+                            Admin &amp; Scheduling
+                          </p>
                         </div>
                       </div>
                     </div>
-                    <button className="w-full mt-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2">
+                    <button
+                      className="w-full mt-8 py-3 rounded-2xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                      style={{
+                        backgroundColor: 'var(--portal-gold)',
+                        color: 'var(--portal-ink)',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(0.95)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
+                    >
                       <MessageSquare className="w-4 h-4" />
                       Message Team
                     </button>
                   </div>
 
-                  <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200">
-                    <h4 className="font-bold text-slate-900 mb-6 flex items-center justify-between">
-                      Recent Photos
-                      <Camera className="w-4 h-4 text-slate-400" />
+                  <div className="portal-card-cream p-8">
+                    <p
+                      className="portal-eyebrow mb-2"
+                      style={{ color: 'var(--portal-gold)' }}
+                    >
+                      Project Gallery
+                    </p>
+                    <h4
+                      className="portal-display mb-4 flex items-center justify-between"
+                      style={{ color: 'var(--portal-ink)', fontSize: 22 }}
+                    >
+                      Recent photos.
+                      <Camera className="w-4 h-4" style={{ color: 'var(--portal-ink-50)' }} />
                     </h4>
-                    <div className="aspect-video bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 text-xs italic">
+                    <div
+                      className="aspect-video rounded-2xl flex items-center justify-center portal-body italic"
+                      style={{
+                        backgroundColor: 'rgba(10,31,61,0.04)',
+                        border: '1px solid rgba(10,31,61,0.08)',
+                        color: 'var(--portal-ink-50)',
+                        fontSize: 13,
+                      }}
+                    >
                       Photos will appear here once site prep begins
                     </div>
                   </div>

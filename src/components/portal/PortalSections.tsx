@@ -4,21 +4,18 @@
  * no permit references. Brand palette only (slate scale + gold #D4A853).
  *
  * Exports:
- *   ProofWall                — Asset 10: testimonial gallery
- *   ReverseRiskStack          — Asset 05: six sealed commitments, dark vault
+ *   ProofWall                 — Asset 10: testimonial gallery
  *   BuildDayCommitment        — Asset 06: day-by-day horizontal ribbon
  *   PaymentScheduleTimeline   — Asset 07: 30/30/40 gold rail, dynamic $
- *   CompareQuotesChecklist    — Asset 09: 10-question interactive accordion
  *   ShareWithPartner          — Asset 08: floating button + modal
  */
 
 import React, { useState } from 'react';
 import {
-  Sparkles, ShieldCheck, Award, ClipboardList, Truck, Layers,
-  Hammer, Brush, Calendar, Send, X, Check, ChevronDown, Download, Quote,
+  Sparkles, ShieldCheck, ClipboardList, Truck, Layers,
+  Brush, Calendar, Send, X, Check, Quote,
 } from 'lucide-react';
 import { useInView, useCountUp } from '../../hooks/useInView';
-import { generateContractorChecklistPDF } from '../../utils/contractorChecklistPdf';
 import { PortalSection } from './PortalSection';
 
 // Locked portal palette — mirrors /src/styles/portal-tokens.css
@@ -186,112 +183,6 @@ const TestimonialCard: React.FC<{
         </div>
       </div>
     </div>
-  );
-};
-
-// ════════════════════════════════════════════════════════════════════════════
-// Asset 05 · Reverse Risk Stack ("Our Promises, in Writing")
-// ════════════════════════════════════════════════════════════════════════════
-
-const PROMISES = [
-  {
-    title: 'Structural settlement',
-    body: 'If your footings settle more than the Ontario Building Code tolerance within the first two years, we re-level at no cost. No deductible. Photos and a tape measure are all the claim needs.',
-  },
-  {
-    title: 'Frame integrity',
-    body: 'If a joist, beam, or ledger board cups, twists, or splits within five years due to improper installation, we replace it at no cost. This is our workmanship standing behind what we build.',
-  },
-  {
-    title: 'Fastener and hardware',
-    body: 'If any structural fastener loosens, backs out, or fails within five years, we re-fasten or replace it at no cost. Applies to every screw, bolt, and bracket we install.',
-  },
-  {
-    title: 'Manufacturer claim support',
-    body: 'If a manufacturer warranty claim on your decking boards is denied for installation reasons, we cover the labour to replace the affected boards. The only scenario where you pay labour on a manufacturer claim is if you damage the boards yourself.',
-  },
-  {
-    title: 'Price lock',
-    body: 'The price on your signed contract is final. If our material or labour costs rise between signing and your build start, we absorb the difference. You will not see a surprise invoice, a supplier cost pass-through, or an adjustment line item. What you sign is what you pay.',
-  },
-  {
-    title: 'Site condition',
-    body: 'On the last day of your build, the site is left cleaner than we found it. If it is not, we come back within 48 hours to finish the cleanup at no cost.',
-  },
-];
-
-export const ReverseRiskStack: React.FC = () => {
-  const [ref, inView] = useInView<HTMLDivElement>();
-  return (
-    <section
-      id="risk-stack"
-      ref={ref}
-      className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-      style={{
-        background: 'linear-gradient(to bottom, #0f172a, #020617)',
-      }}
-    >
-      {/* Radial gold glow in top-left */}
-      <div
-        className="absolute top-0 left-0 w-[50rem] h-[50rem] pointer-events-none"
-        style={{
-          background: `radial-gradient(circle at 20% 0%, ${GOLD}14, transparent 60%)`,
-        }}
-      />
-      <div className="max-w-5xl mx-auto relative">
-        <div className="text-center mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-3 font-mono" style={{ color: GOLD }}>
-            Six Sealed Commitments
-          </p>
-          <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">
-            Our Promises, in Writing
-          </h2>
-          <p className="mt-4 text-lg text-slate-400 max-w-2xl mx-auto">
-            Six specific commitments. Each one bounded, each one verifiable in our contract.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {PROMISES.map((p, i) => (
-            <div
-              key={i}
-              className={`relative rounded-2xl p-8 overflow-hidden transition-all duration-500 ${
-                inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
-              } hover:border-[${GOLD}]/40`}
-              style={{
-                background: 'rgba(2, 6, 23, 0.7)',
-                border: `1px solid rgba(51, 65, 85, 0.6)`,
-                transitionDelay: `${80 * i}ms`,
-              }}
-            >
-              {/* Gold numeral */}
-              <div
-                className="font-mono text-5xl font-black mb-6 leading-none"
-                style={{ color: `${GOLD}e6` }} // 90% opacity
-              >
-                {String(i + 1).padStart(2, '0')}
-              </div>
-              {/* Hairline gold divider */}
-              <div className="h-px w-12 mb-5" style={{ backgroundColor: `${GOLD}99` }} />
-              <h3 className="text-xl font-bold text-white mb-3 tracking-tight">{p.title}</h3>
-              <p className="text-sm text-slate-300 leading-relaxed">{p.body}</p>
-
-              {/* Corner seal */}
-              <div
-                className="absolute bottom-5 right-5 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500"
-                style={{
-                  border: `1px solid ${GOLD}33`,
-                  opacity: inView ? 1 : 0,
-                  transitionDelay: `${80 * i + 300}ms`,
-                }}
-              >
-                <Check className="w-4 h-4" style={{ color: `${GOLD}99` }} strokeWidth={2.5} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
   );
 };
 
@@ -520,179 +411,6 @@ const PaymentMilestoneCard: React.FC<{ milestone: PaymentMilestone; index: numbe
         {milestone.description}
       </p>
     </div>
-  );
-};
-
-// ════════════════════════════════════════════════════════════════════════════
-// Asset 09 · Compare Quotes Interactive Checklist
-// ════════════════════════════════════════════════════════════════════════════
-
-const CHECKLIST_QUESTIONS = [
-  {
-    q: 'Joist spacing',
-    ask: 'What spacing are you using on the joists?',
-    why: 'Ontario Building Code minimum is 16 inch on-centre for most deck loads. Wider spacing is cheaper to build and bouncier to walk on.',
-    our: 'Standard at 16 inch on-centre. 12 inch on-centre on our Platinum tier for rock-solid feel.',
-  },
-  {
-    q: 'Manufacturer certification',
-    ask: 'Are you certified by the composite manufacturer for the specific product you are installing?',
-    why: 'Installing composite without certification can void the manufacturer\'s material warranty. Certified installers also unlock extended labour warranties directly from the manufacturer.',
-    our: 'Fiberon Pro certified. TimberTech Registered Pro. AZEK Registered Pro.',
-  },
-  {
-    q: 'Footing depth and type',
-    ask: 'What type of footings, and how deep?',
-    why: 'Helical piles or concrete footings below 48 inches are required in Ottawa frost conditions. Surface deck blocks are not code-compliant for permanent structures.',
-    our: 'Helical piles by default on Gold and Platinum. Concrete sonotubes to 48 inches on Silver.',
-  },
-  {
-    q: 'Ledger attachment',
-    ask: 'How is the ledger attached to the house, and what flashing is behind it?',
-    why: 'Improper ledger attachment is the most common structural failure in home-handyman decks.',
-    our: 'Through-bolted into the rim joist with stainless ledger bolts. Z-flashing and peel-and-stick membrane behind every ledger.',
-  },
-  {
-    q: 'Railing post blocking',
-    ask: 'Are railing posts blocked and bolted through the frame, or surface-mounted?',
-    why: 'Surface-mounted railing posts do not meet Ontario Building Code guard-load requirements.',
-    our: 'Every post through-bolted into blocked framing. Zero surface-mount posts on any tier.',
-  },
-  {
-    q: 'Board direction and spacing',
-    ask: 'What direction do the deck boards run, and what gap is left for expansion?',
-    why: 'Tight gaps on composite decks cause buckling in Ottawa summer heat.',
-    our: 'Expansion gaps set per manufacturer spec for the exact board we install. Measured, not eyeballed.',
-  },
-  {
-    q: 'Warranty specifics',
-    ask: 'What exactly is warranted, for how long, and by whom?',
-    why: 'Get the manufacturer warranty and the workmanship warranty in writing, with transfer terms.',
-    our: '5-year workmanship plus the full manufacturer material warranty on boards. Both transferable once. Handed to you as a PDF at walkthrough.',
-  },
-  {
-    q: 'Liability insurance',
-    ask: 'Can I see your certificate of general liability insurance?',
-    why: 'If a worker is injured on your property, or if there is property damage during the build, uninsured contractors expose you personally. Always ask to see the certificate, not just verbal confirmation.',
-    our: 'Current certificate on request. Named additional-insured endorsement available for your records.',
-  },
-  {
-    q: 'Recent references',
-    ask: 'Can you give me two references from completed decks in the last year, within a 30-minute drive?',
-    why: 'New contractors and under-performers rarely have recent local references.',
-    our: 'Three local references supplied on request. Most from within 20 minutes of your build address.',
-  },
-  {
-    q: 'Deck portfolio depth',
-    ask: 'Can I see your last 10 to 15 completed decks?',
-    why: 'Generalists (fencing / landscaping / pools) may only build a handful of decks per year. Specialists build deck after deck. Specialists get better with every build. Generalists stay at the skill level their occasional deck work allows.',
-    our: 'We only build decks. Our recent portfolio is available on our site and on Instagram.',
-  },
-];
-
-export const CompareQuotesChecklist: React.FC = () => {
-  const [ref, inView] = useInView<HTMLDivElement>();
-  const [openIds, setOpenIds] = useState<Set<number>>(new Set());
-
-  const toggle = (i: number) => {
-    setOpenIds(prev => {
-      const next = new Set(prev);
-      if (next.has(i)) next.delete(i);
-      else next.add(i);
-      return next;
-    });
-  };
-
-  return (
-    <section id="compare-checklist" ref={ref} className="py-24 md:py-32 bg-slate-50 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-3 font-mono" style={{ color: GOLD }}>
-            Before You Compare Quotes
-          </p>
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
-            10 Questions to Ask Any Contractor
-          </h2>
-          <p className="mt-4 text-lg text-slate-600">
-            Use this when you compare us to anyone else. If the answer to any of these is unclear or missing, the lower number is almost always a hidden cost.
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          {CHECKLIST_QUESTIONS.map((item, i) => {
-            const open = openIds.has(i);
-            return (
-              <div
-                key={i}
-                className={`bg-white border rounded-xl transition-all duration-300 ${open ? 'border-slate-300 shadow-md' : 'border-slate-200'} ${
-                  inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-                }`}
-                style={{ transitionDelay: `${60 * i}ms` }}
-              >
-                <button
-                  onClick={() => toggle(i)}
-                  className="w-full text-left p-6 flex items-start gap-4 group"
-                  aria-expanded={open}
-                >
-                  <span className="font-mono text-2xl font-black text-slate-300 group-hover:text-slate-400 transition-colors shrink-0 leading-none">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-1 font-mono">{item.q}</p>
-                    <p className="text-lg font-semibold text-slate-900 leading-snug">{item.ask}</p>
-                  </div>
-                  <ChevronDown
-                    className={`w-5 h-5 text-slate-400 shrink-0 mt-1 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                <div
-                  className="grid transition-all duration-300 ease-out"
-                  style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
-                >
-                  <div className="overflow-hidden">
-                    <div className="px-6 pb-6 pl-16 space-y-4">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 font-mono">Why it matters</p>
-                        <p className="text-sm text-slate-600 leading-relaxed">{item.why}</p>
-                      </div>
-                      <div className="pt-3 border-t border-slate-100 flex items-start gap-3">
-                        <span
-                          className="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: GOLD }}
-                        >
-                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                        </span>
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 font-mono" style={{ color: GOLD }}>Luxury Decking answer</p>
-                          <p className="text-sm text-slate-900 font-medium leading-relaxed">{item.our}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-12 p-8 rounded-2xl bg-white border-2" style={{ borderColor: `${GOLD}40` }}>
-          <p className="text-slate-700 leading-relaxed">
-            A quote that can answer all ten of these questions in writing is the quote worth comparing on price.
-            A quote that cannot is not cheaper. It is riskier.
-          </p>
-        </div>
-
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={() => generateContractorChecklistPDF({ items: CHECKLIST_QUESTIONS })}
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:border-[#D4A853] hover:text-[#D4A853] transition-all"
-          >
-            <Download className="w-4 h-4" />
-            Download as PDF
-          </button>
-        </div>
-      </div>
-    </section>
   );
 };
 
