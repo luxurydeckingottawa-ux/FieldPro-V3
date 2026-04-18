@@ -1648,7 +1648,7 @@ useEffect(() => {
     // Warn the user if they already have more than one option set up
     if (options.length > 1) {
       const ok = window.confirm(
-        `This will replace your current ${options.length} options with the Good / Better / Best presets.\n\nContinue?`
+        `This will replace your current ${options.length} options with the Silver / Gold / Platinum presets.\n\nContinue?`
       );
       if (!ok) return;
     }
@@ -1670,10 +1670,10 @@ useEffect(() => {
     // Switch to helical on the composite/PVC options if footings are entered
     const useHelical = baseDims.footingsCount > 0 && helical != null;
 
-    // ── Option A: GOOD — Pressure Treated Wood ────────────────────────────
+    // ── Option A: SILVER — Pressure Treated Wood ──────────────────────────
     const optionA: EstimateOptionSnapshot = {
       id: 'A',
-      name: 'Option A — Good (Wood)',
+      name: 'Option A — Silver',
       dimensions: baseDims,
       selections: {
         ...baseSel,
@@ -1684,10 +1684,10 @@ useEffect(() => {
       activePackage: basePackage,
     };
 
-    // ── Option B: BETTER — Fiberon GoodLife Escapes + helical if footings ─
+    // ── Option B: GOLD — Fiberon GoodLife Escapes + helical if footings ───
     const optionB: EstimateOptionSnapshot = {
       id: 'B',
-      name: 'Option B — Better (Composite)',
+      name: 'Option B — Gold',
       dimensions: baseDims,
       selections: {
         ...baseSel,
@@ -1700,10 +1700,10 @@ useEffect(() => {
       activePackage: basePackage,
     };
 
-    // ── Option C: BEST — Woodbridge PVC + 2×10@12" framing + helical ─────
+    // ── Option C: PLATINUM — Woodbridge PVC + 2×10@12" framing + helical ─
     const optionC: EstimateOptionSnapshot = {
       id: 'C',
-      name: 'Option C — Best (PVC)',
+      name: 'Option C — Platinum',
       dimensions: baseDims,
       selections: {
         ...baseSel,

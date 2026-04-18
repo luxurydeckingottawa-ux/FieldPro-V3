@@ -98,7 +98,7 @@ const ShowroomTopNav: React.FC<ShowroomTopNavProps> = ({
         {onGenerateGoodBetterBest && (
           <button
             onClick={onGenerateGoodBetterBest}
-            title="Auto-generate Option A (Wood), B (Composite), C (PVC) from current dimensions. Update railings manually after."
+            title="Auto-generate Option A (Silver / Wood), B (Gold / Composite), C (Platinum / PVC) from current dimensions. Update railings manually after."
             style={{
               padding: '8px 14px',
               borderRadius: 4,
@@ -133,7 +133,7 @@ const ShowroomTopNav: React.FC<ShowroomTopNavProps> = ({
               <path d="M10 14.66V17c0 .55-.47 1-1.05 1h-.05a2 2 0 0 0-1.9 2H17a2 2 0 0 0-1.9-2h-.05c-.58 0-1.05-.45-1.05-1v-2.34"/>
               <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/>
             </svg>
-            Good / Better / Best
+            Silver / Gold / Platinum
           </button>
         )}
       </div>

@@ -64,6 +64,54 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   // Which option's swap modal is open (null = closed)
   const [swapModalOption, setSwapModalOption] = useState<EstimateOption | null>(null);
 
+  // Find the calculator option data for an EstimateOption by matching name or
+  // falling back to index. IMPORTANT: estimateData.options[i].id is a composite
+  // like "opt-A-1717234-0" while calculatorOptions[i].id is just "A" — so .id
+  // matching never works. We match by name, then by position.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const findCalOptFor = (option: EstimateOption): any => {
+    const co = job.calculatorOptions;
+    if (!co || co.length === 0) return undefined;
+    // 1. Match by name (estimateData.options[i].name === calculatorOptions[i].name)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const byName = co.find((o: any) => o.name && option.name && o.name === option.name);
+    if (byName) return byName;
+    // 2. Match by index (estimateData and calculatorOptions are built from the same array)
+    const idx = estimateData.options.findIndex(o => o.id === option.id);
+    if (idx >= 0 && idx < co.length) return co[idx];
+    return undefined;
+  };
+
+  // Returns the effective decking dimensions for an option, with multiple fallbacks:
+  //   1. calculatorOptions[i].dimensions (per-option, primary source)
+  //   2. job.calculatorDimensions       (top-level deck dims)
+  //   3. Derived approximation          (based on option price, last resort so the
+  //                                      swap modal still shows meaningful deltas)
+  const getDimsForOption = (option: EstimateOption): { sqft: number; steps: number; fasciaLF: number } => {
+    const calOpt = findCalOptFor(option);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const optDims: any = calOpt?.dimensions;
+    if (optDims?.sqft) {
+      return {
+        sqft: optDims.sqft || 0,
+        steps: optDims.steps || 0,
+        fasciaLF: optDims.fasciaLF || optDims.fascia_lf || 0,
+      };
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const topDims: any = job.calculatorDimensions;
+    if (topDims?.sqft) {
+      return {
+        sqft: topDims.sqft || 0,
+        steps: topDims.steps || 0,
+        fasciaLF: topDims.fasciaLF || topDims.fascia_lf || 0,
+      };
+    }
+    // Last-resort approximation — better than showing "$0 delta for every material"
+    const guessSqft = Math.max(50, Math.round(option.price / 130));
+    return { sqft: guessSqft, steps: 0, fasciaLF: 0 };
+  };
+
   // Resolve an option's current decking (post-swap if one is active)
   const getActiveDeckingForOption = (option: EstimateOption): DeckingCatalogItem | null => {
     // 1. Swap active? Return the swapped catalog entry.
@@ -73,16 +121,14 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
       if (swapped) return swapped;
     }
     // 2. Original selection from calculatorOptions
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const calOpt = job.calculatorOptions?.find((o: any) => o.id === option.id);
+    const calOpt = findCalOptFor(option);
     return resolveDeckingFromSelection(calOpt?.selections?.decking);
   };
 
   // Resolve an option's ORIGINAL (pre-swap) decking — needed as the baseline
   // when computing swap price deltas.
   const getOriginalDeckingForOption = (option: EstimateOption): DeckingCatalogItem | null => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const calOpt = job.calculatorOptions?.find((o: any) => o.id === option.id);
+    const calOpt = findCalOptFor(option);
     return resolveDeckingFromSelection(calOpt?.selections?.decking);
   };
 
@@ -93,14 +139,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
     const to = DECKING_CATALOG.find(d => d.id === swapId);
     const from = getOriginalDeckingForOption(option);
     if (!to) return option.price;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const calOpt = job.calculatorOptions?.find((o: any) => o.id === option.id);
-    const dims = {
-      sqft: calOpt?.dimensions?.sqft || 0,
-      steps: calOpt?.dimensions?.steps || 0,
-      fasciaLF: calOpt?.dimensions?.fasciaLF || 0,
-    };
-    return calculateSwappedPrice(option.price, dims, from, to);
+    return calculateSwappedPrice(option.price, getDimsForOption(option), from, to);
   };
 
   const applyDeckingSwap = (optionId: string, to: DeckingCatalogItem) => {
@@ -705,10 +744,16 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     const isPreferred = estimateData.options.length >= 2 && idx === 1;
                     const isSelected = selectedOptionId === option.id;
 
-                    // Compute sqft and footings from job calculator data
-                    const calOpt = (job.calculatorOptions?.find(o => o.id === option.id) as unknown as Record<string, Record<string, number>> | undefined);
-                    const sqft: number = calOpt?.dimensions?.sqft || (job.calculatorDimensions as unknown as Record<string, number> | undefined)?.sqft || 0;
-                    const footings: number = calOpt?.dimensions?.footingCount || (job.calculatorDimensions as unknown as Record<string, number> | undefined)?.footingCount || 0;
+                    // Compute sqft and footings — use shared findCalOptFor which matches
+                    // by name/index (NOT by composite id which never matches).
+                    const calOpt = findCalOptFor(option);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const optDims: any = calOpt?.dimensions;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const topDims: any = job.calculatorDimensions;
+                    const sqft: number = optDims?.sqft || topDims?.sqft || 0;
+                    const footings: number = optDims?.footingsCount || optDims?.footingCount
+                      || topDims?.footingsCount || topDims?.footingCount || 0;
 
                     // Build optional enhancements list
                     const kf = option.keyFeatures;
@@ -1018,13 +1063,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   const opt = swapModalOption;
                   const currentDecking = getActiveDeckingForOption(opt);
                   const originalDecking = getOriginalDeckingForOption(opt);
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const calOpt = job.calculatorOptions?.find((o: any) => o.id === opt.id);
-                  const dims = {
-                    sqft: calOpt?.dimensions?.sqft || 0,
-                    steps: calOpt?.dimensions?.steps || 0,
-                    fasciaLF: calOpt?.dimensions?.fasciaLF || 0,
-                  };
+                  const dims = getDimsForOption(opt);
                   const groups = groupCatalogByBrand();
                   return (
                     <div
@@ -1104,7 +1143,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                                           {delta === 0 ? (
                                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Included</span>
                                           ) : (
-                                            <span className={`text-sm font-black ${delta > 0 ? 'text-[#D4A853]' : 'text-green-600'}`}>
+                                            <span className={`text-sm font-black ${delta > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                               {delta > 0 ? '+' : '−'}${Math.abs(delta).toLocaleString()}
                                             </span>
                                           )}
