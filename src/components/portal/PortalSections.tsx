@@ -90,7 +90,7 @@ const DEFAULT_TESTIMONIALS: Testimonial[] = [
     neighbourhood: 'Westboro',
     monthYear: 'May 2025',
     quote: "These guys are great to work with. Their pricing is very competitive and flexible to any budget, and the quality is there to see. They are very responsive to calls for quotes, and the crew works efficiently and cleans up after themselves. I've forwarded them to two of my colleagues and will happily recommend them to friends and family.",
-    projectDetail: '16×20 · Silver series · pressure-treated',
+    projectDetail: '12×16 · Silver series · pressure-treated',
     imageUrl: '/assets/reviews/tyler.jpg',
     imageBgColor: '#5dade2',
   },

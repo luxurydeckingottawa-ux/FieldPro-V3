@@ -432,13 +432,13 @@ export const PromiseShield: React.FC = () => {
                 />
               ))}
               <polygon points={centerHex} style={{ fill: NAVY, stroke: GOLD, strokeWidth: 1.5 }} />
-              {/* Gold logo — kept at hex centre per spec (single gold logo inside shield) */}
+              {/* Gold logo — centred in hex, sized down per Jack's feedback (Apr 2026) */}
               <image
                 href="/assets/logo-luxury-gold.png"
-                x={154}
-                y={178}
-                width={92}
-                height={44}
+                x={178}
+                y={190}
+                width={44}
+                height={21}
                 preserveAspectRatio="xMidYMid meet"
                 style={{ pointerEvents: 'none' }}
               />
