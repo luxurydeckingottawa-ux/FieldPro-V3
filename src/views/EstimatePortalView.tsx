@@ -1950,29 +1950,39 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
       </button>
 
       {/* ─── ASSET 08 · Send to Your Partner (floating secondary CTA + modal) ─── */}
-      {!isAccepted && (
+      {!isAccepted && job.customerPortalToken && (
         <ShareWithPartner
           clientFirstName={job.clientName ? job.clientName.split(' ')[0] : ''}
           projectAddress={job.projectAddress || ''}
           portalUrl={typeof window !== 'undefined' ? window.location.href : ''}
           onShare={async (payload) => {
-            // Fire-and-forget send via existing Netlify function. Graceful degrade
-            // if the function isn't available — the UI still confirms so the
-            // prospect's experience isn't broken.
+            // Hit the public share-proposal endpoint. This endpoint verifies the
+            // portal token against Supabase, templates the email server-side,
+            // and sends via SendGrid as Angela from admin@luxurydecking.ca.
             try {
-              await fetch('/.netlify/functions/send-email', {
+              const resp = await fetch('/.netlify/functions/share-proposal', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  to: payload.recipientEmail,
-                  subject: `Deck estimate for ${job.projectAddress || 'your project'} · Luxury Decking`,
-                  text: `${payload.message}\n\nView the proposal: ${payload.portalUrl}`,
+                  portalToken: job.customerPortalToken,
+                  recipientEmail: payload.recipientEmail,
+                  recipientName: payload.recipientName,
+                  senderNote: payload.message,
+                  portalUrl: payload.portalUrl,
+                  clientFirstName: job.clientName ? job.clientName.split(' ')[0] : '',
+                  projectAddress: job.projectAddress || '',
                 }),
-              }).catch(() => { /* tolerate network failure */ });
-            } catch {
-              // best-effort
+              });
+              if (!resp.ok) {
+                console.warn('[ShareWithPartner] server returned', resp.status);
+              }
+            } catch (err) {
+              console.error('[ShareWithPartner] network error:', err);
+              // The modal will still show the success state — the customer
+              // doesn't need a technical error. Office will see no engagement
+              // tick and can follow up if they notice.
             }
-            // Always record the share on engagement so the office sees it.
+            // Record the share on portal engagement regardless.
             try {
               onTrackEngagement?.({
                 lastInteraction: new Date().toISOString(),
