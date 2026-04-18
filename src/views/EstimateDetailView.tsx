@@ -366,6 +366,60 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                   </div>
                 </div>
 
+                {/* Share-with-partner activity (Asset 08 telemetry).
+                    Shows each recipient the customer shared the proposal to,
+                    and how many times the partner-tagged link was opened.
+                    Counts are kept on portalEngagement so they ride alongside
+                    the rest of the engagement signals. */}
+                {(job.portalEngagement.sharesSent && job.portalEngagement.sharesSent.length > 0) ||
+                 (job.portalEngagement.partnerOpens && job.portalEngagement.partnerOpens > 0) ? (
+                  <div className="mt-4 p-4 bg-[var(--bg-primary)]/50 rounded-lg border border-[var(--border-color)]">
+                    <h4 className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <Send className="w-3 h-3 text-[var(--brand-gold)]" /> Share Activity
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Sent to Partner</p>
+                        <p className="text-xl font-bold text-[var(--text-primary)]">
+                          {job.portalEngagement.sharesSent?.length || 0}
+                          <span className="text-[9px] text-[var(--text-secondary)] uppercase ml-2 tracking-widest font-medium">recipients</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Partner Opens</p>
+                        <p className="text-xl font-bold text-[var(--brand-gold)]">
+                          {job.portalEngagement.partnerOpens || 0}
+                          <span className="text-[9px] text-[var(--text-secondary)] uppercase ml-2 tracking-widest font-medium">
+                            {job.portalEngagement.lastPartnerOpenAt ? `last: ${new Date(job.portalEngagement.lastPartnerOpenAt).toLocaleDateString('en-CA')}` : 'not yet'}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    {job.portalEngagement.sharesSent && job.portalEngagement.sharesSent.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-[var(--border-color)] space-y-1.5">
+                        {job.portalEngagement.sharesSent.slice(-5).reverse().map((s, i) => (
+                          <div key={i} className="flex items-baseline justify-between text-xs">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <ArrowRight className="w-3 h-3 text-[var(--brand-gold)] shrink-0" />
+                              <span className="text-[var(--text-primary)] font-medium truncate">
+                                {s.recipientName ? `${s.recipientName} ` : ''}&lt;{s.recipientEmail}&gt;
+                              </span>
+                            </div>
+                            <span className="text-[var(--text-secondary)] shrink-0 ml-2 text-[10px] uppercase tracking-widest">
+                              {new Date(s.sentAt).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}
+                            </span>
+                          </div>
+                        ))}
+                        {job.portalEngagement.sharesSent.length > 5 && (
+                          <p className="text-[10px] text-[var(--text-secondary)] italic mt-2">
+                            + {job.portalEngagement.sharesSent.length - 5} more earlier shares
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
                 {/* Option engagement breakdown */}
                 {job.estimateData?.options && job.estimateData.options.length > 0 && (
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">

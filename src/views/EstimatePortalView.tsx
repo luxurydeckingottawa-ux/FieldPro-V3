@@ -433,11 +433,19 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   }, [job]);
 
   useEffect(() => {
+    // Detect a partner-open: the share email appends `?s=1` to the portal link.
+    // When we see that param, we bump `partnerOpens` in addition to `totalOpens`
+    // so the office can distinguish primary-customer activity from second
+    // decision-maker activity.
+    const isPartnerOpen = typeof window !== 'undefined'
+      && new URLSearchParams(window.location.search).get('s') === '1';
+
     // Initial tracking for portal open
     if (onTrackEngagement) {
       onTrackEngagement({
         firstOpenedAt: new Date().toISOString(),
-        totalOpens: 1
+        totalOpens: 1,
+        ...(isPartnerOpen ? { partnerOpens: 1 } : {}),
       });
     }
 
@@ -1951,9 +1959,13 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
           projectAddress={job.projectAddress || ''}
           portalUrl={typeof window !== 'undefined' ? window.location.href : ''}
           onShare={async (payload) => {
-            // Hit the public share-proposal endpoint. This endpoint verifies the
-            // portal token against Supabase, templates the email server-side,
-            // and sends via SendGrid as Angela from admin@luxurydecking.ca.
+            // The URL that actually lands in the partner's inbox gets a `?s=1`
+            // query-parameter tag so we can count partner-opens distinctly from
+            // the customer's own opens. (See the ?s=1 handler in the portal
+            // mount effect.)
+            const sep = payload.portalUrl.includes('?') ? '&' : '?';
+            const sharedPortalUrl = `${payload.portalUrl}${sep}s=1`;
+
             try {
               const resp = await fetch('/.netlify/functions/share-proposal', {
                 method: 'POST',
@@ -1963,7 +1975,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   recipientEmail: payload.recipientEmail,
                   recipientName: payload.recipientName,
                   senderNote: payload.message,
-                  portalUrl: payload.portalUrl,
+                  portalUrl: sharedPortalUrl,
                   clientFirstName: job.clientName ? job.clientName.split(' ')[0] : '',
                   projectAddress: job.projectAddress || '',
                 }),
@@ -1977,10 +1989,16 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               // doesn't need a technical error. Office will see no engagement
               // tick and can follow up if they notice.
             }
-            // Record the share on portal engagement regardless.
+
+            // Record the share event on portal engagement so the office's
+            // "Proposal Engagement" panel shows who was shared to and when.
             try {
               onTrackEngagement?.({
-                lastInteraction: new Date().toISOString(),
+                sharesSent: [{
+                  recipientEmail: payload.recipientEmail,
+                  recipientName: payload.recipientName || undefined,
+                  sentAt: new Date().toISOString(),
+                }],
               });
             } catch {
               // best-effort

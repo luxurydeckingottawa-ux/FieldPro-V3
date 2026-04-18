@@ -686,9 +686,12 @@ const App: React.FC = () => {
           totalOpens: current.totalOpens + (engagement.totalOpens || 0),
           totalTimeSpentSeconds: current.totalTimeSpentSeconds + (engagement.totalTimeSpentSeconds || 0),
           optionClicks: { ...current.optionClicks },
-          addOnInteractions: { ...current.addOnInteractions }
+          addOnInteractions: { ...current.addOnInteractions },
+          sharesSent: [...(current.sharesSent || [])],
+          partnerOpens: current.partnerOpens || 0,
+          lastPartnerOpenAt: current.lastPartnerOpenAt,
         };
-        
+
         if (engagement.optionClicks) {
           Object.entries(engagement.optionClicks).forEach(([id, count]) => {
             updated.optionClicks[id] = (updated.optionClicks[id] || 0) + count;
@@ -699,6 +702,19 @@ const App: React.FC = () => {
           Object.entries(engagement.addOnInteractions).forEach(([id, count]) => {
             updated.addOnInteractions[id] = (updated.addOnInteractions[id] || 0) + count;
           });
+        }
+
+        // Append new share events.
+        if (engagement.sharesSent && engagement.sharesSent.length > 0) {
+          updated.sharesSent = [...(updated.sharesSent || []), ...engagement.sharesSent];
+        }
+
+        // Partner-open signal: when the portal detected a ?s=1 link this session,
+        // the engagement payload includes partnerOpens: 1. Roll it into the counter
+        // (which rides alongside totalOpens rather than replacing it).
+        if (engagement.partnerOpens) {
+          updated.partnerOpens = (updated.partnerOpens || 0) + engagement.partnerOpens;
+          updated.lastPartnerOpenAt = new Date().toISOString();
         }
 
         // Calculate engagement heat

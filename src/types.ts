@@ -618,6 +618,25 @@ export interface PortalEngagement {
   heatLevel?: 'Cold' | 'Warm' | 'Hot';
   viewCount?: number;
   lastViewedAt?: string;
+  /**
+   * Sent-to-partner events recorded when the customer uses the Share modal.
+   * Each entry documents when and to whom the proposal was forwarded. The
+   * office sees this in the Proposal Engagement section so follow-ups can
+   * acknowledge the second decision-maker.
+   */
+  sharesSent?: Array<{
+    recipientEmail: string;
+    recipientName?: string;
+    sentAt: string;
+  }>;
+  /**
+   * Portal opens attributed to a share link (detected via the `?s=1` query
+   * parameter that the share email appends). These are a subset of the
+   * `totalOpens` count — when `?s=1` is seen we increment BOTH counters so
+   * the primary "total opens" number still matches reality.
+   */
+  partnerOpens?: number;
+  lastPartnerOpenAt?: string;
 }
 
 export enum PunchType {
