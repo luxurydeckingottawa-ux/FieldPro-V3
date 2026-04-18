@@ -45,9 +45,9 @@ export interface CustomerDeckingSwapPayload {
 // zone as the user scrolls; a gold underline slides between the active link.
 
 const NAV_ZONES: Array<{ id: string; label: string; sectionIds: string[] }> = [
-  { id: 'zone-proposal',   label: 'Your Proposal', sectionIds: ['options', 'financing', 'comparison', 'payment-schedule'] },
+  { id: 'zone-proposal',   label: 'Your Proposal', sectionIds: ['options', 'financing', 'comparison'] },
   { id: 'zone-why-us',     label: 'Why Choose Us', sectionIds: ['proof-wall', 'risk-stack', 'objection-center', 'compare-checklist'] },
-  { id: 'zone-our-process', label: 'Our Process',  sectionIds: ['process-journey', 'build-day', 'commitment-closer'] },
+  { id: 'zone-our-process', label: 'Our Process',  sectionIds: ['journey-after-accept', 'process-journey', 'build-day', 'commitment-closer', 'payment-schedule'] },
 ];
 
 const ScrollAwareNav: React.FC<{ isAccepted: boolean }> = ({ isAccepted }) => {
@@ -707,13 +707,21 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 })()}
               </p>
             </div>
-            {/* Luxury Decking brand badge */}
-            <div className="shrink-0 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-center w-[96px] h-[96px]">
-              <img
-                src="/assets/logo-black.png"
-                alt="Luxury Decking"
-                className="w-full h-full object-contain"
-              />
+            {/* Luxury Decking brand badge — text-based so it renders cleanly on any device */}
+            <div
+              className="shrink-0 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-800 shadow-xl shadow-slate-900/20 px-5 py-4 flex flex-col items-center justify-center text-center"
+              style={{ minWidth: '120px', minHeight: '96px' }}
+            >
+              <span className="text-[9px] font-bold uppercase tracking-[0.3em] mb-1" style={{ color: '#D4A853' }}>
+                Est. Ottawa
+              </span>
+              <span className="text-base font-black tracking-tight text-white leading-none">
+                LUXURY
+              </span>
+              <span className="text-sm font-light tracking-[0.2em] uppercase text-white/70 mt-0.5">
+                Decking
+              </span>
+              <div className="mt-2 h-px w-8" style={{ backgroundColor: '#D4A853' }} />
             </div>
           </div>
         </div>
@@ -1508,8 +1516,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
 
             {/* "Enhance Your Outdoor Living" section removed — per-option enhancements inside each card replace it */}
 
-            {/* ─── ASSET 07 · Payment Schedule Timeline (dynamic from selected option) ─── */}
-            {!isAccepted && <PaymentScheduleTimeline selectedTotal={calculateTotal()} />}
+            {/* Payment Schedule moved to the very bottom of the scroll — see after the Commitment closer. */}
 
             {/* ─── ASSET 10 · Proof Wall testimonial gallery ─── */}
             {!isAccepted && <ProofWall companyName={COMPANY.name} />}
@@ -1519,55 +1526,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               <AIObjectionHelper job={job} />
             </section>
 
-            {/* Trust & Warranty Section */}
-            <section id="built-for-life" className="bg-slate-900 rounded-[2.5rem] p-8 md:p-16 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 blur-[100px] -mr-48 -mt-48" />
-              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <div>
-                  <h3 className="text-3xl md:text-4xl font-black mb-6 tracking-tight">Built for Life, <br/><span className="text-blue-400">Guaranteed for Decades.</span></h3>
-                  <p className="text-slate-400 text-lg mb-10 leading-relaxed">
-                    We don't just build decks; we engineer outdoor living spaces that withstand the elements. Every project is backed by our industry-leading dual-layer protection.
-                  </p>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
-                      <ShieldCheck className="w-8 h-8 text-blue-400 mb-4" />
-                      <h4 className="font-bold text-lg mb-2">Workmanship</h4>
-                      <p className="text-sm text-slate-400 leading-relaxed">Up to 10 years of coverage on every structural detail and fastener.</p>
-                    </div>
-                    <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
-                      <Award className="w-8 h-8 text-amber-400 mb-4" />
-                      <h4 className="font-bold text-lg mb-2">Materials</h4>
-                      <p className="text-sm text-slate-400 leading-relaxed">Manufacturer warranties up to 50 years on fading, staining, and rot.</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="p-8 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm">
-                    <div className="flex gap-1 mb-4">
-                      {[1,2,3,4,5].map(i => <Sparkles key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />)}
-                    </div>
-                    <p className="text-lg font-medium italic mb-6 leading-relaxed">
-                      "The level of professionalism was unlike any contractor we've ever worked with. The portal kept us updated daily, and the final deck is absolutely flawless."
-                    </p>
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center font-bold">JD</div>
-                      <div>
-                        <p className="font-bold">James & Diane R.</p>
-                        <p className="text-xs text-slate-500 uppercase tracking-widest">Ottawa, ON</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-center gap-8 py-4 opacity-50 grayscale">
-                    <div className="text-xl font-black tracking-tighter">TREX SELECT</div>
-                    <div className="text-xl font-black tracking-tighter">TIMBERTECH</div>
-                    <div className="text-xl font-black tracking-tighter">AZEK</div>
-                  </div>
-                </div>
-              </div>
-            </section>
+            {/* "Built for Life" dark warranty block removed — Proof Wall covers social proof, Reverse Risk Stack covers guarantees */}
 
             {/* ─── ASSET 05 · Reverse Risk Stack (six sealed commitments) ─── */}
             {!isAccepted && <ReverseRiskStack />}
@@ -1664,43 +1623,43 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative">
                 <div className="absolute top-1/2 left-0 right-0 h-px bg-slate-200 hidden lg:block -translate-y-1/2 z-0" />
-                {estimateData.whatHappensNext?.map((step, i: number) => {
-                  const isObject = typeof step === 'object' && step !== null;
-                  const title = isObject ? step.title : `Step ${i + 1}`;
-                  const desc = isObject ? step.desc : step;
-                  const iconName = isObject ? step.icon : 'CheckCircle2';
-
-                  // Map icon names to components
-                  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-                    'CheckCircle2': CheckCircle2,
-                    'ShieldCheck': ShieldCheck,
-                    'Calendar': Calendar,
-                    'Zap': Zap,
-                    'Sparkles': Sparkles,
-                    'Award': Award,
-                    'Info': Info,
-                    'Shield': Shield
-                  };
-                  const StepIcon = iconMap[iconName] || CheckCircle2;
-                  
+                {[
+                  {
+                    title: 'Accept & Secure Your Spot',
+                    desc: 'Choose your preferred option and sign. Within one hour you receive a deposit invoice for 30% of project total, which locks your build into our production calendar.',
+                    Icon: CheckCircle2,
+                  },
+                  {
+                    title: 'Project Concierge',
+                    desc: 'Angela becomes your single point of contact. She confirms build scheduling, manages material procurement with our suppliers, and answers every question.',
+                    Icon: ShieldCheck,
+                  },
+                  {
+                    title: 'Site Finalization',
+                    desc: 'Our crew performs a technical site visit to laser-measure, confirm your material selections, and walk you through the detailed build plan before we break ground.',
+                    Icon: Calendar,
+                  },
+                  {
+                    title: 'The Build Experience',
+                    desc: 'Construction begins on your confirmed date. You receive one progress photo and a short note on your Project Portal every single build day.',
+                    Icon: Zap,
+                  },
+                ].map((step, i) => {
+                  const StepIcon = step.Icon;
                   return (
-                    <div 
-                      key={i} 
-                      
-                      
-                      
-                      
+                    <div
+                      key={i}
                       className="relative z-10 flex flex-col items-center text-center group"
                     >
-                      <div className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center font-black text-xl text-slate-900 mb-6 group-hover:border-slate-900 group-hover:scale-110 transition-all duration-300 shadow-sm bg-white relative">
+                      <div className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center font-black text-xl text-slate-900 mb-6 group-hover:border-slate-900 group-hover:scale-110 transition-all duration-300 shadow-sm relative">
                         <StepIcon className="w-6 h-6 text-slate-900" />
                         <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-900 text-white text-[10px] flex items-center justify-center font-bold">
                           {i + 1}
                         </div>
                       </div>
                       <div className="bg-white p-4 rounded-xl border border-transparent group-hover:border-slate-100 group-hover:shadow-sm transition-all">
-                        <h4 className="font-bold text-slate-900 mb-2">{title}</h4>
-                        <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+                        <h4 className="font-bold text-slate-900 mb-2">{step.title}</h4>
+                        <p className="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
                       </div>
                     </div>
                   );
@@ -1751,28 +1710,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               ))}
             </div>
 
-            {/* Build Standards Section */}
-            <div className="bg-slate-900 rounded-[3rem] p-12 md:p-20 text-white">
-              <div className="max-w-4xl">
-                <h3 className="text-3xl font-black mb-12">Our "Invisible" Build Standards</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  {[
-                    { title: 'Joist Tape Protection', desc: 'We apply butyl tape to the top of every joist. This prevents water from sitting between the deck board and the frame, doubling the life of your structure.' },
-                    { title: 'Helical Pile Foundations', desc: 'No more concrete frost heaves. We use engineered steel helical piles that go deep into the earth for a foundation that never moves.' },
-                    { title: 'Oversized Framing', desc: 'While code allows for 2x8 joists, we default to 2x10 or 2x12 to ensure a rock-solid feel with zero "bounce" when you walk.' },
-                    { title: 'Hidden Fastener Systems', desc: 'We believe screws should be invisible. Our systems ensure a clean, barefoot-friendly surface with no exposed screw heads.' }
-                  ].map((std, i) => (
-                    <div key={i} className="space-y-4">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold">
-                        {i + 1}
-                      </div>
-                      <h4 className="text-xl font-bold">{std.title}</h4>
-                      <p className="text-slate-400 text-sm leading-relaxed">{std.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            {/* "Our Invisible Build Standards" section removed per owner request */}
           </div>
 
         {/* Legacy "Our Process" content (5-step build journey), inline */}
@@ -1806,6 +1744,10 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             </div>
           </div>
         </div>
+
+        {/* ─── ASSET 07 · Payment Schedule Timeline — placed at the very bottom so
+             prospect scrolls past all trust + proof content before hitting money. ─── */}
+        {!isAccepted && <PaymentScheduleTimeline selectedTotal={calculateTotal()} />}
       </main>
 
       {/* Sticky Footer for Acceptance */}
