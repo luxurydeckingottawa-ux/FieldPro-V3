@@ -643,15 +643,15 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 {job.clientName ? `Hello, ${job.clientName.split(' ')[0]}` : 'Welcome to Your Project'}
               </h2>
               <p className="text-xl text-slate-600 leading-relaxed">
-                Thank you for the opportunity to quote your outdoor project{job.projectAddress ? <> at <span className="font-semibold text-slate-900">{job.projectAddress}</span></> : ''}.
+                Thank you for the opportunity to quote your project{job.projectAddress ? <> at <span className="font-semibold text-slate-900">{job.projectAddress}</span></> : ''}.
                 {' '}
                 {(() => {
                   const count = estimateData.options.length;
-                  if (count === 0) return `We've prepared your personalized quote below.`;
-                  if (count === 1) return `We've prepared your personalized quote to help you find the perfect balance of aesthetics, maintenance, and value.`;
+                  if (count === 0) return `The quote below is tailored to your lot, your build preferences, and your budget range. It is a complete deck, priced honestly, with nothing hidden.`;
+                  if (count === 1) return `The option below is tailored to your lot, your build preferences, and your budget range. It is a complete deck, priced honestly, with nothing hidden.`;
                   const words = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
                   const wordCount = count <= 10 ? words[count - 1] : count.toString();
-                  return `We've prepared ${wordCount} tailored options to help you find the perfect balance of aesthetics, maintenance, and value.`;
+                  return `The ${wordCount} options below are tailored to your lot, your build preferences, and your budget range. Each is a complete deck, priced honestly, with nothing hidden.`;
                 })()}
               </p>
             </div>
@@ -1342,10 +1342,10 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     <Wallet className="w-8 h-8" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Flexible Financing Available</h3>
+                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Financing</h3>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1">
                       <p className="text-blue-700 font-medium max-w-md">
-                        Build your dream deck now and pay over time with affordable monthly plans through iFinance Canada.
+                        Through our partner iFinance Canada, this project can be spread across monthly payments. Pre-approval is a soft credit check that does not affect your credit score.
                       </p>
                       <div className="flex items-center gap-2 bg-blue-600/10 px-3 py-1.5 rounded-xl border border-blue-600/20 w-fit">
                         <Wallet size={14} className="text-blue-600" />
@@ -1388,23 +1388,57 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                      {[
-                        { label: 'Annual Maintenance', key: 'maintenance' },
-                        { label: 'Expected Longevity', key: 'longevity' },
-                        { label: 'Material Warranty', key: 'warranty' },
-                        { label: 'Surface Temperature', key: 'heat' }
-                      ].map((row, i) => (
-                        <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="p-6 text-sm font-semibold text-slate-600">{row.label}</td>
-                          {estimateData.options.map(opt => (
-                            <td key={opt.id} className={`p-6 text-sm font-medium ${selectedOptionId === opt.id ? 'bg-slate-50 font-bold' : 'text-slate-900'}`}>
-                              {(opt as unknown as Record<string, Record<string, string>>).specs?.[row.key]}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
+                      {(() => {
+                        // Tier-indexed comparison rows. Index 0 = Silver (wood), 1 = Gold (composite), 2 = Platinum (PVC).
+                        // For estimates with more/fewer options we fall back to the closest tier.
+                        const COMPARISON_ROWS: Array<{ label: string; values: [string, string, string] }> = [
+                          {
+                            label: 'Annual Maintenance',
+                            values: [
+                              '2 to 4 hours, once per year. Oil or stain application.',
+                              '30 minutes, once per year. Soap and water rinse.',
+                              'None required. Occasional debris sweep only.',
+                            ],
+                          },
+                          {
+                            label: 'Expected Longevity',
+                            values: [
+                              '10 to 15 years with consistent maintenance. 8 to 10 years without.',
+                              '25 to 30 years under manufacturer warranty.',
+                              '30 to 50 years under manufacturer warranty.',
+                            ],
+                          },
+                          {
+                            label: 'Material Warranty',
+                            values: [
+                              'Pressure treatment warranted against rot for 25 years by the mill. Aesthetic fade not covered.',
+                              '25-year manufacturer warranty against fade, stain, and structural failure. Transferable once.',
+                              '50-year manufacturer warranty against fade, stain, and structural failure. Transferable once.',
+                            ],
+                          },
+                          {
+                            label: 'Surface Temperature',
+                            values: [
+                              'Warm in direct sun. Comfortable barefoot in most Ottawa conditions.',
+                              'Moderate in direct sun. Lighter colours stay comfortable, darker tones warm up slightly.',
+                              'Moderate to warm in direct sun depending on colour. Cap-stock reduces heat compared to older PVC.',
+                            ],
+                          },
+                        ];
+                        const tierIdx = (i: number) => Math.min(i, 2); // any option past idx 2 inherits the Platinum column
+                        return COMPARISON_ROWS.map((row, rIdx) => (
+                          <tr key={rIdx} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="p-6 text-sm font-semibold text-slate-600 align-top whitespace-nowrap">{row.label}</td>
+                            {estimateData.options.map((opt, oIdx) => (
+                              <td key={opt.id} className={`p-6 text-sm font-medium align-top leading-relaxed ${selectedOptionId === opt.id ? 'bg-slate-50 text-slate-900 font-semibold' : 'text-slate-700'}`}>
+                                {row.values[tierIdx(oIdx)]}
+                              </td>
+                            ))}
+                          </tr>
+                        ));
+                      })()}
                       <tr>
-                        <td className="p-6 text-sm font-semibold text-slate-600">Investment</td>
+                        <td className="p-6 text-sm font-semibold text-slate-600 whitespace-nowrap">Investment</td>
                         {estimateData.options.map(opt => (
                           <td key={opt.id} className={`p-6 ${selectedOptionId === opt.id ? 'bg-slate-50' : ''}`}>
                             <div className="flex flex-col">
@@ -1490,17 +1524,17 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 {[
                   {
                     q: "I found a cheaper quote. Why are you more?",
-                    a: "We often aren't the cheapest, and that's intentional. Most 'cheap' quotes skip joist tape, use undersized framing, or don't include proper permitting. We build to a standard that prevents rot and structural failure 10 years down the road.",
+                    a: "Our quotes are built around a single number: the total cost of owning this deck over the next 15 to 25 years. That includes the build, the warranty, the maintenance, and the repairs you will not have to make. A lower upfront number almost always trades future cost for present savings. Our pricing is transparent precisely so you can do the math yourself. Scroll down to the 'How to Compare Quotes' checklist. It walks you through the ten questions we encourage you to ask any contractor before deciding.",
                     icon: AlertCircle
                   },
                   {
                     q: "What happens after I accept?",
-                    a: "Immediately after acceptance, you'll receive your deposit invoice. Once paid, we begin permit applications and material procurement. You'll also get full access to your Project Portal to track every milestone.",
+                    a: "Within an hour of accepting, you receive a deposit invoice via email (30 percent of project total). Once the deposit is paid, we begin two things in parallel: material procurement with our suppliers, and build scheduling confirmation. You get full access to your Project Portal the same day, where you can track every milestone, see every daily photo, and message Angela directly.",
                     icon: ArrowRight
                   },
                   {
                     q: "Why do prices vary so much between options?",
-                    a: "The primary driver is material longevity. Pressure treated wood is affordable but requires annual maintenance. Composite and PVC eliminate maintenance and offer 25-50 year warranties, saving you money over time.",
+                    a: "Material longevity is the main driver. Pressure-treated wood needs annual oiling or staining and typically lasts 10 to 15 years. Composite needs only a rinse and typically lasts 25 to 30 years under its fade-and-stain warranty. PVC needs no maintenance at all and typically lasts 30 to 50 years. When you divide the upfront cost by the years of use, the gap narrows dramatically, and in many cases the order inverts.",
                     icon: Wallet
                   },
                   {
@@ -1510,7 +1544,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   },
                   {
                     q: "Can I make changes later?",
-                    a: "Yes! While it's best to finalize the main structure now, we can handle change orders for lighting, add-ons, or minor details up until construction begins.",
+                    a: "Yes. The main structure, footprint, and material tier are locked at contract signing because those drive framing, materials, and build scope. Lighting layouts, railing colour choices, step placement, and similar details can still be finalized up to one week before construction begins. Change orders under $500 are absorbed at cost. Larger scope changes are priced transparently in writing and require your approval before any work is done.",
                     icon: Edit2
                   },
                   {
