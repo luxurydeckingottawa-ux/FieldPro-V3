@@ -43,39 +43,55 @@ export interface Testimonial {
   projectDetail: string;
   imageUrl?: string;
   imageBgColor?: string; // fallback if no image
+  isLongForm?: boolean; // true for the hero (left) card holding a full-length review
 }
 
 const DEFAULT_TESTIMONIALS: Testimonial[] = [
+  // Hero (far-left, full-length review)
   {
-    name: 'Sarah M.',
-    neighbourhood: 'Westboro',
-    monthYear: 'September 2025',
-    quote: 'Every day ended with the yard cleaner than they found it. The communication through the portal made it feel effortless from our side.',
-    projectDetail: '320 sq ft Platinum deck · Azek Vintage Dark Hickory · integrated stair lighting',
+    name: 'Dr. Adam Dryden',
+    neighbourhood: 'Ottawa',
+    monthYear: 'July 2025',
+    projectDetail: '800 sq ft · Diamond package · Apex Plus bamboo hybrid · helical piles · tighter joist spacing',
+    imageUrl: '/assets/reviews/dryden.jpg',
+    imageBgColor: '#1e2a3a',
+    isLongForm: true,
+    quote:
+      "Our experience with Jack and the Luxury Decking team was absolutely outstanding from start to finish. We were looking to invest in a high-quality, structurally sound deck that would last for years, and they delivered a final product that exceeded our already high expectations.\n\n" +
+      "From the very first interaction, Jack's communication was exceptional. He was patient and thorough in answering all of our questions during the quotation process, providing clear, well-thought-out responses. I ask a lot of questions and like to be well informed, and Jack kept me in the loop every step of the way. While their quote wasn't the cheapest we received, the detailed proposal and Jack's professionalism gave us complete confidence that we were choosing a company focused on superior quality and long-term value.\n\n" +
+      "The quality of the workmanship is truly top-notch. We opted for their premium package, including helical piles and tighter joist spacing, and used the Apex Plus bamboo hybrid decking. It was obvious that Jack and his crew take immense pride in their craft, with meticulous attention to detail at every stage. The precision in their work and the solidity of the final build are evident to everyone who has seen and walked on the deck.\n\n" +
+      "What truly sets Luxury Decking apart is their integrity and conduct on-site. When an unexpected issue arose with the helical piles needing to be drilled deeper, Jack handled it with complete transparency and fairness, communicating the reasons and the extra cost clearly. They were also incredibly flexible, working seamlessly around other renovations in our backyard. Most importantly for our family (with a 2 and 4-year-old), the crew left the job site clean at the end of every day without ever being asked. This level of professionalism and respect for our property was incredible.\n\n" +
+      "Jack's father, who came to help with the project a few times, even gave me some advice on the aluminum picket fence I was building and lent me a tool. It saved me significant time and frustration as Luxury Decking had built thousands of feet of this fence product previously. The professionalism and customer service must run in the family.\n\n" +
+      "If you are looking for a deck builder who combines master-level craftsmanship with unparalleled communication and professionalism, look no further. The investment in Luxury Decking was worth every penny for the peace of mind and the stunning final product. We couldn't be happier.",
+  },
+  // Slot 2 — Stacy S., Manotick, April 2025
+  {
+    name: 'Stacy S.',
+    neighbourhood: 'Manotick',
+    monthYear: 'April 2025',
+    quote: 'Luxury Decking did a fantastic job on our deck. It was not a straightforward project but they did it! They were fast and on time with everything.',
+    projectDetail: '1,200 sq ft · Gold package · multilevel Fiberon composite',
+    imageUrl: '/assets/reviews/sharma.jpg',
     imageBgColor: '#3e2723',
   },
+  // Slot 3 — Alyssa L., Stittsville, April 2024
   {
-    name: 'Mark L.',
-    neighbourhood: 'Kanata',
-    monthYear: 'July 2025',
-    quote: 'We compared three contractors. Luxury Decking was the only one who answered every question on the checklist without hedging. Worth every dollar.',
-    projectDetail: '16×12 Gold composite · Fiberon GoodLife Escapes · aluminum railings',
+    name: 'Alyssa L.',
+    neighbourhood: 'Stittsville',
+    monthYear: 'April 2024',
+    quote: "The quality of work by Luxury Decking cannot be put into words, it's a comfort you have to experience to appreciate. The promptness they were able to start and finish made it even more comforting that I could enjoy before the weekend began. The team's professionalism and courtesy combined with years of experience delivered the highest quality. Thank you so much.",
+    projectDetail: '600 sq ft · Silver series · pressure-treated multilevel',
+    imageUrl: '/assets/reviews/laplount.jpg',
     imageBgColor: '#8e44ad',
   },
+  // Slot 4 — Tyler B., Westboro, May 2025
   {
-    name: 'Diane R.',
-    neighbourhood: 'Orleans',
-    monthYear: 'August 2025',
-    quote: 'Five days from demo to walkthrough. Tarps over the garden, safety barriers for the dog. My kids played in the yard every evening.',
-    projectDetail: '240 sq ft Gold composite · TimberTech Terrain Silver Maple · helical pile foundation',
-    imageBgColor: '#922b21',
-  },
-  {
-    name: 'James & Priya S.',
-    neighbourhood: 'Nepean',
-    monthYear: 'June 2025',
-    quote: 'The finished deck is stunning, but the part that sold me was the warranty paperwork. Transferable, in writing, no fine print.',
-    projectDetail: '400 sq ft Platinum PVC · ClubHouse Woodbridge · glass rail panels',
+    name: 'Tyler B.',
+    neighbourhood: 'Westboro',
+    monthYear: 'May 2025',
+    quote: "These guys are great to work with. Their pricing is very competitive and flexible to any budget, and the quality is there to see. They are very responsive to calls for quotes, and the crew works efficiently and cleans up after themselves. I've forwarded them to two of my colleagues and will happily recommend them to friends and family.",
+    projectDetail: '16×20 · Silver series · pressure-treated',
+    imageUrl: '/assets/reviews/tyler.jpg',
     imageBgColor: '#5dade2',
   },
 ];
@@ -96,11 +112,13 @@ export const ProofWall: React.FC<{ testimonials?: Testimonial[]; companyName: st
       title={<>The Proof Wall.</>}
       subtitle={`Real Ottawa decks, real homeowners, real project details. Built, warrantied, and walked away clean by ${companyName}.`}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {hero && (
-          <TestimonialCard testimonial={hero} hero inView={inView} delayMs={0} />
+          <div className="lg:col-span-5">
+            <TestimonialCard testimonial={hero} hero inView={inView} delayMs={0} />
+          </div>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:col-span-2">
+        <div className="lg:col-span-7 flex flex-col gap-6">
           {rest.map((t, i) => (
             <TestimonialCard key={t.name + i} testimonial={t} inView={inView} delayMs={120 * (i + 1)} />
           ))}
@@ -117,15 +135,22 @@ const TestimonialCard: React.FC<{
   delayMs: number;
 }> = ({ testimonial, hero = false, inView, delayMs }) => {
   const t = testimonial;
+  const isLong = hero && t.isLongForm;
+  const paragraphs = isLong
+    ? t.quote.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)
+    : [t.quote];
+
   return (
     <div
-      className={`group relative portal-card-slate overflow-hidden transition-all duration-500 ${
+      className={`group relative portal-card-slate overflow-hidden transition-all duration-500 flex flex-col ${
         inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
       } hover:-translate-y-1`}
       style={{ transitionDelay: `${delayMs}ms` }}
     >
       <div
-        className={`w-full ${hero ? 'aspect-[4/5]' : 'aspect-square'} overflow-hidden relative`}
+        className={`w-full overflow-hidden relative ${
+          isLong ? 'aspect-[16/10]' : hero ? 'aspect-[4/5]' : 'aspect-[4/3]'
+        }`}
         style={{ backgroundColor: t.imageBgColor || '#4d5d30' }}
       >
         {t.imageUrl ? (
@@ -140,24 +165,50 @@ const TestimonialCard: React.FC<{
           </div>
         )}
       </div>
-      <div className="p-6">
+      <div className={isLong ? 'p-6 md:p-7 flex-1 flex flex-col' : 'p-6'}>
         <div className="flex gap-1 mb-3">
           {[0, 1, 2, 3, 4].map(i => (
             <Sparkles key={i} className="w-3.5 h-3.5" style={{ color: GOLD, fill: GOLD }} />
           ))}
         </div>
-        <p
-          className={`portal-body italic ${hero ? '' : ''}`}
-          style={{
-            color: 'var(--portal-cream-92)',
-            fontSize: hero ? 18 : 16,
-            lineHeight: 1.45,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 400,
-          }}
-        >
-          &ldquo;{t.quote}&rdquo;
-        </p>
+        {isLong ? (
+          <div
+            className="flex-1"
+            style={{
+              color: 'var(--portal-cream-92)',
+              fontSize: 12.5,
+              lineHeight: 1.55,
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 400,
+              fontStyle: 'italic',
+            }}
+          >
+            {paragraphs.map((p, idx) => (
+              <p
+                key={idx}
+                style={{
+                  margin: idx === 0 ? 0 : '0.65em 0 0 0',
+                }}
+              >
+                {idx === 0 ? `\u201C${p}` : p}
+                {idx === paragraphs.length - 1 ? '\u201D' : ''}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p
+            className="portal-body italic"
+            style={{
+              color: 'var(--portal-cream-92)',
+              fontSize: hero ? 18 : 16,
+              lineHeight: 1.45,
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 400,
+            }}
+          >
+            &ldquo;{t.quote}&rdquo;
+          </p>
+        )}
         <div
           className="mt-4 pt-4"
           style={{ borderTop: '1px solid rgba(212,168,83,0.15)' }}
@@ -168,18 +219,24 @@ const TestimonialCard: React.FC<{
           >
             {t.name}
           </p>
-          <p
-            className="mt-0.5"
-            style={{ color: 'var(--portal-cream-50)', fontSize: 12 }}
-          >
-            {t.neighbourhood} &middot; {t.monthYear}
-          </p>
-          <p
-            className="portal-eyebrow mt-2"
-            style={{ color: 'var(--portal-cream-50)', fontSize: 10 }}
-          >
-            {t.projectDetail}
-          </p>
+          {(t.neighbourhood || t.monthYear) && (
+            <p
+              className="mt-0.5"
+              style={{ color: 'var(--portal-cream-50)', fontSize: 12 }}
+            >
+              {t.neighbourhood}
+              {t.neighbourhood && t.monthYear ? ' \u00b7 ' : ''}
+              {t.monthYear}
+            </p>
+          )}
+          {t.projectDetail && (
+            <p
+              className="portal-eyebrow mt-2"
+              style={{ color: 'var(--portal-cream-50)', fontSize: 10 }}
+            >
+              {t.projectDetail}
+            </p>
+          )}
         </div>
       </div>
     </div>
