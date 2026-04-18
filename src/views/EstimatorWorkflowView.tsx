@@ -29,7 +29,9 @@ import {
 
 import EstimatorSiteIntake from '../components/EstimatorSiteIntake';
 import EstimatorMeasureSheet from '../components/EstimatorMeasureSheet';
-import EstimatorSketchPad from '../components/EstimatorSketchPad';
+// EstimatorSketchPad pulls in Konva (~300 KB). Lazy-load so it only ships when the
+// user opens the 'sketch' tab — most site-visits never touch the sketch pad.
+const EstimatorSketchPad = React.lazy(() => import('../components/EstimatorSketchPad'));
 import { safeSetItem, safeRemoveItem, aggressiveFreeSpace, getStorageUsageKB } from '../utils/storage';
 import { validateIntakeCompleteness, generateHandoffSummary as generateRuleHandoffSummary } from '../utils/intakeValidation';
 import { COMPANY } from '../config/company';
@@ -561,14 +563,16 @@ const EstimatorWorkflowView: React.FC<EstimatorWorkflowViewProps> = ({ job, onBa
           {activeTab === 'sketch' && (
             <div
               key="sketch"
-              
-              
-              
+
+
+
             >
-              <EstimatorSketchPad 
-                data={intake.sketch}
-                onChange={handleUpdateSketch}
-              />
+              <React.Suspense fallback={<div className="p-8 text-center text-[var(--text-secondary)] text-sm">Loading sketch pad...</div>}>
+                <EstimatorSketchPad
+                  data={intake.sketch}
+                  onChange={handleUpdateSketch}
+                />
+              </React.Suspense>
             </div>
           )}
 

@@ -23,7 +23,8 @@ import {
 import { createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS } from '../constants';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { dataService } from '../services/dataService';
-import { generateEstimatePDF } from '../utils/estimatePdf';
+// estimatePdf pulls in jspdf (~150 KB). Lazy-loaded below inside the async PDF
+// generation block so it does not bloat the main chunk.
 import { sendSms, sendGoogleReviewSms, sendWarrantySms, sendWarrantyEmail, sendEstimateEmail } from '../utils/communications';
 
 const JOBS_STORAGE_KEY = 'luxury_decking_jobs_v5';
@@ -926,6 +927,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     const capturedTargetJobId = targetJobId;
     ;(async () => {
       try {
+        const { generateEstimatePDF } = await import('../utils/estimatePdf');
         const pdfDataUri = await generateEstimatePDF({
           jobNumber: jobNumberForPdf,
           clientName: data.clientName,

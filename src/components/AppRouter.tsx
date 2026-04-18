@@ -15,26 +15,9 @@ import {
   EstimatorIntake, Invoice, Customer,
 } from '../types';
 import { ESTIMATE_STAGES } from '../constants';
+// LoginView remains statically imported — it is on the landing path for logged-out
+// users and lazy-loading it would cause a visible loading spinner on login.
 import LoginView from '../views/LoginView';
-import WorkflowContainer from '../views/WorkflowContainer';
-import PublicBookingView from '../views/PublicBookingView';
-import EstimatePortalView from '../views/EstimatePortalView';
-import JobsListView from '../views/JobsListView';
-import JobDetailView from '../views/JobDetailView';
-import OfficeDashboardView from '../views/OfficeDashboardView';
-import NewJobIntakeView from '../views/NewJobIntakeView';
-import EstimatorDashboardView from '../views/EstimatorDashboardView';
-import EstimatorWorkflowView from '../views/EstimatorWorkflowView';
-import BookingSettingsView from '../views/BookingSettingsView';
-import AutomationSettingsView from '../views/AutomationSettingsView';
-import BusinessInfoView from '../views/BusinessInfoView';
-import PriceBookView from '../views/PriceBookView';
-import CustomersView from '../views/CustomersView';
-import InvoicesView from '../views/InvoicesView';
-import FieldResourcesView from '../views/FieldResourcesView';
-import UserManagementView from '../views/UserManagementView';
-import UnifiedPipelineView from '../views/UnifiedPipelineView';
-import SchedulingCalendarView from '../views/SchedulingCalendarView';
 import NavBar from './NavBar';
 import AcceptanceModal from './AcceptanceModal';
 import JobAcceptanceModal from './JobAcceptanceModal';
@@ -44,10 +27,18 @@ import { aggressiveFreeSpace, getStorageUsageKB } from '../utils/storage';
 import { COMPANY } from '../config/company';
 import { sendAppointmentConfirmationSms } from '../utils/communications';
 
-// Code-split views
+// Code-split views — every non-login route is lazy so the main shell stays lean.
 import {
+  // Originally lazy
   EstimatorCalculatorView, OfficeJobDetailView, CustomerPortalView,
   EstimateDetailView, StatsView, ChatView,
+  // Newly lazy (Phase 2 cohesion pass — bundle split)
+  WorkflowContainer, PublicBookingView, EstimatePortalView,
+  JobsListView, JobDetailView, OfficeDashboardView, NewJobIntakeView,
+  EstimatorDashboardView, EstimatorWorkflowView, BookingSettingsView,
+  AutomationSettingsView, BusinessInfoView, PriceBookView, CustomersView,
+  InvoicesView, FieldResourcesView, UserManagementView, UnifiedPipelineView,
+  SchedulingCalendarView,
 } from '../LazyViews';
 
 // ── Error Boundary (co-located -- only used by AppRouter) ──────────────────

@@ -7,7 +7,8 @@ import {
 } from './types';
 import { useAppRouter, pathToView } from './hooks/useAppRouter';
 import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, PIPELINE_STAGES, ESTIMATE_STAGES, RATES } from './constants';
-import { generateCloseoutPDF, generateInvoicePDF } from './utils/pdfGenerator';
+// pdfGenerator pulls in jspdf + jspdf-autotable (~150 KB). Lazy-loaded at call sites
+// below so it does not bloat the main chunk for every user on landing.
 import { safeSetItem } from './utils/storage';
 import { geminiService } from './services/geminiService';
 import { supabase } from './lib/supabase';
@@ -859,6 +860,8 @@ const App: React.FC = () => {
 
       setUploadProgress('Generating Verified Build Passport...');
       const updatedStateWithPhotos = { ...workflowState, pages: updatedPages, customerSignatureCloudinaryUrl: sigUrl };
+      // Lazy-load jspdf-heavy module only at submission time.
+      const { generateCloseoutPDF, generateInvoicePDF } = await import('./utils/pdfGenerator');
       const closeoutDataUri = await generateCloseoutPDF(updatedStateWithPhotos);
       let verifiedBuildPassportUrl = '';
       try {
@@ -1286,8 +1289,14 @@ const App: React.FC = () => {
     if (!job) return;
 
     const now = new Date().toISOString();
-    const { generateContractPDF } = await import('./utils/contractPdf');
-    const { generateDepositInvoice } = await import('./utils/depositInvoice');
+    // contractPdf and depositInvoice are lightweight (no heavy deps) — use dynamic
+    // import to keep them out of the main chunk. AcceptanceModal still imports them
+    // statically; Vite groups both imports into the same chunk, which is correct:
+    // the two call sites share a logical "acceptance" code path.
+    const [{ generateContractPDF }, { generateDepositInvoice }] = await Promise.all([
+      import('./utils/contractPdf'),
+      import('./utils/depositInvoice'),
+    ]);
     const amount = job.totalAmount || job.estimateAmount || 0;
 
     try {

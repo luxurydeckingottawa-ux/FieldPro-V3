@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { Job, PipelineStage, DepositStatus, SoldWorkflowStatus, CustomerLifecycle, BuildDetails } from '../types';
 import SignaturePad from './SignaturePad';
-import { generateContractPDF } from '../utils/contractPdf';
-import { generateDepositInvoice } from '../utils/depositInvoice';
+// NOTE: contractPdf and depositInvoice are lazy-loaded inside handleAccept below.
+// App.tsx also dynamic-imports them — keeping both sides dynamic lets Vite move
+// them into their own chunk instead of bundling into the main shell.
 import { prefillBuildDetailsFromQuote } from '../utils/prefillBuildDetails';
 import { createDefaultBuildDetails } from '../constants';
 import {
@@ -67,6 +68,12 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
 
     try {
       const now = new Date().toISOString();
+
+      // Lazy-load PDF generators so they stay out of the main bundle.
+      const [{ generateContractPDF }, { generateDepositInvoice }] = await Promise.all([
+        import('../utils/contractPdf'),
+        import('../utils/depositInvoice'),
+      ]);
 
       // Generate the contract PDF
       let contractPdfUrl = '';
