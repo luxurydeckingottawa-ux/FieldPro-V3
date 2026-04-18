@@ -31,6 +31,7 @@ import {
   DeckAnatomy,
   ContractorQuestions,
 } from '../components/portal/PortalRebuildSections';
+import { PortalSection } from '../components/portal/PortalSection';
 import { generateContractorChecklistPDF } from '../utils/contractorChecklistPdf';
 import { useCurrentSection } from '../hooks/useInView';
 
@@ -1522,295 +1523,340 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               </section>
             )}
 
-            {/* Financing Badge */}
-            {!isAccepted && (
-              <div
-                id="financing"
-                className="bg-blue-50 border border-blue-100 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center justify-between gap-8 shadow-sm relative overflow-hidden group"
-              >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 blur-3xl -mr-32 -mt-32 transition-transform group-hover:scale-110" />
-                <div className="flex items-center gap-6 relative z-10">
-                  <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-600/20">
-                    <Wallet className="w-8 h-8" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Financing</h3>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1">
-                      <p className="text-blue-700 font-medium max-w-md">
-                        Through our partner iFinance Canada, this project can be spread across monthly payments. Pre-approval is a soft credit check that does not affect your credit score.
-                      </p>
-                      <div className="flex items-center gap-2 bg-blue-600/10 px-3 py-1.5 rounded-xl border border-blue-600/20 w-fit">
-                        <Wallet size={14} className="text-blue-600" />
-                        <span className="text-sm font-black text-blue-700">
-                          ~${calculateMonthlyEstimate(calculateTotal()).toLocaleString()}/mo
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <a 
-                  href="https://apply.ifinancecanada.com/22121" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="relative z-10 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 flex items-center justify-center gap-3 group/btn"
+        </div>
+      </main>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          PORTAL PHASE 2 TRAIL — full-bleed bands, unified chrome, locked
+          palette. Order (per ARIA): ComparisonMeters → CostSlider →
+          Financing (navy strip) → ProofWall (slate) → PromiseShield (navy)
+          → DeckAnatomy (cream) → Objection Center + AI (slate) →
+          Contractor Questions (cream-deep) → Journey (cream) → Build Day
+          (slate) → Payment Schedule (cream) → Commitment Closer (navy).
+          Gold hairline divides every slate↔cream transition.
+          ══════════════════════════════════════════════════════════════ */}
+
+      {!isAccepted && (
+        <>
+          {/* 02 · Comparison Meters — cream-deep */}
+          <ComparisonMeters
+            silverPrice={estimateData.options[0]?.price}
+            goldPrice={estimateData.options[1]?.price}
+            platinumPrice={estimateData.options[2]?.price}
+          />
+
+          {/* 03 · Cost-Over-Time slider — cream */}
+          <CostSlider />
+
+          {/* 04 · Financing — full-bleed navy, 1-line strip */}
+          <section
+            id="financing"
+            className="portal-band-navy py-8 px-6 sm:px-8"
+          >
+            <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6 md:gap-10 justify-between">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div
+                  className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: 'rgba(212,168,83,0.12)', border: '1px solid rgba(212,168,83,0.25)' }}
                 >
-                  Apply for Financing 
-                  <ArrowRight size={18} className="transition-transform group-hover/btn:translate-x-1" />
-                </a>
+                  <Wallet className="w-5 h-5" style={{ color: '#D4A853' }} />
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-5 min-w-0">
+                  <span
+                    className="portal-eyebrow"
+                    style={{ color: '#D4A853' }}
+                  >
+                    Financing Available
+                  </span>
+                  <span
+                    className="portal-body"
+                    style={{ color: 'var(--portal-cream-92)', fontSize: 15 }}
+                  >
+                    Spread this project across monthly payments through iFinance Canada.{' '}
+                    <span className="portal-numeric ml-1" style={{ color: '#D4A853', fontSize: 16 }}>
+                      ~${calculateMonthlyEstimate(calculateTotal()).toLocaleString()}/mo
+                    </span>
+                  </span>
+                </div>
               </div>
-            )}
-
-            {/* ─── Rebuild 02 · Comparison Meters replaces the old side-by-side table ─── */}
-            {!isAccepted && (
-              <ComparisonMeters
-                silverPrice={estimateData.options[0]?.price}
-                goldPrice={estimateData.options[1]?.price}
-                platinumPrice={estimateData.options[2]?.price}
-              />
-            )}
-
-            {/* ─── Rebuild 01 · Cost-Over-Time slider (TCO crossover visualisation) ─── */}
-            {!isAccepted && <CostSlider />}
-
-            {/* ─── Rebuild 05 · Deck Anatomy explorer (exploded cross-section) ─── */}
-            {!isAccepted && <DeckAnatomy />}
-
-            {/* "Enhance Your Outdoor Living" section removed — per-option enhancements inside each card replace it */}
-
-            {/* Payment Schedule moved to the very bottom of the scroll — see after the Commitment closer. */}
-
-            {/* ─── ASSET 10 · Proof Wall testimonial gallery ─── */}
-            {!isAccepted && <ProofWall companyName={COMPANY.name} />}
-
-            {/* FAQ & AI Support Section */}
-            <section className="mt-20">
-              <AIObjectionHelper job={job} />
-            </section>
-
-            {/* "Built for Life" dark warranty block removed — Proof Wall covers social proof, Reverse Risk Stack covers guarantees */}
-
-            {/* ─── ASSET 05 / rebuild 03 · Promise Shield (navy vault, six segments) ─── */}
-            {!isAccepted && <PromiseShield />}
-
-            {/* Objection Handling / FAQ Center */}
-            <section id="objection-center" className="space-y-12">
-              <div className="text-center max-w-2xl mx-auto">
-                <h3 className="text-3xl font-black mb-4">The Objection Center</h3>
-                <p className="text-slate-600">We know you have choices. Here is why homeowners choose {COMPANY.name} over the competition.</p>
-              </div>
- 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[
-                  {
-                    q: "I found a cheaper quote. Why are you more?",
-                    a: "Our quotes are built around a single number: the total cost of owning this deck over the next 15 to 25 years. That includes the build, the warranty, the maintenance, and the repairs you will not have to make. A lower upfront number almost always trades future cost for present savings. Our pricing is transparent precisely so you can do the math yourself. Scroll down to the 'How to Compare Quotes' checklist. It walks you through the ten questions we encourage you to ask any contractor before deciding.",
-                    icon: AlertCircle
-                  },
-                  {
-                    q: "What happens after I accept?",
-                    a: "Within an hour of accepting, you receive a deposit invoice via email (30 percent of project total). Once the deposit is paid, we begin two things in parallel: material procurement with our suppliers, and build scheduling confirmation. You get full access to your Project Portal the same day, where you can track every milestone, see every daily photo, and message Angela directly.",
-                    icon: ArrowRight
-                  },
-                  {
-                    q: "Why do prices vary so much between options?",
-                    a: "Material longevity is the main driver. Pressure-treated wood needs annual oiling or staining and typically lasts 10 to 15 years. Composite needs only a rinse and typically lasts 25 to 30 years under its fade-and-stain warranty. PVC needs no maintenance at all and typically lasts 30 to 50 years. When you divide the upfront cost by the years of use, the gap narrows dramatically, and in many cases the order inverts.",
-                    icon: Wallet
-                  },
-                  {
-                    q: "How does scheduling work?",
-                    a: "We provide a tentative start window upon deposit. As your date approaches, we finalize the schedule. Weather can impact dates, but we communicate every shift in real-time through the portal.",
-                    icon: Calendar
-                  },
-                  {
-                    q: "Can I make changes later?",
-                    a: "Yes. The main structure, footprint, and material tier are locked at contract signing because those drive framing, materials, and build scope. Lighting layouts, railing colour choices, step placement, and similar details can still be finalized up to one week before construction begins. Change orders under $500 are absorbed at cost. Larger scope changes are priced transparently in writing and require your approval before any work is done.",
-                    icon: Edit2
-                  },
-                  {
-                    q: "Is the warranty actually transferable?",
-                    a: "Yes. Our workmanship warranty and most manufacturer material warranties are transferable to the next homeowner, which adds significant resale value to your home.",
-                    icon: ShieldCheck
-                  }
-                ].map((faq, i) => (
-                  <div key={i} className="group bg-white p-8 rounded-3xl border border-slate-200 hover:border-slate-900 transition-all duration-300">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center mb-6 group-hover:bg-slate-900 group-hover:text-white transition-colors">
-                      <faq.icon className="w-5 h-5" />
-                    </div>
-                    <h4 className="text-lg font-bold mb-3">{faq.q}</h4>
-                    <p className="text-slate-600 text-sm leading-relaxed">{faq.a}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* ─── ASSET 09 / rebuild 04 · Contractor Questions (flip-card rail) ─── */}
-            {!isAccepted && (
-              <ContractorQuestions
-                onDownloadPDF={() => {
-                  // Record the download on portal engagement so the office sees
-                  // this prospect is actively shopping around with our checklist
-                  // in hand — strong intent signal.
-                  try {
-                    onTrackEngagement?.({
-                      pdfDownloads: [{ document: 'contractor-checklist', downloadedAt: new Date().toISOString() }],
-                    });
-                  } catch {
-                    // best-effort
-                  }
-                  generateContractorChecklistPDF({
-                    items: [
-                      { q: 'Joist spacing', ask: 'What spacing are you using on the joists?', why: 'Ontario Building Code minimum is 16 inch on-centre for most deck loads. Wider spacing is cheaper to build and bouncier to walk on.', our: 'Standard at 16 inch on-centre. 12 inch on-centre on our Platinum tier for rock-solid feel.' },
-                      { q: 'Manufacturer certification', ask: 'Are you certified by the composite manufacturer for the specific product you are installing?', why: 'Installing composite without certification can void the manufacturer material warranty. Certified installers also unlock extended labour warranties.', our: 'Fiberon Pro certified. TimberTech Registered Pro. AZEK Registered Pro.' },
-                      { q: 'Footing depth and type', ask: 'What type of footings, and how deep?', why: 'Helical piles or concrete footings below 48 inches are required in Ottawa frost conditions. Surface deck blocks are not code-compliant for permanent structures.', our: 'Helical piles by default on Gold and Platinum. Concrete sonotubes to 48 inches on Silver.' },
-                      { q: 'Ledger attachment', ask: 'How is the ledger attached to the house, and what flashing is behind it?', why: 'Improper ledger attachment is the most common structural failure in home-handyman decks.', our: 'Through-bolted into the rim joist with stainless ledger bolts. Z-flashing and peel-and-stick membrane behind every ledger.' },
-                      { q: 'Railing post blocking', ask: 'Are railing posts blocked and bolted through the frame, or surface-mounted?', why: 'Surface-mounted railing posts do not meet Ontario Building Code guard-load requirements.', our: 'Every post through-bolted into blocked framing. Zero surface-mount posts on any tier.' },
-                      { q: 'Board direction and spacing', ask: 'What direction do the deck boards run, and what gap is left for expansion?', why: 'Tight gaps on composite decks cause buckling in Ottawa summer heat.', our: 'Expansion gaps set per manufacturer spec for the exact board we install. Measured, not eyeballed.' },
-                      { q: 'Warranty specifics', ask: 'What exactly is warranted, for how long, and by whom?', why: 'Get the manufacturer warranty and the workmanship warranty in writing, with transfer terms.', our: '5-year workmanship plus the full manufacturer material warranty on boards. Both transferable once. Handed to you as a PDF at walkthrough.' },
-                      { q: 'Liability insurance', ask: 'Can I see your certificate of general liability insurance?', why: 'If a worker is injured on your property, or if there is property damage during the build, uninsured contractors expose you personally.', our: 'Current certificate on request. Named additional-insured endorsement available for your records.' },
-                      { q: 'Recent references', ask: 'Can you give me two references from completed decks in the last year, within a 30-minute drive?', why: 'New contractors and under-performers rarely have recent local references.', our: 'Three local references supplied on request. Most from within 20 minutes of your build address.' },
-                      { q: 'Deck portfolio depth', ask: 'Can I see your last 10 to 15 completed decks?', why: 'Generalists (fencing / landscaping / pools) may only build a handful of decks per year. Specialists build deck after deck.', our: 'We only build decks. Our recent portfolio is available on our site and on Instagram.' },
-                    ],
-                  });
+              <a
+                href="https://apply.ifinancecanada.com/22121"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold transition-all"
+                style={{
+                  backgroundColor: '#D4A853',
+                  color: '#0b1220',
                 }}
-              />
-            )}
-
-            {/* Educational Snippets */}
-            <section className="bg-blue-50 rounded-[2.5rem] p-8 md:p-12 border border-blue-100">
-              <div className="flex flex-col md:flex-row gap-12 items-center">
-                <div className="md:w-1/3">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full mb-4">
-                    <Info className="w-3 h-3" /> Expert Advice
-                  </div>
-                  <h3 className="text-2xl font-black text-slate-900 mb-4">Composite vs. PVC: <br/>Which is right for you?</h3>
-                  <p className="text-slate-600 text-sm leading-relaxed">
-                    While both are low-maintenance, PVC (Elite) stays cooler in direct sunlight and has superior scratch resistance—ideal for pets and high-traffic areas. Composite (Signature) offers the most realistic wood grain at a mid-range price point.
-                  </p>
-                </div>
-                <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-6 bg-white rounded-2xl shadow-sm border border-blue-100">
-                    <h4 className="font-bold text-slate-900 mb-2">Why Framing Matters</h4>
-                    <p className="text-xs text-slate-500 leading-relaxed">A deck is only as good as what's underneath. We use oversized joists and specialized flashing tape to prevent rot and ensure your structure lasts as long as your decking.</p>
-                  </div>
-                  <div className="p-6 bg-white rounded-2xl shadow-sm border border-blue-100">
-                    <h4 className="font-bold text-slate-900 mb-2">The Value of Lighting</h4>
-                    <p className="text-xs text-slate-500 leading-relaxed">Integrated LED lighting doesn't just add ambiance; it extends your deck's usability into the evening and significantly increases safety on stairs and transitions.</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* What Happens Next */}
-            <section id="journey-after-accept" className="py-16 bg-slate-50/50 rounded-[2.5rem] px-8 md:px-12 border border-slate-100">
-              <div className="text-center mb-16">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/5 border border-slate-900/10 text-slate-900 text-[10px] font-bold uppercase tracking-widest mb-4">
-                  <Sparkles className="w-3 h-3" />
-                  The Road Ahead
-                </div>
-                <h3 className="text-3xl md:text-4xl font-black mb-4">Your Journey After Acceptance</h3>
-                <p className="text-slate-600 max-w-2xl mx-auto">We've refined our process to be as smooth as the finish on our decks. Here is exactly what you can expect once you join the {COMPANY.name} family.</p>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-                <div className="absolute top-1/2 left-0 right-0 h-px bg-slate-200 hidden lg:block -translate-y-1/2 z-0" />
-                {[
-                  {
-                    title: 'Accept & Secure Your Spot',
-                    desc: 'Choose your preferred option and sign. Within one hour you receive a deposit invoice for 30% of project total, which locks your build into our production calendar.',
-                    Icon: CheckCircle2,
-                  },
-                  {
-                    title: 'Project Concierge',
-                    desc: 'Angela becomes your single point of contact. She confirms build scheduling, manages material procurement with our suppliers, and answers every question.',
-                    Icon: ShieldCheck,
-                  },
-                  {
-                    title: 'Production Prep',
-                    desc: 'We finalize design drawings and architectural documents, lock in material orders with our suppliers, confirm your crew and build slot, and prepare every detail of the project behind the scenes.',
-                    Icon: Calendar,
-                  },
-                  {
-                    title: 'The Build Experience',
-                    desc: 'Construction begins on your confirmed date. You receive one progress photo and a short note on your Project Portal every single build day.',
-                    Icon: Zap,
-                  },
-                ].map((step, i) => {
-                  const StepIcon = step.Icon;
-                  return (
-                    <div
-                      key={i}
-                      className="relative z-10 flex flex-col items-center text-center group"
-                    >
-                      <div className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center font-black text-xl text-slate-900 mb-6 group-hover:border-slate-900 group-hover:scale-110 transition-all duration-300 shadow-sm relative">
-                        <StepIcon className="w-6 h-6 text-slate-900" />
-                        <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-900 text-white text-[10px] flex items-center justify-center font-bold">
-                          {i + 1}
-                        </div>
-                      </div>
-                      <div className="bg-white p-4 rounded-xl border border-transparent group-hover:border-slate-100 group-hover:shadow-sm transition-all">
-                        <h4 className="font-bold text-slate-900 mb-2">{step.title}</h4>
-                        <p className="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* ─── ASSET 06 · Build Day Commitment (what build week actually looks like) ─── */}
-            {!isAccepted && <BuildDayCommitment />}
-
-            {/* Our Commitment */}
-            <section id="commitment-closer" className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200 text-center">
-              <div className="max-w-2xl mx-auto">
-                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <ShieldCheck className="w-8 h-8 text-slate-900" />
-                </div>
-                <h3 className="text-2xl font-bold mb-4">Our Commitment to You</h3>
-                <p className="text-slate-600 mb-8 leading-relaxed">
-                  At {COMPANY.name}, we don't just build structures; we build relationships. We promise to respect your property, communicate transparently, and deliver a finished product that exceeds your expectations.
-                </p>
-                <div className="pt-8 border-t border-slate-100 flex flex-col items-center">
-                  <div className="font-serif italic text-3xl text-slate-400 mb-2">The {COMPANY.name} Team</div>
-                  <p className="text-xs font-bold text-slate-900 uppercase tracking-widest">Quality Without Compromise</p>
-                </div>
-              </div>
-            </section>
-
-        {/* Legacy "Why Choose Us" content, now inline in single scroll */}
-        <div className="space-y-24 py-12">
-            <div className="text-center max-w-3xl mx-auto">
-              <h2 className="text-4xl font-black mb-6">The {COMPANY.name} Difference</h2>
-              <p className="text-xl text-slate-600">We've spent years refining our process to ensure every project is a masterpiece of durability and design.</p>
+                onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(0.95)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
+              >
+                Apply for Financing
+                <ArrowRight size={16} />
+              </a>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          </section>
+
+          {/* Hairline at navy → slate transition */}
+          <div className="portal-transition-hairline" />
+
+          {/* 05 · Proof Wall — slate */}
+          <ProofWall companyName={COMPANY.name} />
+
+          {/* Hairline at slate → navy transition */}
+          <div className="portal-transition-hairline" />
+
+          {/* 06 · Promise Shield — full-bleed navy, py-32 */}
+          <PromiseShield />
+
+          {/* Hairline at navy → cream transition */}
+          <div className="portal-transition-hairline" />
+
+          {/* 07 · Deck Anatomy — cream */}
+          <DeckAnatomy />
+
+          {/* Hairline at cream → slate transition */}
+          <div className="portal-transition-hairline" />
+
+          {/* 08 · Objection Center + AI Helper merged — slate */}
+          <PortalSection
+            id="objection-center"
+            tone="slate"
+            eyebrow="Straight Answers"
+            title={<>The objection centre.</>}
+            subtitle={`Six questions homeowners ask us most, answered plainly. Need something specific? Open the AI helper below and ask in your own words.`}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
-                { title: 'Master Craftsmanship', desc: 'Our crews are specialized deck builders, not general contractors. We know every nuance of outdoor structures.', icon: Award },
-                { title: 'Premium Materials', desc: 'We only source the highest grade lumber and composite materials that meet our strict quality standards.', icon: Shield },
-                { title: 'Digital Experience', desc: 'From this estimate to your final walkthrough, our portal keeps you informed and in control.', icon: Zap }
-              ].map((item, i) => (
-                <div key={i} className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mb-6">
-                    <item.icon className="w-7 h-7 text-slate-900" />
+                {
+                  q: 'I found a cheaper quote. Why are you more?',
+                  a: "Our quotes are built around a single number: the total cost of owning this deck over the next 15 to 25 years. That includes the build, the warranty, the maintenance, and the repairs you will not have to make. A lower upfront number almost always trades future cost for present savings. Our pricing is transparent precisely so you can do the math yourself. Scroll down to the 'How to Compare Quotes' checklist. It walks you through the ten questions we encourage you to ask any contractor before deciding.",
+                  icon: AlertCircle,
+                },
+                {
+                  q: 'What happens after I accept?',
+                  a: 'Within an hour of accepting, you receive a deposit invoice via email (30 percent of project total). Once the deposit is paid, we begin two things in parallel: material procurement with our suppliers, and build scheduling confirmation. You get full access to your Project Portal the same day, where you can track every milestone, see every daily photo, and message Angela directly.',
+                  icon: ArrowRight,
+                },
+                {
+                  q: 'Why do prices vary so much between options?',
+                  a: 'Material longevity is the main driver. Pressure-treated wood needs annual oiling or staining and typically lasts 10 to 15 years. Composite needs only a rinse and typically lasts 25 to 30 years under its fade-and-stain warranty. PVC needs no maintenance at all and typically lasts 30 to 50 years. When you divide the upfront cost by the years of use, the gap narrows dramatically, and in many cases the order inverts.',
+                  icon: Wallet,
+                },
+                {
+                  q: 'How does scheduling work?',
+                  a: 'We provide a tentative start window upon deposit. As your date approaches, we finalize the schedule. Weather can impact dates, but we communicate every shift in real-time through the portal.',
+                  icon: Calendar,
+                },
+                {
+                  q: 'Can I make changes later?',
+                  a: 'Yes. The main structure, footprint, and material tier are locked at contract signing because those drive framing, materials, and build scope. Lighting layouts, railing colour choices, step placement, and similar details can still be finalized up to one week before construction begins. Change orders under $500 are absorbed at cost. Larger scope changes are priced transparently in writing and require your approval before any work is done.',
+                  icon: Edit2,
+                },
+                {
+                  q: 'Is the warranty actually transferable?',
+                  a: 'Yes. Our workmanship warranty and most manufacturer material warranties are transferable to the next homeowner, which adds significant resale value to your home.',
+                  icon: ShieldCheck,
+                },
+              ].map((faq, i) => (
+                <div
+                  key={i}
+                  className="portal-card-slate p-8 group transition-all duration-300"
+                >
+                  <div
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center mb-6 transition-colors"
+                    style={{
+                      backgroundColor: 'rgba(212,168,83,0.08)',
+                      border: '1px solid rgba(212,168,83,0.25)',
+                    }}
+                  >
+                    <faq.icon className="w-5 h-5" style={{ color: '#D4A853' }} />
                   </div>
-                  <h4 className="text-xl font-bold mb-4">{item.title}</h4>
-                  <p className="text-slate-600 leading-relaxed">{item.desc}</p>
+                  <h4
+                    className="portal-display mb-3"
+                    style={{ color: 'var(--portal-cream-92)', fontSize: 18, fontStyle: 'normal', fontWeight: 600 }}
+                  >
+                    {faq.q}
+                  </h4>
+                  <p
+                    className="portal-body"
+                    style={{ color: 'var(--portal-cream-70)', fontSize: 14 }}
+                  >
+                    {faq.a}
+                  </p>
                 </div>
               ))}
             </div>
 
-            {/* "Our Invisible Build Standards" section removed per owner request */}
-          </div>
+            {/* AI Helper panel — collapsible, gold hairline separator above */}
+            <div className="mt-12 pt-10" style={{ borderTop: '1px solid rgba(212,168,83,0.25)' }}>
+              <AIObjectionHelper job={job} />
+            </div>
+          </PortalSection>
 
-        {/* 5-Step Build Journey section removed — redundant with Journey After
-            Acceptance (same content, smaller). */}
-        </div>
+          {/* Hairline at slate → cream-deep transition */}
+          <div className="portal-transition-hairline" />
 
-        {/* ─── ASSET 07 · Payment Schedule Timeline — placed at the very bottom so
-             prospect scrolls past all trust + proof content before hitting money. ─── */}
-        {!isAccepted && <PaymentScheduleTimeline selectedTotal={calculateTotal()} />}
-      </main>
+          {/* 09 · Contractor Questions — cream-deep */}
+          <ContractorQuestions
+            onDownloadPDF={() => {
+              try {
+                onTrackEngagement?.({
+                  pdfDownloads: [{ document: 'contractor-checklist', downloadedAt: new Date().toISOString() }],
+                });
+              } catch {
+                // best-effort
+              }
+              generateContractorChecklistPDF({
+                items: [
+                  { q: 'Joist spacing', ask: 'What spacing are you using on the joists?', why: 'Ontario Building Code minimum is 16 inch on-centre for most deck loads. Wider spacing is cheaper to build and bouncier to walk on.', our: 'Standard at 16 inch on-centre. 12 inch on-centre on our Platinum tier for rock-solid feel.' },
+                  { q: 'Manufacturer certification', ask: 'Are you certified by the composite manufacturer for the specific product you are installing?', why: 'Installing composite without certification can void the manufacturer material warranty. Certified installers also unlock extended labour warranties.', our: 'Fiberon Pro certified. TimberTech Registered Pro. AZEK Registered Pro.' },
+                  { q: 'Footing depth and type', ask: 'What type of footings, and how deep?', why: 'Helical piles or concrete footings below 48 inches are required in Ottawa frost conditions. Surface deck blocks are not code-compliant for permanent structures.', our: 'Helical piles by default on Gold and Platinum. Concrete sonotubes to 48 inches on Silver.' },
+                  { q: 'Ledger attachment', ask: 'How is the ledger attached to the house, and what flashing is behind it?', why: 'Improper ledger attachment is the most common structural failure in home-handyman decks.', our: 'Through-bolted into the rim joist with stainless ledger bolts. Z-flashing and peel-and-stick membrane behind every ledger.' },
+                  { q: 'Railing post blocking', ask: 'Are railing posts blocked and bolted through the frame, or surface-mounted?', why: 'Surface-mounted railing posts do not meet Ontario Building Code guard-load requirements.', our: 'Every post through-bolted into blocked framing. Zero surface-mount posts on any tier.' },
+                  { q: 'Board direction and spacing', ask: 'What direction do the deck boards run, and what gap is left for expansion?', why: 'Tight gaps on composite decks cause buckling in Ottawa summer heat.', our: 'Expansion gaps set per manufacturer spec for the exact board we install. Measured, not eyeballed.' },
+                  { q: 'Warranty specifics', ask: 'What exactly is warranted, for how long, and by whom?', why: 'Get the manufacturer warranty and the workmanship warranty in writing, with transfer terms.', our: '5-year workmanship plus the full manufacturer material warranty on boards. Both transferable once. Handed to you as a PDF at walkthrough.' },
+                  { q: 'Liability insurance', ask: 'Can I see your certificate of general liability insurance?', why: 'If a worker is injured on your property, or if there is property damage during the build, uninsured contractors expose you personally.', our: 'Current certificate on request. Named additional-insured endorsement available for your records.' },
+                  { q: 'Recent references', ask: 'Can you give me two references from completed decks in the last year, within a 30-minute drive?', why: 'New contractors and under-performers rarely have recent local references.', our: 'Three local references supplied on request. Most from within 20 minutes of your build address.' },
+                  { q: 'Deck portfolio depth', ask: 'Can I see your last 10 to 15 completed decks?', why: 'Generalists (fencing / landscaping / pools) may only build a handful of decks per year. Specialists build deck after deck.', our: 'We only build decks. Our recent portfolio is available on our site and on Instagram.' },
+                ],
+              });
+            }}
+          />
+
+          {/* 10 · Journey After Acceptance — cream */}
+          <PortalSection
+            id="journey-after-accept"
+            tone="cream"
+            eyebrow="The Road Ahead"
+            title={<>Your journey after acceptance.</>}
+            subtitle={`We've refined our process to be as smooth as the finish on our decks. Here is exactly what you can expect once you join the ${COMPANY.name} family.`}
+          >
+            <div className="relative">
+              {/* 1px connector + gold 10px dots on cream (journey timeline) */}
+              <div
+                className="absolute top-[22px] left-[8%] right-[8%] h-px hidden lg:block"
+                style={{ backgroundColor: 'rgba(212,168,83,0.35)' }}
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-6 relative">
+                {[
+                  { title: 'Accept & Secure Your Spot', desc: 'Choose your preferred option and sign. Within one hour you receive a deposit invoice for 30% of project total, which locks your build into our production calendar.', Icon: CheckCircle2 },
+                  { title: 'Project Concierge', desc: 'Angela becomes your single point of contact. She confirms build scheduling, manages material procurement with our suppliers, and answers every question.', Icon: ShieldCheck },
+                  { title: 'Production Prep', desc: 'We finalize design drawings and architectural documents, lock in material orders with our suppliers, confirm your crew and build slot, and prepare every detail of the project behind the scenes.', Icon: Calendar },
+                  { title: 'The Build Experience', desc: 'Construction begins on your confirmed date. You receive one progress photo and a short note on your Project Portal every single build day.', Icon: Zap },
+                ].map((step, i) => {
+                  const StepIcon = step.Icon;
+                  return (
+                    <div key={i} className="relative flex flex-col items-center text-center">
+                      {/* 10px gold dot */}
+                      <span
+                        className="block rounded-full mb-6"
+                        style={{
+                          width: 10,
+                          height: 10,
+                          backgroundColor: '#D4A853',
+                          boxShadow: '0 0 0 4px var(--portal-cream)',
+                        }}
+                      />
+                      <div
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6"
+                        style={{
+                          backgroundColor: '#ffffff',
+                          border: '1px solid rgba(10,31,61,0.08)',
+                          boxShadow: '0 1px 2px rgba(10,31,61,0.06), 0 8px 24px -12px rgba(10,31,61,0.12)',
+                        }}
+                      >
+                        <StepIcon className="w-6 h-6" style={{ color: '#0a1f3d' }} />
+                      </div>
+                      <h4
+                        className="portal-display mb-2"
+                        style={{ color: 'var(--portal-ink)', fontSize: 18, fontStyle: 'normal', fontWeight: 600 }}
+                      >
+                        {step.title}
+                      </h4>
+                      <p
+                        className="portal-body max-w-[240px]"
+                        style={{ color: 'var(--portal-ink-70)', fontSize: 14 }}
+                      >
+                        {step.desc}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </PortalSection>
+
+          {/* Hairline at cream → slate transition */}
+          <div className="portal-transition-hairline" />
+
+          {/* 11 · Build Day Commitment — slate */}
+          <BuildDayCommitment />
+
+          {/* Hairline at slate → cream transition */}
+          <div className="portal-transition-hairline" />
+
+          {/* 12 · Payment Schedule Timeline — cream */}
+          <PaymentScheduleTimeline selectedTotal={calculateTotal()} />
+
+          {/* Hairline at cream → navy transition */}
+          <div className="portal-transition-hairline" />
+
+          {/* 13 · Commitment Closer — full-bleed navy, gold logo 40px, gold CTA */}
+          <section
+            id="commitment-closer"
+            className="portal-band-navy py-24 md:py-32 px-6 sm:px-8"
+          >
+            <div className="max-w-4xl mx-auto text-center">
+              <img
+                src="/assets/logo-luxury-gold.png"
+                alt="Luxury Decking"
+                style={{ height: 40 }}
+                className="mx-auto mb-8 object-contain"
+              />
+              <h3
+                className="portal-display"
+                style={{ color: 'var(--portal-cream-92)', fontSize: 56 }}
+              >
+                Quality without compromise.
+              </h3>
+              <p
+                className="portal-subtitle mx-auto mt-6"
+                style={{ color: 'var(--portal-cream-70)' }}
+              >
+                At {COMPANY.name}, we do not just build structures; we build relationships. We promise to respect your property, communicate transparently, and deliver a finished product that exceeds your expectations.
+              </p>
+              <div className="mt-10">
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('options');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="inline-flex items-center gap-2 px-8 rounded-2xl font-semibold transition-all"
+                  style={{
+                    height: 48,
+                    backgroundColor: '#D4A853',
+                    color: '#0b1220',
+                    fontSize: 15,
+                    letterSpacing: '0.01em',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(0.95)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
+                >
+                  Review your options
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+              <div
+                className="mt-10 pt-8 portal-eyebrow"
+                style={{ color: 'rgba(212,168,83,0.6)', borderTop: '1px solid rgba(212,168,83,0.15)' }}
+              >
+                The {COMPANY.name} Team
+              </div>
+            </div>
+          </section>
+        </>
+      )}
 
       {/* Sticky Footer for Acceptance */}
       

@@ -1,0 +1,175 @@
+/**
+ * Portal Tokens — single source of truth for the customer estimate portal.
+ *
+ * ARIA's Phase 2 cohesion spec (April 2026) locks the palette and typography
+ * scale used by every portal section. All section components must reference
+ * these tokens (directly via var(--*) or via the helper .portal-* utility
+ * classes below) so the portal stays one disciplined voice rather than a
+ * stack of one-off overrides.
+ */
+
+:root {
+  /* ── Palette (locked) ────────────────────────────────────────────────── */
+  --portal-gold: #D4A853;
+  --portal-gold-dim: #8a6d32;      /* slate-bg hover / borders only */
+  --portal-navy: #0a1f3d;
+  --portal-slate-900: #0f172a;
+  --portal-cream: #faf8f2;
+  --portal-cream-deep: #f0ebdf;
+  --portal-ink: #0b1220;           /* body text on cream */
+
+  /* Cream-text on slate — three opacities only */
+  --portal-cream-92: rgba(250, 248, 242, 0.92);
+  --portal-cream-70: rgba(250, 248, 242, 0.70);
+  --portal-cream-50: rgba(250, 248, 242, 0.50);
+
+  /* Ink-text on cream — three opacities only */
+  --portal-ink-92: rgba(11, 18, 32, 0.92);
+  --portal-ink-70: rgba(11, 18, 32, 0.70);
+  --portal-ink-50: rgba(11, 18, 32, 0.50);
+
+  /* Gold hairlines — 8% and 15% opacity variants */
+  --portal-gold-08: rgba(212, 168, 83, 0.08);
+  --portal-gold-15: rgba(212, 168, 83, 0.15);
+  --portal-gold-25: rgba(212, 168, 83, 0.25);
+
+  /* Card borders */
+  --portal-card-border-cream: 1px solid rgba(10, 31, 61, 0.08);
+  --portal-card-border-slate: 1px solid rgba(212, 168, 83, 0.15);
+
+  /* Card shadow (cream only) */
+  --portal-card-shadow:
+    0 1px 2px rgba(10, 31, 61, 0.06),
+    0 8px 24px -12px rgba(10, 31, 61, 0.12);
+
+  /* Single radius across portal */
+  --portal-radius: 1rem;           /* 16px — maps to rounded-2xl */
+
+  /* ── Type scale (desktop / mobile) ───────────────────────────────────── */
+  --portal-font-eyebrow: 'JetBrains Mono', monospace;
+  --portal-font-display: 'Syne', 'Inter', sans-serif;
+  --portal-font-body: 'Outfit', 'Inter', sans-serif;
+  --portal-font-numeric: 'Orbitron', 'Inter', sans-serif;
+}
+
+/* ── Helper utility classes ────────────────────────────────────────────── */
+
+/* Eyebrow — JetBrains Mono 12/11, tracking 0.18em, upper */
+.portal-eyebrow {
+  font-family: var(--portal-font-eyebrow);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+@media (max-width: 640px) {
+  .portal-eyebrow {
+    font-size: 11px;
+  }
+}
+
+/* Display title — Syne italic 44/32, tracking -0.01em, sentence */
+.portal-display {
+  font-family: var(--portal-font-display);
+  font-weight: 600;
+  font-style: italic;
+  font-size: 44px;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+@media (max-width: 640px) {
+  .portal-display {
+    font-size: 32px;
+  }
+}
+
+/* Subtitle — Outfit 18/16 */
+.portal-subtitle {
+  font-family: var(--portal-font-body);
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.55;
+  letter-spacing: 0;
+  max-width: 60ch;
+}
+@media (max-width: 640px) {
+  .portal-subtitle {
+    font-size: 16px;
+  }
+}
+
+/* Body — Outfit 16/15, line-height 1.6 */
+.portal-body {
+  font-family: var(--portal-font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+@media (max-width: 640px) {
+  .portal-body {
+    font-size: 15px;
+  }
+}
+
+/* Label / meta — Outfit 500, 13/12, tracking 0.04em, upper */
+.portal-label {
+  font-family: var(--portal-font-body);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+@media (max-width: 640px) {
+  .portal-label {
+    font-size: 12px;
+  }
+}
+
+/* Numeric accent — Orbitron 600, size contextual (28–56), tracking -0.02em */
+.portal-numeric {
+  font-family: var(--portal-font-numeric);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Gold hairline — 48px wide, 2px tall, used above the eyebrow */
+.portal-hairline {
+  display: block;
+  width: 48px;
+  height: 2px;
+  background-color: var(--portal-gold);
+  margin: 0 auto 12px auto;
+}
+
+/* Section band backgrounds — keep these in sync with the tone prop */
+.portal-band-cream      { background-color: var(--portal-cream); }
+.portal-band-cream-deep { background-color: var(--portal-cream-deep); }
+.portal-band-slate      { background-color: var(--portal-slate-900); }
+.portal-band-navy       { background-color: var(--portal-navy); }
+
+/* Unified card chrome */
+.portal-card-cream {
+  background-color: #ffffff;
+  border: var(--portal-card-border-cream);
+  border-radius: var(--portal-radius);
+  box-shadow: var(--portal-card-shadow);
+}
+.portal-card-slate {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: var(--portal-card-border-slate);
+  border-top: 1px solid var(--portal-gold-25);
+  border-radius: var(--portal-radius);
+  box-shadow: none;
+}
+
+/* Gold hairline band used at slate↔cream transitions */
+.portal-transition-hairline {
+  height: 1px;
+  background-color: var(--portal-gold-08);
+  width: 100%;
+}

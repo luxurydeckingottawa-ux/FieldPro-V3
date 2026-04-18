@@ -19,8 +19,20 @@ import {
 } from 'lucide-react';
 import { useInView, useCountUp } from '../../hooks/useInView';
 import { generateContractorChecklistPDF } from '../../utils/contractorChecklistPdf';
+import { PortalSection } from './PortalSection';
 
+// Locked portal palette — mirrors /src/styles/portal-tokens.css
 const GOLD = '#D4A853';
+const GOLD_DIM = '#8a6d32';
+const NAVY = '#0a1f3d';
+const SLATE_900 = '#0f172a';
+const CREAM = '#faf8f2';
+const INK = '#0b1220';
+// Silence unused warnings for parity constants
+void SLATE_900;
+void CREAM;
+void INK;
+void GOLD_DIM;
 
 // ════════════════════════════════════════════════════════════════════════════
 // Asset 10 · Proof Wall
@@ -75,39 +87,29 @@ export const ProofWall: React.FC<{ testimonials?: Testimonial[]; companyName: st
   testimonials = DEFAULT_TESTIMONIALS,
   companyName,
 }) => {
-  const [ref, inView] = useInView<HTMLDivElement>();
+  const [ref, inView] = useInView<HTMLElement>();
   const [hero, ...rest] = testimonials;
 
   return (
-    <section id="proof-wall" ref={ref} className="py-24 md:py-32 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>
-            From Your Neighbourhood
-          </p>
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
-            The Proof Wall
-          </h2>
-          <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-            Real Ottawa decks, real homeowners, real project details. Built, warrantied, and walked away clean by {companyName}.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Hero card (left, spans 2 cols on desktop) */}
-          {hero && (
-            <TestimonialCard testimonial={hero} hero inView={inView} delayMs={0} />
-          )}
-
-          {/* 2x2 grid of smaller cards on the right */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:col-span-2">
-            {rest.map((t, i) => (
-              <TestimonialCard key={t.name + i} testimonial={t} inView={inView} delayMs={120 * (i + 1)} />
-            ))}
-          </div>
+    <PortalSection
+      id="proof-wall"
+      sectionRef={ref}
+      tone="slate"
+      eyebrow="From Your Neighbourhood"
+      title={<>The Proof Wall.</>}
+      subtitle={`Real Ottawa decks, real homeowners, real project details. Built, warrantied, and walked away clean by ${companyName}.`}
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {hero && (
+          <TestimonialCard testimonial={hero} hero inView={inView} delayMs={0} />
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:col-span-2">
+          {rest.map((t, i) => (
+            <TestimonialCard key={t.name + i} testimonial={t} inView={inView} delayMs={120 * (i + 1)} />
+          ))}
         </div>
       </div>
-    </section>
+    </PortalSection>
   );
 };
 
@@ -120,25 +122,21 @@ const TestimonialCard: React.FC<{
   const t = testimonial;
   return (
     <div
-      className={`group relative bg-white rounded-2xl overflow-hidden border border-slate-200 transition-all duration-500 ${
+      className={`group relative portal-card-slate overflow-hidden transition-all duration-500 ${
         inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
-      } hover:-translate-y-1 hover:shadow-xl`}
+      } hover:-translate-y-1`}
       style={{ transitionDelay: `${delayMs}ms` }}
     >
-      {/* Hero corner bracket */}
-      {hero && (
-        <>
-          <span className="absolute top-4 left-4 z-10 w-6 h-6 border-l-2 border-t-2" style={{ borderColor: GOLD }} />
-          <span className="absolute top-4 right-4 z-10 w-6 h-6 border-r-2 border-t-2" style={{ borderColor: GOLD }} />
-        </>
-      )}
-      {/* Photo placeholder (real imageUrl if provided, otherwise colored block) */}
       <div
         className={`w-full ${hero ? 'aspect-[4/5]' : 'aspect-square'} overflow-hidden relative`}
         style={{ backgroundColor: t.imageBgColor || '#4d5d30' }}
       >
         {t.imageUrl ? (
-          <img src={t.imageUrl} alt={`Deck built for ${t.name}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
+          <img
+            src={t.imageUrl}
+            alt={`Deck built for ${t.name}`}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+          />
         ) : (
           <div className="absolute inset-0 flex items-end justify-start p-6 bg-gradient-to-t from-black/50 to-transparent">
             <Quote className="w-8 h-8 text-white/70" />
@@ -151,13 +149,40 @@ const TestimonialCard: React.FC<{
             <Sparkles key={i} className="w-3.5 h-3.5" style={{ color: GOLD, fill: GOLD }} />
           ))}
         </div>
-        <p className={`italic text-slate-800 leading-snug ${hero ? 'text-lg' : 'text-base'}`}>
+        <p
+          className={`portal-body italic ${hero ? '' : ''}`}
+          style={{
+            color: 'var(--portal-cream-92)',
+            fontSize: hero ? 18 : 16,
+            lineHeight: 1.45,
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 400,
+          }}
+        >
           &ldquo;{t.quote}&rdquo;
         </p>
-        <div className="mt-4 pt-4 border-t border-slate-100">
-          <p className="text-sm font-bold text-slate-900">{t.name}</p>
-          <p className="text-xs text-slate-500 mt-0.5">{t.neighbourhood} &middot; {t.monthYear}</p>
-          <p className="text-[11px] text-slate-400 uppercase tracking-wide mt-2 font-mono">{t.projectDetail}</p>
+        <div
+          className="mt-4 pt-4"
+          style={{ borderTop: '1px solid rgba(212,168,83,0.15)' }}
+        >
+          <p
+            className="portal-label"
+            style={{ color: 'var(--portal-cream-92)', fontWeight: 600, letterSpacing: '0.02em', textTransform: 'none', fontSize: 14 }}
+          >
+            {t.name}
+          </p>
+          <p
+            className="mt-0.5"
+            style={{ color: 'var(--portal-cream-50)', fontSize: 12 }}
+          >
+            {t.neighbourhood} &middot; {t.monthYear}
+          </p>
+          <p
+            className="portal-eyebrow mt-2"
+            style={{ color: 'var(--portal-cream-50)', fontSize: 10 }}
+          >
+            {t.projectDetail}
+          </p>
         </div>
       </div>
     </div>
@@ -284,58 +309,85 @@ const BUILD_DAY_COMMITMENTS = [
 ];
 
 export const BuildDayCommitment: React.FC = () => {
-  const [ref, inView] = useInView<HTMLDivElement>();
+  const [ref, inView] = useInView<HTMLElement>();
   return (
-    <section id="build-day" ref={ref} className="py-24 md:py-32 bg-slate-50 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-3 font-mono" style={{ color: GOLD }}>
-            During Construction
-          </p>
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
-            What Build Week Actually Looks Like
-          </h2>
-          <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-            Six commitments we make to every homeowner during construction.
-          </p>
-        </div>
+    <PortalSection
+      id="build-day"
+      sectionRef={ref}
+      tone="slate"
+      eyebrow="During Construction"
+      title={<>What build week actually looks like.</>}
+      subtitle="Six commitments we make to every homeowner during construction."
+    >
+      <div className="relative">
+        {/* 1px connector + 10px gold dots — slate-zone accent is gold */}
+        <div
+          className="absolute left-[8%] right-[8%] top-[34px] h-px hidden lg:block transition-transform duration-1000 origin-left"
+          style={{
+            backgroundColor: 'rgba(212,168,83,0.25)',
+            transform: inView ? 'scaleX(1)' : 'scaleX(0)',
+          }}
+        />
 
-        <div className="relative">
-          {/* Horizontal rail */}
-          <div
-            className="absolute left-10 right-10 top-10 h-px bg-slate-200 hidden lg:block transition-transform duration-1000 origin-left"
-            style={{ transform: inView ? 'scaleX(1)' : 'scaleX(0)' }}
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-4">
-            {BUILD_DAY_COMMITMENTS.map((c, i) => {
-              const Icon = c.icon;
-              return (
-                <div
-                  key={c.day}
-                  className={`relative flex flex-col items-center text-center transition-all duration-500 ${
-                    inView ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
-                  }`}
-                  style={{ transitionDelay: `${200 + i * 140}ms` }}
-                >
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-3 font-mono">
-                    {c.day}
-                  </p>
-                  <div
-                    className="w-20 h-20 rounded-full bg-white border border-slate-200 flex items-center justify-center mb-4 transition-all hover:bg-[#D4A85315] group cursor-default"
-                    style={{ boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)' }}
-                  >
-                    <Icon className="w-8 h-8 text-slate-700 group-hover:text-[#D4A853] transition-colors" strokeWidth={1.5} />
-                  </div>
-                  <p className="text-sm font-bold text-slate-900 leading-tight mb-2 max-w-[160px]">{c.title}</p>
-                  <p className="text-xs text-slate-600 leading-relaxed max-w-[200px]">{c.body}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-4">
+          {BUILD_DAY_COMMITMENTS.map((c, i) => {
+            const Icon = c.icon;
+            return (
+              <div
+                key={c.day}
+                className={`relative flex flex-col items-center text-center transition-all duration-500 ${
+                  inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                }`}
+                style={{ transitionDelay: `${200 + i * 140}ms` }}
+              >
+                <div className="portal-eyebrow mb-5" style={{ color: 'var(--portal-cream-50)' }}>
+                  {c.day}
                 </div>
-              );
-            })}
-          </div>
+                {/* 10px gold dot on the connector line */}
+                <span
+                  className="block rounded-full mb-6"
+                  style={{
+                    width: 10,
+                    height: 10,
+                    backgroundColor: GOLD,
+                    boxShadow: `0 0 0 4px ${NAVY}`,
+                  }}
+                />
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-all group cursor-default"
+                  style={{
+                    backgroundColor: 'rgba(212,168,83,0.08)',
+                    border: '1px solid rgba(212,168,83,0.25)',
+                  }}
+                >
+                  <Icon
+                    className="w-7 h-7 transition-colors"
+                    style={{ color: GOLD }}
+                    strokeWidth={1.5}
+                  />
+                </div>
+                <p
+                  className="portal-body mb-2 max-w-[160px]"
+                  style={{ color: 'var(--portal-cream-92)', fontWeight: 600, fontSize: 14, lineHeight: 1.3 }}
+                >
+                  {c.title}
+                </p>
+                <p
+                  className="max-w-[200px]"
+                  style={{
+                    color: 'var(--portal-cream-70)',
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {c.body}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
-    </section>
+    </PortalSection>
   );
 };
 
@@ -351,9 +403,8 @@ interface PaymentMilestone {
 }
 
 export const PaymentScheduleTimeline: React.FC<{ selectedTotal: number }> = ({ selectedTotal }) => {
-  const [ref, inView] = useInView<HTMLDivElement>('-10% 0px -10% 0px', true);
+  const [ref, inView] = useInView<HTMLElement>('-10% 0px -10% 0px', true);
 
-  // If no option selected, show static percentages only
   const milestones: PaymentMilestone[] = [
     {
       label: 'Contract Signed',
@@ -376,54 +427,50 @@ export const PaymentScheduleTimeline: React.FC<{ selectedTotal: number }> = ({ s
   ];
 
   return (
-    <section
+    <PortalSection
       id="payment-schedule"
-      ref={ref}
-      className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-      style={{ background: 'linear-gradient(to bottom, #020617, #0f172a)' }}
+      sectionRef={ref}
+      tone="cream"
+      eyebrow="Payment Schedule"
+      title={
+        <>
+          <span style={{ color: NAVY, fontStyle: 'normal' }} className="portal-numeric" >30</span>
+          <span className="mx-2" style={{ color: 'var(--portal-ink-50)' }}>/</span>
+          <span style={{ color: NAVY, fontStyle: 'normal' }} className="portal-numeric">30</span>
+          <span className="mx-2" style={{ color: 'var(--portal-ink-50)' }}>/</span>
+          <span style={{ color: NAVY, fontStyle: 'normal' }} className="portal-numeric">40</span>
+        </>
+      }
+      subtitle="Three milestones, each tied to a clear project event. No surprises, no hidden installments."
     >
-      <div className="max-w-5xl mx-auto relative">
-        <div className="text-center mb-20">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-3 font-mono" style={{ color: GOLD }}>
-            Payment Schedule
-          </p>
-          <h2 className="text-7xl md:text-8xl font-black tracking-tight font-mono leading-none">
-            <span style={{ color: GOLD }}>30</span>
-            <span className="text-slate-700 mx-2">/</span>
-            <span style={{ color: GOLD }}>30</span>
-            <span className="text-slate-700 mx-2">/</span>
-            <span style={{ color: GOLD }}>40</span>
-          </h2>
-          <p className="mt-6 text-lg text-slate-400 max-w-2xl mx-auto">
-            Three milestones, each tied to a clear project event. No surprises, no hidden installments.
-          </p>
+      <div className="relative">
+        {/* 1px connector + navy 10px dots (cream-zone accent is navy) */}
+        <div
+          className="absolute top-[22px] left-[8%] right-[8%] h-px hidden md:block"
+          style={{ backgroundColor: 'rgba(10,31,61,0.15)' }}
+        />
+        <div
+          className="absolute top-[22px] left-[8%] h-px hidden md:block transition-all duration-1000 origin-left"
+          style={{
+            width: inView ? '84%' : '0%',
+            backgroundColor: NAVY,
+          }}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-6 relative">
+          {milestones.map((m, i) => (
+            <PaymentMilestoneCard key={i} milestone={m} index={i} inView={inView} />
+          ))}
         </div>
-
-        {/* Timeline rail */}
-        <div className="relative">
-          {/* Connecting line */}
-          <div className="absolute top-10 left-[8%] right-[8%] h-px bg-slate-700 hidden md:block" />
-          <div
-            className="absolute top-10 left-[8%] h-px hidden md:block transition-all duration-1500 origin-left"
-            style={{
-              width: inView ? 'calc(84%)' : '0%',
-              background: `linear-gradient(to right, ${GOLD}, ${GOLD}66)`,
-              transitionDuration: '1400ms',
-            }}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-6 relative">
-            {milestones.map((m, i) => (
-              <PaymentMilestoneCard key={i} milestone={m} index={i} inView={inView} />
-            ))}
-          </div>
-        </div>
-
-        <p className="mt-16 text-center text-xs text-slate-500 font-mono uppercase tracking-widest">
-          Payable by credit card via online invoice, or e-transfer
-        </p>
       </div>
-    </section>
+
+      <p
+        className="mt-10 text-center portal-eyebrow"
+        style={{ color: 'var(--portal-ink-50)' }}
+      >
+        Payable by credit card via online invoice, or e-transfer
+      </p>
+    </PortalSection>
   );
 };
 
@@ -434,30 +481,44 @@ const PaymentMilestoneCard: React.FC<{ milestone: PaymentMilestone; index: numbe
       className={`text-center transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
       style={{ transitionDelay: `${200 + index * 200}ms` }}
     >
-      <p className="text-[10px] font-bold uppercase tracking-[0.25em] mb-6 font-mono text-slate-500">
-        Milestone 0{index + 1}
-      </p>
-      <h3 className="text-xl font-bold text-slate-100 mb-4">{milestone.label}</h3>
-      {/* Gold dot */}
-      <div className="flex justify-center mb-4 relative">
-        <div
-          className={`w-4 h-4 rounded-full transition-all duration-500 ${inView ? 'scale-100' : 'scale-0'}`}
+      {/* 10px navy dot aligned with the connector rail */}
+      <div className="flex justify-center mb-6">
+        <span
+          className={`block rounded-full transition-all duration-500 ${inView ? 'scale-100' : 'scale-0'}`}
           style={{
-            backgroundColor: GOLD,
-            boxShadow: `0 0 0 4px ${GOLD}33`,
+            width: 10,
+            height: 10,
+            backgroundColor: NAVY,
+            boxShadow: '0 0 0 4px var(--portal-cream)',
             transitionDelay: `${300 + index * 300}ms`,
           }}
         />
       </div>
+      <div className="portal-eyebrow mb-4" style={{ color: 'var(--portal-ink-50)' }}>
+        Milestone 0{index + 1}
+      </div>
+      <h3
+        className="portal-display mb-4"
+        style={{ color: INK, fontSize: 22, fontStyle: 'normal', fontWeight: 600 }}
+      >
+        {milestone.label}
+      </h3>
       <p
         ref={countRef}
-        className="font-mono text-3xl md:text-4xl font-black mb-2 tabular-nums"
-        style={{ color: GOLD }}
+        className="portal-numeric mb-2"
+        style={{ color: NAVY, fontSize: 36 }}
       >
         ${count.toLocaleString()}
       </p>
-      <p className="text-xs font-mono text-slate-500 mb-3">{milestone.percent}% of project total</p>
-      <p className="text-sm text-slate-400 leading-relaxed max-w-xs mx-auto">{milestone.description}</p>
+      <div className="portal-eyebrow mb-3" style={{ color: 'var(--portal-ink-50)' }}>
+        {milestone.percent}% of project total
+      </div>
+      <p
+        className="portal-body max-w-xs mx-auto"
+        style={{ color: 'var(--portal-ink-70)', fontSize: 14 }}
+      >
+        {milestone.description}
+      </p>
     </div>
   );
 };
