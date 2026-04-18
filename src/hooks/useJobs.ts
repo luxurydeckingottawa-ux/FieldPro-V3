@@ -304,7 +304,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     const acceptedBuildSummary = {
       optionName: data.activePackage
         ? `${data.activePackage.size} ${data.activePackage.level} Package`
-        : `Custom Estimate #${data.estimateNumber}`,
+        : 'Custom Deck Build',
       basePrice: estimateAmount,
       addOns: data.pricingSummary.impacts
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -423,7 +423,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
     const acceptedBuildSummary = {
       optionName: data.activePackage
         ? `${data.activePackage.size} ${data.activePackage.level} Package`
-        : `Custom Estimate #${data.estimateNumber}`,
+        : 'Custom Deck Build',
       basePrice: estimateAmount,
       addOns: data.pricingSummary.impacts
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -659,10 +659,10 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
           const foundationName = sel.foundation?.name || 'Concrete Deck Blocks (Standard)';
           const deckStr = deckingName.toLowerCase();
           const materialWarranty = /azek|timbertech/.test(deckStr) ? '50-Year Material' : /fiberon|trex|clubhouse|eva-?last/.test(deckStr) ? '25-Year Material' : /cedar/.test(deckStr) ? '10-Year Natural Wood' : '5-Year PT Lumber';
-          return { id: `opt-${opt.id}-${Date.now()}-${idx}`, name: opt.name, title: opt.activePackage ? `${opt.activePackage.size} ${opt.activePackage.level} Package` : `Custom Estimate #${data.estimateNumber}-${opt.id}`, description: nonZeroImpacts.map(i => i.label).slice(0, 3).join(' · ') || 'Custom deck build', price: Math.round(opt.pricingSummary.finalTotal), features: nonZeroImpacts.map(i => i.label), differences: [], itemizedItems: optItems, keyFeatures: { decking: deckingName, framing: framingName, railing: railingName, foundation: foundationName, materialWarranty, workmanshipWarranty: '5-Year Workmanship Warranty', addOns: [] } };
+          return { id: `opt-${opt.id}-${Date.now()}-${idx}`, name: opt.name, title: opt.activePackage ? `${opt.activePackage.size} ${opt.activePackage.level} Package` : '', description: nonZeroImpacts.map(i => i.label).filter(l => !/^upgrade\s+/i.test(l)).slice(0, 3).join(' · ') || 'Custom deck build', price: Math.round(opt.pricingSummary.finalTotal), features: nonZeroImpacts.map(i => i.label), differences: [], itemizedItems: optItems, keyFeatures: { decking: deckingName, framing: framingName, railing: railingName, foundation: foundationName, materialWarranty, workmanshipWarranty: '5-Year Workmanship Warranty', addOns: [] } };
         });
       } else {
-        earlyUpdatedOptions = [{ id: `opt-${Date.now()}`, name: data.activePackage ? `${data.activePackage.level}` : 'Custom', title: data.activePackage ? `${data.activePackage.size} ${data.activePackage.level} Package` : `Custom Estimate #${data.estimateNumber}`, description: acceptedBuildSummary.scopeSummary || '', price: totalAmount, features: data.pricingSummary.impacts?.filter((imp: any) => Math.round(imp.value) !== 0)?.map((imp: any) => imp.label) || [], differences: [] }];
+        earlyUpdatedOptions = [{ id: `opt-${Date.now()}`, name: data.activePackage ? `${data.activePackage.level}` : 'Custom', title: data.activePackage ? `${data.activePackage.size} ${data.activePackage.level} Package` : '', description: acceptedBuildSummary.scopeSummary || '', price: totalAmount, features: data.pricingSummary.impacts?.filter((imp: any) => Math.round(imp.value) !== 0)?.map((imp: any) => imp.label) || [], differences: [] }];
       }
       const earlyEstimateData: EstimateData = { options: earlyUpdatedOptions, addOns: [] };
 
@@ -835,8 +835,8 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
           name: opt.name,
           title: opt.activePackage
             ? `${opt.activePackage.size} ${opt.activePackage.level} Package`
-            : `Custom Estimate #${data.estimateNumber}-${opt.id}`,
-          description: featureLabels.slice(0, 3).join(' · ') || 'Custom deck build',
+            : '',
+          description: featureLabels.filter(l => !/^upgrade\s+/i.test(l)).slice(0, 3).join(' · ') || 'Custom deck build',
           price: Math.round(opt.pricingSummary.finalTotal),
           features: featureLabels,
           differences: [],
@@ -861,7 +861,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         name: newOptionName,
         title: data.activePackage
           ? `${data.activePackage.size} ${data.activePackage.level} Package`
-          : `Custom Estimate #${data.estimateNumber}`,
+          : '',
         description: acceptedBuildSummary.scopeSummary || '',
         price: totalAmount,
         features: data.pricingSummary.impacts

@@ -34,6 +34,34 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   const [showContractSigning, setShowContractSigning] = useState(false);
   const [startTime] = useState(Date.now());
   const [viewDetailsOption, setViewDetailsOption] = useState<EstimateOption | null>(null);
+  // Per-option enhancement selections: optionId -> Set of enhancement keys
+  const [selectedEnhancements, setSelectedEnhancements] = useState<Record<string, Set<string>>>({});
+
+  const toggleEnhancement = (optionId: string, key: string, name: string, price: number) => {
+    setSelectedEnhancements(prev => {
+      const current = prev[optionId] || new Set<string>();
+      const next = new Set(current);
+      const wasChecked = next.has(key);
+      if (wasChecked) next.delete(key);
+      else next.add(key);
+      // Engagement tracking — enhancement interaction
+      try {
+        onTrackEngagement?.({
+          lastInteraction: new Date().toISOString(),
+          // Append to interactions log if the shape supports it
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...(((): any => {
+            const interaction = { optionId, key, name, price, action: wasChecked ? 'removed' : 'added', timestamp: new Date().toISOString() };
+            const existing = (job.portalEngagement as unknown as Record<string, unknown>)?.enhancementInteractions as Array<Record<string, unknown>> | undefined;
+            return { enhancementInteractions: [...(existing || []), interaction] };
+          })()),
+        });
+      } catch {
+        // Tracking is best-effort — never break the UI
+      }
+      return { ...prev, [optionId]: next };
+    });
+  };
 
   const isAccepted = job.lifecycleStage === CustomerLifecycle.WON_SOLD;
   const acceptedSummary = job.acceptedBuildSummary;
@@ -215,8 +243,11 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
 
   const handleAccept = () => {
     if (selectedOptionId) {
-      onAcceptOption(selectedOptionId, selectedAddOns);
-      // Show contract signing step instead of immediate confirmation
+      // Merge per-option enhancement selections (keyed by e.g. 'helical', 'fabric_stone')
+      // into the accepted add-ons list so they are captured on the job record.
+      const enhancementKeys = Array.from(selectedEnhancements[selectedOptionId] || []);
+      const mergedAddOns = Array.from(new Set([...selectedAddOns, ...enhancementKeys]));
+      onAcceptOption(selectedOptionId, mergedAddOns);
       setShowContractSigning(true);
     }
   };
@@ -453,26 +484,37 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Welcome Section */}
         <div className="mb-12">
-          <div 
-            
-            
-            className="max-w-3xl"
-          >
-            <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-              {job.clientName ? `Hello, ${job.clientName.split(' ')[0]}` : 'Welcome to Your Project'}
-            </h2>
-            <p className="text-xl text-slate-600 leading-relaxed">
-              Thank you for the opportunity to quote your outdoor project{job.projectAddress ? <> at <span className="font-semibold text-slate-900">{job.projectAddress}</span></> : ''}.
-              {' '}
-              {(() => {
-                const count = estimateData.options.length;
-                if (count === 0) return `We've prepared your personalized quote below.`;
-                if (count === 1) return `We've prepared your personalized quote to help you find the perfect balance of aesthetics, maintenance, and value.`;
-                const words = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
-                const wordCount = count <= 10 ? words[count - 1] : count.toString();
-                return `We've prepared ${wordCount} tailored options to help you find the perfect balance of aesthetics, maintenance, and value.`;
-              })()}
-            </p>
+          <div className="flex items-start justify-between gap-6 flex-wrap">
+            <div className="max-w-3xl flex-1 min-w-[260px]">
+              {job.jobNumber && (
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-400 mb-3">
+                  Estimate {job.jobNumber}
+                </p>
+              )}
+              <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                {job.clientName ? `Hello, ${job.clientName.split(' ')[0]}` : 'Welcome to Your Project'}
+              </h2>
+              <p className="text-xl text-slate-600 leading-relaxed">
+                Thank you for the opportunity to quote your outdoor project{job.projectAddress ? <> at <span className="font-semibold text-slate-900">{job.projectAddress}</span></> : ''}.
+                {' '}
+                {(() => {
+                  const count = estimateData.options.length;
+                  if (count === 0) return `We've prepared your personalized quote below.`;
+                  if (count === 1) return `We've prepared your personalized quote to help you find the perfect balance of aesthetics, maintenance, and value.`;
+                  const words = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+                  const wordCount = count <= 10 ? words[count - 1] : count.toString();
+                  return `We've prepared ${wordCount} tailored options to help you find the perfect balance of aesthetics, maintenance, and value.`;
+                })()}
+              </p>
+            </div>
+            {/* Luxury Decking brand badge */}
+            <div className="shrink-0 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-center w-[96px] h-[96px]">
+              <img
+                src="/assets/logo-black.png"
+                alt="Luxury Decking"
+                className="w-full h-full object-contain"
+              />
+            </div>
           </div>
         </div>
 
@@ -562,26 +604,33 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     // Build optional enhancements list
                     const kf = option.keyFeatures;
                     const allFeatureText = [...(option.features || []), ...(kf ? Object.values(kf).filter(v => typeof v === 'string') : [])].join(' ').toLowerCase();
-                    const enhancements: Array<{ name: string; price: number; description: string }> = [];
+                    const enhancements: Array<{ key: string; name: string; price: number; description: string }> = [];
 
                     if (footings > 0 && !(kf?.foundation?.toLowerCase().includes('helical') || kf?.foundation?.toLowerCase().includes('screw pile'))) {
-                      enhancements.push({ name: 'Helical Pile Upgrade', price: footings * 469, description: 'Permanent steel screw-pile foundation' });
+                      enhancements.push({ key: 'helical', name: 'Helical Pile Upgrade', price: footings * 469, description: 'Permanent steel screw-pile foundation' });
                     }
                     if (sqft > 0 && !allFeatureText.includes('fabric') && !allFeatureText.includes('stone')) {
-                      enhancements.push({ name: 'Landscape Fabric & Stone', price: Math.round(sqft * 5.49), description: 'Under-deck weed barrier and decorative stone' });
+                      enhancements.push({ key: 'fabric_stone', name: 'Landscape Fabric & Stone', price: Math.round(sqft * 5.49), description: 'Under-deck weed barrier and decorative stone' });
                     }
                     if (sqft > 0 && !allFeatureText.includes('joist')) {
-                      enhancements.push({ name: 'JoistGuard Protection', price: Math.round(sqft * 2.49), description: 'Butyl joist tape on all framing members' });
+                      enhancements.push({ key: 'joist_guard', name: 'JoistGuard Protection', price: Math.round(sqft * 2.49), description: 'Butyl joist tape on all framing members' });
                     }
                     if (sqft > 0 && !(kf?.framing?.includes('2\u00d710') && kf?.framing?.includes('12'))) {
-                      enhancements.push({ name: '2\u00d710 PT @ 12" OC Framing', price: Math.round(sqft * 6.49), description: 'Upgraded oversized joist framing package' });
+                      enhancements.push({ key: 'framing_2x10_12', name: '2\u00d710 PT @ 12" OC Framing', price: Math.round(sqft * 6.49), description: 'Upgraded oversized joist framing package' });
                     }
                     if (!allFeatureText.includes('light')) {
-                      enhancements.push({ name: 'InLight 6-Light Package', price: 1249, description: 'Low-voltage LED stair and post cap lights' });
+                      enhancements.push({ key: 'inlight_6', name: 'InLight 6-Light Package', price: 1249, description: 'Low-voltage LED stair and post cap lights' });
                     }
                     if (!allFeatureText.includes('10-year') && !allFeatureText.includes('extended')) {
-                      enhancements.push({ name: '10-Year Extended Warranty', price: Math.round(option.price * 0.05), description: 'Extended workmanship coverage for a decade of peace of mind' });
+                      enhancements.push({ key: 'warranty_10', name: '10-Year Extended Warranty', price: Math.round(option.price * 0.05), description: 'Extended workmanship coverage for a decade of peace of mind' });
                     }
+
+                    // Live price calculation — add selected enhancement prices to option base
+                    const optionSelections = selectedEnhancements[option.id] || new Set<string>();
+                    const enhancementTotal = enhancements
+                      .filter(e => optionSelections.has(e.key))
+                      .reduce((s, e) => s + e.price, 0);
+                    const displayPrice = option.price + enhancementTotal;
 
                     return (
                       <div
@@ -605,35 +654,38 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                         ) : null}
 
                         <div className={`p-8 flex-grow ${isPreferred ? 'pt-6' : ''}`}>
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <span className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 block">
+                          <div className="flex justify-between items-start mb-6">
+                            <div className="min-w-0">
+                              <h4 className="text-2xl font-black text-slate-900 leading-tight">
                                 {option.name}
-                              </span>
-                              <h4 className="text-xl font-bold">{option.title}</h4>
+                              </h4>
+                              {option.title && option.title.trim() && option.title.trim().toLowerCase() !== option.name.trim().toLowerCase() && (
+                                <p className="text-sm text-slate-500 mt-1 font-medium">{option.title}</p>
+                              )}
                             </div>
                             {isSelected && (
-                              <div className={`rounded-full p-1 ${isPreferred ? 'bg-[#D4A853]' : 'bg-slate-900'}`}>
+                              <div className={`rounded-full p-1 shrink-0 ml-2 ${isPreferred ? 'bg-[#D4A853]' : 'bg-slate-900'}`}>
                                 <Check className="w-4 h-4 text-white" />
                               </div>
                             )}
                           </div>
 
-                          <p className="text-slate-600 text-sm mb-6 line-clamp-3">
-                            {option.description}
-                          </p>
-
                           <div className="mb-6">
                             <div className="flex items-baseline gap-1">
                               <span className="text-3xl font-black text-slate-900">
-                                ${option.price.toLocaleString()}
+                                ${displayPrice.toLocaleString()}
                               </span>
                               <span className="text-slate-400 text-sm font-medium">inc. tax</span>
                             </div>
+                            {enhancementTotal > 0 && (
+                              <p className="text-[11px] text-slate-400 font-medium mt-1">
+                                Base ${option.price.toLocaleString()} + ${enhancementTotal.toLocaleString()} upgrades
+                              </p>
+                            )}
                             <div className="mt-2 flex items-center gap-2 text-blue-600 bg-blue-50/50 w-fit px-3 py-1 rounded-lg border border-blue-100/50">
                               <Wallet size={12} className="shrink-0" />
                               <span className="text-[11px] font-bold tracking-tight uppercase">
-                                Estimated ${calculateMonthlyEstimate(option.price).toLocaleString()}/mo
+                                Estimated ${calculateMonthlyEstimate(displayPrice).toLocaleString()}/mo
                               </span>
                             </div>
                           </div>
@@ -660,7 +712,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                                   <span className="text-slate-700 font-medium">{kf.decking}</span>
                                 </div>
                               )}
-                              {kf.railing && kf.railing !== 'No Railing' && (
+                              {kf.railing && kf.railing.trim() && !/^no\s+railing/i.test(kf.railing.trim()) && (
                                 <div className="flex gap-2 text-sm">
                                   <span className="text-slate-400 font-medium w-24 shrink-0">Railing</span>
                                   <span className="text-slate-700 font-medium">{kf.railing}</span>
@@ -704,18 +756,32 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                             </div>
                           )}
 
-                          {/* Optional Enhancements */}
+                          {/* Optional Enhancements — clickable checkboxes */}
                           {enhancements.length > 0 && (
                             <div className="mt-4 pt-4 border-t border-slate-100">
                               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Optional Enhancements</p>
-                              <ul className="space-y-2">
-                                {enhancements.map((enh, i) => (
-                                  <li key={i} className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-600">{enh.name}</span>
-                                    <span className="font-bold" style={{ color: '#D4A853' }}>+${enh.price.toLocaleString()}</span>
-                                  </li>
-                                ))}
-                              </ul>
+                              <div className="space-y-1">
+                                {enhancements.map((enh) => {
+                                  const isChecked = optionSelections.has(enh.key);
+                                  return (
+                                    <label
+                                      key={enh.key}
+                                      onClick={(e) => { e.stopPropagation(); toggleEnhancement(option.id, enh.key, enh.name, enh.price); }}
+                                      className="flex items-center justify-between text-sm cursor-pointer select-none py-1.5 px-2 -mx-2 rounded-lg hover:bg-slate-50 transition-colors"
+                                    >
+                                      <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all ${
+                                          isChecked ? 'bg-[#D4A853] border-[#D4A853]' : 'border-slate-300 bg-white'
+                                        }`}>
+                                          {isChecked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                                        </div>
+                                        <span className={`truncate ${isChecked ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{enh.name}</span>
+                                      </div>
+                                      <span className={`font-bold shrink-0 ml-2 ${isChecked ? 'text-[#D4A853]' : 'text-slate-400'}`}>+${enh.price.toLocaleString()}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
                             </div>
                           )}
 
@@ -1049,51 +1115,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               </section>
             )}
 
-            {/* Add-ons Section */}
-            {!isAccepted && (
-              <section className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200 shadow-sm">
-                <div className="max-w-4xl mx-auto">
-                  <div className="text-center mb-12">
-                    <h3 className="text-2xl font-bold mb-4">Enhance Your Outdoor Living</h3>
-                    <p className="text-slate-600">Select any upgrades you'd like to include in your project. Your total will update automatically.</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    {estimateData.addOns.map((addon) => (
-                      <div 
-                        key={addon.id}
-                        onClick={() => toggleAddOn(addon.id)}
-                        className={`group flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${
-                          selectedAddOns.includes(addon.id)
-                            ? 'border-slate-900 bg-slate-50'
-                            : 'border-slate-100 hover:border-slate-200'
-                        }`}
-                      >
-                        <div className="flex items-center gap-6">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                            selectedAddOns.includes(addon.id) ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400'
-                          }`}>
-                            <Zap className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-slate-900">{addon.name}</h4>
-                            <p className="text-sm text-slate-500">{addon.description}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <span className="font-bold text-slate-900">+${addon.price.toLocaleString()}</span>
-                          <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-                            selectedAddOns.includes(addon.id) ? 'bg-slate-900 border-slate-900' : 'border-slate-200'
-                          }`}>
-                            {selectedAddOns.includes(addon.id) && <Check className="w-4 h-4 text-white" />}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            )}
+            {/* "Enhance Your Outdoor Living" section removed — per-option enhancements inside each card replace it */}
 
             {/* FAQ & AI Support Section */}
             <section className="mt-20">
