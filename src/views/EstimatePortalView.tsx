@@ -1,20 +1,41 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Job, EstimateOption, PortalEngagement, CustomerLifecycle, DepositStatus, SoldWorkflowStatus } from '../types';
 import { COMPANY } from '../config/company';
-import { 
-  Check, Info, Shield, 
+import {
+  Check, Info, Shield,
   Award, Zap, MessageSquare, Phone,
   ArrowRight, CheckCircle2, AlertCircle, Sparkles,
   ShieldCheck, Calendar, Wallet, Edit2, X,
-  Clock, FileText, Receipt, Camera
+  Clock, FileText, Receipt, Camera, Layers, RotateCcw
 } from 'lucide-react';
 
 import { AISalesAssistant } from '../components/AISalesAssistant';
 import { AIObjectionHelper } from '../components/AIObjectionHelper';
+import {
+  DECKING_CATALOG,
+  DeckingCatalogItem,
+  calculateSwappedPrice,
+  resolveDeckingFromSelection,
+  groupCatalogByBrand,
+} from '../data/deckingCatalog';
+
+export interface CustomerDeckingSwapPayload {
+  optionId: string;
+  fromId: string;
+  fromName: string;
+  toId: string;
+  toName: string;
+  toBrand?: string;
+  priceImpact: number;
+}
 
 interface EstimatePortalViewProps {
   job: Job;
-  onAcceptOption: (optionId: string, selectedAddOns: string[]) => void;
+  onAcceptOption: (
+    optionId: string,
+    selectedAddOns: string[],
+    deckingSwap?: CustomerDeckingSwapPayload,
+  ) => void;
   onSignContract?: (jobId: string, signature: string) => void;
   onTrackEngagement?: (engagement: Partial<PortalEngagement>) => void;
   onClose?: () => void;
@@ -36,6 +57,70 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   const [viewDetailsOption, setViewDetailsOption] = useState<EstimateOption | null>(null);
   // Per-option enhancement selections: optionId -> Set of enhancement keys
   const [selectedEnhancements, setSelectedEnhancements] = useState<Record<string, Set<string>>>({});
+
+  // Customer decking swap state: optionId -> chosen catalog item id
+  // null / missing means "no swap, use the originally quoted decking"
+  const [deckingSwaps, setDeckingSwaps] = useState<Record<string, string>>({});
+  // Which option's swap modal is open (null = closed)
+  const [swapModalOption, setSwapModalOption] = useState<EstimateOption | null>(null);
+
+  // Resolve an option's current decking (post-swap if one is active)
+  const getActiveDeckingForOption = (option: EstimateOption): DeckingCatalogItem | null => {
+    // 1. Swap active? Return the swapped catalog entry.
+    const swapId = deckingSwaps[option.id];
+    if (swapId) {
+      const swapped = DECKING_CATALOG.find(d => d.id === swapId);
+      if (swapped) return swapped;
+    }
+    // 2. Original selection from calculatorOptions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const calOpt = job.calculatorOptions?.find((o: any) => o.id === option.id);
+    return resolveDeckingFromSelection(calOpt?.selections?.decking);
+  };
+
+  // Resolve an option's ORIGINAL (pre-swap) decking — needed as the baseline
+  // when computing swap price deltas.
+  const getOriginalDeckingForOption = (option: EstimateOption): DeckingCatalogItem | null => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const calOpt = job.calculatorOptions?.find((o: any) => o.id === option.id);
+    return resolveDeckingFromSelection(calOpt?.selections?.decking);
+  };
+
+  // Compute the display price for an option with swap applied
+  const getSwappedPriceForOption = (option: EstimateOption): number => {
+    const swapId = deckingSwaps[option.id];
+    if (!swapId) return option.price;
+    const to = DECKING_CATALOG.find(d => d.id === swapId);
+    const from = getOriginalDeckingForOption(option);
+    if (!to) return option.price;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const calOpt = job.calculatorOptions?.find((o: any) => o.id === option.id);
+    const dims = {
+      sqft: calOpt?.dimensions?.sqft || 0,
+      steps: calOpt?.dimensions?.steps || 0,
+      fasciaLF: calOpt?.dimensions?.fasciaLF || 0,
+    };
+    return calculateSwappedPrice(option.price, dims, from, to);
+  };
+
+  const applyDeckingSwap = (optionId: string, to: DeckingCatalogItem) => {
+    setDeckingSwaps(prev => ({ ...prev, [optionId]: to.id }));
+    try {
+      onTrackEngagement?.({
+        lastInteraction: new Date().toISOString(),
+      });
+    } catch {
+      // best-effort
+    }
+  };
+
+  const clearDeckingSwap = (optionId: string) => {
+    setDeckingSwaps(prev => {
+      const next = { ...prev };
+      delete next[optionId];
+      return next;
+    });
+  };
 
   const toggleEnhancement = (optionId: string, key: string, name: string, price: number) => {
     setSelectedEnhancements(prev => {
@@ -247,7 +332,31 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
       // into the accepted add-ons list so they are captured on the job record.
       const enhancementKeys = Array.from(selectedEnhancements[selectedOptionId] || []);
       const mergedAddOns = Array.from(new Set([...selectedAddOns, ...enhancementKeys]));
-      onAcceptOption(selectedOptionId, mergedAddOns);
+
+      // If the customer swapped the decking material on the accepted option,
+      // pack it into the acceptance payload so the office sees it as a
+      // pending swap requiring reconciliation before production kickoff.
+      let deckingSwap: CustomerDeckingSwapPayload | undefined;
+      const selectedOption = estimateData.options.find(o => o.id === selectedOptionId);
+      const swapId = deckingSwaps[selectedOptionId];
+      if (selectedOption && swapId) {
+        const to = DECKING_CATALOG.find(d => d.id === swapId);
+        const from = getOriginalDeckingForOption(selectedOption);
+        if (to && from && to.id !== from.id) {
+          const swappedPrice = getSwappedPriceForOption(selectedOption);
+          deckingSwap = {
+            optionId: selectedOptionId,
+            fromId: from.id,
+            fromName: `${from.brand} ${from.name}`.trim(),
+            toId: to.id,
+            toName: to.name,
+            toBrand: to.brand,
+            priceImpact: swappedPrice - selectedOption.price,
+          };
+        }
+      }
+
+      onAcceptOption(selectedOptionId, mergedAddOns, deckingSwap);
       setShowContractSigning(true);
     }
   };
@@ -625,12 +734,19 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                       enhancements.push({ key: 'warranty_10', name: '10-Year Extended Warranty', price: Math.round(option.price * 0.05), description: 'Extended workmanship coverage for a decade of peace of mind' });
                     }
 
-                    // Live price calculation — add selected enhancement prices to option base
+                    // Live price calculation — base option + enhancements + decking swap delta
                     const optionSelections = selectedEnhancements[option.id] || new Set<string>();
                     const enhancementTotal = enhancements
                       .filter(e => optionSelections.has(e.key))
                       .reduce((s, e) => s + e.price, 0);
-                    const displayPrice = option.price + enhancementTotal;
+                    const swappedBasePrice = getSwappedPriceForOption(option);
+                    const swapDelta = swappedBasePrice - option.price; // post-HST delta
+                    const displayPrice = swappedBasePrice + enhancementTotal;
+
+                    // Determine current decking for this option (post-swap if active)
+                    const activeDecking = getActiveDeckingForOption(option);
+                    const originalDecking = getOriginalDeckingForOption(option);
+                    const hasSwap = Boolean(deckingSwaps[option.id] && activeDecking && originalDecking && activeDecking.id !== originalDecking.id);
 
                     return (
                       <div
@@ -677,9 +793,15 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                               </span>
                               <span className="text-slate-400 text-sm font-medium">inc. tax</span>
                             </div>
-                            {enhancementTotal > 0 && (
+                            {(enhancementTotal > 0 || swapDelta !== 0) && (
                               <p className="text-[11px] text-slate-400 font-medium mt-1">
-                                Base ${option.price.toLocaleString()} + ${enhancementTotal.toLocaleString()} upgrades
+                                Base ${option.price.toLocaleString()}
+                                {swapDelta !== 0 && (
+                                  <> {swapDelta > 0 ? '+' : '−'} ${Math.abs(swapDelta).toLocaleString()} decking</>
+                                )}
+                                {enhancementTotal > 0 && (
+                                  <> + ${enhancementTotal.toLocaleString()} upgrades</>
+                                )}
                               </p>
                             )}
                             <div className="mt-2 flex items-center gap-2 text-blue-600 bg-blue-50/50 w-fit px-3 py-1 rounded-lg border border-blue-100/50">
@@ -706,10 +828,13 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                                   <span className="text-slate-700 font-medium">{kf.framing}</span>
                                 </div>
                               )}
-                              {kf.decking && (
+                              {(kf.decking || activeDecking) && (
                                 <div className="flex gap-2 text-sm">
                                   <span className="text-slate-400 font-medium w-24 shrink-0">Decking</span>
-                                  <span className="text-slate-700 font-medium">{kf.decking}</span>
+                                  <span className={`font-medium ${hasSwap ? 'text-[#D4A853]' : 'text-slate-700'}`}>
+                                    {activeDecking ? `${activeDecking.brand} ${activeDecking.name}` : kf.decking}
+                                    {hasSwap && <span className="ml-1.5 text-[10px] uppercase tracking-widest bg-[#D4A853]/10 text-[#D4A853] font-bold px-1.5 py-0.5 rounded">Swapped</span>}
+                                  </span>
                                 </div>
                               )}
                               {kf.railing && kf.railing.trim() && !/^no\s+railing/i.test(kf.railing.trim()) && (
@@ -718,10 +843,12 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                                   <span className="text-slate-700 font-medium">{kf.railing}</span>
                                 </div>
                               )}
-                              {kf.materialWarranty && (
+                              {(kf.materialWarranty || activeDecking) && (
                                 <div className="flex gap-2 text-sm">
                                   <span className="text-slate-400 font-medium w-24 shrink-0">Mat. Warranty</span>
-                                  <span className="text-slate-700 font-medium">{kf.materialWarranty}</span>
+                                  <span className={`font-medium ${hasSwap ? 'text-[#D4A853]' : 'text-slate-700'}`}>
+                                    {hasSwap && activeDecking ? activeDecking.materialWarranty : kf.materialWarranty}
+                                  </span>
                                 </div>
                               )}
                               <div className="flex gap-2 text-sm">
@@ -785,14 +912,36 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                             </div>
                           )}
 
-                          {/* View Details button */}
-                          {option.itemizedItems && option.itemizedItems.length > 0 && (
+                          {/* Try Different Decking + View Details buttons */}
+                          <div className="mt-4 grid grid-cols-2 gap-2">
                             <button
-                              onClick={(e) => { e.stopPropagation(); setViewDetailsOption(option); }}
-                              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all"
+                              onClick={(e) => { e.stopPropagation(); setSwapModalOption(option); }}
+                              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                                hasSwap
+                                  ? 'bg-[#D4A853]/10 border border-[#D4A853]/30 text-[#D4A853] hover:bg-[#D4A853]/15'
+                                  : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                              }`}
                             >
-                              <FileText className="w-3.5 h-3.5" />
-                              View Details
+                              <Layers className="w-3.5 h-3.5" />
+                              {hasSwap ? 'Decking Swapped' : 'Try Different Decking'}
+                            </button>
+                            {option.itemizedItems && option.itemizedItems.length > 0 ? (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setViewDetailsOption(option); }}
+                                className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-all"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                View Details
+                              </button>
+                            ) : <div />}
+                          </div>
+                          {hasSwap && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); clearDeckingSwap(option.id); }}
+                              className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Reset to original decking
                             </button>
                           )}
                         </div>
@@ -863,6 +1012,125 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                     </div>
                   </div>
                 )}
+
+                {/* Decking Swap Modal */}
+                {swapModalOption && (() => {
+                  const opt = swapModalOption;
+                  const currentDecking = getActiveDeckingForOption(opt);
+                  const originalDecking = getOriginalDeckingForOption(opt);
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const calOpt = job.calculatorOptions?.find((o: any) => o.id === opt.id);
+                  const dims = {
+                    sqft: calOpt?.dimensions?.sqft || 0,
+                    steps: calOpt?.dimensions?.steps || 0,
+                    fasciaLF: calOpt?.dimensions?.fasciaLF || 0,
+                  };
+                  const groups = groupCatalogByBrand();
+                  return (
+                    <div
+                      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                      onClick={() => setSwapModalOption(null)}
+                    >
+                      <div
+                        className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Header */}
+                        <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between gap-4 sticky top-0 bg-white rounded-t-3xl z-10">
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">{opt.name} &middot; Try Different Decking</p>
+                            <h3 className="text-xl font-black text-slate-900 mt-1">Compare Deck Materials</h3>
+                            {originalDecking && (
+                              <p className="text-xs text-slate-500 mt-1">
+                                Original: <span className="font-semibold text-slate-700">{originalDecking.brand} {originalDecking.name}</span>
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => setSwapModalOption(null)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all shrink-0"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        {/* Scrollable catalog */}
+                        <div className="overflow-y-auto px-6 py-4 flex-1 space-y-6">
+                          {groups.map(group => (
+                            <div key={group.brand}>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">{group.brand}</p>
+                              <div className="space-y-2">
+                                {group.items.map(item => {
+                                  const isActive = currentDecking?.id === item.id;
+                                  const isOriginal = originalDecking?.id === item.id;
+                                  const previewPrice = originalDecking
+                                    ? calculateSwappedPrice(opt.price, dims, originalDecking, item)
+                                    : opt.price;
+                                  const delta = previewPrice - opt.price;
+                                  return (
+                                    <button
+                                      key={item.id}
+                                      onClick={() => {
+                                        if (isOriginal) {
+                                          clearDeckingSwap(opt.id);
+                                        } else {
+                                          applyDeckingSwap(opt.id, item);
+                                        }
+                                      }}
+                                      className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${
+                                        isActive
+                                          ? 'border-[#D4A853] bg-[#D4A853]/5 shadow-md'
+                                          : 'border-slate-100 bg-white hover:border-slate-300 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0 flex-1">
+                                          <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-bold text-slate-900">{item.name}</span>
+                                            {isOriginal && (
+                                              <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">Original</span>
+                                            )}
+                                            {isActive && !isOriginal && (
+                                              <span className="text-[9px] font-black uppercase tracking-widest bg-[#D4A853] text-white px-1.5 py-0.5 rounded">Selected</span>
+                                            )}
+                                          </div>
+                                          <p className="text-xs text-slate-500 mt-0.5">{item.description}</p>
+                                          <p className="text-[11px] text-slate-400 mt-1">
+                                            <ShieldCheck className="inline w-3 h-3 mr-1 -mt-0.5" />
+                                            {item.materialWarranty}
+                                          </p>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                          {delta === 0 ? (
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Included</span>
+                                          ) : (
+                                            <span className={`text-sm font-black ${delta > 0 ? 'text-[#D4A853]' : 'text-green-600'}`}>
+                                              {delta > 0 ? '+' : '−'}${Math.abs(delta).toLocaleString()}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Footer info */}
+                        <div className="border-t border-slate-100 px-6 py-4 bg-slate-50 rounded-b-3xl">
+                          <p className="text-[11px] text-slate-500 leading-relaxed">
+                            <Info className="inline w-3 h-3 mr-1 -mt-0.5" />
+                            Swapping decking updates the displayed price in real time. Your choice is finalised
+                            when you accept the quote — our office will confirm material availability and final
+                            pricing before production begins.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </section>
             ) : (
               /* Accepted Option Summary */

@@ -207,6 +207,8 @@ export function rowToJob(row: Record<string, unknown>): Job {
     nurtureStatus: row.nurture_status,
     postProjectStatus: row.post_project_status,
     dripCampaign: row.drip_campaign || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    customerRequestedSwaps: (row.customer_requested_swaps as any) || undefined,
     officeNotes: [], // loaded separately from job_notes table
     siteNotes: [],
     files: [], // loaded separately from job_files table
@@ -580,6 +582,8 @@ export const dataService = {
         notes: 'notes',
         siteNotes: 'site_notes',
         officeNotes: 'office_notes',
+        // Customer-initiated material swaps captured via portal
+        customerRequestedSwaps: 'customer_requested_swaps',
       };
 
       for (const [camelKey, value] of Object.entries(updates)) {

@@ -1216,11 +1216,42 @@ const App: React.FC = () => {
     );
   }, [currentUser?.name]);
 
-  const onAcceptOption = useCallback((optionId: string, addOns: string[]) => {
-    if (selectedJob) {
-      handleAcceptEstimateOption(selectedJob.id, optionId, addOns);
+  const onAcceptOption = useCallback((
+    optionId: string,
+    addOns: string[],
+    deckingSwap?: {
+      optionId: string;
+      fromId: string;
+      fromName: string;
+      toId: string;
+      toName: string;
+      toBrand?: string;
+      priceImpact: number;
+    },
+  ) => {
+    if (!selectedJob) return;
+    handleAcceptEstimateOption(selectedJob.id, optionId, addOns);
+
+    // Persist the decking swap (if any) onto the job so the office sees it as
+    // a pending reconciliation before production can kick off.
+    if (deckingSwap) {
+      const swapEntry = {
+        optionId: deckingSwap.optionId,
+        category: 'decking' as const,
+        fromId: deckingSwap.fromId,
+        fromName: deckingSwap.fromName,
+        toId: deckingSwap.toId,
+        toName: deckingSwap.toName,
+        toBrand: deckingSwap.toBrand,
+        priceImpact: deckingSwap.priceImpact,
+        timestamp: new Date().toISOString(),
+      };
+      const existing = selectedJob.customerRequestedSwaps || [];
+      handleUpdateJob(selectedJob.id, {
+        customerRequestedSwaps: [...existing, swapEntry],
+      });
     }
-  }, [selectedJob, handleAcceptEstimateOption]);
+  }, [selectedJob, handleAcceptEstimateOption, handleUpdateJob]);
 
   const onTrackEngagement = useCallback((engagement: Partial<PortalEngagement>) => {
     if (selectedJob) {

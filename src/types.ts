@@ -431,6 +431,29 @@ export interface Job {
     activePackage: any;
   }>;
 
+  /**
+   * Customer-requested material swaps captured via the portal "Try Different
+   * Decking" (and future) flow. Each entry documents a swap the customer
+   * previewed on their option cards AND locked in when they accepted.
+   *
+   * Office must reconcile these before the job advances from Sold → Production:
+   * confirm pricing with the new material, check stock, update the option's
+   * actual decking selection. A banner on the job detail view surfaces them.
+   */
+  customerRequestedSwaps?: Array<{
+    optionId: string;
+    category: 'decking';
+    fromId: string;
+    fromName: string;
+    toId: string;
+    toName: string;
+    toBrand?: string;
+    priceImpact: number;   // post-HST price delta (positive = upgrade, negative = downgrade)
+    timestamp: string;
+    reconciledAt?: string; // set by office when the swap is resolved
+    reconciledBy?: string;
+  }>;
+
   // Module: CRM / Nurture & Automation
   nurtureSequence?: NurtureSequence;
   nurtureStep?: number;

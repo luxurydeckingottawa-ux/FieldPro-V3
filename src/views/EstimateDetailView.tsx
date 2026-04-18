@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Job, PipelineStage, CustomerLifecycle, LiveEstimateItem, LiveEstimate, EstimateOption, EstimateAddOn, JobFile, JobNote, SiteIntakeChecklist } from '../types';
 import {
-  ArrowLeft, User, MapPin, Phone, Mail, Calendar,
+  ArrowLeft, ArrowRight, User, MapPin, Phone, Mail, Calendar,
   DollarSign, FileText, MessageSquare, ExternalLink,
   Copy, Check, Edit2, Save, X, ChevronRight,
   ClipboardList, Send, Clock, AlertCircle, CheckCircle2,
@@ -274,6 +274,48 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
 
       {/* Content */}
       <div className="max-w-6xl mx-auto px-6 py-6">
+        {/* Customer-Requested Material Swap Banner — unreconciled */}
+        {job.customerRequestedSwaps && job.customerRequestedSwaps.some(s => !s.reconciledAt) && (
+          <div className="mb-6 rounded-xl border-2 border-amber-500/40 bg-amber-500/5 p-5">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5 text-amber-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Customer-Requested Material Swap</h3>
+                  <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-amber-500 text-white">Needs Reconciliation</span>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)] mb-3">
+                  The customer swapped materials on their accepted quote via the portal.
+                  Confirm availability, verify pricing, and update the quoted option before production kickoff.
+                </p>
+                <div className="space-y-2">
+                  {job.customerRequestedSwaps.filter(s => !s.reconciledAt).map((swap, i) => (
+                    <div key={i} className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-3">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2 text-sm flex-wrap">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">Option {swap.optionId.replace(/^opt-/i, '').split('-')[0].toUpperCase()}</span>
+                          <span className="text-[var(--text-secondary)]">Decking:</span>
+                          <span className="font-semibold text-[var(--text-primary)]">{swap.fromName}</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
+                          <span className="font-semibold text-amber-600">{swap.toBrand ? `${swap.toBrand} ${swap.toName}` : swap.toName}</span>
+                        </div>
+                        <span className={`text-sm font-black ${swap.priceImpact >= 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                          {swap.priceImpact >= 0 ? '+' : '−'}${Math.abs(swap.priceImpact).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-[var(--text-secondary)] mt-1.5">
+                        Requested {new Date(swap.timestamp).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* Left Column - Main Content */}
