@@ -207,6 +207,37 @@ export function rowToJob(row: Record<string, unknown>): Job {
     nurtureStatus: row.nurture_status,
     postProjectStatus: row.post_project_status,
     dripCampaign: row.drip_campaign || undefined,
+    // ── Fields that were in the updateJob keyMap but missing here until now ──
+    // These get WRITTEN to the DB correctly but weren't being READ BACK on load,
+    // so the portal (and other consumers) saw `undefined` for calculator-related
+    // data even when it was fully present in the DB. That broke the decking-swap
+    // pricing and the optional-enhancement dimension checks.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    calculatorOptions: (row.calculator_options as any) || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    calculatorDimensions: (row.calculator_dimensions as any) || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    calculatorSelections: (row.calculator_selections as any) || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    liveEstimate: (row.live_estimate as any) || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    digitalWorkOrder: (row.digital_work_order as any) || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    needsJobSetup: (row.needs_job_setup as any) || undefined,
+    customerSignature: (row.customer_signature as string) || undefined,
+    customerSignatureCloudinaryUrl: (row.customer_signature_cloudinary_url as string) || undefined,
+    contractPdfUrl: (row.contract_pdf_url as string) || undefined,
+    contractSignedDate: (row.contract_signed_date as string) || undefined,
+    depositRequestedDate: (row.deposit_requested_date as string) || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    invoices: (row.invoices as any) || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    jobFiles: (row.job_files_json as any) || undefined,
+    description: (row.description as string) || undefined,
+    acceptedPackageTier: (row.accepted_package_tier as string) || undefined,
+    acceptedMonthlyPayment: (row.accepted_monthly_payment as number) || undefined,
+    declinedReason: (row.declined_reason as string) || undefined,
+    notes: (row.notes as string) || undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     customerRequestedSwaps: (row.customer_requested_swaps as any) || undefined,
     officeNotes: [], // loaded separately from job_notes table
