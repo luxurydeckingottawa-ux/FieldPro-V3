@@ -20,12 +20,18 @@ import {
 } from '../data/deckingCatalog';
 import {
   ProofWall,
-  ReverseRiskStack,
   BuildDayCommitment,
   PaymentScheduleTimeline,
-  CompareQuotesChecklist,
   ShareWithPartner,
 } from '../components/portal/PortalSections';
+import {
+  ComparisonMeters,
+  PromiseShield,
+  CostSlider,
+  DeckAnatomy,
+  ContractorQuestions,
+} from '../components/portal/PortalRebuildSections';
+import { generateContractorChecklistPDF } from '../utils/contractorChecklistPdf';
 import { useCurrentSection } from '../hooks/useInView';
 
 export interface CustomerDeckingSwapPayload {
@@ -1533,93 +1539,14 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               </div>
             )}
 
-            {/* Comparison Table Section */}
-            {!isAccepted && (
-              <section id="comparison" className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                <div className="p-8 md:p-12 border-b border-slate-100 bg-slate-50/50">
-                  <h3 className="text-2xl font-bold mb-2">Side-by-Side Comparison</h3>
-                  <p className="text-slate-600">A clear look at the technical differences and long-term value of each option.</p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-100">
-                        <th className="p-6 text-xs font-bold uppercase tracking-widest text-slate-400">Feature</th>
-                        {estimateData.options.map(opt => (
-                          <th key={opt.id} className={`p-6 text-sm font-bold ${selectedOptionId === opt.id ? 'bg-slate-900 text-white' : 'text-slate-900'}`}>
-                            {opt.name}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {(() => {
-                        // Tier-indexed comparison rows. Index 0 = Silver (wood), 1 = Gold (composite), 2 = Platinum (PVC).
-                        // For estimates with more/fewer options we fall back to the closest tier.
-                        const COMPARISON_ROWS: Array<{ label: string; values: [string, string, string] }> = [
-                          {
-                            label: 'Annual Maintenance',
-                            values: [
-                              '2 to 4 hours, once per year. Oil or stain application.',
-                              '30 minutes, once per year. Soap and water rinse.',
-                              'None required. Occasional debris sweep only.',
-                            ],
-                          },
-                          {
-                            label: 'Expected Longevity',
-                            values: [
-                              '10 to 15 years with consistent maintenance. 8 to 10 years without.',
-                              '25 to 30 years under manufacturer warranty.',
-                              '30 to 50 years under manufacturer warranty.',
-                            ],
-                          },
-                          {
-                            label: 'Material Warranty',
-                            values: [
-                              'Pressure treatment warranted against rot for 25 years by the mill. Aesthetic fade not covered.',
-                              '25-year manufacturer warranty against fade, stain, and structural failure. Transferable once.',
-                              '50-year manufacturer warranty against fade, stain, and structural failure. Transferable once.',
-                            ],
-                          },
-                          {
-                            label: 'Surface Temperature',
-                            values: [
-                              'Warm in direct sun. Comfortable barefoot in most Ottawa conditions.',
-                              'Moderate in direct sun. Lighter colours stay comfortable, darker tones warm up slightly.',
-                              'Moderate to warm in direct sun depending on colour. Cap-stock reduces heat compared to older PVC.',
-                            ],
-                          },
-                        ];
-                        const tierIdx = (i: number) => Math.min(i, 2); // any option past idx 2 inherits the Platinum column
-                        return COMPARISON_ROWS.map((row, rIdx) => (
-                          <tr key={rIdx} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="p-6 text-sm font-semibold text-slate-600 align-top whitespace-nowrap">{row.label}</td>
-                            {estimateData.options.map((opt, oIdx) => (
-                              <td key={opt.id} className={`p-6 text-sm font-medium align-top leading-relaxed ${selectedOptionId === opt.id ? 'bg-slate-50 text-slate-900 font-semibold' : 'text-slate-700'}`}>
-                                {row.values[tierIdx(oIdx)]}
-                              </td>
-                            ))}
-                          </tr>
-                        ));
-                      })()}
-                      <tr>
-                        <td className="p-6 text-sm font-semibold text-slate-600 whitespace-nowrap">Investment</td>
-                        {estimateData.options.map(opt => (
-                          <td key={opt.id} className={`p-6 ${selectedOptionId === opt.id ? 'bg-slate-50' : ''}`}>
-                            <div className="flex flex-col">
-                              <span className="text-lg font-black text-slate-900">${opt.price.toLocaleString()}</span>
-                              <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tight">
-                                ~${calculateMonthlyEstimate(opt.price).toLocaleString()}/mo
-                              </span>
-                            </div>
-                          </td>
-                        ))}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            )}
+            {/* ─── Rebuild 02 · Comparison Meters replaces the old side-by-side table ─── */}
+            {!isAccepted && <ComparisonMeters />}
+
+            {/* ─── Rebuild 01 · Cost-Over-Time slider (TCO crossover visualisation) ─── */}
+            {!isAccepted && <CostSlider />}
+
+            {/* ─── Rebuild 05 · Deck Anatomy explorer (exploded cross-section) ─── */}
+            {!isAccepted && <DeckAnatomy />}
 
             {/* "Enhance Your Outdoor Living" section removed — per-option enhancements inside each card replace it */}
 
@@ -1635,8 +1562,8 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
 
             {/* "Built for Life" dark warranty block removed — Proof Wall covers social proof, Reverse Risk Stack covers guarantees */}
 
-            {/* ─── ASSET 05 · Reverse Risk Stack (six sealed commitments) ─── */}
-            {!isAccepted && <ReverseRiskStack />}
+            {/* ─── ASSET 05 / rebuild 03 · Promise Shield (navy vault, six segments) ─── */}
+            {!isAccepted && <PromiseShield />}
 
             {/* Objection Handling / FAQ Center */}
             <section id="objection-center" className="space-y-12">
@@ -1689,8 +1616,27 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               </div>
             </section>
 
-            {/* ─── ASSET 09 · Compare Quotes Interactive Checklist ─── */}
-            {!isAccepted && <CompareQuotesChecklist />}
+            {/* ─── ASSET 09 / rebuild 04 · Contractor Questions (flip-card rail) ─── */}
+            {!isAccepted && (
+              <ContractorQuestions
+                onDownloadPDF={() =>
+                  generateContractorChecklistPDF({
+                    items: [
+                      { q: 'Joist spacing', ask: 'What spacing are you using on the joists?', why: 'Ontario Building Code minimum is 16 inch on-centre for most deck loads. Wider spacing is cheaper to build and bouncier to walk on.', our: 'Standard at 16 inch on-centre. 12 inch on-centre on our Platinum tier for rock-solid feel.' },
+                      { q: 'Manufacturer certification', ask: 'Are you certified by the composite manufacturer for the specific product you are installing?', why: 'Installing composite without certification can void the manufacturer material warranty. Certified installers also unlock extended labour warranties.', our: 'Fiberon Pro certified. TimberTech Registered Pro. AZEK Registered Pro.' },
+                      { q: 'Footing depth and type', ask: 'What type of footings, and how deep?', why: 'Helical piles or concrete footings below 48 inches are required in Ottawa frost conditions. Surface deck blocks are not code-compliant for permanent structures.', our: 'Helical piles by default on Gold and Platinum. Concrete sonotubes to 48 inches on Silver.' },
+                      { q: 'Ledger attachment', ask: 'How is the ledger attached to the house, and what flashing is behind it?', why: 'Improper ledger attachment is the most common structural failure in home-handyman decks.', our: 'Through-bolted into the rim joist with stainless ledger bolts. Z-flashing and peel-and-stick membrane behind every ledger.' },
+                      { q: 'Railing post blocking', ask: 'Are railing posts blocked and bolted through the frame, or surface-mounted?', why: 'Surface-mounted railing posts do not meet Ontario Building Code guard-load requirements.', our: 'Every post through-bolted into blocked framing. Zero surface-mount posts on any tier.' },
+                      { q: 'Board direction and spacing', ask: 'What direction do the deck boards run, and what gap is left for expansion?', why: 'Tight gaps on composite decks cause buckling in Ottawa summer heat.', our: 'Expansion gaps set per manufacturer spec for the exact board we install. Measured, not eyeballed.' },
+                      { q: 'Warranty specifics', ask: 'What exactly is warranted, for how long, and by whom?', why: 'Get the manufacturer warranty and the workmanship warranty in writing, with transfer terms.', our: '5-year workmanship plus the full manufacturer material warranty on boards. Both transferable once. Handed to you as a PDF at walkthrough.' },
+                      { q: 'Liability insurance', ask: 'Can I see your certificate of general liability insurance?', why: 'If a worker is injured on your property, or if there is property damage during the build, uninsured contractors expose you personally.', our: 'Current certificate on request. Named additional-insured endorsement available for your records.' },
+                      { q: 'Recent references', ask: 'Can you give me two references from completed decks in the last year, within a 30-minute drive?', why: 'New contractors and under-performers rarely have recent local references.', our: 'Three local references supplied on request. Most from within 20 minutes of your build address.' },
+                      { q: 'Deck portfolio depth', ask: 'Can I see your last 10 to 15 completed decks?', why: 'Generalists (fencing / landscaping / pools) may only build a handful of decks per year. Specialists build deck after deck.', our: 'We only build decks. Our recent portfolio is available on our site and on Instagram.' },
+                    ],
+                  })
+                }
+              />
+            )}
 
             {/* Educational Snippets */}
             <section className="bg-blue-50 rounded-[2.5rem] p-8 md:p-12 border border-blue-100">
