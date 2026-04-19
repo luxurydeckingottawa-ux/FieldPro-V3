@@ -14,6 +14,56 @@
 
 const https = require('https');
 
+/**
+ * Insert a row into Supabase's incoming_messages table (used as the unified
+ * SMS thread store — direction='inbound' for customer replies, 'outbound' for
+ * office sends). Best-effort: never throws and never blocks the SMS response.
+ */
+async function logOutboundMessage({ supabaseUrl, supabaseKey, from, to, body, twilioSid, orgId, userId }) {
+  if (!supabaseUrl || !supabaseKey) return;
+  const payload = JSON.stringify({
+    from_number: from,
+    to_number: to,
+    message_body: body,
+    twilio_sid: twilioSid || null,
+    org_id: orgId || null,
+    sent_by_user_id: userId || null,
+    received_at: new Date().toISOString(),
+    read: true, // outbound is never "unread" on the office side
+    direction: 'outbound',
+  });
+  const hostname = supabaseUrl.replace('https://', '').replace('http://', '');
+  return new Promise((resolve) => {
+    const req = https.request({
+      hostname,
+      port: 443,
+      path: '/rest/v1/incoming_messages',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Length': Buffer.byteLength(payload),
+      },
+    }, (res) => {
+      let b = '';
+      res.on('data', (c) => { b += c; });
+      res.on('end', () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          console.warn('[send-sms] outbound log failed:', res.statusCode, b);
+        }
+        resolve();
+      });
+    });
+    req.on('error', (err) => {
+      console.warn('[send-sms] outbound log error:', err.message);
+      resolve();
+    });
+    req.write(payload);
+    req.end();
+  });
+}
+
 // Simple request-size guard to prevent abuse (S-10)
 function checkPayloadSize(event, maxBytes = 10000) {
   if (event.body && event.body.length > maxBytes) return false;
@@ -48,7 +98,7 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
   }
 
-  const { to, message, campaignId, touchId } = payload;
+  const { to, message, campaignId, touchId, orgId, userId } = payload;
 
   if (!to || !message) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields: to, message' }) };
@@ -103,6 +153,18 @@ exports.handler = async function(event) {
         try {
           const data = JSON.parse(responseBody);
           if (res.statusCode >= 200 && res.statusCode < 300) {
+            // Fire-and-forget: log the outbound SMS to Supabase so the office
+            // chat thread on the customer file shows it immediately.
+            logOutboundMessage({
+              supabaseUrl: process.env.VITE_SUPABASE_URL,
+              supabaseKey: process.env.VITE_SUPABASE_ANON_KEY,
+              from: fromNumber,
+              to: formattedTo,
+              body: message,
+              twilioSid: data.sid,
+              orgId,
+              userId,
+            }).catch(() => {});
             resolve({
               statusCode: 200,
               body: JSON.stringify({

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Job, JobStatus, PipelineStage, ChatSession } from '../types';
+import React, { useEffect, useRef, useState } from 'react';
+import { Job, JobStatus, PipelineStage, ChatSession, PortalEngagement } from '../types';
 import { COMPANY } from '../config/company';
 import { 
   Clock, MapPin, CheckCircle2, Phone, MessageSquare, 
@@ -18,15 +18,20 @@ interface CustomerPortalViewProps {
   allJobs?: Job[];
   chatSessions?: ChatSession[];
   onSendMessage?: (sessionId: string, text: string) => void;
+  /** Optional — present in the live admin-routed preview and the customer-facing
+   *  render. Lets us track portal opens + time spent on the sold/build portal,
+   *  so the office engagement meter fires for production jobs too. */
+  onTrackEngagement?: (engagement: Partial<PortalEngagement>) => void;
   onBack?: () => void;
 }
 
-const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({ 
-  job, 
-  allJobs = [], 
-  chatSessions = [], 
-  onSendMessage, 
-  onBack 
+const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
+  job,
+  allJobs = [],
+  chatSessions = [],
+  onSendMessage,
+  onTrackEngagement,
+  onBack,
 }) => {
   const [activeTab, setActiveTab] = useState<'project' | 'timeline' | 'portal'>('project');
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
@@ -35,6 +40,28 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   const [chatMessage, setChatMessage] = useState('');
 
   const currentSession = chatSessions.find(s => s.jobId === job.id);
+
+  // ── Portal engagement tracking ──────────────────────────────────────────
+  // Mirrors EstimatePortalView: bumps totalOpens on mount, writes
+  // totalTimeSpentSeconds on unmount. Lets the office see how often a sold
+  // customer is checking the build-stage portal.
+  const startTimeRef = useRef<number>(Date.now());
+  useEffect(() => {
+    if (!onTrackEngagement) return;
+    onTrackEngagement({
+      firstOpenedAt: new Date().toISOString(),
+      lastOpenedAt: new Date().toISOString(),
+      totalOpens: 1,
+    });
+    return () => {
+      const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      if (timeSpent > 2) {
+        onTrackEngagement({ totalTimeSpentSeconds: timeSpent });
+      }
+    };
+    // Intentionally run once per mount — we want one open per session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   // Calculate queue position

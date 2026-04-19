@@ -20,6 +20,7 @@ import { PIPELINE_STAGES, APP_USERS, PAGE_TITLES, createDefaultBuildDetails } fr
 import JobSummaryCard from '../components/JobSummaryCard';
 import PortalSharingCard from '../components/PortalSharingCard';
 import QuickMessageModal from '../components/QuickMessageModal';
+import CustomerChatThread from '../components/CustomerChatThread';
 import { getJobIssues } from '../utils/issueLogic';
 import { timeClockService } from '../services/TimeClockService';
 import { 
@@ -492,6 +493,15 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               allJobs={allJobs}
               isEstimateStage={isEstimateStage}
               onPreviewPortal={onPreviewPortal}
+            />
+
+            {/* Text-thread bubble — full SMS history + compose box. Available
+                at every lifecycle stage so office can chase leads, confirm
+                appointments, answer build-stage questions, all from one place. */}
+            <CustomerChatThread
+              clientName={job.clientName}
+              clientPhone={job.clientPhone}
+              jobId={job.id}
             />
 
             {/* Payment Schedule */}
@@ -1245,6 +1255,104 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 </div>
               </section>
             )}
+
+            {/* ── Production-stage engagement meter ────────────────────────
+                Same philosophy as the estimate engagement card above but
+                scoped for sold/production jobs: shows how often the customer
+                is checking the build-stage portal (progress photos, timeline,
+                payment schedule). A customer logging in daily during the
+                build is a signal the office can use to time updates proactively. */}
+            {!isEstimateStage && job.portalEngagement && job.portalEngagement.totalOpens > 0 && (() => {
+              const e = job.portalEngagement!;
+              const mins = Math.floor((e.totalTimeSpentSeconds || 0) / 60);
+              const secs = (e.totalTimeSpentSeconds || 0) % 60;
+              const daysSinceLast = e.lastOpenedAt
+                ? Math.floor((Date.now() - new Date(e.lastOpenedAt).getTime()) / (1000 * 60 * 60 * 24))
+                : null;
+              // Tier by visit cadence (simpler than the estimate version —
+              // sold customers don't click "options" so we skip that dimension).
+              const tier: 'hot' | 'warm' | 'cool' =
+                (e.totalOpens >= 8 || (daysSinceLast !== null && daysSinceLast <= 1 && e.totalOpens >= 3))
+                  ? 'hot'
+                  : (e.totalOpens >= 3 || (daysSinceLast !== null && daysSinceLast <= 3))
+                    ? 'warm'
+                    : 'cool';
+              // Static class map — Tailwind JIT requires fully literal class names.
+              const tierStyles = {
+                hot: {
+                  section: 'bg-emerald-500/5 border-emerald-500/20',
+                  glow: 'bg-emerald-500/10',
+                  icon: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
+                  title: 'text-emerald-500',
+                  badge: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                },
+                warm: {
+                  section: 'bg-amber-500/5 border-amber-500/20',
+                  glow: 'bg-amber-500/10',
+                  icon: 'bg-amber-500/10 border-amber-500/20 text-amber-500',
+                  title: 'text-amber-500',
+                  badge: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                },
+                cool: {
+                  section: 'bg-blue-500/5 border-blue-500/20',
+                  glow: 'bg-blue-500/10',
+                  icon: 'bg-blue-500/10 border-blue-500/20 text-blue-500',
+                  title: 'text-blue-500',
+                  badge: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+                },
+              }[tier];
+              return (
+                <section className={`border rounded-[2.5rem] p-8 relative overflow-hidden ${tierStyles.section}`}>
+                  <div className={`absolute top-0 right-0 w-96 h-96 blur-[100px] -mr-48 -mt-48 pointer-events-none ${tierStyles.glow}`} />
+                  <div className="flex items-center justify-between mb-8 relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center ${tierStyles.icon}`}>
+                        <Activity className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] mb-1 ${tierStyles.title}`}>
+                          Portal Engagement
+                        </h3>
+                        <h2 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">
+                          Customer Check-Ins
+                        </h2>
+                      </div>
+                    </div>
+                    <div className={`px-4 py-2 rounded-xl border font-black text-[10px] uppercase tracking-widest flex items-center gap-2 ${tierStyles.badge}`}>
+                      <Zap size={14} /> {tier} engagement
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
+                    <div className="p-4 bg-[var(--bg-primary)]/60 rounded-2xl border border-[var(--border-color)]">
+                      <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Total Visits</p>
+                      <p className="text-2xl font-black text-[var(--text-primary)] italic">{e.totalOpens}</p>
+                      <p className="text-[8px] text-[var(--text-tertiary)] font-bold uppercase mt-1">Portal Opens</p>
+                    </div>
+                    <div className="p-4 bg-[var(--bg-primary)]/60 rounded-2xl border border-[var(--border-color)]">
+                      <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Time Spent</p>
+                      <p className="text-2xl font-black text-[var(--text-primary)] italic">{mins}m {secs}s</p>
+                      <p className="text-[8px] text-[var(--text-tertiary)] font-bold uppercase mt-1">Total Attention</p>
+                    </div>
+                    <div className="p-4 bg-[var(--bg-primary)]/60 rounded-2xl border border-[var(--border-color)]">
+                      <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Last Visit</p>
+                      <p className="text-sm font-black text-[var(--text-primary)] uppercase tracking-tight mt-2">
+                        {daysSinceLast === 0 ? 'Today' :
+                         daysSinceLast === 1 ? 'Yesterday' :
+                         daysSinceLast !== null ? `${daysSinceLast}d ago` : 'N/A'}
+                      </p>
+                      <p className="text-[8px] text-[var(--text-tertiary)] font-bold uppercase mt-1">Recency Signal</p>
+                    </div>
+                    <div className="p-4 bg-[var(--bg-primary)]/60 rounded-2xl border border-[var(--border-color)]">
+                      <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">First Opened</p>
+                      <p className="text-sm font-black text-[var(--text-primary)] uppercase tracking-tight mt-2">
+                        {e.firstOpenedAt ? new Date(e.firstOpenedAt).toLocaleDateString() : 'N/A'}
+                      </p>
+                      <p className="text-[8px] text-[var(--text-tertiary)] font-bold uppercase mt-1">Journey Start</p>
+                    </div>
+                  </div>
+                </section>
+              );
+            })()}
 
             {/* Lead Campaign Queue — intentionally hidden on Job Sold view; only relevant during estimate/lead stages */}
             {false && job.dripCampaign?.campaignType === 'LEAD_FOLLOW_UP' && leadCampaignTouches.length > 0 && (

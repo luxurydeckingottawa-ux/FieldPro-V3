@@ -327,6 +327,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
               allJobs={jobs}
               chatSessions={chatSessions}
               onSendMessage={(sessionId, text) => handleSendMessage(sessionId, text, true)}
+              onTrackEngagement={onTrackEngagement}
               onBack={(currentUser?.role === Role.ADMIN || false) ? handleClosePortal : undefined}
             />
           )
