@@ -9,7 +9,6 @@ import {
   Clock, FileText, Receipt, Camera, Layers, RotateCcw
 } from 'lucide-react';
 
-import { AISalesAssistant } from '../components/AISalesAssistant';
 import {
   DECKING_CATALOG,
   DeckingCatalogItem,
@@ -188,7 +187,19 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   onTrackEngagement,
   onClose
 }) => {
-  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(job.acceptedOptionId || null);
+  // Pre-select the "Most Popular" tier (index 1 — mirrors isPreferred in the
+  // card grid) so the sticky Accept bar is live from first render. This
+  // removes the "how do I select?" friction Jack saw in customer emails.
+  // Customer can change via the tier cards or the Change Option button.
+  // Backed by status-quo-bias research + compromise-effect data — see
+  // /reports research bundle, pre-selection decision.
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(() => {
+    if (job.acceptedOptionId) return job.acceptedOptionId;
+    const opts = job.estimateData?.options || [];
+    if (opts.length >= 2) return opts[1].id;
+    if (opts.length === 1) return opts[0].id;
+    return null;
+  });
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>(job.selectedAddOnIds || []);
   // activeTab legacy — retained for back-compat; the portal is now a single
   // scroll with scroll-aware nav. Reads true while the bottom tabs still call
@@ -927,7 +938,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   </h3>
                   <div className="hidden sm:flex items-center gap-2 text-sm text-slate-500">
                     <Info className="w-4 h-4" />
-                    <span>Click an option to select it</span>
+                    <span>Our most-chosen option is highlighted — tap any to change.</span>
                   </div>
                 </div>
 
@@ -1963,44 +1974,6 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               ))}
             </div>
 
-            {/* Ask Angela — private advisor widget (iframe, brand-locked) */}
-            {/* Replaces the previous AI Objection Helper. The widget is hosted */}
-            {/* externally on Cloud Run (pretty subdomain coming later) and reads its context */}
-            {/* (name/tier/price/job) from URL params. Conversation telemetry is */}
-            {/* posted back via postMessage and written to job.angelaConversations. */}
-            {(() => {
-              const angelaOption = estimateData.options.find(
-                (o) => o.id === (job.acceptedOptionId || selectedOptionId),
-              ) || estimateData.options[0];
-              const angelaTier = job.acceptedOptionName || angelaOption?.name || 'Gold';
-              const angelaPrice = angelaOption?.price || 0;
-              const angelaFirstName = (job.clientName || '').split(' ')[0] || '';
-              const angelaToken = job.customerPortalToken || '';
-              const angelaJob = job.jobNumber || '';
-              const angelaSrc =
-                `https://angela-portal-813827554567.europe-west1.run.app/widget` +
-                `?portal=${encodeURIComponent(angelaToken)}` +
-                `&name=${encodeURIComponent(angelaFirstName)}` +
-                `&tier=${encodeURIComponent(angelaTier)}` +
-                `&price=${angelaPrice}` +
-                `&job=${encodeURIComponent(angelaJob)}`;
-              return (
-                <div
-                  className="mt-12 pt-10"
-                  style={{ borderTop: '1px solid rgba(212,168,83,0.25)' }}
-                >
-                  <iframe
-                    src={angelaSrc}
-                    title="Ask Angela — Your Project Advisor"
-                    className="w-full rounded-2xl"
-                    style={{ height: 780, border: 0, background: 'transparent' }}
-                    sandbox="allow-scripts allow-same-origin allow-forms"
-                    allow="clipboard-write"
-                    loading="lazy"
-                  />
-                </div>
-              );
-            })()}
           </PortalSection>
 
           {/* Hairline at slate → cream-deep transition */}
@@ -2108,6 +2081,59 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
           {/* 12 · Payment Schedule Timeline — cream */}
           <PaymentScheduleTimeline selectedTotal={calculateTotal()} />
 
+          {/* 12b · Ask Angela — cream (final objection-killer before CTA). */}
+          {/* Positioned immediately above commitment-closer per CRO research: */}
+          {/* objection handlers belong adjacent to the CTA, not buried mid-page. */}
+          {/* Widget hosted externally on Cloud Run; context passed via URL params; */}
+          {/* conversation telemetry posts back via postMessage -> job.angelaConversations. */}
+          {(() => {
+            const angelaOption = estimateData.options.find(
+              (o) => o.id === (job.acceptedOptionId || selectedOptionId),
+            ) || estimateData.options[0];
+            const angelaTier = job.acceptedOptionName || angelaOption?.name || 'Gold';
+            const angelaPrice = angelaOption?.price || 0;
+            const angelaFirstName = (job.clientName || '').split(' ')[0] || '';
+            const angelaToken = job.customerPortalToken || '';
+            const angelaJob = job.jobNumber || '';
+            const angelaSrc =
+              `https://angela-portal-813827554567.europe-west1.run.app/widget` +
+              `?portal=${encodeURIComponent(angelaToken)}` +
+              `&name=${encodeURIComponent(angelaFirstName)}` +
+              `&tier=${encodeURIComponent(angelaTier)}` +
+              `&price=${angelaPrice}` +
+              `&job=${encodeURIComponent(angelaJob)}`;
+            return (
+              <section
+                id="ask-angela"
+                className="portal-band-cream px-6 sm:px-8 py-16 md:py-20"
+              >
+                <div className="max-w-4xl mx-auto">
+                  <div className="text-center mb-8">
+                    <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#8a6d00] mb-3">
+                      Your Project Advisor
+                    </p>
+                    <h3 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+                      Ask Angela anything.
+                    </h3>
+                    <p className="text-slate-600 mt-4 max-w-xl mx-auto text-base md:text-lg">
+                      One last question before you commit? Angela knows your exact proposal —
+                      pricing, materials, timeline, warranty — and answers in seconds.
+                    </p>
+                  </div>
+                  <iframe
+                    src={angelaSrc}
+                    title="Ask Angela — Your Project Advisor"
+                    className="w-full rounded-2xl"
+                    style={{ height: 780, border: 0, background: 'transparent' }}
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    allow="clipboard-write"
+                    loading="lazy"
+                  />
+                </div>
+              </section>
+            );
+          })()}
+
           {/* Hairline at cream → navy transition */}
           <div className="portal-transition-hairline" />
 
@@ -2211,7 +2237,21 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   Change Option
                 </button>
                 <div className="flex items-center gap-4">
-                  <AISalesAssistant job={job} />
+                  {/* Ask Angela — scrolls to the widget just above the commitment */}
+                  {/* closer. Replaces the legacy "Help Me Choose" button. Gives */}
+                  {/* the customer a one-tap path to the advisor from any scroll */}
+                  {/* position on the page, adjacent to the Accept CTA. */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('ask-angela');
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="hidden sm:flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm bg-[#D4A853] hover:bg-[#c09840] text-slate-900 transition-colors shadow-md shadow-amber-900/10"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Ask Angela
+                  </button>
                   <div className="relative group/tip">
                     <button
                       disabled
