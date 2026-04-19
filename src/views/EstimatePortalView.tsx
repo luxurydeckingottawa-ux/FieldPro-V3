@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 
 import { AISalesAssistant } from '../components/AISalesAssistant';
-import { AIObjectionHelper } from '../components/AIObjectionHelper';
 import {
   DECKING_CATALOG,
   DeckingCatalogItem,
@@ -473,6 +472,67 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
       }
     };
   }, [onTrackEngagement, startTime]);
+
+  // Angela widget telemetry — listen for postMessage events from the Angela
+  // iframe (Cloud Run-hosted; pretty subdomain coming later) and route them through the existing
+  // engagement tracking pipeline. Two event types are handled:
+  //
+  //   ANGELA_MESSAGE — lightweight per-exchange update (question count,
+  //                    last question text, sentiment, close readiness)
+  //   ANGELA_SUMMARY — full conversation summary when the customer ends the
+  //                    session or the widget times out (summary text,
+  //                    escalation flag, end timestamp)
+  //
+  // We hard-gate on event.origin so nothing from another frame or browser
+  // extension can spoof these payloads. onTrackEngagement is the existing
+  // Supabase write path, so no new plumbing is needed downstream — the office
+  // dashboard simply reads job.angelaConversations[] once the field lands.
+  useEffect(() => {
+    const ALLOWED_ORIGINS = [
+      'https://angela-portal-813827554567.europe-west1.run.app',
+      'https://angela.luxurydecking.ca', // future pretty subdomain
+    ];
+    const handleMessage = (event: MessageEvent) => {
+      if (!ALLOWED_ORIGINS.includes(event.origin)) return;
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+
+      // Per-exchange telemetry
+      if ((data as { type?: string }).type === 'ANGELA_MESSAGE') {
+        const d = data as {
+          questionCount?: number;
+          lastQuestion?: string;
+          sentiment?: string;
+          closeReadiness?: string;
+        };
+        onTrackEngagement?.({
+          angelaQuestionCount: d.questionCount,
+          angelaLastQuestion: d.lastQuestion,
+          angelaLastMessageAt: new Date().toISOString(),
+          angelaSentiment: d.sentiment,
+          angelaCloseReadiness: d.closeReadiness,
+        });
+      }
+
+      // End-of-conversation summary
+      if ((data as { type?: string }).type === 'ANGELA_SUMMARY') {
+        const d = data as {
+          summary?: string;
+          escalated?: boolean;
+          questions?: string[];
+        };
+        onTrackEngagement?.({
+          angelaConversationSummary: d.summary,
+          angelaConversationEscalated: d.escalated,
+          angelaConversationQuestions: d.questions,
+          angelaConversationEndedAt: new Date().toISOString(),
+        });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onTrackEngagement]);
 
   const toggleAddOn = (id: string) => {
     setSelectedAddOns(prev => {
@@ -1903,10 +1963,44 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
               ))}
             </div>
 
-            {/* AI Helper panel — collapsible, gold hairline separator above */}
-            <div className="mt-12 pt-10" style={{ borderTop: '1px solid rgba(212,168,83,0.25)' }}>
-              <AIObjectionHelper job={job} />
-            </div>
+            {/* Ask Angela — private advisor widget (iframe, brand-locked) */}
+            {/* Replaces the previous AI Objection Helper. The widget is hosted */}
+            {/* externally on Cloud Run (pretty subdomain coming later) and reads its context */}
+            {/* (name/tier/price/job) from URL params. Conversation telemetry is */}
+            {/* posted back via postMessage and written to job.angelaConversations. */}
+            {(() => {
+              const angelaOption = estimateData.options.find(
+                (o) => o.id === (job.acceptedOptionId || selectedOptionId),
+              ) || estimateData.options[0];
+              const angelaTier = job.acceptedOptionName || angelaOption?.name || 'Gold';
+              const angelaPrice = angelaOption?.price || 0;
+              const angelaFirstName = (job.clientName || '').split(' ')[0] || '';
+              const angelaToken = job.customerPortalToken || '';
+              const angelaJob = job.jobNumber || '';
+              const angelaSrc =
+                `https://angela-portal-813827554567.europe-west1.run.app/widget` +
+                `?portal=${encodeURIComponent(angelaToken)}` +
+                `&name=${encodeURIComponent(angelaFirstName)}` +
+                `&tier=${encodeURIComponent(angelaTier)}` +
+                `&price=${angelaPrice}` +
+                `&job=${encodeURIComponent(angelaJob)}`;
+              return (
+                <div
+                  className="mt-12 pt-10"
+                  style={{ borderTop: '1px solid rgba(212,168,83,0.25)' }}
+                >
+                  <iframe
+                    src={angelaSrc}
+                    title="Ask Angela — Your Project Advisor"
+                    className="w-full rounded-2xl"
+                    style={{ height: 780, border: 0, background: 'transparent' }}
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    allow="clipboard-write"
+                    loading="lazy"
+                  />
+                </div>
+              );
+            })()}
           </PortalSection>
 
           {/* Hairline at slate → cream-deep transition */}

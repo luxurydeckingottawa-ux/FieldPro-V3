@@ -723,13 +723,72 @@ const App: React.FC = () => {
           updated.pdfDownloads = [...(updated.pdfDownloads || []), ...engagement.pdfDownloads];
         }
 
+        // Angela advisor widget — flat "latest state" fields overwrite each
+        // exchange (per-message telemetry). Only update when the new payload
+        // actually carries a value so partial updates from either ANGELA_MESSAGE
+        // or ANGELA_SUMMARY don't wipe the other set.
+        if (engagement.angelaQuestionCount !== undefined)  updated.angelaQuestionCount  = engagement.angelaQuestionCount;
+        if (engagement.angelaLastQuestion   !== undefined) updated.angelaLastQuestion   = engagement.angelaLastQuestion;
+        if (engagement.angelaLastMessageAt  !== undefined) updated.angelaLastMessageAt  = engagement.angelaLastMessageAt;
+        if (engagement.angelaSentiment      !== undefined) updated.angelaSentiment      = engagement.angelaSentiment;
+        if (engagement.angelaCloseReadiness !== undefined) updated.angelaCloseReadiness = engagement.angelaCloseReadiness;
+
+        // Angela conversation summary — received once per ended session.
+        // We also keep the last summary text on the engagement blob for fast
+        // dashboard reads, but the authoritative log is the appended array on
+        // the job row (see ANGELA_SUMMARY branch below).
+        if (engagement.angelaConversationSummary !== undefined)    updated.angelaConversationSummary    = engagement.angelaConversationSummary;
+        if (engagement.angelaConversationEscalated !== undefined)  updated.angelaConversationEscalated  = engagement.angelaConversationEscalated;
+        if (engagement.angelaConversationQuestions !== undefined)  updated.angelaConversationQuestions  = engagement.angelaConversationQuestions;
+        if (engagement.angelaConversationEndedAt !== undefined)    updated.angelaConversationEndedAt    = engagement.angelaConversationEndedAt;
+
         // Calculate engagement heat
         const isRecentlyOpened = updated.lastOpenedAt && (Date.now() - new Date(updated.lastOpenedAt).getTime()) < 24 * 60 * 60 * 1000;
         let heat: 'cold' | 'warm' | 'hot' = 'cold';
         if (updated.totalOpens > 5 || updated.totalTimeSpentSeconds > 300 || isRecentlyOpened) heat = 'hot';
         else if (updated.totalOpens > 2 || updated.totalTimeSpentSeconds > 60) heat = 'warm';
 
-        return { ...job, portalEngagement: updated, engagementHeat: heat };
+        // Angela conversation append — if this payload carries a full summary
+        // (ANGELA_SUMMARY event), push a new record onto the running log so
+        // the office can audit the whole history, not just the most recent.
+        // The flat fields above still get written too so "last question /
+        // sentiment / close readiness" reads stay cheap.
+        //
+        // Persistence: because portal_engagement auto-persistence is
+        // deliberately deferred (to avoid write amplification on every chip
+        // click), we hit dataService.updateJob directly for angela_conversations
+        // so an ended conversation is saved immediately — losing one because
+        // the customer closed the tab before a batch flush would be a bad
+        // experience.
+        let nextConversations = job.angelaConversations || [];
+        if (
+          engagement.angelaConversationSummary !== undefined ||
+          engagement.angelaConversationEndedAt !== undefined
+        ) {
+          const entry: AngelaConversation = {
+            endedAt: engagement.angelaConversationEndedAt || new Date().toISOString(),
+            questionCount: engagement.angelaQuestionCount,
+            questions: engagement.angelaConversationQuestions,
+            summary: engagement.angelaConversationSummary,
+            sentiment: engagement.angelaSentiment,
+            closeReadiness: engagement.angelaCloseReadiness,
+            escalated: engagement.angelaConversationEscalated,
+          };
+          nextConversations = [...nextConversations, entry];
+          // Fire-and-forget DB write so the summary survives tab close.
+          dataService
+            .updateJob(job.id, { angelaConversations: nextConversations })
+            .catch((err) =>
+              console.error('[Angela] failed to persist conversation summary:', err),
+            );
+        }
+
+        return {
+          ...job,
+          portalEngagement: updated,
+          engagementHeat: heat,
+          angelaConversations: nextConversations,
+        };
       }
       return job;
     }));

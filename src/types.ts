@@ -387,6 +387,15 @@ export interface Job {
   };
   engagementHeat?: 'cold' | 'warm' | 'hot';
 
+  /**
+   * Angela advisor widget — full conversation log. Each entry is one ended
+   * session (ANGELA_SUMMARY event), appended in chronological order. Powers
+   * the office dashboard's "Angela Conversations" panel so the office can
+   * see exactly what a customer asked before picking up the phone for a
+   * follow-up. Persisted to `jobs.angela_conversations` (JSONB array).
+   */
+  angelaConversations?: AngelaConversation[];
+
   // Module: Phase 5 Sold Workflow
   depositStatus?: DepositStatus;
   soldWorkflowStatus?: SoldWorkflowStatus;
@@ -608,6 +617,23 @@ export interface EstimateData {
   paymentStructure?: string[];
 }
 
+/**
+ * One ended session with the Angela advisor widget. The widget posts an
+ * ANGELA_SUMMARY event when the customer closes the chat or the session
+ * times out; we append one of these per event to `job.angelaConversations`.
+ * Field names mirror the widget's payload so the append is straight
+ * passthrough (no translation layer).
+ */
+export interface AngelaConversation {
+  endedAt: string;
+  questionCount?: number;
+  questions?: string[];
+  summary?: string;
+  sentiment?: string;
+  closeReadiness?: string;
+  escalated?: boolean;
+}
+
 export interface PortalEngagement {
   firstOpenedAt?: string;
   lastOpenedAt?: string;
@@ -643,6 +669,23 @@ export interface PortalEngagement {
    * actively using it to shop competitors — a strong intent signal.
    */
   pdfDownloads?: Array<{ document: 'contractor-checklist'; downloadedAt: string }>;
+  /**
+   * Angela advisor widget telemetry. The widget (iframe embedded on the
+   * customer estimate portal) posts two message types back to the parent
+   * frame: ANGELA_MESSAGE per exchange, ANGELA_SUMMARY on session end. The
+   * portal routes both through `onTrackEngagement`, which writes to the
+   * `jobs` row so the office dashboard can surface what each customer has
+   * asked before a follow-up call.
+   */
+  angelaQuestionCount?: number;
+  angelaLastQuestion?: string;
+  angelaLastMessageAt?: string;
+  angelaSentiment?: string;
+  angelaCloseReadiness?: string;
+  angelaConversationSummary?: string;
+  angelaConversationEscalated?: boolean;
+  angelaConversationQuestions?: string[];
+  angelaConversationEndedAt?: string;
 }
 
 export enum PunchType {
