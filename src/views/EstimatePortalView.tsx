@@ -509,8 +509,8 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
   // dashboard simply reads job.angelaConversations[] once the field lands.
   useEffect(() => {
     const ALLOWED_ORIGINS = [
-      'https://angela-portal-813827554567.europe-west1.run.app',
-      'https://angela.luxurydecking.ca', // future pretty subdomain
+      'https://angela.luxurydecking.ca', // production (pretty domain, branded SSL)
+      'https://angela-portal-813827554567.europe-west1.run.app', // Cloud Run fallback / debug
     ];
     const handleMessage = (event: MessageEvent) => {
       if (!ALLOWED_ORIGINS.includes(event.origin)) return;
@@ -2110,7 +2110,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             const angelaToken = job.customerPortalToken || '';
             const angelaJob = job.jobNumber || '';
             const angelaSrc =
-              `https://angela-portal-813827554567.europe-west1.run.app/widget` +
+              `https://angela.luxurydecking.ca/widget` +
               `?portal=${encodeURIComponent(angelaToken)}` +
               `&name=${encodeURIComponent(angelaFirstName)}` +
               `&tier=${encodeURIComponent(angelaTier)}` +
