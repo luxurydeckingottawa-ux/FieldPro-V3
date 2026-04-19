@@ -13,7 +13,7 @@
 import React, { useState } from 'react';
 import {
   Sparkles, ShieldCheck, ClipboardList, Truck, Layers,
-  Brush, Calendar, Send, X, Check, Quote,
+  Brush, Calendar, Send, X, Check, Quote, AlertTriangle,
 } from 'lucide-react';
 import { useInView, useCountUp } from '../../hooks/useInView';
 import { PortalSection } from './PortalSection';
@@ -491,6 +491,7 @@ export const ShareWithPartner: React.FC<{
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
 
   React.useEffect(() => {
@@ -507,6 +508,7 @@ export const ShareWithPartner: React.FC<{
   const handleSend = async () => {
     if (!email.trim()) return;
     setSending(true);
+    setSendError(null);
     try {
       const payload: ShareModalResult = {
         recipientEmail: email.trim(),
@@ -524,8 +526,17 @@ export const ShareWithPartner: React.FC<{
       }, 2500);
     } catch (e) {
       console.error('[ShareWithPartner] send failed', e);
+      const friendly =
+        e instanceof Error && e.message
+          ? e.message
+          : "We couldn't send right now. Please try again or email admin@luxurydecking.ca directly.";
+      setSendError(friendly);
       setSending(false);
     }
+  };
+
+  const handleRetry = () => {
+    setSendError(null);
   };
 
   return (
@@ -551,10 +562,10 @@ export const ShareWithPartner: React.FC<{
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(4px)' }}
-          onClick={() => !sending && !sent && setOpen(false)}
+          onClick={() => !sending && !sent && !sendError && setOpen(false)}
         >
           <div
-            className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl"
+            className={`bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl ${sendError ? 'border border-red-300' : ''}`}
             onClick={(e) => e.stopPropagation()}
           >
             {sent ? (
@@ -567,6 +578,31 @@ export const ShareWithPartner: React.FC<{
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 mb-2">Sent to {sent}</h3>
                 <p className="text-slate-600 text-sm">They will receive the same secure link and your note.</p>
+              </div>
+            ) : sendError ? (
+              <div className="text-center py-6">
+                <div
+                  className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-red-50"
+                >
+                  <AlertTriangle className="w-8 h-8 text-red-500" strokeWidth={2.5} />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">Something went wrong</h3>
+                <p className="text-slate-600 text-sm mb-6">{sendError}</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleRetry}
+                    className="flex-1 py-3 rounded-xl font-bold text-slate-900 transition-all hover:brightness-95"
+                    style={{ backgroundColor: GOLD }}
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={() => { setSendError(null); setOpen(false); }}
+                    className="flex-1 py-3 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             ) : (
               <>

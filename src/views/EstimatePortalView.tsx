@@ -2643,8 +2643,16 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             const sep = payload.portalUrl.includes('?') ? '&' : '?';
             const sharedPortalUrl = `${payload.portalUrl}${sep}s=1`;
 
+            // Human-readable fallback shown to the customer. Technical detail
+            // (status, response body, stack) always goes to the console so Jack
+            // can diagnose from DevTools. Never surface raw server text to the
+            // customer, as it could contain stack traces or PII.
+            const friendlyFailure =
+              "We couldn't send right now. Please try again or email admin@luxurydecking.ca directly.";
+
+            let resp: Response;
             try {
-              const resp = await fetch('/.netlify/functions/share-proposal', {
+              resp = await fetch('/.netlify/functions/share-proposal', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2657,14 +2665,23 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                   projectAddress: job.projectAddress || '',
                 }),
               });
-              if (!resp.ok) {
-                console.warn('[ShareWithPartner] server returned', resp.status);
-              }
             } catch (err) {
               console.error('[ShareWithPartner] network error:', err);
-              // The modal will still show the success state — the customer
-              // doesn't need a technical error. Office will see no engagement
-              // tick and can follow up if they notice.
+              throw new Error(friendlyFailure);
+            }
+
+            if (!resp.ok) {
+              // Drain the body for diagnostics. Never surface raw server text
+              // to the customer — it could contain stack traces or PII.
+              let bodyText = '';
+              try { bodyText = await resp.text(); } catch { /* ignore */ }
+              console.error(
+                '[ShareWithPartner] server returned',
+                resp.status,
+                resp.statusText,
+                bodyText,
+              );
+              throw new Error(friendlyFailure);
             }
 
             // Record the share event on portal engagement so the office's
