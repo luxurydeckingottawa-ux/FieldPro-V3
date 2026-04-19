@@ -2090,7 +2090,10 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
           {/* 12 · Payment Schedule Timeline — cream */}
           <PaymentScheduleTimeline selectedTotal={calculateTotal()} />
 
-          {/* 12b · Ask Angela — cream band (final objection-killer before CTA). */}
+          {/* Hairline at cream → navy transition (PaymentSchedule → Angela) */}
+          <div className="portal-transition-hairline" />
+
+          {/* 12b · Ask Angela — navy band (final objection-killer before CTA). */}
           {/* Positioned immediately above commitment-closer per CRO research: */}
           {/* objection handlers belong adjacent to the CTA, not buried mid-page. */}
           {/* Uses PortalSection wrapper so it matches the rest of the portal's */}
@@ -2116,7 +2119,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             return (
               <PortalSection
                 id="ask-angela"
-                tone="cream"
+                tone="navy"
                 eyebrow="Your Project Advisor"
                 title={<>Ask Angela anything.</>}
                 subtitle={<>One last question before you commit? Angela knows your exact proposal — pricing, materials, timeline, warranty — and answers in seconds.</>}
@@ -2125,7 +2128,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
                 <iframe
                   src={angelaSrc}
                   title="Ask Angela — Your Project Advisor"
-                  className="w-full rounded-2xl"
+                  className="w-full"
                   style={{ height: 900, border: 0, background: 'transparent' }}
                   sandbox="allow-scripts allow-same-origin allow-forms"
                   allow="clipboard-write"
@@ -2135,8 +2138,7 @@ const EstimatePortalView: React.FC<EstimatePortalViewProps> = ({
             );
           })()}
 
-          {/* Hairline at cream → navy transition */}
-          <div className="portal-transition-hairline" />
+          {/* No hairline needed — Angela (navy) flows straight into Commitment Closer (navy) */}
 
           {/* 13 · Commitment Closer — full-bleed navy, gold logo 40px, gold CTA */}
           <section
