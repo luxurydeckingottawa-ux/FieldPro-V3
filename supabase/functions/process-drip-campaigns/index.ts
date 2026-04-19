@@ -372,7 +372,7 @@ Deno.serve(async (req) => {
   const { data: jobs, error } = await supabase
     .from('jobs')
     .select('id, client_name, client_phone, client_email, project_type, pipeline_stage, customer_portal_token, portal_engagement, drip_campaign')
-    .eq("drip_campaign->>'status'", 'active');
+    .eq("drip_campaign->>status", 'active');
 
   if (error) {
     console.error('Supabase query error:', error);
