@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { PageState } from '../types';
 import PhotoUploadSection from '../components/PhotoUploadSection';
 import SignaturePad from '../components/SignaturePad';
@@ -8,13 +8,15 @@ import { Check } from 'lucide-react';
 interface FinalCompletionViewProps {
   state: PageState;
   signature?: string;
+  /** Job name (used as Cloudinary sub-folder so portal BuildTracker sees photos live). */
+  folderName?: string;
   onUpdate: (update: Partial<PageState>) => void;
   onSignatureUpdate: (dataUrl: string) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-const FinalCompletionView: React.FC<FinalCompletionViewProps> = ({ state, signature, onUpdate, onSignatureUpdate, onNext, onBack }) => {
+const FinalCompletionView: React.FC<FinalCompletionViewProps> = ({ state, signature, folderName, onUpdate, onSignatureUpdate, onNext, onBack }) => {
   const toggleItem = (id: string) => {
     const newChecklist = state.checklist.map(item => 
       item.id === id ? { ...item, completed: !item.completed } : item
@@ -22,16 +24,18 @@ const FinalCompletionView: React.FC<FinalCompletionViewProps> = ({ state, signat
     onUpdate({ checklist: newChecklist });
   };
 
-  const handlePhotoUpload = (key: string, url: string) => {
-    const newPhotos = state.photos.map(p => 
-      p.key === key ? { ...p, url } : p
+  const handlePhotoUpload = (key: string, url: string, cloudinaryUrl?: string) => {
+    const newPhotos = state.photos.map(p =>
+      p.key === key
+        ? { ...p, url, ...(cloudinaryUrl ? { cloudinaryUrl } : {}) }
+        : p
     );
     onUpdate({ photos: newPhotos });
   };
 
   const handlePhotoRemove = (key: string) => {
-    const newPhotos = state.photos.map(p => 
-      p.key === key ? { ...p, url: undefined } : p
+    const newPhotos = state.photos.map(p =>
+      p.key === key ? { ...p, url: undefined, cloudinaryUrl: undefined } : p
     );
     onUpdate({ photos: newPhotos });
   };
@@ -40,6 +44,15 @@ const FinalCompletionView: React.FC<FinalCompletionViewProps> = ({ state, signat
   const total = state.checklist.length;
   const allPhotosUploaded = state.photos.every(p => !!p.url);
   const isComplete = progress === total && allPhotosUploaded && !!signature;
+
+  // Propagate page-level completion so the customer-portal BuildTracker
+  // (which reads job.fieldProgress[5].completed) flips to "Complete" in real
+  // time once walkthrough + photos + signature are all done.
+  useEffect(() => {
+    if (isComplete !== state.completed) {
+      onUpdate({ completed: isComplete });
+    }
+  }, [isComplete, state.completed, onUpdate]);
 
   return (
     <div className="p-6 pb-40 space-y-12 bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300">
@@ -82,10 +95,11 @@ const FinalCompletionView: React.FC<FinalCompletionViewProps> = ({ state, signat
         </div>
       </section>
 
-      <PhotoUploadSection 
-        photos={state.photos} 
-        onUpload={handlePhotoUpload} 
-        onRemove={handlePhotoRemove} 
+      <PhotoUploadSection
+        photos={state.photos}
+        folderName={folderName}
+        onUpload={handlePhotoUpload}
+        onRemove={handlePhotoRemove}
       />
 
       <section className="pt-8 border-t border-[var(--border-color)]">

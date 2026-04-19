@@ -137,10 +137,11 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
       case 3:
       case 4:
         return (
-          <ChecklistView 
+          <ChecklistView
             title={PAGE_TITLES[state.currentPage]}
             pageIndex={state.currentPage}
             state={state.pages[state.currentPage]}
+            folderName={state.jobInfo.jobName}
             onUpdate={(updates) => updatePage(state.currentPage, updates)}
             onNext={handleNext}
             onBack={handleBack}
@@ -148,9 +149,10 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
         );
       case 5:
         return (
-          <FinalCompletionView 
+          <FinalCompletionView
             state={state.pages[5]}
             signature={state.customerSignature}
+            folderName={state.jobInfo.jobName}
             onUpdate={(updates) => updatePage(5, updates)}
             onSignatureUpdate={(sig) => setState(prev => ({ ...prev, customerSignature: sig }))}
             onNext={handleNext}

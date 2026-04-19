@@ -8,12 +8,14 @@ interface ChecklistViewProps {
   title: string;
   pageIndex: number;
   state: PageState;
+  /** Job name (used as Cloudinary sub-folder so portal BuildTracker sees photos live). */
+  folderName?: string;
   onUpdate: (update: Partial<PageState>) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, onUpdate, onNext, onBack }) => {
+const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, folderName, onUpdate, onNext, onBack }) => {
   const toggleItem = (id: string) => {
     const newChecklist = state.checklist.map(item => 
       item.id === id ? { ...item, completed: !item.completed, isNA: false } : item
@@ -30,16 +32,18 @@ const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, onUpdate, o
     onUpdate({ checklist: newChecklist });
   };
 
-  const handlePhotoUpload = (key: string, url: string) => {
-    const newPhotos = state.photos.map(p => 
-      p.key === key ? { ...p, url } : p
+  const handlePhotoUpload = (key: string, url: string, cloudinaryUrl?: string) => {
+    const newPhotos = state.photos.map(p =>
+      p.key === key
+        ? { ...p, url, ...(cloudinaryUrl ? { cloudinaryUrl } : {}) }
+        : p
     );
     onUpdate({ photos: newPhotos });
   };
 
   const handlePhotoRemove = (key: string) => {
-    const newPhotos = state.photos.map(p => 
-      p.key === key ? { ...p, url: undefined } : p
+    const newPhotos = state.photos.map(p =>
+      p.key === key ? { ...p, url: undefined, cloudinaryUrl: undefined } : p
     );
     onUpdate({ photos: newPhotos });
   };
@@ -120,10 +124,11 @@ const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, onUpdate, o
         </div>
       </section>
 
-      <PhotoUploadSection 
-        photos={state.photos} 
-        onUpload={handlePhotoUpload} 
-        onRemove={handlePhotoRemove} 
+      <PhotoUploadSection
+        photos={state.photos}
+        folderName={folderName}
+        onUpload={handlePhotoUpload}
+        onRemove={handlePhotoRemove}
       />
 
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-[var(--bg-primary)]/80 backdrop-blur-xl border-t border-[var(--border-color)] z-40">
