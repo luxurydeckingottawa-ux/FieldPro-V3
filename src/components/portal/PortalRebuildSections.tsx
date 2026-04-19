@@ -363,7 +363,7 @@ export const PromiseShield: React.FC = () => {
             Our promises, as a shield.
           </h2>
           <p className="portal-subtitle mx-auto mt-4" style={{ color: 'var(--portal-cream-70)' }}>
-            Every deck we build is backed by six guarantees — written, signed, and enforceable. If something fails, we fix it. If we miss a deadline, we pay the penalty. These aren't marketing promises. They're the contract.
+            Every deck we build is backed by six guarantees — written, signed, and enforceable. If something fails, we fix it. These aren't marketing promises. They're the contract.
           </p>
         </div>
 
@@ -913,7 +913,7 @@ interface FlipQ {
 
 const QUESTIONS: FlipQ[] = [
   { num: '01', title: 'Joist spacing', why: 'Ontario Building Code minimum is 16 inch on-centre. Wider spacing is cheaper to build and bouncier to walk on.', ans: '16" on-centre, always' },
-  { num: '02', title: 'Manufacturer certification', why: 'Installing composite without certification can void the manufacturer warranty on your deck, and forfeit any extended labour coverage.', ans: 'Fiberon Pro, TimberTech Registered Pro, AZEK Registered Pro, TrexPro' },
+  { num: '02', title: 'Manufacturer certification', why: 'Installing composite without certification can void the manufacturer warranty on your deck, and forfeit any extended labour coverage.', ans: 'Fiberon Pro, TimberTech Registered Pro, AZEK Registered Pro' },
   { num: '03', title: 'Footing depth', why: 'Helicals below 48" or concrete to frost-depth are code in Ottawa. Surface deck blocks are not.', ans: 'Helicals to 48" or concrete, frost-depth compliant' },
   { num: '04', title: 'Ledger attachment', why: 'The most common structural failure in home-handyman decks. Improper flashing creates hidden rot.', ans: 'Through-bolted, flashed, inspected' },
   { num: '05', title: 'Railing post blocking', why: 'Surface-mounted railing posts do not meet Ontario guard-load requirements.', ans: 'Bolted through the frame, blocked for guard-load' },
