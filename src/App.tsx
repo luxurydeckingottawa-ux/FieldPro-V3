@@ -814,17 +814,57 @@ const App: React.FC = () => {
     setJobs(prev => [jobWithCampaign, ...prev]);
     dataService.createJob(jobWithCampaign).catch(err => console.error('Failed to persist new job:', err));
 
-    // Auto-fire Touch 1: instant SMS acknowledgement for new leads
-    // Respect quiet hours: only send between 9 AM - 8 PM. If outside window,
-    // the drip campaign processor will pick it up at the next eligible hour.
+    // Auto-fire Touch 1: instant SMS acknowledgement for new leads.
+    //
+    // The campaign was created above with T1 pre-marked as completed. This
+    // prevents the cron from double-firing T1 during the ~5 min window after
+    // lead creation while the sync send is in flight.
+    //
+    // HOWEVER — if the sync send fails OR we're in quiet hours and skip the
+    // send entirely, we roll back the pre-mark so the cron picks it up on
+    // the next run. Without this rollback the lead would silently never
+    // receive T1 at all (prior bug — every failed/quiet-hour creation lost
+    // its first-touch forever).
+    //
+    // Quiet hours: only sync-send between 9 AM - 8 PM local. Outside that
+    // window we un-mark T1 so the cron fires it during the next business
+    // window (the cron enforces its own ET quiet-hours check).
+    //
     // When T1 sends successfully, advance the lead forward from LEAD_IN to
     // FIRST_CONTACT (mirrors the auto-advance logic in the Edge Function).
+    const rollbackT1 = (reason: string) => {
+      console.warn(`[T1 sync] rolling back pre-mark (reason: ${reason}) so cron retries`);
+      setJobs(prev => prev.map(j => {
+        if (j.id !== newJob.id) return j;
+        if (!j.dripCampaign) return j;
+        return {
+          ...j,
+          dripCampaign: {
+            ...j.dripCampaign,
+            completedTouches: j.dripCampaign.completedTouches.filter(t => t !== 'lead-t1-sms'),
+            sentMessages: j.dripCampaign.sentMessages.filter(m => m.touchId !== 'lead-t1-sms'),
+          },
+        };
+      }));
+      dataService.updateJob(newJob.id, {
+        dripCampaign: {
+          ...jobWithCampaign.dripCampaign!,
+          completedTouches: [],
+          sentMessages: [],
+        },
+      }).catch(err => console.warn('[T1 rollback persist] failed:', err));
+    };
+
     if (newJob.pipelineStage === PipelineStage.LEAD_IN && newJob.clientPhone) {
       const hour = new Date().getHours();
       if (hour >= 9 && hour < 20) {
         sendLeadAcknowledgementSms(newJob.clientPhone, newJob.clientName)
           .then(ok => {
-            if (!ok) return;
+            if (!ok) {
+              rollbackT1('sms send returned !ok');
+              return;
+            }
+            // Send succeeded — advance pipeline stage forward.
             // Only advance if the job is still at LEAD_IN (never move backward,
             // never overwrite a manual forward move made in the meantime).
             setJobs(prev => prev.map(j => {
@@ -834,8 +874,20 @@ const App: React.FC = () => {
             }));
             dataService.updateJob(newJob.id, { pipelineStage: PipelineStage.FIRST_CONTACT })
               .catch(err => console.warn('[T1 auto-advance] persist failed:', err));
+          })
+          .catch(err => {
+            console.error('[T1 sync send] threw:', err);
+            rollbackT1('sms send threw');
           });
+      } else {
+        // Quiet hours — skip sync send, let the cron handle T1 at next business window.
+        rollbackT1(`quiet hours (local hour=${hour})`);
       }
+    } else if (newJob.pipelineStage === PipelineStage.LEAD_IN && !newJob.clientPhone) {
+      // No phone number — nothing to sync-send. Cron will handle email-only touches
+      // (T3, T5, T7) if an email is present. Roll back the SMS pre-mark so cron
+      // knows T1 was never actually sent.
+      rollbackT1('no client phone');
     }
 
     // Always route to estimator workflow — the on-site checklist, measurements, sketch, and photos
