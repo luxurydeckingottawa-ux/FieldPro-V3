@@ -33,6 +33,49 @@ const FROM_NAME          = Deno.env.get('SENDGRID_FROM_NAME') ?? 'Angela - Luxur
 const SITE_URL           = Deno.env.get('SITE_URL') ?? 'https://fieldpro.luxurydecking.ca';
 
 // ── constants ─────────────────────────────────────────────────────────────────
+// Lead pipeline stage order — MUST mirror LEAD_COLUMNS in UnifiedPipelineView.tsx.
+// Used to enforce forward-only auto-advance when a lead drip touch fires.
+const LEAD_STAGE_ORDER = [
+  'LEAD_IN',
+  'FIRST_CONTACT',
+  'SECOND_CONTACT',
+  'THIRD_CONTACT',
+  'LEAD_ON_HOLD',
+] as const;
+
+// Lead drip touch id → target pipeline_stage.
+// Mapping follows the day labels on the lead pipeline columns:
+//   FIRST_CONTACT  · D1  (t1-sms instant, t3-email D0+15m, t4-sms D1)
+//   SECOND_CONTACT · D3  (t5-email D3)
+//   THIRD_CONTACT  · D7  (t6-sms D7)
+//   LEAD_ON_HOLD   · D30 (t7-email D30 — re-engage / terminal)
+// Estimate-side touches (est-fu*) are NOT mapped — they live on the estimate pipeline.
+const LEAD_TOUCH_TO_STAGE: Record<string, string> = {
+  'lead-t1-sms':   'FIRST_CONTACT',
+  'lead-t3-email': 'FIRST_CONTACT',
+  'lead-t4-sms':   'FIRST_CONTACT',
+  'lead-t5-email': 'SECOND_CONTACT',
+  'lead-t6-sms':   'THIRD_CONTACT',
+  'lead-t7-email': 'LEAD_ON_HOLD',
+};
+
+/**
+ * Given a current pipeline_stage and a target stage, return the stage the lead
+ * should be at after the touch fires. Never moves a lead backward — if the lead
+ * is already at or past the target (including stages outside the lead ladder
+ * like LEAD_WON / LEAD_LOST / any estimate stage), returns null (no-op).
+ */
+function nextForwardStage(current: string | null | undefined, target: string): string | null {
+  const currentIdx = current ? LEAD_STAGE_ORDER.indexOf(current as typeof LEAD_STAGE_ORDER[number]) : -1;
+  const targetIdx  = LEAD_STAGE_ORDER.indexOf(target as typeof LEAD_STAGE_ORDER[number]);
+  if (targetIdx < 0) return null;
+  // Current stage not in the lead ladder (won/lost/estimate/job stage) — never overwrite.
+  if (current && currentIdx < 0) return null;
+  // Already at or past target — silent skip.
+  if (currentIdx >= targetIdx) return null;
+  return target;
+}
+
 const PRICING_PAGE   = 'https://luxurydecking.ca/pricing';
 const INSTAQUOTE     = 'https://luxurydecking.ca/instaquote';
 const PROCESS_PAGE   = 'https://luxurydecking.ca/our-process';
@@ -84,6 +127,7 @@ interface Job {
   client_phone?: string;
   client_email?: string;
   project_type?: string;
+  pipeline_stage?: string;
   customer_portal_token?: string;
   portal_engagement?: PortalEngagement;
   drip_campaign?: DripCampaign;
@@ -327,7 +371,7 @@ Deno.serve(async (req) => {
   // Fetch all active campaigns
   const { data: jobs, error } = await supabase
     .from('jobs')
-    .select('id, client_name, client_phone, client_email, project_type, customer_portal_token, portal_engagement, drip_campaign')
+    .select('id, client_name, client_phone, client_email, project_type, pipeline_stage, customer_portal_token, portal_engagement, drip_campaign')
     .eq("drip_campaign->>'status'", 'active');
 
   if (error) {
@@ -344,6 +388,10 @@ Deno.serve(async (req) => {
     const completed = [...(campaign.completedTouches ?? [])];
     const sent      = [...(campaign.sentMessages ?? [])];
     let firedAny    = false;
+    // Track pipeline_stage advancement separately so we can write it at the end.
+    // Only applies to LEAD_FOLLOW_UP campaigns; estimate campaigns leave pipeline_stage alone.
+    let nextStage: string | null = null;
+    let workingStage: string | undefined = job.pipeline_stage;
 
     const tier   = getEngagementTier(job.portal_engagement);
     const touches = campaign.campaignType === 'LEAD_FOLLOW_UP'
@@ -383,6 +431,20 @@ Deno.serve(async (req) => {
         firedAny = true;
         fired.push({ jobId: job.id, touchId: touch.id, channel: touch.channel });
         console.info(`[DripCampaign] ✓ ${touch.id} → ${job.client_name} (${job.id})`);
+
+        // Auto-advance lead pipeline stage FORWARD only. Scope: LEAD_FOLLOW_UP campaigns only.
+        // Estimate follow-ups (est-fu*) live on the estimate pipeline and are skipped.
+        if (campaign.campaignType === 'LEAD_FOLLOW_UP') {
+          const targetStage = LEAD_TOUCH_TO_STAGE[touch.id];
+          if (targetStage) {
+            const advanced = nextForwardStage(workingStage, targetStage);
+            if (advanced) {
+              nextStage = advanced;
+              workingStage = advanced;
+              console.info(`[DripCampaign] ↪ ${job.id} pipeline_stage → ${advanced} (via ${touch.id})`);
+            }
+          }
+        }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[DripCampaign] ✗ ${touch.id} → ${job.id}: ${msg}`);
@@ -391,11 +453,16 @@ Deno.serve(async (req) => {
     }
 
     if (firedAny) {
+      const updatePayload: Record<string, unknown> = {
+        drip_campaign: { ...campaign, completedTouches: completed, sentMessages: sent },
+      };
+      if (nextStage) {
+        updatePayload.pipeline_stage = nextStage;
+      }
+
       const { error: updateError } = await supabase
         .from('jobs')
-        .update({
-          drip_campaign: { ...campaign, completedTouches: completed, sentMessages: sent },
-        })
+        .update(updatePayload)
         .eq('id', job.id);
 
       if (updateError) {

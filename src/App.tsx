@@ -817,10 +817,24 @@ const App: React.FC = () => {
     // Auto-fire Touch 1: instant SMS acknowledgement for new leads
     // Respect quiet hours: only send between 9 AM - 8 PM. If outside window,
     // the drip campaign processor will pick it up at the next eligible hour.
+    // When T1 sends successfully, advance the lead forward from LEAD_IN to
+    // FIRST_CONTACT (mirrors the auto-advance logic in the Edge Function).
     if (newJob.pipelineStage === PipelineStage.LEAD_IN && newJob.clientPhone) {
       const hour = new Date().getHours();
       if (hour >= 9 && hour < 20) {
-        sendLeadAcknowledgementSms(newJob.clientPhone, newJob.clientName);
+        sendLeadAcknowledgementSms(newJob.clientPhone, newJob.clientName)
+          .then(ok => {
+            if (!ok) return;
+            // Only advance if the job is still at LEAD_IN (never move backward,
+            // never overwrite a manual forward move made in the meantime).
+            setJobs(prev => prev.map(j => {
+              if (j.id !== newJob.id) return j;
+              if (j.pipelineStage !== PipelineStage.LEAD_IN) return j;
+              return { ...j, pipelineStage: PipelineStage.FIRST_CONTACT };
+            }));
+            dataService.updateJob(newJob.id, { pipelineStage: PipelineStage.FIRST_CONTACT })
+              .catch(err => console.warn('[T1 auto-advance] persist failed:', err));
+          });
       }
     }
 

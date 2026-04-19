@@ -38,15 +38,24 @@ export function sendAppointmentConfirmationSms(phone: string, name: string): voi
   window.open(`sms:${phone}?body=${encodeURIComponent(msg)}`);
 }
 
-/** Touch-1 instant SMS for new leads. Only call during quiet-hours window (9 AM - 8 PM). */
-export function sendLeadAcknowledgementSms(phone: string, clientName: string): void {
+/**
+ * Touch-1 instant SMS for new leads. Only call during quiet-hours window (9 AM - 8 PM).
+ * Returns a Promise<boolean> so callers can gate on success (e.g. to advance
+ * the lead's pipeline_stage from LEAD_IN to FIRST_CONTACT). Never throws.
+ */
+export function sendLeadAcknowledgementSms(phone: string, clientName: string): Promise<boolean> {
   const firstName = clientName.split(' ')[0] || 'there';
   const smsT1 = `Hi ${firstName}, this is Angela from ${COMPANY.name}. Thank you for reaching out about your deck project. We will be in touch shortly to learn more about what you have in mind. In the meantime, feel free to explore our transparent pricing packages here: https://${COMPANY.website}/pricing. Talk soon!`;
-  fetch('/.netlify/functions/send-sms', {
+  return fetch('/.netlify/functions/send-sms', {
     method: 'POST',
     headers: internalHeaders(),
     body: JSON.stringify({ to: phone, message: smsT1 }),
-  }).catch(err => console.warn('[T1 SMS] failed:', err));
+  })
+    .then(res => res.ok)
+    .catch(err => {
+      console.warn('[T1 SMS] failed:', err);
+      return false;
+    });
 }
 
 /** Google review request SMS. */
