@@ -363,7 +363,7 @@ export const PromiseShield: React.FC = () => {
             Our promises, as a shield.
           </h2>
           <p className="portal-subtitle mx-auto mt-4" style={{ color: 'var(--portal-cream-70)' }}>
-            A numbered list of six guarantees reads as legal fine print. A shield with six segments reads as protection. The information is identical. The emotional weight is not.
+            Every deck we build is backed by six guarantees — written, signed, and enforceable. If something fails, we fix it. If we miss a deadline, we pay the penalty. These aren't marketing promises. They're the contract.
           </p>
         </div>
 
