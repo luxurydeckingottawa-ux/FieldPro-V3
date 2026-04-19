@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { PageState } from '../types';
 import PhotoUploadSection from '../components/PhotoUploadSection';
 import { Check } from 'lucide-react';
@@ -48,6 +48,17 @@ const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, onUpdate, o
   const total = state.checklist.length;
   const allPhotosUploaded = state.photos.every(p => !!p.url);
   const isComplete = progress === total && allPhotosUploaded;
+
+  // Propagate page-level completion flag so the customer-portal BuildTracker
+  // (which reads job.fieldProgress[page].completed) updates in real time as
+  // the field crew checks off items + uploads photos. Without this effect,
+  // pages stayed at completed=false even when every checklist item was ticked
+  // and every required photo uploaded.
+  useEffect(() => {
+    if (isComplete !== state.completed) {
+      onUpdate({ completed: isComplete });
+    }
+  }, [isComplete, state.completed, onUpdate]);
 
   return (
     <div className="p-6 pb-40 space-y-10 bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300">
