@@ -23,6 +23,15 @@ const crypto = require('crypto');
  * Validates a Twilio webhook signature.
  * https://www.twilio.com/docs/usage/webhooks/webhooks-security
  */
+function decodeBody(event) {
+  if (!event.body) return '';
+  if (event.isBase64Encoded) {
+    try { return Buffer.from(event.body, 'base64').toString('utf8'); }
+    catch { return event.body; }
+  }
+  return event.body;
+}
+
 function validateTwilioSignature(event) {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   if (!authToken) return true; // Not configured — allow (will log a warning below)
@@ -30,21 +39,46 @@ function validateTwilioSignature(event) {
   const twilioSignature = event.headers['x-twilio-signature'] || event.headers['X-Twilio-Signature'];
   if (!twilioSignature) return false;
 
-  // Reconstruct the full URL Twilio signed
-  const host = event.headers.host || event.headers.Host || '';
-  const url = `https://${host}${event.rawUrl || event.path || '/.netlify/functions/incoming-sms'}`;
+  // Reconstruct the full URL Twilio signed. Netlify's `event.rawUrl` already
+  // includes the scheme+host+path+query, so prefer it directly. Fall back to
+  // building from host+path when rawUrl is missing (older Netlify shims).
+  let url;
+  if (event.rawUrl && /^https?:\/\//i.test(event.rawUrl)) {
+    url = event.rawUrl;
+  } else {
+    const host = event.headers.host || event.headers.Host || '';
+    const proto = event.headers['x-forwarded-proto'] || 'https';
+    url = `${proto}://${host}${event.path || '/.netlify/functions/incoming-sms'}`;
+  }
 
-  // Sort POST parameters and append to URL
-  const params = new URLSearchParams(event.body || '');
+  // Body may arrive base64-encoded on Netlify — decode before parsing.
+  const rawBody = decodeBody(event);
+
+  // Sort POST parameters and append to URL (Twilio signs concatenated key+value pairs)
+  const params = new URLSearchParams(rawBody);
   const sortedKeys = [...params.keys()].sort();
   const sigBase = url + sortedKeys.map(k => `${k}${params.get(k)}`).join('');
 
   const expectedSig = crypto.createHmac('sha1', authToken).update(sigBase, 'utf8').digest('base64');
 
-  // Use timing-safe comparison to prevent timing attacks
+  // Log on mismatch so future breakage is debuggable (no PII — just signatures + URL).
+  // Use timing-safe comparison to prevent timing attacks.
   try {
-    return crypto.timingSafeEqual(Buffer.from(twilioSignature), Buffer.from(expectedSig));
+    const ok = crypto.timingSafeEqual(Buffer.from(twilioSignature), Buffer.from(expectedSig));
+    if (!ok) {
+      console.warn('[incoming-sms] signature mismatch', {
+        url,
+        expected: expectedSig,
+        received: twilioSignature,
+        base64Encoded: !!event.isBase64Encoded,
+      });
+    }
+    return ok;
   } catch {
+    console.warn('[incoming-sms] signature length mismatch', {
+      expectedLen: expectedSig.length,
+      receivedLen: twilioSignature.length,
+    });
     return false; // Buffers not the same length — signature mismatch
   }
 }
@@ -133,8 +167,8 @@ exports.handler = async function(event) {
     return { statusCode: 403, body: 'Forbidden' };
   }
 
-  // Parse Twilio webhook data
-  const params = new URLSearchParams(event.body);
+  // Parse Twilio webhook data (decode base64 body if present)
+  const params = new URLSearchParams(decodeBody(event));
   const from = params.get('From') || '';
   const body = params.get('Body') || '';
   const to = params.get('To') || '';

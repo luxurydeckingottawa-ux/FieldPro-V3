@@ -9,6 +9,7 @@ import {
   Plus, Trash2
 } from 'lucide-react';
 import AcceptanceModal from '../components/AcceptanceModal';
+import CustomerChatThread from '../components/CustomerChatThread';
 import { calculateEngagementTier } from '../utils/engagementScoring';
 import { COMPANY } from '../config/company';
 import { getCampaignTouches } from '../utils/dripCampaign';
@@ -594,6 +595,16 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                 )}
               </div>
             </div>
+
+            {/* ── CUSTOMER TEXT THREAD ──────────────────────────────────────
+                Unified SMS history: inbound + outbound combined. Visible at
+                every lifecycle stage (lead, estimate, sold, production) so
+                anyone on the team can see the full conversation. */}
+            <CustomerChatThread
+              clientName={job.clientName}
+              clientPhone={job.clientPhone}
+              jobId={job.id}
+            />
 
             {/* ── OPTIONS SUMMARY (multi-option estimates only) ─────────────── */}
             {hasMultipleOptions && (
