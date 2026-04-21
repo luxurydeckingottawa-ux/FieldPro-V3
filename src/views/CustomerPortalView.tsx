@@ -1355,72 +1355,6 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 </div>
               </div>
 
-              {/* ── Rain-Days Meter — transparency on weather-driven delays ── */}
-              {/* Counts observed rain days (>= 1mm) between when the project  */}
-              {/* was booked and today, with a light "heavy rain" sub-count.  */}
-              {/* Answers the "why is my project taking longer?" question     */}
-              {/* with hard data instead of hand-waving.                      */}
-              {rainSinceBooking && rainSinceBooking.totalDays > 0 && (
-                <div className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                        <Droplets className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-[#1A1A1A]">Rain Since Your Project Was Booked</h4>
-                        <p className="text-[10px] text-[#999] font-bold uppercase tracking-wider">Weather Transparency Meter</p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                      {rainSinceBooking.totalDays} Days Tracked
-                    </span>
-                  </div>
-
-                  {/* Big number + sub-counts */}
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="p-4 bg-blue-50/60 rounded-2xl border border-blue-100">
-                      <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">Rain Days</p>
-                      <p className="text-3xl font-black text-blue-700">{rainSinceBooking.rainDays}</p>
-                      <p className="text-[10px] text-blue-600/80 mt-1">≥ 1 mm</p>
-                    </div>
-                    <div className="p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100">
-                      <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1">Heavy Rain</p>
-                      <p className="text-3xl font-black text-indigo-700">{rainSinceBooking.heavyRainDays}</p>
-                      <p className="text-[10px] text-indigo-600/80 mt-1">≥ 10 mm</p>
-                    </div>
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                      <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Total</p>
-                      <p className="text-3xl font-black text-slate-700">{rainSinceBooking.totalPrecipMm.toFixed(0)}<span className="text-sm font-bold text-slate-400 ml-1">mm</span></p>
-                      <p className="text-[10px] text-slate-500 mt-1">Cumulative</p>
-                    </div>
-                  </div>
-
-                  {/* Proportional rain-vs-dry bar */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-black text-[#999] uppercase tracking-widest">Dry vs. Rainy Days</span>
-                      <span className="text-[#666]">
-                        {rainSinceBooking.totalDays - rainSinceBooking.rainDays} dry · {rainSinceBooking.rainDays} rainy
-                      </span>
-                    </div>
-                    <div className="h-2 bg-[#F0F0F0] rounded-full overflow-hidden flex">
-                      <div
-                        className="h-full bg-amber-400"
-                        style={{ width: `${((rainSinceBooking.totalDays - rainSinceBooking.rainDays) / rainSinceBooking.totalDays) * 100}%` }}
-                      />
-                      <div
-                        className="h-full bg-blue-500"
-                        style={{ width: `${(rainSinceBooking.rainDays / rainSinceBooking.totalDays) * 100}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-[#999] leading-relaxed italic mt-2">
-                      Rain days before or during your start window push the full production schedule forward as we catch up on active builds. We track them so you can see exactly where the time has gone.
-                    </p>
-                  </div>
-                </div>
-              )}
-
               {/* Traditional Calendar View */}
               <div className="bg-white rounded-3xl border border-[#F0F0F0] overflow-hidden shadow-sm">
                 <div className="p-6 border-b border-[#F0F0F0] bg-[#F9F9F9] flex items-center justify-between">
@@ -1538,6 +1472,74 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* ── Rain-Days Meter — transparency on weather-driven delays ──
+                  Moved BELOW the calendar per Jack's note: the calendar is the
+                  primary focus of the Schedule tab, this meter is a secondary
+                  context panel that answers "why is my project taking longer?"
+                  with hard data instead of hand-waving. Counts observed rain
+                  days (≥ 1 mm) between when the project was booked and today,
+                  plus a "heavy rain" (≥ 10 mm) sub-count. */}
+              {rainSinceBooking && rainSinceBooking.totalDays > 0 && (
+                <div className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                        <Droplets className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-[#1A1A1A]">Rain Since Your Project Was Booked</h4>
+                        <p className="text-[10px] text-[#999] font-bold uppercase tracking-wider">Weather Transparency Meter</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                      {rainSinceBooking.totalDays} Days Tracked
+                    </span>
+                  </div>
+
+                  {/* Big number + sub-counts */}
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="p-4 bg-blue-50/60 rounded-2xl border border-blue-100">
+                      <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">Rain Days</p>
+                      <p className="text-3xl font-black text-blue-700">{rainSinceBooking.rainDays}</p>
+                      <p className="text-[10px] text-blue-600/80 mt-1">≥ 1 mm</p>
+                    </div>
+                    <div className="p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100">
+                      <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1">Heavy Rain</p>
+                      <p className="text-3xl font-black text-indigo-700">{rainSinceBooking.heavyRainDays}</p>
+                      <p className="text-[10px] text-indigo-600/80 mt-1">≥ 10 mm</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Total</p>
+                      <p className="text-3xl font-black text-slate-700">{rainSinceBooking.totalPrecipMm.toFixed(0)}<span className="text-sm font-bold text-slate-400 ml-1">mm</span></p>
+                      <p className="text-[10px] text-slate-500 mt-1">Cumulative</p>
+                    </div>
+                  </div>
+
+                  {/* Proportional rain-vs-dry bar */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-black text-[#999] uppercase tracking-widest">Dry vs. Rainy Days</span>
+                      <span className="text-[#666]">
+                        {rainSinceBooking.totalDays - rainSinceBooking.rainDays} dry · {rainSinceBooking.rainDays} rainy
+                      </span>
+                    </div>
+                    <div className="h-2 bg-[#F0F0F0] rounded-full overflow-hidden flex">
+                      <div
+                        className="h-full bg-amber-400"
+                        style={{ width: `${((rainSinceBooking.totalDays - rainSinceBooking.rainDays) / rainSinceBooking.totalDays) * 100}%` }}
+                      />
+                      <div
+                        className="h-full bg-blue-500"
+                        style={{ width: `${(rainSinceBooking.rainDays / rainSinceBooking.totalDays) * 100}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-[#999] leading-relaxed italic mt-2">
+                      Rain days before or during your start window push the full production schedule forward as we catch up on active builds. We track them so you can see exactly where the time has gone.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1553,6 +1555,78 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 estimate portal pre-sale, not on the production portal.
               */}
               <div className="grid grid-cols-1 gap-6">
+                {/* ── DESIGN PLAN / DECK DRAWINGS ─────────────────────────────
+                    Placeholder for the sketch/design that will eventually be
+                    generated by the estimator tool when a job is accepted.
+                    Today we surface an empty-state card so the slot exists in
+                    the layout; once the estimator sketch pipeline drops a
+                    PDF or image onto job.designPlan (or similar), we render
+                    it here. Wired off job.designPlanUrl for now — add the
+                    field to Job + dataService keyMap when we actually ship
+                    the sketch capture. */}
+                {(() => {
+                  // Future: swap this for the actual field when wired up.
+                  const designPlanUrl = (job as Job & { designPlanUrl?: string }).designPlanUrl;
+                  return (
+                    <div className="bg-white rounded-3xl border border-[#F0F0F0] shadow-sm overflow-hidden">
+                      <div className="p-6 border-b border-[#F0F0F0] bg-[#F9F9F9] flex items-center justify-between">
+                        <div>
+                          <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em] mb-0.5">Design Plan</p>
+                          <h4 className="text-base font-black text-[#1A1A1A] tracking-tight">Deck Drawings</h4>
+                        </div>
+                        {designPlanUrl ? (
+                          <span className="text-[8px] font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2.5 py-1 rounded uppercase tracking-widest">
+                            Available
+                          </span>
+                        ) : (
+                          <span className="text-[8px] font-black bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-1 rounded uppercase tracking-widest">
+                            Coming Soon
+                          </span>
+                        )}
+                      </div>
+
+                      {designPlanUrl ? (
+                        <div className="p-6">
+                          <a
+                            href={designPlanUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block rounded-2xl overflow-hidden border border-[#F0F0F0] hover:border-[var(--brand-gold)]/40 transition-colors"
+                          >
+                            <img
+                              src={designPlanUrl}
+                              alt="Design plan sketch"
+                              className="w-full h-auto"
+                              referrerPolicy="no-referrer"
+                            />
+                          </a>
+                          <a
+                            href={designPlanUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-[var(--brand-gold)] hover:underline"
+                          >
+                            <FileText className="w-4 h-4" />
+                            Open full-size drawing
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="p-8 flex flex-col items-center justify-center text-center gap-4 bg-[linear-gradient(135deg,#fafaf4_0%,#f5f2e8_100%)]">
+                          <div className="w-16 h-16 rounded-3xl bg-white border border-[var(--brand-gold)]/20 flex items-center justify-center shadow-sm">
+                            <FileText className="w-7 h-7 text-[var(--brand-gold)]" />
+                          </div>
+                          <div className="max-w-sm">
+                            <h5 className="text-sm font-bold text-[#1A1A1A] mb-1">Your design plan will appear here</h5>
+                            <p className="text-xs text-[#888] leading-relaxed">
+                              Once our team finalizes the sketch for your deck, the drawing will be posted to this section so you can review the layout anytime.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {(job.buildDetails || job.digitalWorkOrder) ? (
                   <>
                     {/* ── PRIMARY SELECTIONS — mirrors the Digital Work Order ─── */}

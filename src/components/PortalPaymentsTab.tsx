@@ -1,20 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Job } from '../types';
-import { Receipt, Clock, Wallet, CreditCard, FileText, ArrowRight, CheckCircle2
+import { Receipt, Clock, Wallet, CreditCard, ArrowRight, CheckCircle2
 } from 'lucide-react';
+import PaymentMethodModal, { PaymentMilestone } from './portal/PaymentMethodModal';
 
 
 interface PortalPaymentsTabProps {
   job: Job;
 }
 
+// Canonical milestone schedule — kept in one place so the modal + the
+// progress timeline can't drift out of sync.
+const MILESTONES: Array<{ label: string; percentage: number; desc: string; code: string }> = [
+  { label: '30% Deposit',       percentage: 0.3, desc: 'Project initialization', code: 'DEP' },
+  { label: '30% Delivery',      percentage: 0.3, desc: 'Material delivery',      code: 'DEL' },
+  { label: '40% Final Payment', percentage: 0.4, desc: 'Project completion',     code: 'FIN' },
+];
+
 const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
+  const [payingMilestone, setPayingMilestone] = useState<PaymentMilestone | null>(null);
+
+  const total = job.totalAmount || 0;
+  const paid = job.paidAmount || 0;
+
+  // Figure out which milestone is "next" — the first one not yet paid off.
+  // Uses a 10-dollar grace in case of rounding.
+  const nextMilestone = MILESTONES.find((_, idx) => {
+    const cumulative = MILESTONES.slice(0, idx + 1).reduce((sum, item) => sum + item.percentage, 0);
+    return paid < (total * cumulative) - 10;
+  });
+
+  const handleOpenPayModal = () => {
+    if (!nextMilestone) return;
+    setPayingMilestone({
+      label: nextMilestone.label,
+      amount: total * nextMilestone.percentage,
+      code: nextMilestone.code,
+    });
+  };
+
   return (
-            <div
-              
-              
-              className="space-y-6"
-            >
+            <div className="space-y-6">
               <div className="flex items-center justify-between px-2">
                 <h3 className="text-xl font-bold tracking-tight">Investment Summary</h3>
                 <div className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/5 px-3 py-1 rounded-full border border-[var(--brand-gold)]/10">
@@ -28,7 +54,7 @@ const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
                   <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-3xl -mr-32 -mt-32" />
                   <div className="relative z-10">
                     <p className="text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-2">Total Contract Value</p>
-                    <h4 className="text-4xl font-bold tracking-tight">${(job.totalAmount || 0).toLocaleString()}</h4>
+                    <h4 className="text-4xl font-bold tracking-tight">${total.toLocaleString()}</h4>
                   </div>
                 </div>
 
@@ -48,14 +74,8 @@ const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
                     <div className="relative space-y-10 pl-2">
                       {/* Vertical Progress Line */}
                       <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-[#F0F0F0]" />
-                      
-                      {[
-                        { label: '30% Deposit', percentage: 0.3, desc: 'Project initialization' },
-                        { label: '30% Delivery', percentage: 0.3, desc: 'Material delivery' },
-                        { label: '40% Final Payment', percentage: 0.4, desc: 'Project completion' }
-                      ].map((milestone, idx, arr) => {
-                        const total = job.totalAmount || 0;
-                        const paid = job.paidAmount || 0;
+
+                      {MILESTONES.map((milestone, idx, arr) => {
                         const cumulativePercentage = arr.slice(0, idx + 1).reduce((sum, m) => sum + m.percentage, 0);
                         const amount = total * milestone.percentage;
                         const isPaid = paid >= (total * cumulativePercentage) - 10;
@@ -64,10 +84,10 @@ const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
                         return (
                           <div key={idx} className="relative flex items-start gap-6 group">
                             <div className={`relative z-10 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
-                              isPaid 
-                                ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] shadow-lg shadow-[var(--brand-gold)]/20' 
-                                : isNext 
-                                  ? 'bg-white border-blue-500 shadow-lg shadow-blue-500/10' 
+                              isPaid
+                                ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] shadow-lg shadow-[var(--brand-gold)]/20'
+                                : isNext
+                                  ? 'bg-white border-blue-500 shadow-lg shadow-blue-500/10'
                                   : 'bg-white border-[#EEE]'
                             }`}>
                               {isPaid ? (
@@ -76,7 +96,7 @@ const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
                               ) : null}
                             </div>
-                            
+
                             <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                               <div>
                                 <div className="flex items-center gap-2">
@@ -91,7 +111,7 @@ const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
                                 </div>
                                 <p className="text-[10px] text-[#999] font-medium mt-0.5">{milestone.desc}</p>
                               </div>
-                              
+
                               <div className="text-left sm:text-right">
                                 <p className={`text-sm font-black ${isPaid ? 'text-[var(--brand-gold)]' : 'text-[#1A1A1A]'}`}>
                                   ${amount.toLocaleString()}
@@ -120,7 +140,7 @@ const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
                           <p className="text-[10px] text-[#999] uppercase font-bold tracking-wider">Thank you for your business</p>
                         </div>
                       </div>
-                      <p className="text-lg font-bold text-[var(--brand-gold)]">-${(job.paidAmount || 0).toLocaleString()}</p>
+                      <p className="text-lg font-bold text-[var(--brand-gold)]">-${paid.toLocaleString()}</p>
                     </div>
                     <div className="h-px bg-[#F0F0F0]" />
                     <div className="flex justify-between items-center">
@@ -133,7 +153,7 @@ const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
                           <p className="text-[10px] text-[#999] uppercase font-bold tracking-wider">Due upon completion</p>
                         </div>
                       </div>
-                      <p className="text-2xl font-bold text-[#1A1A1A]">${((job.totalAmount || 0) - (job.paidAmount || 0)).toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-[#1A1A1A]">${(total - paid).toLocaleString()}</p>
                     </div>
 
                     {/* Financing Option */}
@@ -144,12 +164,12 @@ const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
                         </div>
                         <div>
                           <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight italic">Flexible Financing</h4>
-                          <p className="text-[11px] text-blue-700 font-medium">Estimated ~${Math.round((job.totalAmount || 0) * 0.012).toLocaleString()}/mo</p>
+                          <p className="text-[11px] text-blue-700 font-medium">Estimated ~${Math.round(total * 0.012).toLocaleString()}/mo</p>
                         </div>
                       </div>
-                      <a 
-                        href="https://apply.ifinancecanada.com/22121" 
-                        target="_blank" 
+                      <a
+                        href="https://apply.ifinancecanada.com/22121"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2"
                       >
@@ -160,40 +180,35 @@ const PortalPaymentsTab: React.FC<PortalPaymentsTabProps> = ({ job }) => {
                 </div>
 
                 <div className="p-6 bg-[#F9F9F9] border-t border-[#F0F0F0]">
-                  {(() => {
-                    const milestones = [
-                      { label: '30% Deposit', percentage: 0.3 },
-                      { label: '30% Delivery', percentage: 0.3 },
-                      { label: '40% Final Payment', percentage: 0.4 }
-                    ];
-                    const total = job.totalAmount || 0;
-                    const paid = job.paidAmount || 0;
-                    const next = milestones.find((m, idx) => {
-                      const cumulative = milestones.slice(0, idx + 1).reduce((sum, item) => sum + item.percentage, 0);
-                      return paid < (total * cumulative) - 10;
-                    });
-
-                    return (
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <button className="flex-1 py-4 bg-[var(--brand-gold)] text-white rounded-2xl font-bold hover:bg-[var(--brand-gold-dark)] transition-all shadow-lg shadow-[var(--brand-gold)]/20 flex items-center justify-center gap-2">
-                          <CreditCard size={18} />
-                          <span>{next ? `Pay ${next.label}` : 'Make a Payment'}</span>
-                        </button>
-                        <button 
-                          onClick={() => setShowChat(true)}
-                          className="flex-1 py-4 bg-white text-[#1A1A1A] border border-[#F0F0F0] rounded-2xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-                        >
-                          <FileText size={18} className="text-slate-400" />
-                          <span>Request Invoice</span>
-                        </button>
-                      </div>
-                    );
-                  })()}
+                  {/* Single primary CTA — opens PaymentMethodModal with CC +
+                      e-Transfer choices. Removed the "Request Invoice" button
+                      per Jack — it was a no-op and redundant. */}
+                  <button
+                    type="button"
+                    onClick={handleOpenPayModal}
+                    disabled={!nextMilestone}
+                    className="w-full py-4 bg-[var(--brand-gold)] text-white rounded-2xl font-bold hover:bg-[var(--brand-gold-dark)] transition-all shadow-lg shadow-[var(--brand-gold)]/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                  >
+                    <CreditCard size={18} />
+                    <span>
+                      {nextMilestone
+                        ? `Pay ${nextMilestone.label} · $${Math.round(total * nextMilestone.percentage).toLocaleString()}`
+                        : 'All Payments Complete'}
+                    </span>
+                  </button>
                   <p className="text-center text-[10px] text-[#999] mt-4 font-medium uppercase tracking-wider">
-                    Secure checkout powered by Stripe
+                    Credit Card · Interac e-Transfer · Secure
                   </p>
                 </div>
               </div>
+
+              {payingMilestone && (
+                <PaymentMethodModal
+                  job={job}
+                  milestone={payingMilestone}
+                  onClose={() => setPayingMilestone(null)}
+                />
+              )}
             </div>
 
   );
