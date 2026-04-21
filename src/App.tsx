@@ -448,6 +448,38 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // ── Hydrate from Supabase on mount when currentUser is already set ───────
+  // handleLogin pulls fresh data, but a user who's already authenticated and
+  // just refreshes the browser never re-runs it — their `jobs`/`invoices`/
+  // `customers` state stays at whatever localStorage held. If local state got
+  // out of sync (e.g. a row present in Supabase but stripped locally), the
+  // user sees stale data until they log out and back in. This effect closes
+  // that gap by doing one authoritative refresh on every mount.
+  const hasHydratedFromSupabase = React.useRef(false);
+  useEffect(() => {
+    if (!currentUser || hasHydratedFromSupabase.current) return;
+    hasHydratedFromSupabase.current = true;
+
+    dataService.loadJobs().then(supabaseJobs => {
+      if (supabaseJobs.length > 0) {
+        setJobs(supabaseJobs.map(job => ({
+          ...job,
+          officeChecklists: job.officeChecklists || createDefaultOfficeChecklists(),
+          buildDetails: job.buildDetails || createDefaultBuildDetails(),
+          customerPortalToken: job.customerPortalToken || crypto.randomUUID(),
+        })));
+      }
+    }).catch(() => { /* Supabase unavailable — keep localStorage data */ });
+
+    dataService.loadInvoices().then(supabaseInvoices => {
+      if (supabaseInvoices.length > 0) setInvoices(supabaseInvoices);
+    }).catch(() => {});
+
+    dataService.loadCustomers().then(supabaseCustomers => {
+      if (supabaseCustomers.length > 0) setCustomers(supabaseCustomers);
+    }).catch(() => {});
+  }, [currentUser, setJobs, setInvoices, setCustomers]);
+
   useEffect(() => {
     if (currentUser) {
       // SECURITY: Never persist the password field to localStorage
@@ -1591,6 +1623,37 @@ const App: React.FC = () => {
     if (job.calculatorOptions && job.calculatorOptions.length > 0) {
       setCalculatorInitialOptions(job.calculatorOptions);
       // Still set client info and source job; clear legacy single-option state
+      setCalculatorInitialDimensions(undefined);
+      setCalculatorInitialSelections(undefined);
+      setCalculatorInitialClientInfo(jobToCalculatorClientInfo(job));
+      setCalculatorSourceJobId(job.id);
+      setSelectedJob(job);
+      navigateTo('estimator-calculator');
+      return;
+    }
+
+    // ── Priority 1b: reconstruct option tabs from estimate_data.options ─────
+    // When the job has presentation-layer options (set by handleEstimateSaved
+    // via estimateData) but calculator_options is missing — e.g. an older
+    // save path ran before calculatorOptions was added, or a subsequent
+    // update wiped it — seed the estimator with option tabs carrying the
+    // saved names and client info, plus the accepted option's dimensions
+    // where possible. This prevents the calculator from opening at 0-0 with
+    // no tabs, which silently loses the context that there were multiple
+    // options. Dimensions/selections are left empty for each tab so the user
+    // can re-enter them without starting from a blank slate.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const estData = (job as any).estimateData as { options?: Array<{ id: string; name: string }> } | undefined;
+    if (estData?.options && estData.options.length > 0) {
+      const fallbackOptions = estData.options.map((opt) => ({
+        id: opt.id,
+        name: opt.name || `Option ${opt.id}`,
+        selections: {},
+        dimensions: job.calculatorDimensions || {},
+        lightingQuantities: {},
+        activePackage: undefined,
+      }));
+      setCalculatorInitialOptions(fallbackOptions);
       setCalculatorInitialDimensions(undefined);
       setCalculatorInitialSelections(undefined);
       setCalculatorInitialClientInfo(jobToCalculatorClientInfo(job));
