@@ -5,7 +5,7 @@ import SignaturePad from './SignaturePad';
 // App.tsx also dynamic-imports them — keeping both sides dynamic lets Vite move
 // them into their own chunk instead of bundling into the main shell.
 import { prefillBuildDetailsFromQuote } from '../utils/prefillBuildDetails';
-import { createDefaultBuildDetails } from '../constants';
+import { createDefaultBuildDetails, createDefaultOfficeChecklists } from '../constants';
 import {
   X, CheckCircle2, FileText, DollarSign,
   Calendar, Shield, AlertCircle, Download, Loader2
@@ -151,6 +151,24 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
         });
       }
 
+      // Auto-check "Signed contract confirmed" (office-JOB_SOLD-0) and
+      // "Send deposit invoice" (office-JOB_SOLD-1) so the Needs Attention
+      // banner + issueLogic.ts don't flag "Contract Missing" right after
+      // the customer signed in person.
+      const autoCheckedChecklists = (job.officeChecklists || createDefaultOfficeChecklists()).map(cl => {
+        if (cl.stage === PipelineStage.JOB_SOLD) {
+          return {
+            ...cl,
+            items: cl.items.map(item =>
+              (item.id === 'office-JOB_SOLD-0' || item.id === 'office-JOB_SOLD-1')
+                ? { ...item, completed: true }
+                : item
+            )
+          };
+        }
+        return cl;
+      });
+
       // Call the parent accept handler
       try {
         onAccept(job.id, {
@@ -163,9 +181,13 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
           estimateStatus: 'accepted',
           acceptedDate: now,
           customerSignature: signature,
-          contractPdfUrl: contractPdfUrl,
+          // Only set contractPdfUrl if PDF generation actually succeeded.
+          // Empty string would otherwise overwrite any previously saved URL.
+          ...(contractPdfUrl ? { contractPdfUrl } : {}),
+          contractSignedDate: now,
           clientName: clientName,
           buildDetails: prefilledBuildDetails,
+          officeChecklists: autoCheckedChecklists,
           updatedAt: now,
           files: newFiles,
         });

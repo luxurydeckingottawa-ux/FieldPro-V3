@@ -72,6 +72,7 @@ import {
 } from 'lucide-react';
 import { OfficeAIAssistant } from '../components/OfficeAIAssistant';
 import { AIOfficeInsights } from '../components/AIOfficeInsights';
+import CustomerActionPanel from '../components/CustomerActionPanel';
 import { getCampaignTouches } from '../utils/dripCampaign';
 import { calculateEngagementTier } from '../utils/engagementScoring';
 import { generateBuildPassport } from '../utils/buildPassportGenerator';
@@ -941,6 +942,11 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                 )}
               </div>
             </section>
+
+            {/* Customer Action Required — office-controlled portal prompts */}
+            {!isEstimateStage && (
+              <CustomerActionPanel job={job} onUpdateJob={onUpdateJob} />
+            )}
 
             {/* AI Office Insights — bottom of sidebar */}
             {!isEstimateStage && (

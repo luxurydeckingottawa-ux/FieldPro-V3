@@ -7,7 +7,7 @@ import {
   CloudDrizzle, CalendarDays, Truck, Droplets,
   Wallet, AlertCircle, Zap, ShieldCheck, FileText, Receipt,
   Camera, History, Image, X, Send, Sparkles, Star, HelpCircle,
-  Archive, Shield, Award, FileCheck
+  Archive, Shield, Award, FileCheck, BellRing
 } from 'lucide-react';
 import { AIObjectionHelper } from '../components/AIObjectionHelper';
 import PortalPaymentsTab from '../components/PortalPaymentsTab';
@@ -129,27 +129,12 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
     }
   };
 
-  // 2. Customer Action Required
-  const getCustomerAction = () => {
-    switch (job.pipelineStage) {
-      case PipelineStage.JOB_SOLD:
-        return { action: "Review Design Plan", icon: <FileText className="w-4 h-4" />, status: "pending" };
-      case PipelineStage.ADMIN_SETUP:
-        return { action: "Confirm Gate Access", icon: <ShieldCheck className="w-4 h-4" />, status: "pending" };
-      case PipelineStage.PRE_PRODUCTION:
-        return { action: "Clear the Yard", icon: <Zap className="w-4 h-4" />, status: "pending" };
-      case PipelineStage.READY_TO_START:
-        return { action: "Payment is Due", icon: <FileText className="w-4 h-4" />, status: "pending" };
-      case PipelineStage.IN_FIELD:
-        return { action: "No Action Required", icon: <CheckCircle2 className="w-4 h-4" />, status: "complete" };
-      case PipelineStage.COMPLETION:
-        return { action: "Schedule Walkthrough", icon: <CalendarDays className="w-4 h-4" />, status: "pending" };
-      case PipelineStage.PAID_CLOSED:
-        return { action: "Leave a Review", icon: <Star className="w-4 h-4" />, status: "info" };
-      default:
-        return { action: "No Action Required", icon: <CheckCircle2 className="w-4 h-4" />, status: "complete" };
-    }
-  };
+  // 2. Customer Action Required — now driven entirely by the office-side panel.
+  // When office checks a preset or adds a custom entry, it lands in
+  // job.customerActionsRequired. When that array is empty, we show a neutral
+  // "No Action Required" pill (NO automatic stage-based defaults — Jack asked
+  // us to stop inventing actions that don't actually need to happen).
+  const activeCustomerActions = (job.customerActionsRequired || []).filter(a => !a.completedAt);
 
   // 4. Latest Field Update
   const getLatestFieldUpdate = () => {
@@ -240,7 +225,6 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   };
 
   const recentChange = getRecentChanges();
-  const customerAction = getCustomerAction();
   const latestFieldUpdate = getLatestFieldUpdate();
   const photoStory = getMilestonePhotoStory();
   const proactiveFaqs = getProactiveFAQs();
@@ -860,44 +844,47 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 </p>
               </div>
 
-              {/* Customer Action Required */}
-              <div 
-                
-                
-                
-                className={`rounded-3xl p-6 border shadow-sm flex items-center justify-between gap-4 ${
-                  customerAction.status === 'pending' 
-                    ? 'bg-amber-50 border-amber-100' 
-                    : customerAction.status === 'info'
-                    ? 'bg-blue-50 border-blue-100'
-                    : 'bg-[var(--brand-gold)]/5 border-[var(--brand-gold)]/10'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm ${
-                    customerAction.status === 'pending' 
-                      ? 'bg-white text-amber-600' 
-                      : customerAction.status === 'info'
-                      ? 'bg-white text-blue-600'
-                      : 'bg-white text-[var(--brand-gold)]'
-                  }`}>
-                    {customerAction.icon}
+              {/* Customer Action Required — driven by office-side panel. */}
+              {activeCustomerActions.length > 0 ? (
+                <div className="space-y-3">
+                  {activeCustomerActions.map((action, idx) => (
+                    <div
+                      key={action.id}
+                      className="rounded-3xl p-6 border shadow-sm flex items-center justify-between gap-4 bg-amber-50 border-amber-100"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm bg-white text-amber-600">
+                          <BellRing className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-amber-600">
+                            Customer Action Required
+                            {activeCustomerActions.length > 1 && (
+                              <span className="ml-2 text-amber-400">
+                                ({idx + 1} of {activeCustomerActions.length})
+                              </span>
+                            )}
+                          </p>
+                          <h4 className="text-base font-bold text-[#1A1A1A]">{action.label}</h4>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-amber-400" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-3xl p-6 border shadow-sm flex items-center gap-4 bg-[var(--brand-gold)]/5 border-[var(--brand-gold)]/10">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm bg-white text-[var(--brand-gold)]">
+                    <CheckCircle2 className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
-                      customerAction.status === 'pending' 
-                        ? 'text-amber-600' 
-                        : customerAction.status === 'info'
-                        ? 'text-blue-600'
-                        : 'text-[var(--brand-gold)]'
-                    }`}>Customer Action Required</p>
-                    <h4 className="text-base font-bold text-[#1A1A1A]">{customerAction.action}</h4>
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-[var(--brand-gold)]">
+                      Customer Action Required
+                    </p>
+                    <h4 className="text-base font-bold text-[#1A1A1A]">No Action Required</h4>
                   </div>
                 </div>
-                {customerAction.status === 'pending' && (
-                  <ChevronRight className="w-5 h-5 text-amber-400" />
-                )}
-              </div>
+              )}
 
               {/* AI Support Section */}
               <section className="mt-8">

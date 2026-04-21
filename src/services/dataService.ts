@@ -243,6 +243,8 @@ export function rowToJob(row: Record<string, unknown>): Job {
     notes: (row.notes as string) || undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     customerRequestedSwaps: (row.customer_requested_swaps as any) || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    customerActionsRequired: (row.customer_actions_required as any) || undefined,
     officeNotes: [], // loaded separately from job_notes table
     siteNotes: [],
     files: [], // loaded separately from job_files table
@@ -619,6 +621,8 @@ export const dataService = {
         officeNotes: 'office_notes',
         // Customer-initiated material swaps captured via portal
         customerRequestedSwaps: 'customer_requested_swaps',
+        // Office-controlled "Customer Action Required" prompts (portal)
+        customerActionsRequired: 'customer_actions_required',
       };
 
       for (const [camelKey, value] of Object.entries(updates)) {

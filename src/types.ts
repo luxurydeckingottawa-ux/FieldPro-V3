@@ -558,6 +558,27 @@ export interface Job {
 
   // Module: Invoices
   invoices?: Invoice[];
+
+  /**
+   * Office-controlled "Customer Action Required" prompts. When populated, the
+   * customer portal surfaces these as the active action(s) the customer must
+   * complete (e.g. "Ensure laneway is clear", "Clear backyard for material
+   * delivery", "Payment required"). Office toggles presets or adds custom
+   * prompts from the job detail sidebar; an empty array means no action is
+   * currently required (portal shows a clean "No Action Required" state).
+   *
+   * Why an array: lets us surface multiple asks at once (e.g. "Clear laneway"
+   * + "Payment required") without overwriting a still-outstanding item.
+   */
+  customerActionsRequired?: Array<{
+    id: string;
+    label: string;
+    createdAt: string;
+    /** The preset id if this entry was toggled from the preset list, otherwise 'custom'. */
+    preset?: string;
+    /** Set when office marks the action complete (kept for history; UI hides completed items). */
+    completedAt?: string;
+  }>;
 }
 
 export interface EstimateOption {
