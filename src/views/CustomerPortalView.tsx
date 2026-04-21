@@ -9,8 +9,8 @@ import {
   Camera, History, Image, X, Send, Sparkles, Star, HelpCircle,
   Archive, Shield, Award, FileCheck, BellRing
 } from 'lucide-react';
-import { AIObjectionHelper } from '../components/AIObjectionHelper';
 import PortalPaymentsTab from '../components/PortalPaymentsTab';
+import PortalChatPrompt from '../components/portal/PortalChatPrompt';
 import {
   getSevenDayForecast, getRainSince,
   type WeatherForecast, type DailyWeather, type WeatherCondition,
@@ -886,9 +886,20 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                 </div>
               )}
 
-              {/* AI Support Section */}
+              {/* ── Chat Prompt ─────────────────────────────────────────────────
+                  Replaces the old AI Sales Copilot / AIObjectionHelper. Shows a
+                  premium chat-style card wired straight into the office text
+                  chat — same thread the office sees in ChatView, so a message
+                  from the customer here drops directly into Jack's inbox.
+                  Clicking a suggested question pre-fills the chat input and
+                  opens the full Chat modal (showChat). */}
               <section className="mt-8">
-                <AIObjectionHelper job={job} />
+                <PortalChatPrompt
+                  job={job}
+                  currentSession={currentSession}
+                  onOpenChat={() => setShowChat(true)}
+                  onPrefillMessage={(text) => setChatMessage(text)}
+                />
               </section>
 
               {/* Milestone List */}
