@@ -1,20 +1,22 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Job, JobStatus, OfficeReviewStatus, PipelineStage, ForecastReviewStatus } from '../types';
 import { getJobIssues, JobIssue } from '../utils/issueLogic';
 import TimeAttendanceView from '../components/TimeAttendanceView';
 import { timeClockService } from '../services/TimeClockService';
 import { COMPANY } from '../config/company';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import {
   LayoutDashboard,
   Clock,
-  CheckCircle2, 
-  AlertCircle, 
-  FileCheck, 
+  CheckCircle2,
+  AlertCircle,
+  FileCheck,
   ChevronRight,
   User as UserIcon,
   Plus,
   Zap,
-  MapPin
+  MapPin,
+  MessageCircle
 } from 'lucide-react';
 
 interface OfficeDashboardViewProps {
@@ -22,9 +24,17 @@ interface OfficeDashboardViewProps {
   onSelectJob: (job: Job) => void;
   onViewResources: () => void;
   onNewJob: () => void;
+  onNavigateToChat?: () => void;
 }
 
-const StatCard: React.FC<{ label: string; value: number; icon: React.ReactNode; color: string }> = ({ label, value, icon, color }) => {
+const StatCard: React.FC<{
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  color: string;
+  onClick?: () => void;
+  pulse?: boolean;
+}> = ({ label, value, icon, color, onClick, pulse }) => {
   const colorMap: Record<string, string> = {
     emerald: 'text-[var(--brand-gold)] bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/20 shadow-[var(--brand-gold)]/5',
     blue: 'text-blue-500 bg-blue-500/10 border-blue-500/20 shadow-blue-500/5',
@@ -33,17 +43,35 @@ const StatCard: React.FC<{ label: string; value: number; icon: React.ReactNode; 
     rose: 'text-rose-500 bg-rose-500/10 border-rose-500/20 shadow-rose-500/5',
   };
 
+  const bgBlur: Record<string, string> = {
+    emerald: 'bg-[var(--brand-gold)]',
+    blue: 'bg-blue-500',
+    purple: 'bg-purple-500',
+    amber: 'bg-amber-500',
+    rose: 'bg-rose-500',
+  };
+
+  const Wrapper: any = onClick ? 'button' : 'div';
+
   return (
-    <div className="card-base p-6 group relative overflow-hidden">
-      <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl opacity-10 -mr-12 -mt-12 transition-all group-hover:opacity-30 ${color === 'emerald' ? 'bg-[var(--brand-gold)]' : color === 'blue' ? 'bg-blue-500' : color === 'purple' ? 'bg-purple-500' : color === 'amber' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+    <Wrapper
+      {...(onClick ? { onClick, type: 'button' } : {})}
+      className={`card-base p-6 group relative overflow-hidden text-left ${onClick ? 'w-full cursor-pointer hover:border-[var(--brand-gold)]/40 transition-colors' : ''}`}
+    >
+      <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl opacity-10 -mr-12 -mt-12 transition-all group-hover:opacity-30 ${bgBlur[color] || bgBlur.emerald}`} />
       <div className="flex items-center justify-between mb-4 relative z-10">
-        <div className={`p-3 rounded-2xl border ${colorMap[color] || colorMap.emerald}`}>
+        <div className={`p-3 rounded-2xl border ${colorMap[color] || colorMap.emerald} ${pulse && value > 0 ? 'animate-pulse' : ''}`}>
           {icon}
         </div>
         <span className="text-3xl font-display text-[var(--text-primary)]">{value}</span>
       </div>
-      <p className="font-label relative z-10">{label}</p>
-    </div>
+      <p className="font-label relative z-10 flex items-center gap-2">
+        {label}
+        {pulse && value > 0 && (
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+        )}
+      </p>
+    </Wrapper>
   );
 };
 
@@ -153,12 +181,50 @@ const JobCard: React.FC<{ job: Job; onClick: (job: Job) => void }> = ({ job, onC
   );
 };
 
-const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({ 
-  jobs, 
-  onSelectJob, 
-  onNewJob
+const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
+  jobs,
+  onSelectJob,
+  onNewJob,
+  onNavigateToChat,
 }) => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'attendance'>('dashboard');
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  // ─── Unread inbound SMS count ──────────────────────────────────────────
+  // Pulls from the unified `incoming_messages` table (same source as the
+  // per-job chat bubble) so the dashboard badge is always in sync with the
+  // customer file. Subscribes to realtime INSERT/UPDATE so a fresh inbound
+  // text bumps the badge instantly without a page refresh.
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !supabase) return;
+    let cancelled = false;
+
+    const fetchUnread = async () => {
+      const { count, error } = await supabase!
+        .from('incoming_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('direction', 'inbound')
+        .eq('read', false);
+      if (cancelled) return;
+      if (!error && typeof count === 'number') setUnreadMessages(count);
+    };
+
+    fetchUnread();
+
+    const channel = supabase!
+      .channel('dashboard-unread-sms')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'incoming_messages' },
+        () => { fetchUnread(); },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase!.removeChannel(channel);
+    };
+  }, []);
 
   // Summary Stats
   const stats = useMemo(() => {
@@ -252,30 +318,38 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
         </div>
 
         {/* Summary Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <StatCard 
-            label="Active Jobs" 
-            value={stats.active} 
-            icon={<LayoutDashboard className="w-4 h-4" />} 
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <StatCard
+            label="Active Jobs"
+            value={stats.active}
+            icon={<LayoutDashboard className="w-4 h-4" />}
             color="emerald"
           />
-          <StatCard 
-            label="In Field" 
-            value={stats.inField} 
-            icon={<MapPin className="w-4 h-4" />} 
+          <StatCard
+            label="In Field"
+            value={stats.inField}
+            icon={<MapPin className="w-4 h-4" />}
             color="blue"
           />
-          <StatCard 
-            label="Awaiting Review" 
-            value={stats.awaitingReview} 
-            icon={<FileCheck className="w-4 h-4" />} 
+          <StatCard
+            label="Awaiting Review"
+            value={stats.awaitingReview}
+            icon={<FileCheck className="w-4 h-4" />}
             color="purple"
           />
-          <StatCard 
-            label="Needs Attention" 
-            value={stats.needsAttention} 
-            icon={<AlertCircle className="w-4 h-4" />} 
+          <StatCard
+            label="Needs Attention"
+            value={stats.needsAttention}
+            icon={<AlertCircle className="w-4 h-4" />}
             color="rose"
+          />
+          <StatCard
+            label="New Messages"
+            value={unreadMessages}
+            icon={<MessageCircle className="w-4 h-4" />}
+            color="amber"
+            onClick={onNavigateToChat}
+            pulse
           />
         </div>
       </div>

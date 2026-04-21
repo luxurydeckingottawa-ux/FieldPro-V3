@@ -550,6 +550,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
               onSelectJob={handleSelectJob}
               onViewResources={() => navigateTo('resources')}
               onNewJob={() => { setNewJobInitialStage(PipelineStage.LEAD_IN); navigateTo('office-new-job'); }}
+              onNavigateToChat={() => navigateTo('chat')}
             />
           )}
           {view === 'stats' && currentUser && (
