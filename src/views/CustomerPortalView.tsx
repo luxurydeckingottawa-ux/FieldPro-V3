@@ -33,7 +33,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   onTrackEngagement,
   onBack,
 }) => {
-  const [activeTab, setActiveTab] = useState<'project' | 'timeline' | 'portal'>('project');
+  const [activeTab, setActiveTab] = useState<'status' | 'schedule' | 'scope' | 'payments' | 'documents'>('status');
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -701,24 +701,30 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
         {/* Navigation Tabs */}
         <div className="flex p-1 bg-[#F0F0F0] rounded-2xl overflow-x-auto no-scrollbar">
-          {(['project', 'timeline', 'portal'] as const).map((tab) => (
+          {([
+            { id: 'status',    label: 'Status' },
+            { id: 'schedule',  label: 'Schedule' },
+            { id: 'scope',     label: 'Scope' },
+            { id: 'payments',  label: 'Payments' },
+            { id: 'documents', label: 'Documents' },
+          ] as const).map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
               className={`flex-1 min-w-[80px] py-3 text-sm font-bold rounded-xl transition-all ${
-                activeTab === tab
+                activeTab === tab.id
                   ? 'bg-white text-[var(--brand-gold)] shadow-sm'
                   : 'text-[#666] hover:text-[#333]'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab.label}
             </button>
           ))}
         </div>
 
         {/* Tab Content */}
         <div className="min-h-[400px]">
-          {activeTab === 'project' && (
+          {activeTab === 'status' && (
             <div
 
 
@@ -1174,7 +1180,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </div>
           )}
 
-          {activeTab === 'timeline' && (
+          {activeTab === 'schedule' && (
             <div
 
 
@@ -1345,7 +1351,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </div>
           )}
 
-          {activeTab === 'project' && (
+          {activeTab === 'scope' && (
             <div
 
 
@@ -1520,7 +1526,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </div>
           )}
 
-          {activeTab === 'portal' && (
+          {activeTab === 'documents' && (
             <div
 
 
@@ -1681,11 +1687,11 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </div>
           )}
 
-          {activeTab === 'portal' && (
+          {activeTab === 'payments' && (
             <PortalPaymentsTab job={job} />
           )}
 
-          {activeTab === 'portal' && job.pipelineStage === PipelineStage.PAID_CLOSED && (
+          {activeTab === 'documents' && job.pipelineStage === PipelineStage.PAID_CLOSED && (
             <div
 
 
