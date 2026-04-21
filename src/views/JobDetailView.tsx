@@ -31,6 +31,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import QuickMessageModal from '../components/QuickMessageModal';
+import BuildSpecsPanel from '../components/BuildSpecsPanel';
 import { COMPANY } from '../config/company';
 
 interface JobDetailViewProps {
@@ -355,111 +356,17 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
             </section>
           )}
 
-          {/* ── Digital Work Order ── */}
-          {(job.buildDetails || job.digitalWorkOrder) && (
-            <section className="bg-[var(--card-bg)] rounded-[2rem] border border-[var(--border-color)] overflow-hidden">
-              <div className="px-6 py-5 border-b border-[var(--border-color)] flex items-center justify-between">
-                <div>
-                  <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em] mb-0.5 flex items-center gap-1.5">
-                    <Ruler size={11} /> Build Specifications
-                  </p>
-                  <h3 className="text-base font-black text-[var(--text-primary)] uppercase tracking-tight italic">Digital Work Order</h3>
-                </div>
-                <span className="text-[8px] font-black bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] border border-[var(--brand-gold)]/20 px-2.5 py-1 rounded uppercase tracking-widest">Handoff Ready</span>
-              </div>
-              <div className="divide-y divide-[var(--border-color)]">
-
-                {/* Foundation */}
-                {(job.buildDetails?.footings || job.digitalWorkOrder?.footingType) && (
-                  <div className="px-6 py-4">
-                    <p className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Site & Foundation</p>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                      {(job.buildDetails?.footings?.type || job.digitalWorkOrder?.footingType) && (
-                        <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Footing Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails?.footings?.type || job.digitalWorkOrder?.footingType}</p></div>
-                      )}
-                      {(job.buildDetails?.footings?.bracketType || job.digitalWorkOrder?.footingSystem) && (
-                        <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Bracket / System</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails?.footings?.bracketType || job.digitalWorkOrder?.footingSystem}</p></div>
-                      )}
-                      {job.estimatorIntake?.measureSheet?.footingCount > 0 && (
-                        <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Quantity</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.footingCount} pcs</p></div>
-                      )}
-                      <div className="col-span-2 flex flex-wrap gap-1.5">
-                        {job.buildDetails?.footings?.attachedToHouse && <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 uppercase tracking-widest">Attached to House</span>}
-                        {job.buildDetails?.footings?.floating && <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 uppercase tracking-widest">Floating</span>}
-                        {job.buildDetails?.sitePrep?.permitsRequired && <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 uppercase tracking-widest">Permit Required</span>}
-                        {job.buildDetails?.sitePrep?.locatesRequired && <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 uppercase tracking-widest">Locates Required</span>}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Framing */}
-                {job.buildDetails?.framing && (
-                  <div className="px-6 py-4">
-                    <p className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Framing & Structure</p>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                      {job.buildDetails.framing.type && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Frame Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.framing.type}</p></div>}
-                      {(job.buildDetails.framing.joistSize || job.buildDetails.framing.joistSpacing) && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Joists</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.framing.joistSize}{job.buildDetails.framing.joistSpacing ? ` @ ${job.buildDetails.framing.joistSpacing}` : ''}</p></div>}
-                      {job.buildDetails.framing.joistProtection && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Joist Protection</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails.framing.joistProtectionType || 'Yes'}</p></div>}
-                      {job.estimatorIntake?.measureSheet?.deckSqft > 0 && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Deck Area</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.deckSqft} sqft</p></div>}
-                    </div>
-                  </div>
-                )}
-
-                {/* Decking */}
-                {(job.buildDetails?.decking || job.digitalWorkOrder?.deckingMaterial) && (
-                  <div className="px-6 py-4">
-                    <p className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Decking</p>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                      <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Material</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails?.decking ? `${job.buildDetails.decking.brand} ${job.buildDetails.decking.type}`.trim() : job.digitalWorkOrder?.deckingMaterial}</p></div>
-                      {job.buildDetails?.decking?.color && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Colour</p><p className="text-sm font-bold text-[var(--brand-gold)]">{job.buildDetails.decking.color}</p></div>}
-                      {job.estimatorIntake?.measureSheet?.deckSqft > 0 && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Area</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.deckSqft} sqft</p></div>}
-                      {job.estimatorIntake?.measureSheet?.fasciaLf > 0 && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Fascia</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.fasciaLf} lf</p></div>}
-                    </div>
-                  </div>
-                )}
-
-                {/* Railing */}
-                {(job.buildDetails?.railing?.included || job.digitalWorkOrder?.railingType) && (
-                  <div className="px-6 py-4">
-                    <p className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Railing</p>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                      <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Type</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails?.railing?.type || job.digitalWorkOrder?.railingType}</p></div>
-                      {job.estimatorIntake?.measureSheet?.woodRailingLf > 0 && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Linear Feet</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.woodRailingLf} lf</p></div>}
-                    </div>
-                  </div>
-                )}
-
-                {/* Stairs */}
-                {(job.buildDetails?.stairs?.included || job.digitalWorkOrder?.stairs) && (
-                  <div className="px-6 py-4">
-                    <p className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Stairs</p>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                      <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Style</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.buildDetails?.stairs?.style || job.digitalWorkOrder?.stairs}</p></div>
-                      {job.estimatorIntake?.measureSheet?.stairLf > 0 && <div><p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">Steps</p><p className="text-sm font-bold text-[var(--text-primary)]">{job.estimatorIntake.measureSheet.stairLf}</p></div>}
-                    </div>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {job.buildDetails?.features?.customNotes && (
-                  <div className="px-6 py-4 bg-[var(--bg-secondary)]">
-                    <p className="text-[8px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] mb-2">Build Notes</p>
-                    <p className="text-xs text-[var(--text-secondary)] italic leading-relaxed">"{job.buildDetails.features.customNotes}"</p>
-                  </div>
-                )}
-
-                {/* Site Access (from digitalWorkOrder) */}
-                {(job.digitalWorkOrder?.siteAccessNotes || job.digitalWorkOrder?.parkingNotes) && (
-                  <div className="px-6 py-4">
-                    <p className="text-[8px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Site Access</p>
-                    {job.digitalWorkOrder.siteAccessNotes && <p className="text-xs text-[var(--text-secondary)] mb-2">{job.digitalWorkOrder.siteAccessNotes}</p>}
-                    {job.digitalWorkOrder.parkingNotes && <p className="text-[9px] text-[var(--text-tertiary)]">Parking: {job.digitalWorkOrder.parkingNotes}</p>}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
+          {/* ── Build Specifications / Digital Work Order ──
+              Same full DWO view the office sees, minus any pricing. Installers
+              and subcontractors see deck type, height, footings, framing, deck
+              board + colour, railing, stairs, skirting, electrical, site access
+              + delivery notes, scope notes & add-ons — everything they need to
+              execute. Subcontractors hide Schedule & Crew (they only know
+              their own assignment, not the full crew list). */}
+          <BuildSpecsPanel
+            job={job}
+            showScheduleAndCrew={user.role !== Role.SUBCONTRACTOR}
+          />
 
           {/* Handoff Package - Grouped for Scannability (legacy buildDetails card kept for older jobs) */}
           <div className="grid grid-cols-1 gap-10">
