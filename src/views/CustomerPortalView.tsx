@@ -1,15 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Job, JobStatus, PipelineStage, ChatSession, PortalEngagement } from '../types';
 import { COMPANY } from '../config/company';
-import { 
-  Clock, MapPin, CheckCircle2, Phone, MessageSquare, 
-  ChevronRight, Sun, Cloud, CloudRain, CalendarDays, Truck, 
-  Wallet, AlertCircle, Zap, ShieldCheck, FileText, Receipt, 
+import {
+  Clock, MapPin, CheckCircle2, Phone, MessageSquare,
+  ChevronRight, Sun, Cloud, CloudRain, CloudSnow, CloudLightning,
+  CloudDrizzle, CalendarDays, Truck, Droplets,
+  Wallet, AlertCircle, Zap, ShieldCheck, FileText, Receipt,
   Camera, History, Image, X, Send, Sparkles, Star, HelpCircle,
   Archive, Shield, Award, FileCheck
 } from 'lucide-react';
 import { AIObjectionHelper } from '../components/AIObjectionHelper';
 import PortalPaymentsTab from '../components/PortalPaymentsTab';
+import {
+  getSevenDayForecast, getRainSince,
+  type WeatherForecast, type DailyWeather, type WeatherCondition,
+  type HistoricalRainSummary,
+} from '../services/weatherService';
 
 import { format } from 'date-fns';
 
@@ -38,6 +44,14 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
+
+  // ── Weather state (Schedule tab) ────────────────────────────────────────
+  // Lazy-loaded the first time the user opens the Schedule tab. Uses the
+  // job's lat/long when present, else falls back to Ottawa.
+  const [forecast, setForecast] = useState<WeatherForecast | null>(null);
+  const [rainSinceBooking, setRainSinceBooking] = useState<HistoricalRainSummary | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
 
   const currentSession = chatSessions.find(s => s.jobId === job.id);
 
@@ -326,6 +340,66 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
     }
     
     return null;
+  };
+
+  // ── Weather: fetch forecast + rain-days-since-booking on Schedule open ─
+  useEffect(() => {
+    if (activeTab !== 'schedule') return;
+    if (forecast && rainSinceBooking) return; // already loaded
+
+    setWeatherLoading(true);
+    setWeatherError(null);
+
+    // Use job lat/long when available so forecast reflects the actual site
+    const lat = job.latitude;
+    const lon = job.longitude;
+    const coords = (typeof lat === 'number' && typeof lon === 'number') ? { lat, lon } : undefined;
+
+    // "Since booking" = when the job was accepted (falls back to createdAt)
+    const bookingIso = job.acceptedDate
+      || (job.acceptedBuildSummary as { acceptedDate?: string } | undefined)?.acceptedDate
+      || job.updatedAt
+      || new Date().toISOString();
+
+    Promise.all([
+      getSevenDayForecast(coords?.lat, coords?.lon),
+      getRainSince(bookingIso, coords?.lat, coords?.lon),
+    ])
+      .then(([fc, rain]) => {
+        setForecast(fc);
+        setRainSinceBooking(rain);
+      })
+      .catch(err => {
+        console.warn('[portal-weather] failed to load weather', err);
+        setWeatherError('Weather data is temporarily unavailable.');
+      })
+      .finally(() => setWeatherLoading(false));
+    // Intentionally only refire when the tab switches in — the coords/booking
+    // don't change mid-session, and the service layer handles its own caching.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  // Quick lookup: date (YYYY-MM-DD) → daily weather, for the calendar icons
+  const weatherByDate = React.useMemo(() => {
+    const map = new Map<string, DailyWeather>();
+    (forecast?.days || []).forEach(d => map.set(d.date, d));
+    return map;
+  }, [forecast]);
+
+  // Condition → tiny lucide icon. `size` is a pixel number forwarded directly
+  // to lucide — avoids Tailwind JIT's "can't statically resolve dynamic class"
+  // trap you'd hit with something like `w-[${size}px]`.
+  const weatherIconFor = (condition: WeatherCondition, size = 14) => {
+    switch (condition) {
+      case 'clear':      return <Sun size={size} className="text-amber-500" />;
+      case 'partly':     return <Cloud size={size} className="text-slate-400" />;
+      case 'cloudy':     return <Cloud size={size} className="text-slate-500" />;
+      case 'rain-light': return <CloudDrizzle size={size} className="text-blue-400" />;
+      case 'rain':       return <CloudRain size={size} className="text-blue-500" />;
+      case 'snow':       return <CloudSnow size={size} className="text-sky-300" />;
+      case 'storm':      return <CloudLightning size={size} className="text-indigo-500" />;
+      default:           return <Sun size={size} className="text-amber-500" />;
+    }
   };
 
   const getCustomerFriendlyStatus = (status: JobStatus, stage: PipelineStage) => {
@@ -1206,11 +1280,52 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                         <p className="text-[10px] text-[#999] font-bold uppercase tracking-wider">Local Build Conditions</p>
                       </div>
                     </div>
-                    <div className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/5 px-3 py-1 rounded-full border border-[var(--brand-gold)]/10">
-                      Optimal
-                    </div>
+                    {(() => {
+                      const days = forecast?.days ?? [];
+                      const rainy = days.filter(d => d.condition === 'rain' || d.condition === 'storm').length;
+                      const label = rainy === 0 ? 'Optimal' : rainy <= 2 ? 'Mixed' : 'Weather Risk';
+                      const cls = rainy === 0
+                        ? 'text-[var(--brand-gold)] bg-[var(--brand-gold)]/5 border-[var(--brand-gold)]/10'
+                        : rainy <= 2
+                        ? 'text-amber-600 bg-amber-50 border-amber-100'
+                        : 'text-blue-600 bg-blue-50 border-blue-100';
+                      return (
+                        <div className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${cls}`}>
+                          {label}
+                        </div>
+                      );
+                    })()}
                   </div>
 
+                  {/* Daily strip */}
+                  {weatherLoading && (!forecast || !forecast.days.length) && (
+                    <div className="text-xs text-[#999] py-8 text-center">Loading forecast…</div>
+                  )}
+                  {weatherError && !forecast && (
+                    <div className="text-xs text-[#999] py-8 text-center">{weatherError}</div>
+                  )}
+                  {forecast && forecast.days.length > 0 && (
+                    <div className="grid grid-cols-7 gap-1.5">
+                      {forecast.days.map((d, i) => {
+                        const dateObj = new Date(d.date + 'T00:00:00');
+                        const dayShort = i === 0
+                          ? 'Today'
+                          : dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                        return (
+                          <div
+                            key={d.date}
+                            className="flex flex-col items-center gap-1 py-2 rounded-xl hover:bg-[#F9F9F9] transition-colors"
+                            title={`${Math.round(d.tempMinC)}° / ${Math.round(d.tempMaxC)}° · ${d.precipProbabilityPct}% chance · ${d.precipMm.toFixed(1)} mm`}
+                          >
+                            <p className="text-[9px] font-black text-[#999] uppercase tracking-widest">{dayShort}</p>
+                            {weatherIconFor(d.condition, 20)}
+                            <p className="text-[10px] font-bold text-[#1A1A1A]">{Math.round(d.tempMaxC)}°</p>
+                            <p className="text-[8px] text-[#999]">{d.precipProbabilityPct}%</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm space-y-6">
@@ -1230,9 +1345,9 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                       <span className="text-sm font-bold text-[#1A1A1A]">#{queueInfo?.position || 0} of {queueInfo?.total || 0}</span>
                     </div>
                     <div className="h-2 bg-[#F0F0F0] rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-500 rounded-full" 
-                        style={{ width: `${((queueInfo?.total || 1) - (queueInfo?.position || 0)) / (queueInfo?.total || 1) * 100}%` }} 
+                      <div
+                        className="h-full bg-blue-500 rounded-full"
+                        style={{ width: `${((queueInfo?.total || 1) - (queueInfo?.position || 0)) / (queueInfo?.total || 1) * 100}%` }}
                       />
                     </div>
                     <p className="text-[10px] text-[#999] leading-relaxed italic">
@@ -1241,6 +1356,72 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* ── Rain-Days Meter — transparency on weather-driven delays ── */}
+              {/* Counts observed rain days (>= 1mm) between when the project  */}
+              {/* was booked and today, with a light "heavy rain" sub-count.  */}
+              {/* Answers the "why is my project taking longer?" question     */}
+              {/* with hard data instead of hand-waving.                      */}
+              {rainSinceBooking && rainSinceBooking.totalDays > 0 && (
+                <div className="bg-white rounded-3xl p-6 border border-[#F0F0F0] shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                        <Droplets className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-[#1A1A1A]">Rain Since Your Project Was Booked</h4>
+                        <p className="text-[10px] text-[#999] font-bold uppercase tracking-wider">Weather Transparency Meter</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                      {rainSinceBooking.totalDays} Days Tracked
+                    </span>
+                  </div>
+
+                  {/* Big number + sub-counts */}
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="p-4 bg-blue-50/60 rounded-2xl border border-blue-100">
+                      <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">Rain Days</p>
+                      <p className="text-3xl font-black text-blue-700">{rainSinceBooking.rainDays}</p>
+                      <p className="text-[10px] text-blue-600/80 mt-1">≥ 1 mm</p>
+                    </div>
+                    <div className="p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100">
+                      <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1">Heavy Rain</p>
+                      <p className="text-3xl font-black text-indigo-700">{rainSinceBooking.heavyRainDays}</p>
+                      <p className="text-[10px] text-indigo-600/80 mt-1">≥ 10 mm</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Total</p>
+                      <p className="text-3xl font-black text-slate-700">{rainSinceBooking.totalPrecipMm.toFixed(0)}<span className="text-sm font-bold text-slate-400 ml-1">mm</span></p>
+                      <p className="text-[10px] text-slate-500 mt-1">Cumulative</p>
+                    </div>
+                  </div>
+
+                  {/* Proportional rain-vs-dry bar */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-black text-[#999] uppercase tracking-widest">Dry vs. Rainy Days</span>
+                      <span className="text-[#666]">
+                        {rainSinceBooking.totalDays - rainSinceBooking.rainDays} dry · {rainSinceBooking.rainDays} rainy
+                      </span>
+                    </div>
+                    <div className="h-2 bg-[#F0F0F0] rounded-full overflow-hidden flex">
+                      <div
+                        className="h-full bg-amber-400"
+                        style={{ width: `${((rainSinceBooking.totalDays - rainSinceBooking.rainDays) / rainSinceBooking.totalDays) * 100}%` }}
+                      />
+                      <div
+                        className="h-full bg-blue-500"
+                        style={{ width: `${(rainSinceBooking.rainDays / rainSinceBooking.totalDays) * 100}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-[#999] leading-relaxed italic mt-2">
+                      Rain days before or during your start window push the full production schedule forward as we catch up on active builds. We track them so you can see exactly where the time has gone.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Traditional Calendar View */}
               <div className="bg-white rounded-3xl border border-[#F0F0F0] overflow-hidden shadow-sm">
@@ -1276,22 +1457,33 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   <div className="grid grid-cols-7 gap-px bg-[#F0F0F0] border border-[#F0F0F0] rounded-2xl overflow-hidden">
                     {calendarDays.map((day, i) => {
                       const jobInfo = getJobAtDate(day.date);
-                      
+                      // Open-Meteo only returns 7 days forward from today; cell
+                      // gets an icon only when we have a matching forecast entry.
+                      const isoKey = `${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, '0')}-${String(day.date.getDate()).padStart(2, '0')}`;
+                      const dayWeather = weatherByDate.get(isoKey);
+
                       return (
-                        <div 
-                          key={i} 
+                        <div
+                          key={i}
                           className={`min-h-[80px] bg-white p-2 relative group transition-colors ${
                             !day.isCurrentMonth ? 'bg-slate-50/50' : ''
                           }`}
                         >
                           <div className="flex justify-between items-start mb-1">
                             <span className={`text-[10px] font-bold ${
-                              day.isToday ? 'bg-[var(--brand-gold)] text-white w-5 h-5 rounded-full flex items-center justify-center' : 
+                              day.isToday ? 'bg-[var(--brand-gold)] text-white w-5 h-5 rounded-full flex items-center justify-center' :
                               day.isCurrentMonth ? 'text-[#333]' : 'text-[#CCC]'
                             }`}>
                               {day.date.getDate()}
                             </span>
-
+                            {dayWeather && day.isCurrentMonth && (
+                              <span
+                                title={`${Math.round(dayWeather.tempMaxC)}°/${Math.round(dayWeather.tempMinC)}° · ${dayWeather.precipProbabilityPct}% precip`}
+                                className="opacity-80"
+                              >
+                                {weatherIconFor(dayWeather.condition, 12)}
+                              </span>
+                            )}
                           </div>
 
                           {jobInfo && (
@@ -1429,97 +1621,297 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               )}
 
               <div className="grid grid-cols-1 gap-6">
-                {job.buildDetails ? (
+                {(job.buildDetails || job.digitalWorkOrder) ? (
                   <>
-                    {/* Main Selections */}
+                    {/* ── PRIMARY SELECTIONS — mirrors the Digital Work Order ─── */}
+                    {/* Single source of truth for what's getting built. Same fields   */}
+                    {/* the office sees on OfficeJobDetailView's Digital Work Order.   */}
                     <div className="bg-white rounded-3xl border border-[#F0F0F0] shadow-sm overflow-hidden">
-                      <div className="p-6 border-b border-[#F0F0F0] bg-[#F9F9F9]">
-                        <h4 className="text-xs font-black text-[#999] uppercase tracking-[0.2em]">Primary Selections</h4>
-                      </div>
-                      <div className="p-0 divide-y divide-[#F0F0F0]">
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                              <Zap className="w-5 h-5 text-[var(--brand-gold)]" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] text-[#999] uppercase font-black tracking-wider mb-1">Decking</p>
-                              <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails.decking?.brand} {job.buildDetails.decking?.type}</p>
-                              <p className="text-xs text-[#666] mt-0.5">Color: <span className="text-[var(--brand-gold)] font-bold">{job.buildDetails.decking?.color}</span></p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                              <ShieldCheck className="w-5 h-5 text-[var(--brand-gold)]" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] text-[#999] uppercase font-black tracking-wider mb-1">Framing</p>
-                              <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails.framing?.type}</p>
-                              <p className="text-xs text-[#666] mt-0.5">{job.buildDetails.framing?.joistSize} @ {job.buildDetails.framing?.joistSpacing}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                              <CheckCircle2 className="w-5 h-5 text-[var(--brand-gold)]" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] text-[#999] uppercase font-black tracking-wider mb-1">Railing</p>
-                              <p className="text-sm font-bold text-[#1A1A1A]">
-                                {job.buildDetails.railing?.included ? job.buildDetails.railing.type : 'None Included'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                              <History className="w-5 h-5 text-[var(--brand-gold)]" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] text-[#999] uppercase font-black tracking-wider mb-1">Stairs & Skirting</p>
-                              <p className="text-sm font-bold text-[#1A1A1A]">
-                                {job.buildDetails.stairs?.included ? `${job.buildDetails.stairs.style} Stairs` : 'No Stairs'}
-                              </p>
-                              <p className="text-xs text-[#666] mt-0.5">
-                                {job.buildDetails.skirting?.included ? `Skirting: ${job.buildDetails.skirting.type}` : 'No Skirting'}
-                              </p>
-                            </div>
-                          </div>
+                      <div className="p-6 border-b border-[#F0F0F0] bg-[#F9F9F9] flex items-center justify-between">
+                        <div>
+                          <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em] mb-0.5">Build Specifications</p>
+                          <h4 className="text-base font-black text-[#1A1A1A] tracking-tight">Primary Selections</h4>
                         </div>
+                        <span className="text-[8px] font-black bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] border border-[var(--brand-gold)]/20 px-2.5 py-1 rounded uppercase tracking-widest">
+                          Verified
+                        </span>
+                      </div>
+
+                      <div className="divide-y divide-[#F0F0F0]">
+                        {/* Site & Foundation */}
+                        {(job.buildDetails?.footings?.type || job.digitalWorkOrder?.footingType || job.digitalWorkOrder?.footingSystem || job.buildDetails?.sitePrep?.permitsRequired) && (
+                          <div className="px-6 py-5">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Site & Foundation</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                              {(job.buildDetails?.footings?.type || job.digitalWorkOrder?.footingType) && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Footing Type</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails?.footings?.type || job.digitalWorkOrder?.footingType}</p>
+                                </div>
+                              )}
+                              {(job.buildDetails?.footings?.bracketType || job.digitalWorkOrder?.footingSystem) && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Bracket / System</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails?.footings?.bracketType || job.digitalWorkOrder?.footingSystem}</p>
+                                </div>
+                              )}
+                              {job.buildDetails?.sitePrep?.permitsRequired && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Permit</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">Required &amp; Secured</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Framing & Structure */}
+                        {(job.buildDetails?.framing?.type || job.digitalWorkOrder?.framingMaterial || job.digitalWorkOrder?.joistSize) && (
+                          <div className="px-6 py-5">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Framing &amp; Structure</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                              {(job.buildDetails?.framing?.type || job.digitalWorkOrder?.framingMaterial) && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Frame Type</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails?.framing?.type || job.digitalWorkOrder?.framingMaterial}</p>
+                                </div>
+                              )}
+                              {(job.buildDetails?.framing?.joistSize || job.digitalWorkOrder?.joistSize) && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Joists</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">
+                                    {job.buildDetails?.framing?.joistSize || job.digitalWorkOrder?.joistSize}
+                                    {(job.buildDetails?.framing?.joistSpacing || job.digitalWorkOrder?.joistSpacing) ? ` @ ${job.buildDetails?.framing?.joistSpacing || job.digitalWorkOrder?.joistSpacing}` : ''}
+                                  </p>
+                                </div>
+                              )}
+                              {(job.buildDetails?.framing?.joistProtection || job.digitalWorkOrder?.joistProtection) && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Joist Protection</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails?.framing?.joistProtectionType || 'Yes'}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Decking */}
+                        {(job.buildDetails?.decking?.brand || job.buildDetails?.decking?.type || job.digitalWorkOrder?.deckingMaterial || job.digitalWorkOrder?.deckingBrand) && (
+                          <div className="px-6 py-5">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Decking</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                              <div>
+                                <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Material</p>
+                                <p className="text-sm font-bold text-[#1A1A1A]">
+                                  {job.buildDetails?.decking
+                                    ? `${job.buildDetails.decking.brand ?? ''} ${job.buildDetails.decking.type ?? ''}`.trim()
+                                    : `${job.digitalWorkOrder?.deckingBrand ?? ''} ${job.digitalWorkOrder?.deckingMaterial ?? ''}`.trim()}
+                                </p>
+                              </div>
+                              {(job.buildDetails?.decking?.color || job.digitalWorkOrder?.deckingColor) && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Colour</p>
+                                  <p className="text-sm font-bold text-[var(--brand-gold)]">{job.buildDetails?.decking?.color || job.digitalWorkOrder?.deckingColor}</p>
+                                </div>
+                              )}
+                              {job.digitalWorkOrder?.deckSqFt && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Area</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.digitalWorkOrder.deckSqFt} sqft</p>
+                                </div>
+                              )}
+                              {job.digitalWorkOrder?.fastenerType && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Fasteners</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.digitalWorkOrder.fastenerType}</p>
+                                </div>
+                              )}
+                              {job.digitalWorkOrder?.pictureFrame && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Picture Frame</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.digitalWorkOrder.pictureFrameColor || 'Yes'}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Railing */}
+                        {(job.buildDetails?.railing?.included || job.digitalWorkOrder?.railingIncluded || job.digitalWorkOrder?.railingType || job.digitalWorkOrder?.railingSystem) && (
+                          <div className="px-6 py-5">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Railing</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                              <div>
+                                <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Type</p>
+                                <p className="text-sm font-bold text-[#1A1A1A]">
+                                  {job.buildDetails?.railing?.type || job.digitalWorkOrder?.railingType || job.digitalWorkOrder?.railingSystem || 'Included'}
+                                </p>
+                              </div>
+                              {job.digitalWorkOrder?.railingBrand && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Brand</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.digitalWorkOrder.railingBrand}</p>
+                                </div>
+                              )}
+                              {job.digitalWorkOrder?.railingLF && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Linear Feet</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.digitalWorkOrder.railingLF} lf</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Stairs */}
+                        {(job.buildDetails?.stairs?.included || job.digitalWorkOrder?.stairsIncluded || job.digitalWorkOrder?.stairs) && (
+                          <div className="px-6 py-5">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Stairs</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                              {(job.buildDetails?.stairs?.style || job.digitalWorkOrder?.stairs) && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Style</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails?.stairs?.style || job.digitalWorkOrder?.stairs}</p>
+                                </div>
+                              )}
+                              {job.buildDetails?.stairs?.type && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Type</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails.stairs.type}</p>
+                                </div>
+                              )}
+                              {job.digitalWorkOrder?.stairCount && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Steps</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.digitalWorkOrder.stairCount}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Skirting & Privacy */}
+                        {(job.buildDetails?.skirting?.included || job.digitalWorkOrder?.skirtingIncluded || job.buildDetails?.features?.privacyWall) && (
+                          <div className="px-6 py-5">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Skirting &amp; Privacy</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                              {(job.buildDetails?.skirting?.type || job.digitalWorkOrder?.skirtingType) && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Skirting</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails?.skirting?.type || job.digitalWorkOrder?.skirtingType}</p>
+                                </div>
+                              )}
+                              {job.digitalWorkOrder?.skirtingGate && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Skirting Gate</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">Included</p>
+                                </div>
+                              )}
+                              {(job.buildDetails?.features?.privacyWall || job.buildDetails?.features?.privacyWallType) && (
+                                <div>
+                                  <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Privacy Wall</p>
+                                  <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails?.features?.privacyWallType || 'Included'}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Electrical & Extras */}
+                        {(job.buildDetails?.electrical?.lightingIncluded || job.digitalWorkOrder?.lightingIncluded) && (
+                          <div className="px-6 py-5">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Electrical &amp; Extras</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                              <div>
+                                <p className="text-[10px] font-black text-[#999] uppercase tracking-widest mb-0.5">Lighting</p>
+                                <p className="text-sm font-bold text-[#1A1A1A]">{job.buildDetails?.electrical?.lightingType || job.digitalWorkOrder?.lightingType || 'Included'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Scope Notes — free-form notes captured on the DWO */}
+                        {(job.digitalWorkOrder?.scopeNotes || job.scopeSummary) && (
+                          <div className="px-6 py-5">
+                            <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em] mb-3">Scope Notes</p>
+                            <div className="bg-[#F9F9F9] p-4 rounded-2xl border border-[#F0F0F0] text-sm text-[#444] leading-relaxed">
+                              {job.digitalWorkOrder?.scopeNotes || job.scopeSummary}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Build Summary */}
+                    {/* ── BUILD SUMMARY — itemized quote from the contract ───── */}
+                    {/* Source of truth: job.liveEstimate.items (the itemized       */}
+                    {/* breakdown that prints on the contract PDF). If not yet     */}
+                    {/* populated, fall back to acceptedBuildSummary.addOns.       */}
                     <div className="bg-white rounded-3xl border border-[#F0F0F0] shadow-sm overflow-hidden">
-                      <div className="p-6 border-b border-[#F0F0F0] bg-[#F9F9F9]">
-                        <h4 className="text-xs font-black text-[#999] uppercase tracking-[0.2em]">Build Summary</h4>
+                      <div className="p-6 border-b border-[#F0F0F0] bg-[#F9F9F9] flex items-center justify-between">
+                        <div>
+                          <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em] mb-0.5">What You&apos;re Getting</p>
+                          <h4 className="text-base font-black text-[#1A1A1A] tracking-tight">Build Summary</h4>
+                        </div>
+                        {job.acceptedBuildSummary?.optionName && (
+                          <span className="text-[10px] font-black bg-[var(--brand-gold)]/5 text-[#8B7520] border border-[var(--brand-gold)]/20 px-3 py-1 rounded-full uppercase tracking-widest">
+                            {job.acceptedBuildSummary.optionName}
+                          </span>
+                        )}
                       </div>
-                      <div className="p-6 space-y-6">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                          <div className="space-y-1">
-                            <p className="text-[10px] text-[#999] uppercase font-black tracking-wider">Project Type</p>
-                            <p className="text-sm font-bold">{job.projectType}</p>
+
+                      {/* Itemized line items */}
+                      <div className="divide-y divide-[#F0F0F0]">
+                        {(() => {
+                          const items = job.liveEstimate?.items && job.liveEstimate.items.length > 0
+                            ? job.liveEstimate.items.map(it => ({ label: it.label, quantity: it.quantity, value: it.value }))
+                            : (job.acceptedBuildSummary?.addOns || []).map(a => ({ label: a.name, quantity: '', value: a.price }));
+
+                          if (items.length === 0) {
+                            return (
+                              <div className="p-8 text-center text-[#999] text-sm">
+                                Your itemized build summary will appear here once the contract is finalized.
+                              </div>
+                            );
+                          }
+
+                          return items.map((item, idx) => (
+                            <div key={idx} className="px-6 py-4 flex items-center justify-between gap-4">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-[#1A1A1A] truncate">{item.label}</p>
+                                {item.quantity && (
+                                  <p className="text-[10px] text-[#999] uppercase font-black tracking-wider mt-0.5">{item.quantity}</p>
+                                )}
+                              </div>
+                              <p className="text-sm font-black text-[#1A1A1A] font-mono whitespace-nowrap">
+                                ${Math.round(item.value).toLocaleString()}
+                              </p>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+
+                      {/* Totals footer */}
+                      <div className="px-6 py-5 bg-[#F9F9F9] border-t border-[#F0F0F0]">
+                        {job.liveEstimate && job.liveEstimate.discount > 0 && (
+                          <div className="flex items-center justify-between text-sm mb-2">
+                            <span className="text-[#666]">{job.liveEstimate.discountNote || 'Discount'}</span>
+                            <span className="font-bold text-emerald-600 font-mono">-${job.liveEstimate.discount.toLocaleString()}</span>
                           </div>
-                          <div className="space-y-1">
-                            <p className="text-[10px] text-[#999] uppercase font-black tracking-wider">Permits</p>
-                            <p className="text-sm font-bold">{job.buildDetails.sitePrep?.permitsRequired ? 'Required & Secured' : 'Not Required'}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-[10px] text-[#999] uppercase font-black tracking-wider">Lighting</p>
-                            <p className="text-sm font-bold">{job.buildDetails.electrical?.lightingIncluded ? job.buildDetails.electrical.lightingType : 'None'}</p>
-                          </div>
+                        )}
+                        <div className="flex items-center justify-between pt-2 border-t border-[#E5E5E5]">
+                          <span className="text-[11px] font-black text-[#999] uppercase tracking-[0.2em]">Total Project Investment</span>
+                          <span className="text-2xl font-black text-[var(--brand-gold)] font-mono">
+                            ${((job.acceptedBuildSummary?.totalPrice || job.totalAmount || job.estimateAmount) ?? 0).toLocaleString()}
+                          </span>
                         </div>
-                        
-                        <div className="space-y-2">
-                          <p className="text-[10px] text-[#999] uppercase font-black tracking-wider">Scope Details</p>
-                          <div className="bg-[#F9F9F9] p-5 rounded-2xl border border-[#F0F0F0] text-sm text-[#444] leading-relaxed italic">
-                            "{job.scopeSummary || 'No special instructions noted.'}"
-                          </div>
-                        </div>
+                        <p className="text-[10px] text-[#999] mt-1 italic text-right">+ HST</p>
                       </div>
                     </div>
                   </>
                 ) : (
                   <div className="bg-white rounded-3xl border border-dashed border-[#E5E5E5] p-12 text-center text-[#999]">
-                    <p className="text-sm font-medium">Scope details are being finalized by our design team.</p>
+                    <p className="text-sm font-medium">Scope details are being finalized by our team.</p>
+                    <p className="text-xs mt-2">Your Digital Work Order will appear here once your project details are confirmed.</p>
                   </div>
                 )}
               </div>
