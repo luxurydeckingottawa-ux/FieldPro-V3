@@ -41,7 +41,6 @@ const SUGGESTED_QUESTIONS: string[] = [
   "What's the plan if it rains?",
   'Do I need to be home during the build?',
   'Who will be on-site?',
-  'Can I change a material selection?',
 ];
 
 const PortalChatPrompt: React.FC<PortalChatPromptProps> = ({

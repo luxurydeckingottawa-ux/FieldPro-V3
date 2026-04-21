@@ -18,6 +18,7 @@ import {
   Check
 } from 'lucide-react';
 import { MESSAGE_TEMPLATES } from '../constants';
+import { COMPANY } from '../config/company';
 import { Job } from '../types';
 import { aiCommunicationService, ToneAction } from '../services/aiCommunicationService';
 
@@ -68,7 +69,8 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
   const applyTemplate = (template: typeof MESSAGE_TEMPLATES[0]) => {
     let text = template.content
       .replace('{clientName}', clientName)
-      .replace('{jobNumber}', job?.jobNumber || 'N/A');
+      .replace('{jobNumber}', job?.jobNumber || 'N/A')
+      .replace(/\{companyName\}/g, COMPANY.name);
     
     if (job?.plannedStartDate) {
       text = text.replace('{startDate}', new Date(job.plannedStartDate).toLocaleDateString());

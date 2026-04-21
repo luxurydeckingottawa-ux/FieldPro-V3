@@ -21,6 +21,7 @@ import {
   LiveEstimate, LiveEstimateItem,
 } from '../types';
 import { createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS } from '../constants';
+import { COMPANY } from '../config/company';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { dataService } from '../services/dataService';
 // estimatePdf pulls in jspdf (~150 KB). Lazy-loaded below inside the async PDF
@@ -226,7 +227,8 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
         if (automation) {
           const messageText = automation.messageTemplate
             .replace('{clientName}', jobToUpdate.clientName)
-            .replace('{jobNumber}', jobToUpdate.jobNumber);
+            .replace('{jobNumber}', jobToUpdate.jobNumber)
+            .replace(/\{companyName\}/g, COMPANY.name);
 
           const sessionId = `session-${jobToUpdate.id}`;
           setTimeout(() => {

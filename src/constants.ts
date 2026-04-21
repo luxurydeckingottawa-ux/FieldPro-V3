@@ -384,7 +384,7 @@ export const RATES = {
 export const DEFAULT_AUTOMATIONS: PipelineAutomation[] = [
   {
     stage: PipelineStage.JOB_SOLD,
-    messageTemplate: "Hi {clientName}, thank you for choosing ${COMPANY.name}! Your project {jobNumber} is now in our system. We will notify you once admin setup is complete.",
+    messageTemplate: "Hi {clientName}, thank you for choosing {companyName}! Your project {jobNumber} is now in our system. We will reach out if we need any additional information from you.",
     enabled: true
   },
   {
@@ -404,7 +404,7 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
     id: 't1',
     title: 'Start Date Confirmation',
     category: 'start',
-    content: "Hi {clientName}, this is ${COMPANY.name}. We are confirming your project {jobNumber} is scheduled to start on {startDate}. Our team will arrive between 8-9 AM. Please ensure the work area is clear.",
+    content: "Hi {clientName}, this is {companyName}. We are confirming your project {jobNumber} is scheduled to start on {startDate}. Our team will arrive between 8-9 AM. Please ensure the work area is clear.",
     type: 'both',
     stage: PipelineStage.READY_TO_START
   },
