@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Job, PipelineStage, DepositStatus, SoldWorkflowStatus, CustomerLifecycle, BuildDetails } from '../types';
 import SignaturePad from './SignaturePad';
 // NOTE: contractPdf and depositInvoice are lazy-loaded inside handleAccept below.
@@ -8,7 +8,7 @@ import { prefillBuildDetailsFromQuote } from '../utils/prefillBuildDetails';
 import { createDefaultBuildDetails, createDefaultOfficeChecklists } from '../constants';
 import {
   X, CheckCircle2, FileText, DollarSign,
-  Calendar, Shield, AlertCircle, Download, Loader2
+  Calendar, Shield, AlertCircle, Download, Loader2, Plus, Layers
 } from 'lucide-react';
 import { COMPANY } from '../config/company';
 
@@ -46,8 +46,48 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const amount = job.totalAmount || job.estimateAmount || 0;
-  const deposit = Math.round(amount * 0.3);
+  // Option / Add-on selection ─────────────────────────────────────────────
+  // Multi-option estimates need an explicit pick BEFORE contract is generated,
+  // because the contract scope + deposit are anchored to the chosen option.
+  // - `selectedOptionId` = the primary option (radio-style, exactly one)
+  // - `selectedAddOnIds` = optional extras the customer is also buying
+  // Defaults pull from any prior acceptance; otherwise first option / none.
+  const options = job.estimateData?.options || [];
+  const addOns = job.estimateData?.addOns || [];
+  const hasOptions = options.length > 0;
+  const hasMultipleOptions = options.length > 1;
+  const hasAddOns = addOns.length > 0;
+
+  const [selectedOptionId, setSelectedOptionId] = useState<string>(
+    job.acceptedOptionId || options[0]?.id || ''
+  );
+  const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>(
+    job.selectedAddOnIds || []
+  );
+
+  // Effective totals reflect the live picker selections so Project Summary
+  // and Payment Schedule update as the customer toggles add-ons.
+  const { amount, deposit, selectedOption, selectedAddOnObjs } = useMemo(() => {
+    const opt = options.find((o) => o.id === selectedOptionId) || options[0] || null;
+    const addOnObjs = addOns.filter((a) => selectedAddOnIds.includes(a.id));
+    const optionPrice = opt?.price ?? 0;
+    const addOnTotal = addOnObjs.reduce((sum, a) => sum + (a.price || 0), 0);
+    // Fall back to the existing job totals if there's no option model at all
+    // (legacy single-quote jobs that never went through multi-option flow).
+    const total = hasOptions
+      ? optionPrice + addOnTotal
+      : (job.totalAmount || job.estimateAmount || 0);
+    return {
+      amount: total,
+      deposit: Math.round(total * 0.3),
+      selectedOption: opt,
+      selectedAddOnObjs: addOnObjs,
+    };
+  }, [hasOptions, options, addOns, selectedOptionId, selectedAddOnIds, job.totalAmount, job.estimateAmount]);
+
+  const toggleAddOn = useCallback((id: string) => {
+    setSelectedAddOnIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  }, []);
 
   const handleAccept = useCallback(async () => {
     if (!signature) {
@@ -60,6 +100,10 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
     }
     if (!clientName.trim()) {
       setError('Please enter the client name.');
+      return;
+    }
+    if (hasOptions && !selectedOptionId) {
+      setError('Please choose which option the customer is accepting.');
       return;
     }
 
@@ -113,11 +157,17 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
         // Continue without invoice - don't block acceptance
       }
 
-      // Pre-fill build details from quote selections (non-critical)
+      // Pre-fill build details from quote selections (non-critical).
+      // When the customer picked a specific option here in the modal, prefer
+      // that option's name so the prefill reflects what they actually chose
+      // (not the historical default).
       let prefilledBuildDetails = job.buildDetails;
       try {
-        const selections = job.calculatorSelections || 
+        const baseSelections = job.calculatorSelections ||
           (job.acceptedBuildSummary ? { decking: job.acceptedBuildSummary.optionName } : {});
+        const selections = selectedOption
+          ? { ...baseSelections, decking: selectedOption.name, optionTitle: selectedOption.title }
+          : baseSelections;
         prefilledBuildDetails = prefillBuildDetailsFromQuote(
           job.buildDetails || createSafeBuildDetails(),
           selections,
@@ -177,6 +227,15 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
           depositStatus: DepositStatus.REQUESTED,
           depositRequestedDate: now,
           depositAmount: deposit,
+          // Persist the live-computed total so downstream invoicing,
+          // payment milestones, and portal numbers all reflect the
+          // option + add-ons the customer actually picked.
+          totalAmount: amount,
+          ...(selectedOption ? {
+            acceptedOptionId: selectedOption.id,
+            acceptedOptionName: selectedOption.name,
+          } : {}),
+          selectedAddOnIds,
           soldWorkflowStatus: SoldWorkflowStatus.AWAITING_DEPOSIT,
           estimateStatus: 'accepted',
           acceptedDate: now,
@@ -204,7 +263,7 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
     } finally {
       setIsProcessing(false);
     }
-  }, [signature, agreed, clientName, job, amount, deposit, onAccept, onClose]);
+  }, [signature, agreed, clientName, job, amount, deposit, hasOptions, selectedOption, selectedOptionId, selectedAddOnIds, onAccept, onClose]);
 
   if (!isOpen) return null;
 
@@ -233,6 +292,98 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
             <div className="flex items-center gap-3 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-sm">
               <AlertCircle className="w-5 h-5 shrink-0" />
               {error}
+            </div>
+          )}
+
+          {/* ── OPTION PICKER ─────────────────────────────────────────────
+              Shown before the contract whenever there's more than one option
+              on the estimate (or any add-ons). Customer / rep picks the
+              primary build option (radio) and any add-ons (checkboxes); the
+              Project Summary + Payment Schedule below recompute live so the
+              contract reflects exactly what's being accepted. */}
+          {(hasMultipleOptions || hasAddOns) && (
+            <div className="bg-[var(--bg-secondary)] rounded-xl p-5 border border-[var(--brand-gold)]/30">
+              <h3 className="text-xs font-bold text-[var(--brand-gold)] uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Layers className="w-3.5 h-3.5" /> Choose What's Being Accepted
+              </h3>
+
+              {hasMultipleOptions && (
+                <div className="space-y-2 mb-4">
+                  <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-2">Build Option (pick one)</p>
+                  {options.map((opt) => {
+                    const checked = selectedOptionId === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setSelectedOptionId(opt.id)}
+                        className={`w-full flex items-start justify-between gap-3 p-3.5 rounded-lg border-2 transition-all text-left ${
+                          checked
+                            ? 'border-[var(--brand-gold)] bg-[var(--brand-gold)]/10'
+                            : 'border-[var(--border-color)] bg-[var(--bg-primary)] hover:border-[var(--brand-gold)]/40'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className={`w-4 h-4 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center ${
+                            checked ? 'border-[var(--brand-gold)] bg-[var(--brand-gold)]' : 'border-[var(--border-color)]'
+                          }`}>
+                            {checked && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-[var(--text-primary)]">{opt.name}{opt.title && opt.title !== opt.name ? ` — ${opt.title}` : ''}</p>
+                            {opt.description && (
+                              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 leading-snug">{opt.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <p className={`text-sm font-bold shrink-0 ${checked ? 'text-[var(--brand-gold)]' : 'text-[var(--text-primary)]'}`}>
+                          ${opt.price.toLocaleString()}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {hasAddOns && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-2 flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> Add-Ons (optional, multi-select)
+                  </p>
+                  {addOns.map((addOn) => {
+                    const checked = selectedAddOnIds.includes(addOn.id);
+                    return (
+                      <button
+                        key={addOn.id}
+                        type="button"
+                        onClick={() => toggleAddOn(addOn.id)}
+                        className={`w-full flex items-start justify-between gap-3 p-3 rounded-lg border transition-all text-left ${
+                          checked
+                            ? 'border-[var(--brand-gold)] bg-[var(--brand-gold)]/8'
+                            : 'border-[var(--border-color)] bg-[var(--bg-primary)] hover:border-[var(--brand-gold)]/40'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className={`w-4 h-4 rounded border-2 mt-0.5 shrink-0 flex items-center justify-center ${
+                            checked ? 'border-[var(--brand-gold)] bg-[var(--brand-gold)]' : 'border-[var(--border-color)]'
+                          }`}>
+                            {checked && <CheckCircle2 className="w-3 h-3 text-white" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">{addOn.name}</p>
+                            {addOn.description && (
+                              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 leading-snug">{addOn.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <p className={`text-sm font-bold shrink-0 ${checked ? 'text-[var(--brand-gold)]' : 'text-[var(--text-primary)]'}`}>
+                          +${addOn.price.toLocaleString()}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
