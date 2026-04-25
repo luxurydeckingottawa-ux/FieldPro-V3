@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 
 import { Job, User, Role, ScheduleStatus, FieldScheduleForecast } from '../types';
 import { APP_USERS } from '../constants';
@@ -64,29 +64,49 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
   const isAdminOrManager = user.role === Role.ADMIN;
   const isFieldUser = user.role === Role.FIELD_EMPLOYEE || user.role === Role.SUBCONTRACTOR;
 
-  // Field-side form state
-  const [forecastStatus, setForecastStatus] = useState<ScheduleStatus>(job.fieldForecast?.status || ScheduleStatus.ON_SCHEDULE);
-  const [daysRemaining, setDaysRemaining] = useState<number>(job.fieldForecast?.estimatedDaysRemaining || job.plannedDurationDays || 0);
-  const [delayReason, setDelayReason] = useState<string>(job.fieldForecast?.delayReason || '');
-  const [forecastNote, setForecastNote] = useState<string>(job.fieldForecast?.note || '');
+  // Daily Schedule Check-In gate.
+  //
+  // Field user MUST explicitly select a status every visit — no auto-default
+  // to ON_SCHEDULE. If they're BEHIND, days-remaining + reason are required
+  // before the workflow can open. The gate lives at the file level (not
+  // inside the workflow) so resumed-mid-stage jobs still hit it.
+  //
+  // If they already submitted earlier today, we pre-fill their selection so
+  // they can confirm or change without retyping. If they haven't, status
+  // starts unselected and the Resume button stays disabled.
+  const updatedToday =
+    !!job.fieldForecast?.updatedAt &&
+    new Date(job.fieldForecast.updatedAt).toDateString() ===
+      new Date().toDateString();
+
+  const [forecastStatus, setForecastStatus] = useState<ScheduleStatus | null>(
+    () => (updatedToday ? job.fieldForecast?.status || null : null)
+  );
+  const [daysRemaining, setDaysRemaining] = useState<number>(
+    () =>
+      updatedToday && job.fieldForecast?.estimatedDaysRemaining !== undefined
+        ? job.fieldForecast.estimatedDaysRemaining
+        : job.plannedDurationDays || 0
+  );
+  const [delayReason, setDelayReason] = useState<string>(() =>
+    updatedToday ? job.fieldForecast?.delayReason || '' : ''
+  );
+  const [forecastNote, setForecastNote] = useState<string>(() =>
+    updatedToday ? job.fieldForecast?.note || '' : ''
+  );
   const [isUpdatingForecast, setIsUpdatingForecast] = useState(false);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageType, setMessageType] = useState<'sms' | 'email'>('sms');
 
-  // Daily Schedule Check-In gate.
-  // Field user MUST update schedule today before they can open the workflow.
-  // Forces a fresh status every day they show up — without it, opening on day
-  // 3 would jump straight to the checklist and the office never hears how
-  // things are tracking. The gate lives at the file level (not inside the
-  // workflow itself) so resumed-mid-day jobs still hit it.
-  const hasUpdatedScheduleToday = useMemo(() => {
-    if (!job.fieldForecast?.updatedAt) return false;
-    return new Date(job.fieldForecast.updatedAt).toDateString() === new Date().toDateString();
-  }, [job.fieldForecast?.updatedAt]);
-
-  const scheduleGateBlocked = isFieldUser && !hasUpdatedScheduleToday;
+  // Validation: status must be picked. If BEHIND, days > 0 AND reason set.
+  const isBehind = forecastStatus === ScheduleStatus.BEHIND;
+  const canResume = isFieldUser
+    ? forecastStatus !== null &&
+      (!isBehind || (daysRemaining > 0 && !!delayReason))
+    : true;
 
   const handleSubmitDailyCheckIn = (openWorkflowAfter: boolean) => {
+    if (!forecastStatus) return; // safety \u2014 button disabled when null
     setIsUpdatingForecast(true);
     onUpdateFieldForecast?.(job.id, {
       status: forecastStatus,
@@ -244,158 +264,166 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
           </div>
         </header>
 
-        {/* ── Daily Schedule Check-In Gate (field users only) ──
-            Lives at the file level so resumed mid-stage workflows still hit
-            it. Field user MUST submit today's status before the workflow
-            opens. Pre-populates days-remaining with the office's planned
-            duration so they have an anchor to compare against. */}
+        {/* ── Schedule + Daily Check-In (field users only) ──
+            Single unified card. Office plan (start/finish/duration) + today\u2019s
+            check-in form + Resume button — all in one box. Status MUST be
+            explicitly picked every visit (no auto-default). If BEHIND, days
+            and reason are required before the workflow opens. */}
         {isFieldUser && (
           <section
             className={`bg-[var(--card-bg)] border-2 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden transition-all ${
-              scheduleGateBlocked
-                ? 'border-amber-500/40 ring-4 ring-amber-500/10'
-                : 'border-emerald-500/30'
+              canResume
+                ? 'border-[var(--brand-gold)]/30'
+                : 'border-amber-500/40 ring-4 ring-amber-500/10'
             }`}
           >
             <div
               className={`absolute top-0 right-0 w-96 h-96 blur-[100px] -mr-48 -mt-48 pointer-events-none ${
-                scheduleGateBlocked ? 'bg-amber-500/10' : 'bg-emerald-500/5'
+                canResume ? 'bg-[var(--brand-gold)]/5' : 'bg-amber-500/10'
               }`}
             />
 
             <div className="relative z-10 space-y-8">
-              {/* Header row */}
-              <div className="flex items-start justify-between flex-wrap gap-6">
+              {/* Header */}
+              <div className="flex items-start justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-5">
                   <div
                     className={`p-4 rounded-2xl border ${
-                      scheduleGateBlocked
-                        ? 'bg-amber-500/10 border-amber-500/30 animate-pulse'
-                        : 'bg-emerald-500/10 border-emerald-500/30'
+                      canResume
+                        ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/30'
+                        : 'bg-amber-500/10 border-amber-500/30 animate-pulse'
                     }`}
                   >
-                    {scheduleGateBlocked ? (
-                      <Lock className="w-7 h-7 text-amber-500" />
+                    {canResume ? (
+                      <CalendarClock className="w-7 h-7 text-[var(--brand-gold)]" />
                     ) : (
-                      <CheckCircle2 className="w-7 h-7 text-emerald-500" />
+                      <Lock className="w-7 h-7 text-amber-500" />
                     )}
                   </div>
                   <div>
                     <p
                       className={`text-[10px] font-black uppercase tracking-[0.3em] mb-2 ${
-                        scheduleGateBlocked ? 'text-amber-500' : 'text-emerald-500'
+                        canResume ? 'text-[var(--brand-gold)]' : 'text-amber-500'
                       }`}
                     >
-                      {scheduleGateBlocked
-                        ? 'Required Before Workflow'
-                        : 'Today\u2019s Check-In Logged'}
+                      {canResume
+                        ? 'Schedule & Today\u2019s Check-In'
+                        : 'Confirm Status to Continue'}
                     </p>
                     <h2 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] uppercase italic tracking-tight leading-none">
                       Daily Schedule Check-In
                     </h2>
                   </div>
                 </div>
-
-                {/* Office estimate badge */}
-                <div className="px-6 py-4 rounded-2xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/30">
-                  <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em] mb-1.5 flex items-center gap-2">
-                    <CalendarClock size={11} /> Office Estimate
-                  </p>
-                  <p className="text-3xl font-black text-[var(--brand-gold)] italic leading-none">
-                    {job.plannedDurationDays || 0}
-                    <span className="text-xs font-bold normal-case tracking-tight ml-2 text-[var(--brand-gold)]/70">
-                      day{(job.plannedDurationDays || 0) === 1 ? '' : 's'} planned
+                {updatedToday && job.fieldForecast && (
+                  <div className="px-4 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">
+                      Last update{' '}
+                      {new Date(job.fieldForecast.updatedAt).toLocaleTimeString(
+                        [],
+                        { hour: '2-digit', minute: '2-digit' }
+                      )}
                     </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Office Plan (Start / Finish / Estimate) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-5 bg-[var(--bg-secondary)] rounded-2xl border border-[var(--card-border)]">
+                  <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-[0.25em] mb-2 flex items-center gap-1.5">
+                    <Calendar size={10} className="text-[var(--brand-gold)]" /> Start
+                  </p>
+                  <p className="text-base font-black text-[var(--text-primary)]">
+                    {job.plannedStartDate
+                      ? new Date(job.plannedStartDate).toLocaleDateString()
+                      : 'TBD'}
+                  </p>
+                </div>
+                <div className="p-5 bg-[var(--bg-secondary)] rounded-2xl border border-[var(--card-border)]">
+                  <p className="text-[9px] font-black text-[var(--muted-text)] uppercase tracking-[0.25em] mb-2 flex items-center gap-1.5">
+                    <Clock size={10} className="text-[var(--brand-gold)]" /> Finish
+                  </p>
+                  <p className="text-base font-black text-[var(--text-primary)]">
+                    {job.plannedFinishDate
+                      ? new Date(job.plannedFinishDate).toLocaleDateString()
+                      : 'TBD'}
+                  </p>
+                </div>
+                <div className="p-5 bg-[var(--brand-gold)]/10 rounded-2xl border border-[var(--brand-gold)]/30">
+                  <p className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em] mb-2 flex items-center gap-1.5">
+                    <CalendarClock size={10} /> Office Estimate
+                  </p>
+                  <p className="text-base font-black text-[var(--brand-gold)]">
+                    {job.plannedDurationDays || 0} day
+                    {(job.plannedDurationDays || 0) === 1 ? '' : 's'}
                   </p>
                 </div>
               </div>
 
-              {/* Already-updated state */}
-              {!scheduleGateBlocked && job.fieldForecast && (
-                <div className="p-6 bg-emerald-500/5 rounded-[2rem] border border-emerald-500/20 flex items-center justify-between flex-wrap gap-5">
-                  <div className="flex items-center gap-4">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
-                    <div>
-                      <p className="text-base font-black text-[var(--text-primary)] uppercase italic tracking-tight">
-                        {job.fieldForecast.status.replace('_', ' ')}
-                        {' \u2014 '}
-                        {job.fieldForecast.estimatedDaysRemaining} day
-                        {job.fieldForecast.estimatedDaysRemaining === 1 ? '' : 's'} remaining
-                      </p>
-                      <p className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.2em] mt-1">
-                        Updated{' '}
-                        {new Date(job.fieldForecast.updatedAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                        {job.fieldForecast.delayReason
-                          ? ` \u2022 ${job.fieldForecast.delayReason}`
-                          : ''}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => onOpenWorkflow(job)}
-                    className="flex items-center gap-3 px-8 py-5 bg-[var(--brand-gold)] text-black rounded-2xl text-xs font-black uppercase tracking-[0.3em] hover:opacity-90 transition-all shadow-[0_15px_40px_rgba(196,164,50,0.3)] active:scale-95"
-                  >
-                    <Play size={14} className="fill-current" />
-                    {job.currentStage > 0 ? 'Resume Workflow' : 'Start Workflow'}
-                  </button>
+              {/* Status Pills (no default \u2014 must pick) */}
+              <div>
+                <label className="text-[11px] font-black text-[var(--text-primary)] uppercase tracking-[0.25em] mb-4 block flex items-center gap-2">
+                  How are you tracking today?
+                  <span className="text-rose-500 text-sm">*</span>
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    ScheduleStatus.AHEAD,
+                    ScheduleStatus.ON_SCHEDULE,
+                    ScheduleStatus.BEHIND
+                  ].map(status => {
+                    const isAheadOpt = status === ScheduleStatus.AHEAD;
+                    const isOnOpt = status === ScheduleStatus.ON_SCHEDULE;
+                    const isBehindOpt = status === ScheduleStatus.BEHIND;
+                    const isSelected = forecastStatus === status;
+                    const selectedClass = isAheadOpt
+                      ? 'bg-emerald-500 text-black border-emerald-500 shadow-[0_0_25px_rgba(16,185,129,0.4)]'
+                      : isOnOpt
+                        ? 'bg-[var(--brand-gold)] text-black border-[var(--brand-gold)] shadow-[0_0_25px_rgba(196,164,50,0.4)]'
+                        : 'bg-amber-500 text-black border-amber-500 shadow-[0_0_25px_rgba(245,158,11,0.4)]';
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          setForecastStatus(status);
+                          // Clear delay reason when switching off BEHIND so
+                          // the gate doesn\u2019t hold a stale Weather reason
+                          // on a Now-On-Schedule check-in.
+                          if (status !== ScheduleStatus.BEHIND) {
+                            setDelayReason('');
+                          }
+                        }}
+                        className={`py-6 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border-2 transition-all flex flex-col items-center gap-2 ${
+                          isSelected
+                            ? selectedClass
+                            : 'bg-[var(--bg-secondary)] text-[var(--muted-text)] border-[var(--card-border)] hover:border-[var(--brand-gold)]/40 hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        {isAheadOpt && <TrendingUp size={20} />}
+                        {isOnOpt && <Check size={20} />}
+                        {isBehindOpt && <TrendingDown size={20} />}
+                        {status.replace('_', ' ')}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
 
-              {/* Blocked / form state */}
-              {scheduleGateBlocked && (
-                <>
-                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-2xl">
-                    {`Update today\u2019s status before opening the workflow. The office uses this to keep the official calendar in sync \u2014 if you\u2019re behind, they\u2019ll see it immediately and adjust.`}
+              {/* BEHIND-only block: required days + reason */}
+              {isBehind && (
+                <div className="p-6 bg-amber-500/5 rounded-2xl border border-amber-500/30 space-y-6">
+                  <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.25em] flex items-center gap-2">
+                    <AlertCircle size={12} /> Behind \u2014 Tell Office Why
                   </p>
-
-                  {/* Status pills */}
-                  <div>
-                    <label className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.25em] mb-4 block">
-                      How are we tracking today?
-                    </label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        ScheduleStatus.AHEAD,
-                        ScheduleStatus.ON_SCHEDULE,
-                        ScheduleStatus.BEHIND
-                      ].map(status => {
-                        const isAhead = status === ScheduleStatus.AHEAD;
-                        const isOn = status === ScheduleStatus.ON_SCHEDULE;
-                        const isBehind = status === ScheduleStatus.BEHIND;
-                        const isSelected = forecastStatus === status;
-                        const selectedClass = isAhead
-                          ? 'bg-emerald-500 text-black border-emerald-500 shadow-[0_0_25px_rgba(16,185,129,0.4)]'
-                          : isOn
-                            ? 'bg-[var(--brand-gold)] text-black border-[var(--brand-gold)] shadow-[0_0_25px_rgba(196,164,50,0.4)]'
-                            : 'bg-amber-500 text-black border-amber-500 shadow-[0_0_25px_rgba(245,158,11,0.4)]';
-                        return (
-                          <button
-                            key={status}
-                            onClick={() => setForecastStatus(status)}
-                            className={`py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border-2 transition-all flex flex-col items-center gap-2 ${
-                              isSelected
-                                ? selectedClass
-                                : 'bg-[var(--bg-secondary)] text-[var(--muted-text)] border-[var(--card-border)] hover:border-[var(--brand-gold)]/40 hover:text-[var(--text-primary)]'
-                            }`}
-                          >
-                            {isAhead && <TrendingUp size={18} />}
-                            {isOn && <Check size={18} />}
-                            {isBehind && <TrendingDown size={18} />}
-                            {status.replace('_', ' ')}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Days + reason */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.25em] flex items-center justify-between gap-2">
-                        <span>Days Remaining</span>
+                        <span>
+                          Days Remaining{' '}
+                          <span className="text-rose-500">*</span>
+                        </span>
                         <span className="text-[var(--brand-gold)] normal-case tracking-tight font-bold">
                           office said {job.plannedDurationDays || 0}
                         </span>
@@ -403,23 +431,31 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                       <input
                         type="number"
                         value={daysRemaining}
-                        onChange={e => setDaysRemaining(parseInt(e.target.value) || 0)}
-                        min={0}
-                        className="w-full bg-[var(--bg-secondary)] border border-[var(--card-border)] rounded-xl p-5 text-base font-black text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] transition-all shadow-inner"
+                        onChange={e =>
+                          setDaysRemaining(parseInt(e.target.value) || 0)
+                        }
+                        min={1}
+                        className={`w-full bg-[var(--card-bg)] border-2 rounded-xl p-5 text-base font-black text-[var(--text-primary)] focus:outline-none transition-all shadow-inner ${
+                          daysRemaining > 0
+                            ? 'border-[var(--card-border)] focus:border-[var(--brand-gold)]'
+                            : 'border-amber-500/40 focus:border-amber-500'
+                        }`}
                       />
                     </div>
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.25em]">
-                        {forecastStatus === ScheduleStatus.BEHIND
-                          ? 'Delay Reason'
-                          : 'Reason (if any)'}
+                        Reason <span className="text-rose-500">*</span>
                       </label>
                       <select
                         value={delayReason}
                         onChange={e => setDelayReason(e.target.value)}
-                        className="w-full bg-[var(--bg-secondary)] border border-[var(--card-border)] rounded-xl p-5 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)] appearance-none transition-all shadow-inner"
+                        className={`w-full bg-[var(--card-bg)] border-2 rounded-xl p-5 text-sm font-bold text-[var(--text-primary)] focus:outline-none appearance-none transition-all shadow-inner ${
+                          delayReason
+                            ? 'border-[var(--card-border)] focus:border-[var(--brand-gold)]'
+                            : 'border-amber-500/40 focus:border-amber-500'
+                        }`}
                       >
-                        <option value="">None / N/A</option>
+                        <option value="">Select reason\u2026</option>
                         <option value="Weather">Rain / Weather</option>
                         <option value="Materials">Material Delay</option>
                         <option value="Site Issue">Site Issue</option>
@@ -428,34 +464,42 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                       </select>
                     </div>
                   </div>
-
-                  {/* Note */}
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.25em]">
-                      Note for Office (optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Waiting on railing delivery, expecting tomorrow"
-                      value={forecastNote}
-                      onChange={e => setForecastNote(e.target.value)}
-                      className="w-full bg-[var(--bg-secondary)] border border-[var(--card-border)] rounded-xl p-5 text-sm font-medium text-[var(--text-primary)] placeholder:text-[var(--muted-text)]/40 focus:outline-none focus:border-[var(--brand-gold)] transition-all shadow-inner"
-                    />
-                  </div>
-
-                  {/* Submit + open workflow */}
-                  <button
-                    onClick={() => handleSubmitDailyCheckIn(true)}
-                    disabled={isUpdatingForecast}
-                    className="w-full py-7 bg-[var(--brand-gold)] text-black rounded-[2rem] text-sm font-black uppercase tracking-[0.3em] hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 shadow-[0_25px_60px_rgba(196,164,50,0.35)] flex items-center justify-center gap-4 group"
-                  >
-                    <Play size={16} className="fill-current group-hover:scale-110 transition-transform" />
-                    {isUpdatingForecast
-                      ? 'Saving\u2026'
-                      : `Save & ${job.currentStage > 0 ? 'Resume' : 'Start'} Workflow`}
-                  </button>
-                </>
+                </div>
               )}
+
+              {/* Note (always visible, optional) */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-[var(--muted-text)] uppercase tracking-[0.25em]">
+                  Note for Office (optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Waiting on railing delivery, expecting tomorrow"
+                  value={forecastNote}
+                  onChange={e => setForecastNote(e.target.value)}
+                  className="w-full bg-[var(--bg-secondary)] border border-[var(--card-border)] rounded-xl p-5 text-sm font-medium text-[var(--text-primary)] placeholder:text-[var(--muted-text)]/40 focus:outline-none focus:border-[var(--brand-gold)] transition-all shadow-inner"
+                />
+              </div>
+
+              {/* Submit + open workflow */}
+              <button
+                onClick={() => handleSubmitDailyCheckIn(true)}
+                disabled={!canResume || isUpdatingForecast}
+                className={`w-full py-7 rounded-[2rem] text-sm font-black uppercase tracking-[0.3em] transition-all active:scale-95 flex items-center justify-center gap-4 group ${
+                  canResume && !isUpdatingForecast
+                    ? 'bg-[var(--brand-gold)] text-black hover:opacity-90 shadow-[0_25px_60px_rgba(196,164,50,0.35)]'
+                    : 'bg-[var(--bg-secondary)] text-[var(--muted-text)] border border-[var(--card-border)] cursor-not-allowed opacity-60'
+                }`}
+              >
+                <Play size={16} className={canResume ? 'fill-current group-hover:scale-110 transition-transform' : 'opacity-40'} />
+                {isUpdatingForecast
+                  ? 'Saving\u2026'
+                  : !forecastStatus
+                    ? 'Select status to continue'
+                    : isBehind && (!daysRemaining || !delayReason)
+                      ? 'Enter days + reason to continue'
+                      : `Save & ${job.currentStage > 0 ? 'Resume' : 'Start'} Workflow`}
+              </button>
             </div>
           </section>
         )}
@@ -771,11 +815,15 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
             </div>
           </div>
 
-          {/* Scheduling & Timeline Section */}
-          <section 
-            
-            
-            
+          {/* Scheduling & Timeline Section \u2014 admin/manager only.
+              Field users see all of this (start/finish/duration + their
+              daily check-in form) consolidated in the gate card up top, so
+              this section is redundant for them. */}
+          {isAdminOrManager && (
+          <section
+
+
+
             className="bg-[var(--card-bg)] rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-[var(--card-border)] backdrop-blur-md relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-gold)]/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
@@ -918,6 +966,7 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
               </div>
             </div>
           </section>
+          )}
           {/* Execution Status */}
             <section 
               
