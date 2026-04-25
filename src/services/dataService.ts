@@ -245,6 +245,7 @@ export function rowToJob(row: Record<string, unknown>): Job {
     customerRequestedSwaps: (row.customer_requested_swaps as any) || undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     customerActionsRequired: (row.customer_actions_required as any) || undefined,
+    permitNoticeActive: (row as any).permit_notice_active || undefined,
     officeNotes: [], // loaded separately from job_notes table
     siteNotes: [],
     files: [], // loaded separately from job_files table
@@ -556,6 +557,23 @@ export const dataService = {
 
   async updateJob(jobId: string, updates: Partial<Job>): Promise<void> {
     if (isSupabaseConfigured()) {
+      // ── files: route to job_files table separately ─────────────────────
+      // Historically `files` was silently dropped here (no keymap entry),
+      // which meant any contract / invoice / drawing added during the
+      // lifecycle disappeared on next reload. Route it to saveFiles() so
+      // the job_files table stays canonical, then strip the key from the
+      // remaining updates object so the rest of the keymap loop runs clean.
+      if (Array.isArray((updates as { files?: unknown }).files)) {
+        const filesToSave = (updates as { files: { id: string; name: string; url: string; type: string; uploadedAt?: string }[] }).files;
+        // Fire-and-forget — saveFiles handles its own errors and
+        // skipping unsupported URL shapes (raw image data URIs, etc).
+        this.saveFiles(jobId, filesToSave).catch(() => { /* logged inside */ });
+        // Avoid mutating the caller's updates object.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { files: _droppedFiles, ...rest } = updates as Partial<Job> & { files?: unknown };
+        updates = rest as Partial<Job>;
+      }
+
       // Convert only the provided updates to snake_case
       const row: Record<string, unknown> = {};
       const keyMap: Record<string, string> = {
@@ -623,6 +641,8 @@ export const dataService = {
         customerRequestedSwaps: 'customer_requested_swaps',
         // Office-controlled "Customer Action Required" prompts (portal)
         customerActionsRequired: 'customer_actions_required',
+        // Office-toggled flag that surfaces a "Permit application in progress" notice on the portal
+        permitNoticeActive: 'permit_notice_active',
       };
 
       for (const [camelKey, value] of Object.entries(updates)) {
@@ -666,11 +686,31 @@ export const dataService = {
   /**
    * Upsert files into the job_files table.
    * Safe to call with an empty array (no-op).
-   * Skips files whose URL is a raw data URI (too large for DB — must be a Cloudinary URL).
+   *
+   * URL handling:
+   *   - https URLs (Cloudinary, Supabase storage, etc) — always allowed
+   *   - data:text/html and data:application/pdf — allowed up to 800KB so
+   *     contract HTML and synthetic PDF data URIs persist (these are how
+   *     contractPdf.ts and depositInvoice.ts return their output today —
+   *     gating them on Cloudinary uploads would silently drop them, which
+   *     is the bug Jack hit when he saw the contract disappear after the
+   *     pipeline stage moved past Job Sold).
+   *   - data:image/* and other large blobs — still skipped (Cloudinary required)
    */
   async saveFiles(jobId: string, files: { id: string; name: string; url: string; type: string; uploadedAt?: string }[]): Promise<void> {
     if (!isSupabaseConfigured()) return;
-    const validFiles = files.filter(f => f.url && !f.url.startsWith('data:'));
+    const MAX_DATA_URI_BYTES = 800 * 1024; // 800KB — enough for HTML contracts + invoice PDFs
+    const validFiles = files.filter(f => {
+      if (!f.url) return false;
+      if (!f.url.startsWith('data:')) return true; // any http(s)/blob is fine
+      const isContractOrPdf = f.url.startsWith('data:text/html') || f.url.startsWith('data:application/pdf');
+      if (!isContractOrPdf) return false; // raw image / unknown blob — needs Cloudinary
+      // Rough size check: base64 length × 0.75
+      const commaIdx = f.url.indexOf(',');
+      const b64Len = commaIdx >= 0 ? f.url.length - commaIdx - 1 : f.url.length;
+      const approxBytes = Math.ceil(b64Len * 0.75);
+      return approxBytes <= MAX_DATA_URI_BYTES;
+    });
     if (!validFiles.length) return;
     const rows = validFiles.map(f => ({
       id: f.id,

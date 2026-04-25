@@ -123,38 +123,45 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
   return (
     
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div 
-          
-          
-          
+        <div
+
+
+
           onClick={onClose}
           className="absolute inset-0 bg-black/80 backdrop-blur-md"
         />
-        
-        <div 
-          
-          
-          
-          className="relative w-full max-w-lg bg-[var(--bg-primary)] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
+
+        {/* Modal shell — capped at 90vh and split into header / scrollable body /
+            sticky footer so the Send button is always reachable even on short
+            laptop viewports. */}
+        <div
+
+
+
+          className="relative w-full max-w-lg max-h-[90vh] flex flex-col bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[2rem] shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-br from-[var(--brand-gold)]/5 to-transparent">
+          <div className="px-6 py-5 border-b border-[var(--border-color)]/60 flex items-center justify-between bg-gradient-to-br from-[var(--brand-gold)]/5 to-transparent shrink-0">
             <div>
               <h3 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.3em] mb-1 flex items-center gap-2">
                 <Zap size={14} /> Quick Communication
               </h3>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Message {clientName}</h2>
+              <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">Message {clientName}</h2>
             </div>
-            <button 
+            <button
               onClick={onClose}
-              className="p-2 hover:bg-white/5 rounded-xl text-[var(--text-tertiary)] transition-all"
+              className="p-2 hover:bg-[var(--bg-secondary)] rounded-xl text-[var(--text-tertiary)] transition-all"
             >
               <X size={24} />
             </button>
           </div>
 
+          {/* Scrollable body — contains everything between header and the
+              sticky Send footer. */}
+          <div className="flex-1 overflow-y-auto">
+
           {/* AI Drafting Toolbar */}
-          <div className="px-8 mt-6 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+          <div className="px-6 mt-4 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
             <button
               onClick={handleAiDraft}
               disabled={isAiLoading || !job}
@@ -168,7 +175,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
               <button
                 onClick={() => setShowAiOptions(!showAiOptions)}
                 disabled={isAiLoading || !content.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest hover:bg-white/10 transition-all whitespace-nowrap disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest hover:bg-[var(--bg-secondary)]/80 transition-all whitespace-nowrap disabled:opacity-50"
               >
                 <RefreshCw size={12} />
                 Rewrite with AI
@@ -180,7 +187,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                     
                     
                     
-                    className="absolute left-0 bottom-full mb-2 w-48 bg-[var(--bg-primary)] border border-white/10 rounded-2xl shadow-2xl p-2 z-50"
+                    className="absolute left-0 bottom-full mb-2 w-48 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl shadow-2xl p-2 z-50"
                   >
                     <div className="grid grid-cols-1 gap-1">
                       {[
@@ -194,10 +201,10 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                         <button
                           key={action.id}
                           onClick={() => handleAiRewrite(action.id as ToneAction)}
-                          className="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl transition-all text-left group"
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-[var(--bg-secondary)] rounded-xl transition-all text-left group"
                         >
                           <action.icon size={12} className="text-[var(--text-tertiary)] group-hover:text-[var(--brand-gold)]" />
-                          <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest group-hover:text-white">{action.label}</span>
+                          <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest group-hover:text-[var(--text-primary)]">{action.label}</span>
                         </button>
                       ))}
                     </div>
@@ -208,12 +215,12 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
           </div>
 
           {/* Tabs */}
-          <div className="flex p-2 bg-white/5 mx-8 mt-6 rounded-2xl border border-white/5">
+          <div className="flex p-2 bg-[var(--bg-secondary)] mx-6 mt-4 rounded-2xl border border-[var(--border-color)]/60">
             <button 
               disabled={type === 'sms' && !clientPhone && !clientName} // Always allow name-based chat if phone is hidden
               onClick={() => setType('sms')}
               className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                type === 'sms' ? 'bg-[var(--brand-gold)] text-black shadow-lg' : 'text-[var(--text-tertiary)] hover:text-white disabled:opacity-30'
+                type === 'sms' ? 'bg-[var(--brand-gold)] text-black shadow-lg' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)] disabled:opacity-30'
               }`}
             >
               <MessageSquare size={14} /> SMS Text
@@ -223,7 +230,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                 disabled={!clientEmail}
                 onClick={() => setType('email')}
                 className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                  type === 'email' ? 'bg-blue-600 text-white shadow-lg' : 'text-[var(--text-tertiary)] hover:text-white disabled:opacity-30'
+                  type === 'email' ? 'bg-blue-600 text-white shadow-lg' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)] disabled:opacity-30'
                 }`}
               >
                 <Mail size={14} /> Email
@@ -233,14 +240,14 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
 
           {/* Contact Info Display (Conditional) */}
           {(clientPhone || clientEmail) && (
-            <div className="mx-8 mt-4 p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+            <div className="mx-6 mt-3 p-3 bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border-color)]/60 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/5 rounded-lg">
+                <div className="p-2 bg-[var(--bg-secondary)] rounded-lg">
                   {type === 'sms' ? <MessageSquare size={12} className="text-[var(--brand-gold)]" /> : <Mail size={12} className="text-blue-500" />}
                 </div>
                 <div>
                   <p className="text-[8px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">{type === 'sms' ? 'Phone Number' : 'Email Address'}</p>
-                  <p className="text-xs font-bold text-white">
+                  <p className="text-xs font-bold text-[var(--text-primary)]">
                     {type === 'sms' ? (clientPhone || 'Number Hidden') : (clientEmail || 'No Email')}
                   </p>
                 </div>
@@ -252,8 +259,8 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
           )}
 
           {/* Content */}
-          <div className="p-8 space-y-6">
-            <div className="space-y-4">
+          <div className="p-6 space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--text-tertiary)]">
                   <Layout size={12} />
@@ -261,7 +268,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                 </div>
                 <button 
                   onClick={() => setShowTemplates(!showTemplates)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/10 transition-all"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[9px] font-black uppercase tracking-widest text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/10 transition-all"
                 >
                   Select Template <ChevronDown size={12} className={`transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
                 </button>
@@ -277,9 +284,9 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
                     <button
                       key={t.id}
                       onClick={() => applyTemplate(t)}
-                      className="w-full text-left p-3 rounded-xl bg-white/5 border border-white/5 hover:border-[var(--brand-gold)]/30 hover:bg-white/[0.08] transition-all group"
+                      className="w-full text-left p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)]/60 hover:border-[var(--brand-gold)]/30 hover:bg-[var(--bg-secondary)]/90 transition-all group"
                     >
-                      <p className="text-[10px] font-black text-white uppercase tracking-widest group-hover:text-[var(--brand-gold)]">{t.title}</p>
+                      <p className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest group-hover:text-[var(--brand-gold)]">{t.title}</p>
                       <p className="text-[9px] text-[var(--text-tertiary)] mt-1 line-clamp-1">{t.content}</p>
                     </button>
                   ))}
@@ -288,21 +295,21 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
 
               <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
                 <span className="text-[var(--text-tertiary)]">Recipient</span>
-                <span className="text-white">{type === 'sms' ? clientPhone : clientEmail}</span>
+                <span className="text-[var(--text-primary)]">{type === 'sms' ? clientPhone : clientEmail}</span>
               </div>
 
               <div className="relative">
-                <textarea 
+                <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder={type === 'sms' ? "Type your SMS message..." : "Type your email content..."}
-                  className="w-full h-40 bg-white/5 border border-white/10 rounded-2xl p-6 text-sm font-medium text-white focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all resize-none shadow-inner"
+                  className="w-full h-32 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-4 text-sm font-medium text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all resize-none shadow-inner"
                 />
                 {isAiLoading && (
                   <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] rounded-2xl flex items-center justify-center">
-                    <div className="flex items-center gap-3 px-4 py-2 bg-[var(--bg-primary)] border border-white/10 rounded-xl shadow-2xl">
+                    <div className="flex items-center gap-3 px-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl shadow-2xl">
                       <RefreshCw size={14} className="text-[var(--brand-gold)] animate-spin" />
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">AI is thinking...</span>
+                      <span className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest">AI is thinking...</span>
                     </div>
                   </div>
                 )}
@@ -312,33 +319,34 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
-              <ShieldCheck size={16} className="text-[var(--brand-gold)] shrink-0" />
-              <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest leading-relaxed">
-                {type === 'sms' 
-                  ? "This text will be sent from your business number. History will be saved in the Chat Portal."
-                  : "This email will be sent from office@luxurydecking.ca with your signature."}
+            <div className="flex items-center gap-3 p-3 bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border-color)]/60">
+              <ShieldCheck size={14} className="text-[var(--brand-gold)] shrink-0" />
+              <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest leading-relaxed">
+                {type === 'sms'
+                  ? "Sent from your business number. History saved in Chat Portal."
+                  : "Sent from office@luxurydecking.ca with your signature."}
               </p>
             </div>
+          </div>
+          {/* /scrollable body */}
+          </div>
 
-            <button 
+          {/* Sticky footer — Send button always visible regardless of viewport
+              height. Sits OUTSIDE the scrollable body. */}
+          <div className="px-6 py-4 border-t border-[var(--border-color)]/60 bg-[var(--bg-primary)] shrink-0">
+            <button
               onClick={handleSend}
               disabled={!content.trim() || isSending || isSent || isAiLoading}
-              className={`w-full py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl ${
-                isSent 
-                  ? 'bg-[var(--brand-gold)] text-black' 
-                  : type === 'sms' 
-                    ? 'bg-[var(--brand-gold)] text-black hover:bg-[var(--brand-gold)]' 
+              className={`w-full py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl ${
+                isSent
+                  ? 'bg-[var(--brand-gold)] text-black'
+                  : type === 'sms'
+                    ? 'bg-[var(--brand-gold)] text-black hover:bg-[var(--brand-gold)]'
                     : 'bg-blue-600 text-white hover:bg-blue-500'
               } disabled:opacity-50`}
             >
               {isSending ? (
-                <div 
-                  
-                  
-                >
-                  <Zap size={18} />
-                </div>
+                <Zap size={18} />
               ) : isSent ? (
                 <>
                   <CheckCircle2 size={18} /> Message Sent
@@ -352,7 +360,7 @@ const QuickMessageModal: React.FC<QuickMessageModalProps> = ({
           </div>
         </div>
       </div>
-    
+
   );
 };
 

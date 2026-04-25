@@ -7,7 +7,7 @@ import {
   CloudDrizzle, CalendarDays, Truck, Droplets,
   Wallet, AlertCircle, Zap, ShieldCheck, FileText, Receipt,
   Camera, History, Image, X, Send, Sparkles, Star, HelpCircle,
-  Archive, Shield, Award, FileCheck, BellRing
+  Archive, Shield, Award, FileCheck, BellRing, Info
 } from 'lucide-react';
 import PortalPaymentsTab from '../components/PortalPaymentsTab';
 import PortalChatPrompt from '../components/portal/PortalChatPrompt';
@@ -135,6 +135,41 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   // "No Action Required" pill (NO automatic stage-based defaults — Jack asked
   // us to stop inventing actions that don't actually need to happen).
   const activeCustomerActions = (job.customerActionsRequired || []).filter(a => !a.completedAt);
+
+  // Self-healing document list. The Documents tab used to read straight off
+  // job.files; if anything dropped the contract / invoice entries from that
+  // array (legacy save path, failed Supabase upsert) the customer saw an
+  // empty section. Synthesize the contract from job.contractPdfUrl and any
+  // invoices from job.invoices so the canonical sources are always rendered.
+  type PortalDoc = { id: string; name: string; url: string; type: string; uploadedAt: string };
+  const portalDocs: PortalDoc[] = (() => {
+    const persisted: PortalDoc[] = (job.files || [])
+      .filter(f => f.type !== 'photo' && f.type !== 'closeout')
+      .map(f => ({ id: f.id, name: f.name, url: f.url, type: f.type, uploadedAt: f.uploadedAt || new Date().toISOString() }));
+    const out: PortalDoc[] = [...persisted];
+    const seenUrls = new Set(persisted.map(f => f.url).filter(Boolean));
+    if (job.contractPdfUrl && !seenUrls.has(job.contractPdfUrl) && !persisted.some(f => f.type === 'contract')) {
+      out.push({
+        id: `derived-contract-${job.id}`,
+        name: `Contract-${job.jobNumber || job.id}.pdf`,
+        url: job.contractPdfUrl,
+        type: 'contract',
+        uploadedAt: job.contractSignedDate || job.acceptedDate || new Date().toISOString(),
+      });
+    }
+    for (const inv of (job.invoices || [])) {
+      if (!inv.pdfUrl) continue;
+      if (seenUrls.has(inv.pdfUrl)) continue;
+      out.push({
+        id: `derived-inv-${inv.id}`,
+        name: `${inv.invoiceNumber || 'Invoice'}.pdf`,
+        url: inv.pdfUrl,
+        type: 'other',
+        uploadedAt: inv.issuedDate || new Date().toISOString(),
+      });
+    }
+    return out;
+  })();
 
   // 4. Latest Field Update
   const getLatestFieldUpdate = () => {
@@ -843,6 +878,26 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   {recentChange.text}
                 </p>
               </div>
+
+              {/* Permit Notice — toggled from the Admin Setup checklist when an
+                  application is sitting with the city. Sits directly above the
+                  "Customer Action Required" card so it's the first thing the
+                  homeowner reads on arrival. */}
+              {job.permitNoticeActive && (
+                <div className="rounded-3xl p-6 border shadow-sm flex items-center gap-4 bg-blue-50 border-blue-100">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm bg-white text-blue-600">
+                    <Info className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-blue-600">
+                      Permit Approval In Progress
+                    </p>
+                    <h4 className="text-base font-bold text-[#1A1A1A]">
+                      We've submitted your permit application and are waiting on municipal approval. We'll move forward as soon as it clears.
+                    </h4>
+                  </div>
+                </div>
+              )}
 
               {/* Customer Action Required — driven by office-side panel. */}
               {activeCustomerActions.length > 0 ? (
@@ -1941,8 +1996,8 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               <div className="space-y-4">
                 <h4 className="text-sm font-bold uppercase tracking-widest text-[#999] px-2">Contract & Summaries</h4>
                 <div className="grid grid-cols-1 gap-3">
-                  {/* Real files from job.files */}
-                  {job.files?.filter(f => f.type !== 'photo' && f.type !== 'closeout').map((file) => (
+                  {/* Real files from job.files + derived contract / invoices */}
+                  {portalDocs.map((file) => (
                     <a 
                       key={file.id}
                       href={file.url}
@@ -1968,7 +2023,7 @@ const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   ))}
 
                   {/* Standard placeholders if no specific files found */}
-                  {(!job.files || job.files.filter(f => f.type !== 'photo' && f.type !== 'closeout').length === 0) && (
+                  {portalDocs.length === 0 && (
                     <>
                       <div className="bg-white p-5 rounded-3xl border border-[#F0F0F0] shadow-sm flex items-center justify-between group opacity-60">
                         <div className="flex items-center gap-4">

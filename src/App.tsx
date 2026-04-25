@@ -6,7 +6,7 @@ import {
   SoldWorkflowStatus, EstimatorIntake, ScheduleStatus, // Customer, Invoice used by AppRouter via hooks
 } from './types';
 import { useAppRouter, pathToView } from './hooks/useAppRouter';
-import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, createDefaultBuildDetails, PIPELINE_STAGES, ESTIMATE_STAGES, RATES } from './constants';
+import { PAGE_CONFIGS, PAGE_TITLES, INITIAL_INVOICE as EMPTY_INVOICE, createDefaultOfficeChecklists, reconcileOfficeChecklists, createDefaultBuildDetails, PIPELINE_STAGES, ESTIMATE_STAGES, RATES } from './constants';
 // pdfGenerator pulls in jspdf + jspdf-autotable (~150 KB). Lazy-loaded at call sites
 // below so it does not bloat the main chunk for every user on landing.
 import { safeSetItem } from './utils/storage';
@@ -118,7 +118,7 @@ const App: React.FC = () => {
   } = useJobs({ currentUser, navigateTo: stableNavigateTo, handleSendMessage: stableSendMessage });
 
   const {
-    invoices, setInvoices, handleGenerateInvoice, handleUpdateInvoice,
+    invoices, setInvoices, handleGenerateInvoice, handleGenerateAndSendInvoice, handleUpdateInvoice,
   } = useInvoices({ setJobs, selectedJob, setSelectedJob });
 
   const [portalLoading, setPortalLoading] = useState(false);
@@ -464,7 +464,7 @@ const App: React.FC = () => {
       if (supabaseJobs.length > 0) {
         setJobs(supabaseJobs.map(job => ({
           ...job,
-          officeChecklists: job.officeChecklists || createDefaultOfficeChecklists(),
+          officeChecklists: reconcileOfficeChecklists(job.officeChecklists),
           buildDetails: job.buildDetails || createDefaultBuildDetails(),
           customerPortalToken: job.customerPortalToken || crypto.randomUUID(),
         })));
@@ -543,7 +543,7 @@ const App: React.FC = () => {
       if (supabaseJobs.length > 0) {
         setJobs(supabaseJobs.map(job => ({
           ...job,
-          officeChecklists: job.officeChecklists || createDefaultOfficeChecklists(),
+          officeChecklists: reconcileOfficeChecklists(job.officeChecklists),
           buildDetails: job.buildDetails || createDefaultBuildDetails(),
           customerPortalToken: job.customerPortalToken || crypto.randomUUID(),
         })));
@@ -1157,27 +1157,65 @@ const App: React.FC = () => {
         }
       }
 
-      // Persist completion to Supabase — surfaces errors to the crew (no silent failures)
+      // Persist completion to Supabase. The user-facing error message used to
+      // fire on ANY Supabase hiccup, even though Netlify form (the office's
+      // primary notification channel) almost always succeeded — leading to
+      // scary "cloud sync failed" warnings while the office HAD in fact
+      // received the closeout. Now we:
+      //   1. Try Netlify form first and remember whether it succeeded
+      //   2. Try the Supabase update; on failure, retry once WITHOUT the
+      //      heavy fieldProgress payload (most common cause of row-size
+      //      rejections from PostgREST)
+      //   3. Only surface a warning if BOTH paths failed
+      let supabaseSynced = false;
+      let netlifySynced = false;
+
+      // Netlify form submission — primary office notification channel.
+      try {
+        const resp = await fetch("/", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData.toString(),
+        });
+        netlifySynced = resp.ok;
+        if (!resp.ok) {
+          console.warn(`Netlify form responded ${resp.status} ${resp.statusText}`);
+        }
+      } catch (e) {
+        console.warn("Netlify form submission failed:", e);
+      }
+
       if (workflowState.jobId) {
+        const fullUpdate = {
+          status: JobStatus.COMPLETED,
+          currentStage: 5,
+          pipelineStage: PipelineStage.COMPLETION,
+          signoffStatus: 'signed' as const,
+          finalSubmissionStatus: 'submitted' as const,
+          invoiceSupportStatus: workflowState.userRole === UserRole.SUBCONTRACTOR ? 'submitted' as const : 'not_required' as const,
+          officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
+          verifiedBuildPassportUrl: verifiedBuildPassportUrl || undefined,
+          subcontractorInvoiceUrl: subcontractorInvoiceUrl || undefined,
+          fieldProgress: stripPhotoDataUris(updatedPages), // checklist + cloudinary URLs only
+          ...(workflowState.userRole === UserRole.SUBCONTRACTOR ? { labourCost: subInvoiceTotal } : {}),
+          ...(workflowState.fieldForecast ? { fieldForecast: workflowState.fieldForecast } : {}),
+        };
         try {
-          await dataService.updateJob(workflowState.jobId, {
-            status: JobStatus.COMPLETED,
-            currentStage: 5,
-            pipelineStage: PipelineStage.COMPLETION,
-            signoffStatus: 'signed' as const,
-            finalSubmissionStatus: 'submitted' as const,
-            invoiceSupportStatus: workflowState.userRole === UserRole.SUBCONTRACTOR ? 'submitted' as const : 'not_required' as const,
-            officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
-            verifiedBuildPassportUrl: verifiedBuildPassportUrl || undefined,
-            subcontractorInvoiceUrl: subcontractorInvoiceUrl || undefined,
-            fieldProgress: stripPhotoDataUris(updatedPages), // checklist + cloudinary URLs only
-            ...(workflowState.userRole === UserRole.SUBCONTRACTOR ? { labourCost: subInvoiceTotal } : {}),
-            ...(workflowState.fieldForecast ? { fieldForecast: workflowState.fieldForecast } : {}),
-          });
+          await dataService.updateJob(workflowState.jobId, fullUpdate);
+          supabaseSynced = true;
         } catch (supabaseErr) {
-          console.error('Supabase job update failed:', supabaseErr);
-          setSubmissionError('Job submitted locally but cloud sync failed. Please notify the office manually.');
-          // Don't throw — local state is already updated (isJobSubmitted = true)
+          console.error('Supabase job update failed (full payload):', supabaseErr);
+          // Retry without fieldProgress — its photo metadata can occasionally
+          // exceed Postgres jsonb row-size limits when many photos exist.
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { fieldProgress: _drop, ...lean } = fullUpdate;
+            await dataService.updateJob(workflowState.jobId, lean);
+            supabaseSynced = true;
+            console.warn('Supabase update succeeded on retry without fieldProgress');
+          } catch (retryErr) {
+            console.error('Supabase job update retry also failed:', retryErr);
+          }
         }
 
         // Persist build passport file to job_files table
@@ -1204,15 +1242,10 @@ const App: React.FC = () => {
         }
       }
 
-      // Netlify form submission (non-blocking for UI)
-      try {
-        await fetch("/", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: formData.toString(),
-        });
-      } catch (e) {
-        console.warn("Netlify form submission failed, but local state is updated:", e);
+      // Only warn if BOTH delivery paths failed. If Netlify succeeded, the
+      // office has the closeout email — Supabase is just an internal cache.
+      if (!netlifySynced && !supabaseSynced) {
+        setSubmissionError('Could not reach the office. Please check your connection and tap Try Again.');
       }
 
       // Google Review Request Email -- fire after submission (peak happiness)
@@ -1808,6 +1841,7 @@ const App: React.FC = () => {
       invoices={invoices}
       handleUpdateInvoice={handleUpdateInvoice}
       handleGenerateInvoice={handleGenerateInvoice}
+      handleGenerateAndSendInvoice={handleGenerateAndSendInvoice}
       pendingJobAcceptance={pendingJobAcceptance}
       setPendingJobAcceptance={setPendingJobAcceptance}
       newJobInitialStage={newJobInitialStage}

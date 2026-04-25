@@ -17,11 +17,13 @@ interface PhotoUploadSectionProps {
    */
   onUpload: (key: string, url: string, cloudinaryUrl?: string) => void;
   onRemove: (key: string) => void;
+  /** Tech toggles a photo as Not Applicable for this job. */
+  onToggleNA?: (key: string) => void;
 }
 
 type UploadStatus = 'idle' | 'uploading' | 'error';
 
-const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, folderName, onUpload, onRemove }) => {
+const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, folderName, onUpload, onRemove, onToggleNA }) => {
   const [statusByKey, setStatusByKey] = useState<Record<string, UploadStatus>>({});
 
   const setStatus = (key: string, status: UploadStatus) => {
@@ -64,28 +66,53 @@ const PhotoUploadSection: React.FC<PhotoUploadSectionProps> = ({ photos, folderN
         const hasCloudUrl = !!photo.cloudinaryUrl || (typeof photo.url === 'string' && photo.url.startsWith('http'));
 
         return (
-          <div key={photo.key} className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-[2.5rem] p-6 flex flex-col gap-4 shadow-2xl backdrop-blur-md group hover:border-[var(--text-secondary)]/30 transition-all">
+          <div className={`border rounded-[2.5rem] p-6 flex flex-col gap-4 shadow-2xl backdrop-blur-md group transition-all ${
+            photo.isNA
+              ? 'bg-amber-500/5 border-amber-500/20 opacity-80'
+              : 'bg-[var(--bg-secondary)] border-[var(--border-color)] hover:border-[var(--text-secondary)]/30'
+          }`} key={photo.key}>
             <div className="flex items-center justify-between px-2">
-              <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">{photo.label}</span>
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${photo.isNA ? 'text-amber-500/70 line-through' : 'text-[var(--text-secondary)]'}`}>
+                {photo.label}
+                {photo.isNA && <span className="text-[9px] ml-2 px-2 py-0.5 bg-amber-500/20 rounded-full font-black tracking-widest no-underline">N/A</span>}
+              </span>
               <div className="flex items-center gap-2">
-                {status === 'uploading' && (
+                {status === 'uploading' && !photo.isNA && (
                   <span className="flex items-center gap-1.5 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" /> Syncing
                   </span>
                 )}
-                {status === 'error' && (
+                {status === 'error' && !photo.isNA && (
                   <span className="flex items-center gap-1.5 text-[9px] font-black text-rose-400 uppercase tracking-[0.2em]" title="Cloud sync failed — photo still stored locally. It'll retry at submission.">
                     <AlertCircle className="w-3.5 h-3.5" /> Local only
                   </span>
                 )}
-                {photo.url && hasCloudUrl && status !== 'uploading' && (
+                {photo.url && hasCloudUrl && status !== 'uploading' && !photo.isNA && (
                   <CheckCircle2 className="text-[var(--brand-gold)] w-5 h-5 shadow-[0_0_10px_rgba(196,164,50,0.3)]" />
+                )}
+                {onToggleNA && (
+                  <button
+                    onClick={() => onToggleNA(photo.key)}
+                    className={`px-3 py-1.5 rounded-xl border font-black text-[9px] uppercase tracking-widest transition-all ${
+                      photo.isNA
+                        ? 'bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20'
+                        : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-amber-500/50 hover:text-amber-500'
+                    }`}
+                    title={photo.isNA ? 'Mark as required again' : 'Mark this photo as Not Applicable for this job'}
+                  >
+                    N/A
+                  </button>
                 )}
               </div>
             </div>
 
             <div className="relative aspect-video bg-[var(--bg-primary)]/5 rounded-[1.5rem] overflow-hidden border border-[var(--border-color)] group/photo">
-              {photo.url ? (
+              {photo.isNA ? (
+                <div className="w-full h-full flex flex-col items-center justify-center text-amber-500/70">
+                  <span className="text-3xl font-black tracking-widest">N/A</span>
+                  <span className="text-[9px] uppercase tracking-[0.2em] mt-1 opacity-70">Not Applicable</span>
+                </div>
+              ) : photo.url ? (
                 <>
                   <img src={photo.url} alt={photo.label} className="w-full h-full object-cover transition-transform duration-500 group-hover/photo:scale-105" referrerPolicy="no-referrer" />
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/photo:opacity-100 transition-opacity"></div>

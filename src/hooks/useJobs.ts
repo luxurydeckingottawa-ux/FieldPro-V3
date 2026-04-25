@@ -20,7 +20,7 @@ import {
   NurtureSequence, EstimateData, EstimateOption,
   LiveEstimate, LiveEstimateItem,
 } from '../types';
-import { createDefaultOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS } from '../constants';
+import { createDefaultOfficeChecklists, reconcileOfficeChecklists, createDefaultBuildDetails, DEFAULT_AUTOMATIONS } from '../constants';
 import { COMPANY } from '../config/company';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { dataService } from '../services/dataService';
@@ -129,7 +129,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
 
     return currentJobs.map(job => ({
       ...job,
-      officeChecklists: job.officeChecklists || createDefaultOfficeChecklists(),
+      officeChecklists: reconcileOfficeChecklists(job.officeChecklists),
       buildDetails: job.buildDetails || createDefaultBuildDetails(),
       customerPortalToken: job.customerPortalToken || crypto.randomUUID()
     }));
@@ -152,7 +152,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
 
       const migratedJobs = currentJobs.map(job => ({
         ...job,
-        officeChecklists: job.officeChecklists || createDefaultOfficeChecklists(),
+        officeChecklists: reconcileOfficeChecklists(job.officeChecklists),
         buildDetails: job.buildDetails || createDefaultBuildDetails(),
         customerPortalToken: job.customerPortalToken || crypto.randomUUID()
       }));
@@ -188,7 +188,7 @@ export function useJobs({ currentUser, navigateTo, handleSendMessage }: UseJobsP
           if (!updated) return;
           setJobs(prev => prev.map(j => j.id === updated.id ? {
             ...updated,
-            officeChecklists: updated.officeChecklists || createDefaultOfficeChecklists(),
+            officeChecklists: reconcileOfficeChecklists(updated.officeChecklists),
             buildDetails: updated.buildDetails || createDefaultBuildDetails(),
           } : j));
           setSelectedJob(prev => prev?.id === updated.id ? updated : prev);

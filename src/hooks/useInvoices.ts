@@ -23,14 +23,15 @@ export interface UseInvoicesParams {
 export interface UseInvoicesReturn {
   invoices: Invoice[];
   setInvoices: React.Dispatch<React.SetStateAction<Invoice[]>>;
-  handleGenerateInvoice: (job: Job, type: InvoiceType) => void;
+  handleGenerateInvoice: (job: Job, type: InvoiceType) => Invoice;
+  handleGenerateAndSendInvoice: (job: Job, type: InvoiceType) => Invoice;
   handleUpdateInvoice: (invoiceId: string, updates: Partial<Invoice>) => void;
 }
 
 export function useInvoices({ setJobs, selectedJob, setSelectedJob }: UseInvoicesParams): UseInvoicesReturn {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
-  const handleGenerateInvoice = useCallback((job: Job, type: InvoiceType) => {
+  const handleGenerateInvoice = useCallback((job: Job, type: InvoiceType): Invoice => {
     const newInvoice = createInvoice(job, type, invoices);
     setInvoices(prev => [...prev, newInvoice]);
     setJobs(prev => prev.map(j =>
@@ -46,6 +47,30 @@ export function useInvoices({ setJobs, selectedJob, setSelectedJob }: UseInvoice
     }
     // Persist to Supabase
     dataService.createInvoice(newInvoice).catch(() => { /* state already updated above */ });
+    return newInvoice;
+  }, [invoices, selectedJob, setJobs, setSelectedJob]);
+
+  // Generate AND immediately mark as sent — one-click flow from the
+  // pipeline payment schedule. Once Stripe is wired, this will also fire
+  // a portal payment-link SMS; for now it just creates the invoice in
+  // 'sent' status so the customer-facing portal surfaces it immediately
+  // (no second trip to the Invoices hub to flip the status).
+  const handleGenerateAndSendInvoice = useCallback((job: Job, type: InvoiceType): Invoice => {
+    const sentInvoice = { ...createInvoice(job, type, invoices), status: 'sent' as const };
+    setInvoices(prev => [...prev, sentInvoice]);
+    setJobs(prev => prev.map(j =>
+      j.id === job.id
+        ? { ...j, invoices: [...(j.invoices || []), sentInvoice] }
+        : j
+    ));
+    if (selectedJob?.id === job.id) {
+      setSelectedJob(prev => prev
+        ? { ...prev, invoices: [...(prev.invoices || []), sentInvoice] }
+        : prev
+      );
+    }
+    dataService.createInvoice(sentInvoice).catch(() => { /* state already updated above */ });
+    return sentInvoice;
   }, [invoices, selectedJob, setJobs, setSelectedJob]);
 
   const handleUpdateInvoice = useCallback((invoiceId: string, updates: Partial<Invoice>) => {
@@ -54,5 +79,5 @@ export function useInvoices({ setJobs, selectedJob, setSelectedJob }: UseInvoice
     dataService.updateInvoice(invoiceId, updates).catch(() => { /* state already updated above */ });
   }, []);
 
-  return { invoices, setInvoices, handleGenerateInvoice, handleUpdateInvoice };
+  return { invoices, setInvoices, handleGenerateInvoice, handleGenerateAndSendInvoice, handleUpdateInvoice };
 }

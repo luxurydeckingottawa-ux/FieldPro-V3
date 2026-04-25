@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppState, PageState, UserRole, ScheduleStatus } from '../types';
-import { PAGE_TITLES } from '../constants';
+import { PAGE_TITLES, getActivePageIndices } from '../constants';
 import ProgressBar from '../components/ProgressBar';
 import ConnectivityStatus from '../components/ConnectivityStatus';
 import JobInfoView from '../views/JobInfoView';
@@ -8,7 +8,7 @@ import ChecklistView from '../views/ChecklistView';
 import FinalCompletionView from '../views/FinalCompletionView';
 import InvoicingView from '../views/InvoicingView';
 import ReviewView from '../views/ReviewView';
-import { CheckCircle2, CloudUpload, Mail, ArrowLeft, MessageSquare, Calendar } from 'lucide-react';
+import { CheckCircle2, CloudUpload, Mail, ArrowLeft, MessageSquare } from 'lucide-react';
 import { COMPANY } from '../config/company';
 
 interface WorkflowContainerProps {
@@ -36,13 +36,50 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
   clientPhone,
   onScheduleUpdate,
 }) => {
-  const [showScheduleUpdate, setShowScheduleUpdate] = useState(false);
-  const [daysRemaining, setDaysRemaining] = useState(3);
-  const [scheduleStatus, setScheduleStatus] = useState<ScheduleStatus>(ScheduleStatus.ON_SCHEDULE);
-  const [scheduleNote, setScheduleNote] = useState('');
+  // Daily schedule gate — force the tech back to JobInfoView (page 0) every
+  // calendar day so they MUST mark Ahead/On Schedule/Behind before resuming
+  // work. Without this, reopening on day 3 jumps straight to whatever step
+  // they were on and the office never gets a fresh status update.
+  useEffect(() => {
+    const lastUpdate = state.fieldForecast?.updatedAt;
+    const sameDay = lastUpdate
+      ? new Date(lastUpdate).toDateString() === new Date().toDateString()
+      : false;
+    if (!sameDay && state.currentPage !== 0) {
+      setState(prev => ({
+        ...prev,
+        currentPage: 0,
+        // Clear forecast so the gate banner re-engages and they can't just
+        // tap Next without re-confirming today's status.
+        fieldForecast: undefined,
+      }));
+    }
+    // Run once on mount — we don't want this re-firing mid-session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleNext = () => setState(prev => ({ ...prev, currentPage: prev.currentPage + 1 }));
-  const handleBack = () => setState(prev => ({ ...prev, currentPage: Math.max(0, prev.currentPage - 1) }));
+  // Active page list — filters out checklist pages that don't apply to this
+  // job type (e.g. Stairs & Railings QC is skipped on Deck-only jobs).
+  // Then trim the tail based on user role: subcontractors see Invoicing (6)
+  // then Review (7); employees skip Invoicing — page 6 falls through to
+  // ReviewView and they never reach page 7.
+  const activePages = getActivePageIndices(state.jobInfo.jobType).filter(p => {
+    if (state.userRole === UserRole.SUBCONTRACTOR) return true;
+    return p !== 7;
+  });
+
+  const handleNext = () => setState(prev => {
+    const idx = activePages.indexOf(prev.currentPage);
+    const nextPage = idx >= 0 && idx < activePages.length - 1
+      ? activePages[idx + 1]
+      : prev.currentPage + 1;
+    return { ...prev, currentPage: nextPage };
+  });
+  const handleBack = () => setState(prev => {
+    const idx = activePages.indexOf(prev.currentPage);
+    const prevPage = idx > 0 ? activePages[idx - 1] : Math.max(0, prev.currentPage - 1);
+    return { ...prev, currentPage: prevPage };
+  });
 
   const updatePage = (pageIndex: number, updates: Partial<PageState>) => {
     setState(prev => ({
@@ -207,7 +244,10 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex-1 px-8">
-            <ProgressBar current={state.currentPage} total={state.userRole === UserRole.SUBCONTRACTOR ? 7 : 6} />
+            <ProgressBar
+              current={Math.max(0, activePages.indexOf(state.currentPage))}
+              total={Math.max(1, activePages.length - 1)}
+            />
           </div>
           <div className="flex items-center gap-2">
             {/* Message Client button — field workers only */}
@@ -234,81 +274,10 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
         {renderPage()}
       </main>
 
-      {/* Floating schedule update widget — field workers only */}
-      {(state.userRole === UserRole.FIELD_EMPLOYEE || state.userRole === UserRole.SUBCONTRACTOR) && onScheduleUpdate && (
-        <div className="fixed bottom-20 right-4 z-40">
-          <button
-            onClick={() => setShowScheduleUpdate(prev => !prev)}
-            className="w-12 h-12 rounded-full bg-[var(--brand-gold)] shadow-xl flex items-center justify-center hover:brightness-110 transition-all active:scale-95"
-            title="Update finish estimate"
-          >
-            <Calendar size={18} className="text-black" />
-          </button>
-          {showScheduleUpdate && (
-            <div className="absolute bottom-14 right-0 w-72 bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 shadow-2xl">
-              <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3">Daily Schedule Update</p>
-
-              {/* Status selector */}
-              <div className="grid grid-cols-3 gap-1.5 mb-3">
-                {([
-                  { value: ScheduleStatus.ON_SCHEDULE, label: 'On Track', color: 'emerald' },
-                  { value: ScheduleStatus.BEHIND, label: 'Behind', color: 'rose' },
-                  { value: ScheduleStatus.AHEAD, label: 'Ahead', color: 'blue' },
-                ] as { value: ScheduleStatus; label: string; color: string }[]).map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setScheduleStatus(opt.value)}
-                    className={`py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${
-                      scheduleStatus === opt.value
-                        ? opt.color === 'emerald' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
-                          : opt.color === 'rose' ? 'bg-rose-500/20 border-rose-500/40 text-rose-400'
-                          : 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                        : 'bg-white/5 border-white/10 text-[var(--text-tertiary)] hover:bg-white/10'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Days remaining */}
-              <div className="flex items-center gap-2 mb-3">
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={daysRemaining}
-                  onChange={e => setDaysRemaining(Number(e.target.value))}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm text-center"
-                />
-                <span className="text-[10px] text-[var(--text-tertiary)]">days left</span>
-              </div>
-
-              {/* Note / reason (optional) */}
-              {scheduleStatus !== ScheduleStatus.ON_SCHEDULE && (
-                <input
-                  type="text"
-                  placeholder={scheduleStatus === ScheduleStatus.BEHIND ? 'Reason for delay...' : 'What got you ahead?'}
-                  value={scheduleNote}
-                  onChange={e => setScheduleNote(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs mb-3 placeholder-gray-600"
-                />
-              )}
-
-              <button
-                onClick={() => {
-                  onScheduleUpdate(daysRemaining, scheduleStatus, scheduleNote);
-                  setShowScheduleUpdate(false);
-                  setScheduleNote('');
-                }}
-                className="w-full py-2 bg-[var(--brand-gold)] text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:brightness-110 transition-all active:scale-95"
-              >
-                Submit Update
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      {/* In-workflow floating Daily Schedule widget removed — schedule status
+          is now captured upfront on JobInfoView (page 0) and the daily reset
+          effect above forces a fresh capture every calendar day. Avoids
+          duplication and prevents day-3 reopens from skipping the gate. */}
 
       {isUploading && (
         <div className="fixed inset-0 bg-[var(--bg-primary)]/80 backdrop-blur-xl z-50 flex items-center justify-center p-6">

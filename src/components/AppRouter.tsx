@@ -166,6 +166,7 @@ export interface AppRouterProps {
   invoices: Invoice[];
   handleUpdateInvoice: (invoiceId: string, updates: Partial<Invoice>) => void;
   handleGenerateInvoice: (type: unknown) => void;
+  handleGenerateAndSendInvoice: (job: Job, type: unknown) => Invoice;
 
   // Job acceptance wizard
   pendingJobAcceptance: Job | null;
@@ -206,7 +207,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
     submissionError, handleFullSubmission, handleFieldScheduleUpdate,
     chatSessions, handleSendMessage,
     customers, handleUpdateCustomer,
-    invoices, handleUpdateInvoice, handleGenerateInvoice,
+    invoices, handleUpdateInvoice, handleGenerateInvoice, handleGenerateAndSendInvoice,
     pendingJobAcceptance, setPendingJobAcceptance,
     newJobInitialStage, setNewJobInitialStage,
     newJobPrefilledDate, setNewJobPrefilledDate,
@@ -499,6 +500,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
               onDeleteJob={handleDeleteJob}
               onOpenJobSetup={() => setPendingJobAcceptance(selectedJob)}
               onGenerateInvoice={handleGenerateInvoice}
+              onGenerateAndSendInvoice={handleGenerateAndSendInvoice}
               jobInvoices={invoices.filter(i => i.jobId === selectedJob.id)}
             />
           )}
@@ -548,6 +550,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
           {view === 'office-dashboard' && currentUser && (
             <OfficeDashboardView
               jobs={jobs}
+              chatSessions={chatSessions}
               onSelectJob={handleSelectJob}
               onViewResources={() => navigateTo('resources')}
               onNewJob={() => { setNewJobInitialStage(PipelineStage.LEAD_IN); navigateTo('office-new-job'); }}

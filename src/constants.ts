@@ -46,6 +46,11 @@ export const OFFICE_CHECKLIST_CONFIG: Record<PipelineStage, string[]> = {
     "Deposit paid"
   ],
   [PipelineStage.ADMIN_SETUP]: [
+    "Book helical piles if needed (sets project start window)",
+    "Order special-order materials if needed",
+    "Order lighting if needed",
+    "Request locates if needed",
+    "Apply for permits if needed",
     "Contract / scope documents attached",
     "Set target date",
     "Set job duration (estimated number of days)",
@@ -95,6 +100,36 @@ export const createDefaultOfficeChecklists = (): OfficeChecklist[] => {
       completed: false
     }))
   }));
+};
+
+// Merge stored checklists with the latest OFFICE_CHECKLIST_CONFIG so that
+// jobs created before a constant change still surface newly added items.
+// Match priority: by id (legacy index-based), then by exact label. Items
+// present in stored but not in config are kept (covers custom additions
+// or labels Jack renamed historically).
+export const reconcileOfficeChecklists = (stored: OfficeChecklist[] | undefined): OfficeChecklist[] => {
+  const baseline = createDefaultOfficeChecklists();
+  if (!stored || stored.length === 0) return baseline;
+
+  return baseline.map(baseStage => {
+    const storedStage = stored.find(s => s.stage === baseStage.stage);
+    if (!storedStage) return baseStage;
+
+    const merged = baseStage.items.map(baseItem => {
+      const byId = storedStage.items.find(si => si.id === baseItem.id);
+      if (byId && byId.label === baseItem.label) return byId; // index AND label match — straight reuse
+      const byLabel = storedStage.items.find(si => si.label === baseItem.label);
+      if (byLabel) return { ...baseItem, completed: byLabel.completed, isNA: byLabel.isNA }; // label match — preserve state
+      return baseItem; // brand new item — uncompleted
+    });
+
+    // Preserve any stored items that are NOT in the current config (e.g. user-added or
+    // historically renamed). They render at the bottom so the canonical order stays first.
+    const baselineLabels = new Set(baseStage.items.map(i => i.label));
+    const orphans = storedStage.items.filter(si => !baselineLabels.has(si.label));
+
+    return { stage: baseStage.stage, items: [...merged, ...orphans] };
+  });
 };
 
 export const createDefaultBuildDetails = (): BuildDetails => ({
@@ -173,7 +208,27 @@ export const PAGE_TITLES = [
   "Invoicing"
 ];
 
-export const PAGE_CONFIGS: Record<number, { checklist: string[], photos: PhotoUpload[] }> = {
+/**
+ * Field workflow page configs.
+ *
+ * `appliesTo` (optional) controls which job types include the page.
+ * When omitted, the page is shown for every job type. Used to skip the
+ * Stairs & Railings QC page (page 4) on Deck-only jobs so techs aren't
+ * walked through irrelevant items. See `getActivePageIndices()` below.
+ *
+ * Job type strings come from JobInfoView's <select>:
+ *   "Deck"           = Deck Only (no stairs, no railings)
+ *   "Deck+Stairs"    = Deck with stairs (low-rise, no rails)
+ *   "Deck+Railings"  = Deck with railings (no separate stair run)
+ *   "FullBuild"      = Deck + Stairs + Railings
+ */
+export type FieldJobType = 'Deck' | 'Deck+Stairs' | 'Deck+Railings' | 'FullBuild';
+
+export const PAGE_CONFIGS: Record<number, {
+  checklist: string[];
+  photos: PhotoUpload[];
+  appliesTo?: FieldJobType[];
+}> = {
   1: {
     checklist: [
       "Crew lead introduced to homeowner",
@@ -184,9 +239,7 @@ export const PAGE_CONFIGS: Record<number, { checklist: string[], photos: PhotoUp
       "Confirmed deck size, height, and layout location",
       "Confirmed layout height and stair landing",
       "Existing conditions photographed",
-      "Siding, doors, and windows protected",
-      "Correct materials on site",
-      "Customer expectations confirmed"
+      "Correct materials on site"
     ],
     photos: [
       { label: "House / Ledger Area", key: "ledger" },
@@ -239,6 +292,8 @@ export const PAGE_CONFIGS: Record<number, { checklist: string[], photos: PhotoUp
     ]
   },
   4: {
+    // Skipped on Deck-only jobs — no stairs, no railings to inspect.
+    appliesTo: ['Deck+Stairs', 'Deck+Railings', 'FullBuild'],
     checklist: [
       "Stair width planned at 48 in",
       "Riser heights uniform",
@@ -265,10 +320,8 @@ export const PAGE_CONFIGS: Record<number, { checklist: string[], photos: PhotoUp
       "Stairs installed and safe",
       "Railings and guards installed and secure",
       "Site cleaned and debris removed",
-      "Landscaping restored",
       "Customer walkthrough complete",
       "Handed customer 'Review Card' (Google Review QR Code)",
-      "Stairs and railings demonstrated",
       "Customer questions addressed"
     ],
     photos: [
@@ -279,6 +332,26 @@ export const PAGE_CONFIGS: Record<number, { checklist: string[], photos: PhotoUp
     ]
   }
 };
+
+/**
+ * Returns the ordered list of page indices that apply to a given job type.
+ * Always starts with 0 (JobInfoView) and ends with the workflow tail
+ * (page 5 = Final PDI, page 6 = Invoicing/Review). Checklist pages 1-5
+ * are filtered using each PAGE_CONFIGS entry's `appliesTo`.
+ *
+ * Example: jobType="Deck" returns [0, 1, 2, 3, 5, 6, 7] — page 4
+ *   (Stairs & Railings QC) is skipped.
+ */
+export function getActivePageIndices(jobType?: string): number[] {
+  const checklistPages = [1, 2, 3, 4, 5].filter(idx => {
+    const cfg = PAGE_CONFIGS[idx];
+    if (!cfg?.appliesTo) return true; // shown for all job types by default
+    if (!jobType) return true; // unknown job type — be permissive
+    return cfg.appliesTo.includes(jobType as FieldJobType);
+  });
+  // 0 = JobInfoView, then filtered checklist pages, then 6 (invoicing) and 7 (review)
+  return [0, ...checklistPages, 6, 7];
+}
 
 export const INITIAL_INVOICE: InvoicingData = {
   deckSqft: 0,
@@ -388,9 +461,13 @@ export const DEFAULT_AUTOMATIONS: PipelineAutomation[] = [
     enabled: true
   },
   {
+    // Manual-only — Jack triggers this from the Pre-Production checklist
+    // "Notify customer and confirm start date 48 hours before" Text button,
+    // which opens QuickMessageModal pre-filled with this template so he
+    // can drop the actual date in before sending.
     stage: PipelineStage.READY_TO_START,
     messageTemplate: "Hi {clientName}, your project {jobNumber} is ready to start! Our team will be on site on {scheduledDate}. Please ensure the work area is clear.",
-    enabled: true
+    enabled: false
   },
   {
     stage: PipelineStage.COMPLETION,

@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Job, JobStatus, OfficeReviewStatus, PipelineStage, ForecastReviewStatus } from '../types';
+import { Job, JobStatus, OfficeReviewStatus, PipelineStage, ForecastReviewStatus, ChatSession } from '../types';
 import { getJobIssues, JobIssue } from '../utils/issueLogic';
 import TimeAttendanceView from '../components/TimeAttendanceView';
 import { timeClockService } from '../services/TimeClockService';
@@ -25,6 +25,7 @@ interface OfficeDashboardViewProps {
   onViewResources: () => void;
   onNewJob: () => void;
   onNavigateToChat?: () => void;
+  chatSessions?: ChatSession[];
 }
 
 const StatCard: React.FC<{
@@ -186,9 +187,37 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
   onSelectJob,
   onNewJob,
   onNavigateToChat,
+  chatSessions = [],
 }) => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'attendance'>('dashboard');
-  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadSmsCount, setUnreadSmsCount] = useState(0);
+
+  // ─── Unread in-app portal chat ─────────────────────────────────────────
+  // The customer's portal "Chat with our team" panel writes to ChatSession
+  // (not the SMS table), with isFromClient=true and bumps unreadCount on
+  // the session. We surface that here so the dashboard counter and the
+  // New Messages section catch portal messages, not just inbound texts.
+  const portalChatJobs = useMemo(() => {
+    return chatSessions
+      .filter(s => (s.unreadCount || 0) > 0)
+      .map(s => {
+        const job = jobs.find(j => j.id === s.jobId);
+        return job ? { job, session: s } : null;
+      })
+      .filter((x): x is { job: Job; session: ChatSession } => x !== null)
+      .sort((a, b) => {
+        const at = a.session.lastMessageTimestamp ? new Date(a.session.lastMessageTimestamp).getTime() : 0;
+        const bt = b.session.lastMessageTimestamp ? new Date(b.session.lastMessageTimestamp).getTime() : 0;
+        return bt - at;
+      });
+  }, [chatSessions, jobs]);
+
+  const portalChatUnreadTotal = useMemo(
+    () => portalChatJobs.reduce((sum, x) => sum + (x.session.unreadCount || 0), 0),
+    [portalChatJobs],
+  );
+
+  const unreadMessages = unreadSmsCount + portalChatUnreadTotal;
 
   // ─── Unread inbound SMS count ──────────────────────────────────────────
   // Pulls from the unified `incoming_messages` table (same source as the
@@ -206,7 +235,7 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
         .eq('direction', 'inbound')
         .eq('read', false);
       if (cancelled) return;
-      if (!error && typeof count === 'number') setUnreadMessages(count);
+      if (!error && typeof count === 'number') setUnreadSmsCount(count);
     };
 
     fetchUnread();
@@ -360,6 +389,84 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
         {/* Main Content Column */}
         <div className="lg:col-span-8 space-y-12">
           
+          {/* New Messages Section — surfaces unread customer portal chats so
+              Jack sees fresh messages without opening every job file. */}
+          {portalChatJobs.length > 0 && (
+            <section>
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center">
+                    <MessageCircle className="h-5 w-5 text-[var(--brand-gold)]" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-display italic">New Messages</h2>
+                    <p className="font-label">Unread customer portal chats</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={onNavigateToChat}
+                  className="px-3 py-1 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] text-[10px] font-black rounded-lg border border-[var(--brand-gold)]/20 uppercase tracking-widest hover:bg-[var(--brand-gold)]/20 transition-colors"
+                >
+                  {portalChatUnreadTotal} New
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {portalChatJobs.slice(0, 5).map(({ job, session }) => {
+                  const lastTs = session.lastMessageTimestamp
+                    ? new Date(session.lastMessageTimestamp)
+                    : null;
+                  const lastClientMessage = [...session.messages]
+                    .reverse()
+                    .find(m => m.isFromClient);
+                  return (
+                    <button
+                      key={session.id}
+                      type="button"
+                      onClick={() => onSelectJob(job)}
+                      className="w-full flex items-start gap-4 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--border-color)] hover:border-[var(--brand-gold)]/40 hover:bg-[var(--brand-gold)]/[0.03] transition-all text-left group"
+                    >
+                      <div className="relative h-11 w-11 rounded-2xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center shrink-0">
+                        <MessageCircle className="w-4 h-4 text-[var(--brand-gold)]" />
+                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-[0_0_8px_rgba(244,63,94,0.6)]">
+                          {session.unreadCount}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-3 mb-1">
+                          <p className="text-sm font-display truncate group-hover:text-[var(--brand-gold)] transition-colors">
+                            {session.clientName || job.clientName}
+                          </p>
+                          {lastTs && (
+                            <span className="font-label shrink-0">
+                              {lastTs.toLocaleString('en-CA', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[var(--text-secondary)] truncate">
+                          {lastClientMessage?.text || session.lastMessage || 'New message'}
+                        </p>
+                        <p className="font-label mt-1 truncate">
+                          {job.jobNumber} &middot; {job.projectType}
+                        </p>
+                      </div>
+                      <ChevronRight
+                        size={16}
+                        className="text-[var(--text-tertiary)] group-hover:text-[var(--brand-gold)] group-hover:translate-x-1 transition-all mt-2 shrink-0"
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {/* Schedule Review Section */}
           {reviewNeededJobs.length > 0 && (
             <section>

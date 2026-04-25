@@ -48,9 +48,20 @@ const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, folderName,
     onUpdate({ photos: newPhotos });
   };
 
+  const handlePhotoToggleNA = (key: string) => {
+    const newPhotos = state.photos.map(p =>
+      p.key === key
+        // Toggling N/A also clears any uploaded image so it doesn't ship with
+        // the close-out. The next-step gate accepts isNA as "satisfied".
+        ? { ...p, isNA: !p.isNA, url: !p.isNA ? undefined : p.url, cloudinaryUrl: !p.isNA ? undefined : p.cloudinaryUrl }
+        : p
+    );
+    onUpdate({ photos: newPhotos });
+  };
+
   const progress = state.checklist.filter(i => i.completed || i.isNA).length;
   const total = state.checklist.length;
-  const allPhotosUploaded = state.photos.every(p => !!p.url);
+  const allPhotosUploaded = state.photos.every(p => !!p.url || !!p.isNA);
   const isComplete = progress === total && allPhotosUploaded;
 
   // Propagate page-level completion flag so the customer-portal BuildTracker
@@ -129,6 +140,7 @@ const ChecklistView: React.FC<ChecklistViewProps> = ({ title, state, folderName,
         folderName={folderName}
         onUpload={handlePhotoUpload}
         onRemove={handlePhotoRemove}
+        onToggleNA={handlePhotoToggleNA}
       />
 
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-[var(--bg-primary)]/80 backdrop-blur-xl border-t border-[var(--border-color)] z-40">

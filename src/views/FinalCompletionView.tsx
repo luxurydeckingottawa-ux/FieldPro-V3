@@ -40,9 +40,18 @@ const FinalCompletionView: React.FC<FinalCompletionViewProps> = ({ state, signat
     onUpdate({ photos: newPhotos });
   };
 
+  const handlePhotoToggleNA = (key: string) => {
+    const newPhotos = state.photos.map(p =>
+      p.key === key
+        ? { ...p, isNA: !p.isNA, url: !p.isNA ? undefined : p.url, cloudinaryUrl: !p.isNA ? undefined : p.cloudinaryUrl }
+        : p
+    );
+    onUpdate({ photos: newPhotos });
+  };
+
   const progress = state.checklist.filter(i => i.completed).length;
   const total = state.checklist.length;
-  const allPhotosUploaded = state.photos.every(p => !!p.url);
+  const allPhotosUploaded = state.photos.every(p => !!p.url || !!p.isNA);
   const isComplete = progress === total && allPhotosUploaded && !!signature;
 
   // Propagate page-level completion so the customer-portal BuildTracker
@@ -100,6 +109,7 @@ const FinalCompletionView: React.FC<FinalCompletionViewProps> = ({ state, signat
         folderName={folderName}
         onUpload={handlePhotoUpload}
         onRemove={handlePhotoRemove}
+        onToggleNA={handlePhotoToggleNA}
       />
 
       <section className="pt-8 border-t border-[var(--border-color)]">

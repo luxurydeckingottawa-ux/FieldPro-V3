@@ -69,6 +69,7 @@ import {
   CreditCard,
   DollarSign,
   Printer,
+  Send,
 } from 'lucide-react';
 import { OfficeAIAssistant } from '../components/OfficeAIAssistant';
 import { AIOfficeInsights } from '../components/AIOfficeInsights';
@@ -91,6 +92,7 @@ interface OfficeJobDetailViewProps {
   onDeleteJob?: (jobId: string) => void;
   onOpenJobSetup?: () => void;
   onGenerateInvoice?: (job: Job, type: InvoiceType) => void;
+  onGenerateAndSendInvoice?: (job: Job, type: InvoiceType) => Invoice | void;
   jobInvoices?: Invoice[];
 }
 
@@ -108,6 +110,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   onDeleteJob,
   onOpenJobSetup,
   onGenerateInvoice,
+  onGenerateAndSendInvoice,
   jobInvoices = [],
 }) => {
   const [showLiveStatusReport, setShowLiveStatusReport] = useState(false);
@@ -121,6 +124,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const [siteNotesCollapsed, setSiteNotesCollapsed] = useState(true);
   const [fieldAssignmentExpanded, setFieldAssignmentExpanded] = useState(false);
   const [paymentScheduleExpanded, setPaymentScheduleExpanded] = useState(false);
+  const [invoiceSentFlash, setInvoiceSentFlash] = useState<string | null>(null);
   const [sendingLeadTouchId, setSendingLeadTouchId] = useState<string | null>(null);
   const [expandedLeadTouchId, setExpandedLeadTouchId] = useState<string | null>(null);
   const [leadTouchSentFeedback, setLeadTouchSentFeedback] = useState<string | null>(null);
@@ -191,6 +195,50 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
   const leadUser = APP_USERS.find(u => u.id === job.assignedUsers?.[0]);
 
   const issues = useMemo(() => getJobIssues(job), [job]);
+
+  // Self-healing document list. Even if job.files lost the contract /
+  // invoice attachments somewhere along the lifecycle (e.g. legacy data,
+  // failed Supabase persist), surface them by deriving from their
+  // canonical sources: job.contractPdfUrl + jobInvoices. Dedupes by id +
+  // by url so a properly-attached file isn't double-rendered.
+  const displayFiles = useMemo(() => {
+    type FileEntry = { id: string; name: string; url: string; type: string; uploadedAt: string; uploadedBy?: string; derived?: boolean };
+    const persisted: FileEntry[] = (job.files || []).map(f => ({ ...f, uploadedAt: f.uploadedAt || new Date().toISOString() }));
+    const out: FileEntry[] = [...persisted];
+    const seenUrls = new Set(persisted.map(f => f.url).filter(Boolean));
+    const seenIds = new Set(persisted.map(f => f.id));
+
+    // Derived: contract
+    if (job.contractPdfUrl && !seenUrls.has(job.contractPdfUrl)) {
+      const id = `derived-contract-${job.id}`;
+      if (!seenIds.has(id) && !persisted.some(f => f.type === 'contract')) {
+        out.push({
+          id, name: `Contract-${job.jobNumber || job.id}.pdf`,
+          url: job.contractPdfUrl, type: 'contract',
+          uploadedAt: job.contractSignedDate || job.acceptedDate || new Date().toISOString(),
+          derived: true,
+        });
+      }
+    }
+
+    // Derived: invoices (one entry per invoice that isn't already in files)
+    for (const inv of jobInvoices) {
+      if (!inv.pdfUrl) continue;
+      if (seenUrls.has(inv.pdfUrl)) continue;
+      const id = `derived-inv-${inv.id}`;
+      if (seenIds.has(id)) continue;
+      out.push({
+        id,
+        name: `${inv.invoiceNumber || 'Invoice'}.pdf`,
+        url: inv.pdfUrl,
+        type: 'other',
+        uploadedAt: inv.issuedDate || new Date().toISOString(),
+        derived: true,
+      });
+    }
+
+    return out;
+  }, [job.files, job.contractPdfUrl, job.contractSignedDate, job.acceptedDate, job.jobNumber, job.id, jobInvoices]);
 
   const labourSummary = useMemo(() => timeClockService.getLabourSummary(job.id), [job.id]);
 
@@ -576,14 +624,29 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                                     </button>
                                   </div>
                                 ) : (
-                                  onGenerateInvoice && (
-                                    <button
-                                      onClick={() => onGenerateInvoice(job, m.invoiceType)}
-                                      className="flex items-center gap-1 px-2 py-1 rounded-lg border border-[var(--brand-gold)]/25 bg-[var(--brand-gold)]/8 text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/15 transition-all text-[8px] font-black uppercase tracking-widest"
-                                    >
-                                      <FileText size={9} />
-                                      Generate
-                                    </button>
+                                  (onGenerateAndSendInvoice || onGenerateInvoice) && (
+                                    invoiceSentFlash === m.invoiceType ? (
+                                      <span className="flex items-center gap-1 px-2 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase tracking-widest">
+                                        <Check size={9} strokeWidth={3} /> Sent
+                                      </span>
+                                    ) : (
+                                      <button
+                                        onClick={() => {
+                                          if (onGenerateAndSendInvoice) {
+                                            onGenerateAndSendInvoice(job, m.invoiceType);
+                                          } else if (onGenerateInvoice) {
+                                            onGenerateInvoice(job, m.invoiceType);
+                                          }
+                                          setInvoiceSentFlash(m.invoiceType);
+                                          setTimeout(() => setInvoiceSentFlash(null), 2400);
+                                        }}
+                                        title="Generate the invoice and mark it sent in one step"
+                                        className="flex items-center gap-1 px-2 py-1 rounded-lg border border-[var(--brand-gold)]/25 bg-[var(--brand-gold)]/8 text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/15 transition-all text-[8px] font-black uppercase tracking-widest"
+                                      >
+                                        <Send size={9} />
+                                        Generate &amp; Send
+                                      </button>
+                                    )
                                   )
                                 )}
                               </div>
@@ -859,7 +922,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
               </div>
 
               <div className="space-y-6 relative z-10">
-                {job.files && job.files.length > 0 ? (
+                {displayFiles.length > 0 ? (
                   <>
                     {[
                       { type: 'estimate', label: 'Itemized Estimate', icon: ClipboardList, color: 'text-[var(--brand-gold)]' },
@@ -870,7 +933,7 @@ const OfficeJobDetailView: React.FC<OfficeJobDetailViewProps> = ({
                       { type: 'photo', label: 'Site & Progress Photos', icon: Camera, color: 'text-purple-400' },
                       { type: 'other', label: 'Other Documents', icon: FileText, color: 'text-[var(--text-tertiary)]' }
                     ].map(group => {
-                      const groupFiles = job.files.filter(f => f.type === group.type);
+                      const groupFiles = displayFiles.filter(f => f.type === group.type);
                       if (groupFiles.length === 0) return null;
 
                       return (
@@ -1987,29 +2050,28 @@ Ottawa's Premium Deck Builders`;
                         {item.label}
                       </span>
                       
-                      {/* Material Delivery Auto-Text */}
+                      {/* Material Delivery Text — opens the QuickMessageModal pre-filled with
+                          a default delivery-date message. Office must review/edit (date, day,
+                          placement notes) before pressing Send. No more auto-fire. */}
                       {item.label.toLowerCase().includes('arrange delivery') && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!job.clientPhone) { alert('No phone number on file for this customer.'); return; }
                             const firstName = job.clientName?.split(' ')[0] || 'there';
-                            const msg = `Hi ${firstName}, your materials for your Luxury Decking project are scheduled for delivery and will be placed on your driveway. Please let us know if you have specific placement instructions. Thank you!`;
-                            const secret = import.meta.env?.VITE_INTERNAL_API_SECRET;
-                            fetch('/.netlify/functions/send-sms', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json', ...(secret ? { 'X-Internal-Secret': secret } : {}) },
-                              body: JSON.stringify({ to: job.clientPhone, message: msg }),
-                            }).then(() => alert('Material delivery text sent!')).catch(() => alert('Failed to send text.'));
+                            const msg = `Hi ${firstName}, your materials for your Luxury Decking project are scheduled for delivery on [DAY/DATE] and will be placed on your driveway. Please let us know if you have specific placement instructions. Thank you!`;
+                            setPendingReminderMessage(msg);
+                            setMessageType('sms');
+                            setIsMessageModalOpen(true);
                           }}
                           className="ml-auto flex items-center gap-1 px-2.5 py-1.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] rounded-lg hover:bg-[var(--brand-gold)] hover:text-black transition-all text-[9px] font-black uppercase tracking-widest"
-                          title="Auto-text homeowner: materials on the way"
+                          title="Preview and edit the delivery-date text before sending"
                         >
                           <MessageSquare size={11} /> Text
                         </button>
                       )}
                       {/* Communication Hook */}
-                      {!item.label.toLowerCase().includes('arrange delivery') && (item.label.toLowerCase().includes('notify') ||
+                      {!item.label.toLowerCase().includes('arrange delivery') && !item.label.toLowerCase().includes('apply for permits') && (item.label.toLowerCase().includes('notify') ||
                         item.label.toLowerCase().includes('send') ||
                         item.label.toLowerCase().includes('request')) && (
                         <button
@@ -2022,6 +2084,24 @@ Ottawa's Premium Deck Builders`;
                           title="Send Message"
                         >
                           <MessageSquare size={12} />
+                        </button>
+                      )}
+                      {/* Permit Notice Toggle — surfaces a "Permit Approval In Progress" banner on the customer portal */}
+                      {item.label.toLowerCase().includes('apply for permits') && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUpdateJob(job.id, { permitNoticeActive: !job.permitNoticeActive });
+                          }}
+                          className={`ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all text-[9px] font-black uppercase tracking-widest ${
+                            job.permitNoticeActive
+                              ? 'bg-amber-500 text-black border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+                              : 'bg-[var(--bg-secondary)] text-[var(--text-tertiary)] border-[var(--border-color)] hover:border-amber-500/50 hover:text-amber-500'
+                          }`}
+                          title={job.permitNoticeActive ? 'Notice ON — customer portal shows the permit-pending banner' : 'Show "Permit Approval In Progress" notice on the customer portal'}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${job.permitNoticeActive ? 'bg-black' : 'bg-[var(--text-tertiary)]'}`} />
+                          Notify Customer
                         </button>
                       )}
                     </div>

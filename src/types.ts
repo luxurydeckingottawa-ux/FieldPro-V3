@@ -579,6 +579,13 @@ export interface Job {
     /** Set when office marks the action complete (kept for history; UI hides completed items). */
     completedAt?: string;
   }>;
+
+  /**
+   * Toggled ON by office from the Admin Setup checklist when a permit application
+   * is open with the city. Surfaces an info banner on the Customer Portal so the
+   * customer knows we are actively waiting on municipal approval. Off by default.
+   */
+  permitNoticeActive?: boolean;
 }
 
 export interface EstimateOption {
@@ -774,6 +781,8 @@ export interface PhotoUpload {
   key: string;
   url?: string;
   cloudinaryUrl?: string;
+  /** Tech marked this photo not applicable (e.g. ledger flashing on a free-standing deck). */
+  isNA?: boolean;
 }
 
 export interface ChecklistItem {

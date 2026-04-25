@@ -1,19 +1,26 @@
 import { JobInfo, UserRole, ScheduleStatus, FieldScheduleForecast } from '../types';
 import Logo from '../components/Logo';
-import { Calendar, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { Calendar, AlertCircle, CheckCircle2, Clock, Lock } from 'lucide-react';
 
 interface JobInfoViewProps {
   info: JobInfo;
-  role: UserRole | null;
+  /** Kept in the prop type for compatibility with WorkflowContainer wiring,
+   *  but the field workflow no longer asks the tech to pick a role here —
+   *  Employee vs Subcontractor is determined by which portal they're in. */
+  role?: UserRole | null;
   forecast?: FieldScheduleForecast;
-  setRole: (role: UserRole) => void;
+  setRole?: (role: UserRole) => void;
   onUpdate: (info: Partial<JobInfo>) => void;
   onForecastUpdate: (forecast: FieldScheduleForecast) => void;
   onNext: () => void;
 }
 
-const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole, onUpdate, onForecastUpdate, onNext }) => {
-  const isComplete = info.jobName && info.jobAddress && info.customerName && info.jobType && role && forecast;
+const JobInfoView: React.FC<JobInfoViewProps> = ({ info, forecast, onUpdate, onForecastUpdate, onNext }) => {
+  // Schedule status is the gate — tech MUST mark Ahead / On Schedule / Behind
+  // every time they reopen the workflow. This forces a daily forecast update
+  // (per Jack: "they're forced to update us every time they open the workflow").
+  const hasScheduleStatus = !!forecast?.status;
+  const isComplete = !!(info.jobName && info.jobAddress && info.customerName && info.jobType && hasScheduleStatus);
 
   const handleForecastChange = (updates: Partial<FieldScheduleForecast>) => {
     onForecastUpdate({
@@ -33,31 +40,9 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
       </div>
 
       <div className="space-y-12">
-        <section>
-          <label className="block font-label mb-4">Login Identity</label>
-          <div className="grid grid-cols-2 gap-4">
-            <button 
-              onClick={() => setRole(UserRole.FIELD_EMPLOYEE)}
-              className={`p-6 rounded-2xl border-2 transition-all font-label ${
-                role === UserRole.FIELD_EMPLOYEE
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)] shadow-2xl scale-[1.02]' 
-                  : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              Employee
-            </button>
-            <button 
-              onClick={() => setRole(UserRole.SUBCONTRACTOR)}
-              className={`p-6 rounded-2xl border-2 transition-all font-label ${
-                role === UserRole.SUBCONTRACTOR 
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)] shadow-2xl scale-[1.02]' 
-                  : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              Subcontractor
-            </button>
-          </div>
-        </section>
+        {/* Login Identity selector removed — Employee vs Subcontractor is now
+            determined by which portal the user is in (separate apps), so we
+            don't make the tech pick every time they open a job. */}
 
         <section className="space-y-6">
           <label className="block font-label">Project Identification</label>
@@ -131,16 +116,34 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
           </div>
         </section>
 
-        {/* Schedule Tracker Section */}
-        <section className="pt-6 border-t border-[var(--border-color)]">
-          <div className="flex items-center justify-between mb-6">
-            <label className="block font-label">Daily Schedule Tracker</label>
-            <div className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
-              <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Required</span>
+        {/* Schedule Tracker Section — GATE for Start Field Workflow.
+            Tech must mark Ahead/On Schedule/Behind before they can begin.
+            Forces a fresh forecast every day they open the workflow. */}
+        <section className="pt-6 border-t-2 border-[var(--brand-gold)]/40">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Lock className="h-4 w-4 text-[var(--brand-gold)]" />
+              <label className="block font-label">Daily Schedule Tracker</label>
+            </div>
+            <div className={`px-3 py-1 rounded-full border ${
+              hasScheduleStatus
+                ? 'bg-emerald-500/10 border-emerald-500/30'
+                : 'bg-amber-500/15 border-amber-500/40 animate-pulse'
+            }`}>
+              <span className={`text-[8px] font-black uppercase tracking-widest ${
+                hasScheduleStatus ? 'text-emerald-500' : 'text-amber-500'
+              }`}>
+                {hasScheduleStatus ? 'Updated' : 'Required Before Start'}
+              </span>
             </div>
           </div>
+          <p className="font-label opacity-70 mb-6">
+            Update your schedule status before starting today's workflow. This keeps office and customer in the loop.
+          </p>
 
-          <div className="card-base p-8 space-y-8">
+          <div className={`card-base p-8 space-y-8 transition-all ${
+            !hasScheduleStatus ? 'border-2 border-amber-500/30 shadow-[0_0_24px_rgba(245,158,11,0.15)]' : ''
+          }`}>
             <div>
               <label className="block font-label opacity-60 mb-4">Are you on schedule?</label>
               <div className="grid grid-cols-3 gap-3">
@@ -209,13 +212,21 @@ const JobInfoView: React.FC<JobInfoViewProps> = ({ info, role, forecast, setRole
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-[var(--bg-primary)]/80 backdrop-blur-xl border-t border-[var(--border-color)] z-40">
-        <div className="max-w-4xl mx-auto">
-          <button 
+        <div className="max-w-4xl mx-auto space-y-2">
+          {!isComplete && (
+            <p className="text-center text-[10px] font-black uppercase tracking-widest text-amber-500 flex items-center justify-center gap-2">
+              <AlertCircle className="h-3 w-3" />
+              {!hasScheduleStatus
+                ? 'Mark your schedule status above before starting the workflow'
+                : 'Fill in all project details to continue'}
+            </p>
+          )}
+          <button
             onClick={onNext}
             disabled={!isComplete}
             className={`w-full py-5 rounded-[2rem] font-label text-xs transition-all active:scale-[0.98] shadow-2xl ${
-              isComplete 
-                ? 'bg-[var(--brand-gold)] text-black hover:bg-[var(--brand-gold)]' 
+              isComplete
+                ? 'bg-[var(--brand-gold)] text-black hover:bg-[var(--brand-gold)]'
                 : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] opacity-50 cursor-not-allowed border border-[var(--border-color)]'
             }`}
           >
