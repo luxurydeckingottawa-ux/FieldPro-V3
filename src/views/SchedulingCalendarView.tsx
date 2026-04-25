@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Job, ScheduleStatus } from '../types';
+import { Job, ScheduleStatus, ForecastReviewStatus } from '../types';
 import {
   format,
   startOfMonth,
@@ -30,7 +30,7 @@ import {
   MessageSquare,
   GripVertical
 } from 'lucide-react';
-import { ForecastReviewStatus, PipelineStage } from '../types';
+import { PipelineStage } from '../types';
 
 interface SchedulingCalendarViewProps {
   jobs: Job[];
@@ -120,18 +120,6 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
 
   const planningAlerts = useMemo(() => {
     const alerts = [];
-    
-    // Review Needed
-    const reviewNeeded = jobs.filter(j => j.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED);
-    if (reviewNeeded.length > 0) {
-      alerts.push({
-        type: 'review',
-        title: 'Schedule Review Needed',
-        count: reviewNeeded.length,
-        icon: <Clock className="w-4 h-4 text-amber-500" />,
-        color: 'border-amber-500/20 bg-amber-500/5'
-      });
-    }
 
     // Behind Schedule
     const behind = jobs.filter(j => j.officialScheduleStatus === ScheduleStatus.BEHIND || j.officialScheduleStatus === ScheduleStatus.DELAYED);
@@ -142,6 +130,19 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
         count: behind.length,
         icon: <AlertTriangle className="w-4 h-4 text-rose-500" />,
         color: 'border-rose-500/20 bg-rose-500/5'
+      });
+    }
+
+    // Schedule Change — Confirm Updated Dates
+    // Field crew submitted a forecast that office hasn't confirmed yet.
+    const scheduleChange = jobs.filter(j => j.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED);
+    if (scheduleChange.length > 0) {
+      alerts.push({
+        type: 'schedule-change',
+        title: 'Schedule Change — Confirm Dates',
+        count: scheduleChange.length,
+        icon: <AlertCircle className="w-4 h-4 text-amber-500" />,
+        color: 'border-amber-500/20 bg-amber-500/5'
       });
     }
 
@@ -401,9 +402,6 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                             <div className="text-[10px] font-black uppercase leading-tight truncate flex-1 flex items-center gap-1.5">
                               {isSub ? <Truck className="w-3 h-3 opacity-70" /> : <Hammer className="w-3 h-3 opacity-70" />}
                               {job.clientName}
-                              {job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                              )}
                             </div>
                             <div className={`w-2 h-2 rounded-full border border-black/20 ${getStatusIndicator(job.officialScheduleStatus)}`} />
                           </div>
@@ -452,7 +450,12 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                                     <span className="text-[9px] font-black uppercase tracking-widest">Field Forecast</span>
                                   </div>
                                   {job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED && (
-                                    <span className="text-[8px] font-black bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded uppercase tracking-widest">Review Needed</span>
+                                    <span
+                                      className="text-[8px] font-black text-black uppercase tracking-widest bg-amber-400 px-2 py-0.5 rounded animate-pulse"
+                                      title="Crew updated schedule — confirm dates"
+                                    >
+                                      Confirm Dates
+                                    </span>
                                   )}
                                 </div>
                                 <p className="text-[10px] text-[var(--text-secondary)] italic">"{job.fieldForecast.note || 'Status update submitted'}"</p>
@@ -498,9 +501,13 @@ const SchedulingCalendarView: React.FC<SchedulingCalendarViewProps> = ({ jobs, o
                 </div>
                 <p className="text-sm font-display mb-2">{job.clientName}</p>
                 {job.fieldForecast && (
-                  <div className="flex items-center gap-1.5 text-amber-500">
+                  <div className="flex items-center gap-1.5 text-amber-500" title="Crew updated schedule — confirm dates">
                     <AlertCircle className="w-3 h-3" />
-                    <span className="font-label text-amber-500">Field Update Pending</span>
+                    <span className="font-label text-amber-500">
+                      {job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED
+                        ? 'Schedule Change — Confirm Dates'
+                        : 'Field Update Submitted'}
+                    </span>
                   </div>
                 )}
               </div>

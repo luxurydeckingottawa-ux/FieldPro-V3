@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Job, JobStatus, OfficeReviewStatus, PipelineStage, ForecastReviewStatus, ChatSession } from '../types';
+import { Job, JobStatus, PipelineStage, ChatSession, ForecastReviewStatus, ScheduleStatus } from '../types';
 import { getJobIssues, JobIssue } from '../utils/issueLogic';
 import TimeAttendanceView from '../components/TimeAttendanceView';
 import { timeClockService } from '../services/TimeClockService';
@@ -16,7 +16,9 @@ import {
   Plus,
   Zap,
   MapPin,
-  MessageCircle
+  MessageCircle,
+  CalendarClock,
+  TrendingDown
 } from 'lucide-react';
 
 interface OfficeDashboardViewProps {
@@ -116,11 +118,6 @@ const JobCard: React.FC<{ job: Job; onClick: (job: Job) => void }> = ({ job, onC
             }`}>
               {job.status.replace('_', ' ')}
             </span>
-            {job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED && (
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded border border-amber-500/20 bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase tracking-widest">
-                <Zap size={8} /> Review Needed
-              </div>
-            )}
             {issues.slice(0, 2).map((issue, idx) => (
               <IssueBadge key={idx} issue={issue} />
             ))}
@@ -269,9 +266,27 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
         const startDate = new Date(j.plannedStartDate);
         return startDate >= now && startDate <= nextWeek && j.pipelineStage !== PipelineStage.IN_FIELD;
       }).length,
-      awaitingReview: jobs.filter(j => j.officeReviewStatus === OfficeReviewStatus.READY_FOR_REVIEW).length,
       needsAttention: jobs.filter(j => getJobIssues(j).length > 0).length,
+      scheduleChanges: jobs.filter(j => j.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED).length,
     };
+  }, [jobs]);
+
+  // Jobs where the field crew/sub submitted a schedule update that the
+  // office hasn't confirmed yet. Shown as its own section because Jack
+  // didn't notice these when they were buried inside Needs Attention.
+  const scheduleChangeJobs = useMemo(() => {
+    return jobs
+      .filter(j => j.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED)
+      .sort((a, b) => {
+        // Behind-schedule first, then by most recently updated forecast
+        const aBehind = a.fieldForecast?.status === ScheduleStatus.BEHIND || a.fieldForecast?.status === ScheduleStatus.DELAYED;
+        const bBehind = b.fieldForecast?.status === ScheduleStatus.BEHIND || b.fieldForecast?.status === ScheduleStatus.DELAYED;
+        if (aBehind && !bBehind) return -1;
+        if (!aBehind && bBehind) return 1;
+        const at = a.fieldForecast?.updatedAt ? new Date(a.fieldForecast.updatedAt).getTime() : 0;
+        const bt = b.fieldForecast?.updatedAt ? new Date(b.fieldForecast.updatedAt).getTime() : 0;
+        return bt - at;
+      });
   }, [jobs]);
 
   // Section Data
@@ -297,14 +312,6 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
       .filter(j => j.plannedStartDate && new Date(j.plannedStartDate) >= now && j.pipelineStage !== PipelineStage.IN_FIELD)
       .sort((a, b) => new Date(a.plannedStartDate!).getTime() - new Date(b.plannedStartDate!).getTime())
       .slice(0, 5);
-  }, [jobs]);
-
-  const awaitingReviewJobs = useMemo(() => {
-    return jobs.filter(j => j.officeReviewStatus === OfficeReviewStatus.READY_FOR_REVIEW).slice(0, 5);
-  }, [jobs]);
-
-  const reviewNeededJobs = useMemo(() => {
-    return jobs.filter(j => j.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED).slice(0, 5);
   }, [jobs]);
 
   return (
@@ -361,16 +368,17 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
             color="blue"
           />
           <StatCard
-            label="Awaiting Review"
-            value={stats.awaitingReview}
-            icon={<FileCheck className="w-4 h-4" />}
-            color="purple"
-          />
-          <StatCard
             label="Needs Attention"
             value={stats.needsAttention}
             icon={<AlertCircle className="w-4 h-4" />}
             color="rose"
+          />
+          <StatCard
+            label="Schedule Changes"
+            value={stats.scheduleChanges}
+            icon={<CalendarClock className="w-4 h-4" />}
+            color="amber"
+            pulse
           />
           <StatCard
             label="New Messages"
@@ -467,28 +475,94 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
             </section>
           )}
 
-          {/* Schedule Review Section */}
-          {reviewNeededJobs.length > 0 && (
+          {/* Schedule Change — Confirm Updated Dates
+              Surfaces jobs where the field crew/sub submitted a schedule
+              update and the office hasn't decided whether to push it to
+              the official calendar. Sits ABOVE Needs Attention because
+              calendar drift hits revenue scheduling fast and Jack didn't
+              notice these when they were buried in the generic list. */}
+          {scheduleChangeJobs.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                    <Zap className="h-5 w-5 text-amber-500" />
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center animate-pulse">
+                    <CalendarClock className="h-5 w-5 text-amber-500" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-display italic">Schedule Review Needed</h2>
-                    <p className="font-label">Field updates requiring office approval</p>
+                    <h2 className="text-xl font-display italic">Schedule Change — Confirm Updated Dates</h2>
+                    <p className="font-label">Crew updated the schedule. Confirm or apply to official calendar.</p>
                   </div>
                 </div>
                 <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-black rounded-lg border border-amber-500/20 uppercase tracking-widest">
-                  {reviewNeededJobs.length} Pending
+                  {scheduleChangeJobs.length} Pending
                 </span>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {reviewNeededJobs.map(job => (
-                  <JobCard key={job.id} job={job} onClick={onSelectJob} />
-                ))}
+
+              <div className="space-y-3">
+                {scheduleChangeJobs.map(job => {
+                  const isBehind = job.fieldForecast?.status === ScheduleStatus.BEHIND || job.fieldForecast?.status === ScheduleStatus.DELAYED;
+                  const remaining = job.fieldForecast?.estimatedDaysRemaining;
+                  const reason = job.fieldForecast?.delayReason || job.fieldForecast?.note;
+                  const updatedBy = job.fieldForecast?.updatedBy;
+                  const updatedAt = job.fieldForecast?.updatedAt ? new Date(job.fieldForecast.updatedAt) : null;
+                  return (
+                    <button
+                      key={job.id}
+                      type="button"
+                      onClick={() => onSelectJob(job)}
+                      className="w-full flex items-start gap-4 p-5 rounded-2xl bg-amber-500/[0.04] border border-amber-500/20 hover:border-amber-500/50 hover:bg-amber-500/[0.07] transition-all text-left group"
+                    >
+                      <div className="h-11 w-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
+                        {isBehind ? (
+                          <TrendingDown className="w-5 h-5 text-amber-500" />
+                        ) : (
+                          <CalendarClock className="w-5 h-5 text-amber-500" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-3 mb-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest bg-[var(--brand-gold)]/10 px-2 py-0.5 rounded-lg border border-[var(--brand-gold)]/20 shrink-0">
+                              {job.jobNumber}
+                            </span>
+                            <p className="text-sm font-display truncate group-hover:text-amber-500 transition-colors">
+                              {job.clientName}
+                            </p>
+                          </div>
+                          {updatedAt && (
+                            <span className="font-label shrink-0">
+                              {updatedAt.toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border ${
+                            isBehind
+                              ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                              : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                          }`}>
+                            {(job.fieldForecast?.status || 'updated').replace('_', ' ')}
+                          </span>
+                          {typeof remaining === 'number' && remaining > 0 && (
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)]">
+                              {remaining}d remaining
+                            </span>
+                          )}
+                          {updatedBy && (
+                            <span className="font-label">by {updatedBy}</span>
+                          )}
+                        </div>
+                        {reason && (
+                          <p className="text-xs text-[var(--text-secondary)] italic truncate">"{reason}"</p>
+                        )}
+                      </div>
+                      <ChevronRight
+                        size={16}
+                        className="text-[var(--text-tertiary)] group-hover:text-amber-500 group-hover:translate-x-1 transition-all mt-2 shrink-0"
+                      />
+                    </button>
+                  );
+                })}
               </div>
             </section>
           )}
@@ -519,36 +593,6 @@ const OfficeDashboardView: React.FC<OfficeDashboardViewProps> = ({
                 <div className="col-span-full p-12 rounded-[2rem] border border-dashed border-[var(--border-color)] flex flex-col items-center justify-center text-center bg-[var(--text-primary)]/5">
                   <CheckCircle2 className="h-10 w-10 text-[var(--brand-gold)]/20 mb-4" />
                   <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">All systems healthy</p>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* Awaiting Review Section */}
-          <section>
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-amber-500" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-display italic">Awaiting Review</h2>
-                  <p className="font-label">Ready for office closeout</p>
-                </div>
-              </div>
-              <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-black rounded-lg border border-amber-500/20 uppercase tracking-widest">
-                {awaitingReviewJobs.length} Pending
-              </span>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {awaitingReviewJobs.length > 0 ? (
-                awaitingReviewJobs.map(job => (
-                  <JobCard key={job.id} job={job} onClick={onSelectJob} />
-                ))
-              ) : (
-                <div className="col-span-full p-12 rounded-[2rem] border border-dashed border-[var(--border-color)] flex flex-col items-center justify-center text-center bg-[var(--text-primary)]/5">
-                  <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">No reviews pending</p>
                 </div>
               )}
             </div>

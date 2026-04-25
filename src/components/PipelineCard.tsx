@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Job, ForecastReviewStatus, PipelineStage } from '../types';
-import { MapPin, User as UserIcon, Calendar, AlertCircle, Clock, CheckCircle2, ShieldCheck, RefreshCw, Hourglass, Globe, Mail } from 'lucide-react';
+import { Job, PipelineStage, ForecastReviewStatus } from '../types';
+import { MapPin, User as UserIcon, Calendar, AlertCircle, Clock, CheckCircle2, ShieldCheck, Hourglass, Globe, Mail, CalendarClock } from 'lucide-react';
 import { getJobIssues } from '../utils/issueLogic';
 import { getCampaignStatusSummary } from '../utils/dripCampaignProcessor';
 
@@ -68,14 +68,17 @@ const PipelineCard: React.FC<PipelineCardProps> = ({ job, onClick }) => {
               <ShieldCheck size={10} /> Closeout Ready
             </span>
           )}
-          {job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED && (
-            <span className="text-[8px] font-black text-white uppercase tracking-widest bg-purple-600 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm animate-pulse">
-              <RefreshCw size={10} /> Review Needed
-            </span>
-          )}
           {isStuck && (
             <span className="text-[8px] font-black text-white uppercase tracking-widest bg-amber-600 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm animate-pulse">
               <Hourglass size={10} /> Stuck ({agingDays}d)
+            </span>
+          )}
+          {job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED && (
+            <span
+              className="text-[8px] font-black text-black uppercase tracking-widest bg-amber-400 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm animate-pulse"
+              title="Crew updated the schedule — confirm dates"
+            >
+              <CalendarClock size={10} /> Schedule Changed
             </span>
           )}
           {job.needsJobSetup && !job.digitalWorkOrder && (

@@ -11,7 +11,7 @@
 import React from 'react';
 import {
   User, Job, Role, AppState, PipelineStage, CustomerLifecycle,
-  ChatSession, PortalEngagement, OfficeReviewStatus,
+  ChatSession, PortalEngagement,
   EstimatorIntake, Invoice, Customer,
 } from '../types';
 import { ESTIMATE_STAGES } from '../constants';
@@ -109,7 +109,7 @@ export interface AppRouterProps {
   handleOpenWorkflow: (job: Job) => void;
   handleUpdateOfficeChecklist: (jobId: string, stage: PipelineStage, itemId: string, completed: boolean, isNA?: boolean) => void;
   handleUpdateSchedule: (jobId: string, updates: Partial<Job>) => void;
-  handleUpdateOfficeReviewStatus: (jobId: string, status: OfficeReviewStatus) => void;
+  handleConfirmFieldForecast: (jobId: string) => void;
   handleUpdateFieldForecast: (jobId: string, forecast: unknown) => void;
   handleUpdateEstimatorIntake: (intake: EstimatorIntake) => void;
 
@@ -194,7 +194,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
     handleSelectJob, handleUpdateJob, handleDeleteJob, handleUpdatePipelineStage,
     handleCreateJob, handleOpenWorkflow,
     handleUpdateOfficeChecklist, handleUpdateSchedule,
-    handleUpdateOfficeReviewStatus, handleUpdateFieldForecast,
+    handleConfirmFieldForecast, handleUpdateFieldForecast,
     handleUpdateEstimatorIntake,
     handleOpenNewEstimate, handleOpenEstimateForJob, handlePushToEstimating,
     handleEstimateAcceptedLocal, handleEstimateSaved,
@@ -570,7 +570,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
               allJobs={jobs}
               onBack={() => navigateTo(currentUser.role === Role.ADMIN ? 'office-dashboard' : 'jobs')}
               onOpenWorkflow={handleOpenWorkflow}
-              onUpdateOfficeReviewStatus={handleUpdateOfficeReviewStatus}
+              onConfirmFieldForecast={handleConfirmFieldForecast}
               onUpdateSchedule={handleUpdateSchedule}
               onUpdateFieldForecast={handleUpdateFieldForecast}
               onSendMessage={handleSendMessage}

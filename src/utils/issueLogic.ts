@@ -1,4 +1,4 @@
-import { Job, PipelineStage, ScheduleStatus, OfficeReviewStatus } from '../types';
+import { Job, PipelineStage, ScheduleStatus, ForecastReviewStatus } from '../types';
 
 export interface JobIssue {
   type: 'warning' | 'error' | 'info';
@@ -62,9 +62,15 @@ export const getJobIssues = (job: Job): JobIssue[] => {
       if (job.fieldForecast?.status === ScheduleStatus.BEHIND || job.fieldForecast?.status === ScheduleStatus.DELAYED) {
         issues.push({ type: 'error', label: 'Behind Schedule', description: job.fieldForecast.delayReason });
       }
-      // If field submitted a forecast but it hasn't been "applied" (cleared or synced)
-      if (job.fieldForecast && job.fieldForecast.status !== job.officialScheduleStatus) {
-        issues.push({ type: 'info', label: 'Office Review Needed', description: 'Field submitted schedule update' });
+      // Crew submitted a schedule update — office needs to confirm whether
+      // to push it to the official calendar. Cleared by either applying the
+      // change ("Apply to Official Schedule") or acknowledging it.
+      if (job.forecastReviewStatus === ForecastReviewStatus.REVIEW_NEEDED) {
+        issues.push({
+          type: 'warning',
+          label: 'Schedule Change — Confirm Dates',
+          description: job.fieldForecast?.delayReason || 'Crew updated the schedule — confirm or apply to official calendar'
+        });
       }
       break;
 
@@ -78,9 +84,9 @@ export const getJobIssues = (job: Job): JobIssue[] => {
       if (job.photoCompletionStatus === 'NOT_CONFIRMED') {
         issues.push({ type: 'warning', label: 'Photos Pending' });
       }
-      if (job.officeReviewStatus === OfficeReviewStatus.NOT_READY || job.officeReviewStatus === OfficeReviewStatus.UNDER_REVIEW) {
-        issues.push({ type: 'info', label: 'Office Review Needed' });
-      }
+      // Closeout office-review rule removed — office no longer needs to
+      // "review" closeout submissions. The four checklist items + signoff
+      // are the source of truth on whether the file is closed.
       if (!job.materialCost || !job.labourCost) {
         issues.push({ type: 'warning', label: 'Costs Missing' });
       }

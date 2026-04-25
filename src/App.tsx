@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   UserRole, AppState, PageState, User, Job, Role, JobStatus,
-  OfficeReviewStatus, ForecastReviewStatus, ChatSession, ChatMessage,
+  ForecastReviewStatus, ChatSession, ChatMessage,
   CustomerLifecycle, PipelineStage, PortalEngagement, DepositStatus,
   SoldWorkflowStatus, EstimatorIntake, ScheduleStatus, // Customer, Invoice used by AppRouter via hooks
 } from './types';
@@ -1092,7 +1092,6 @@ const App: React.FC = () => {
                 signoffStatus: 'signed' as const,
                 finalSubmissionStatus: 'submitted' as const,
                 invoiceSupportStatus: workflowState.userRole === UserRole.SUBCONTRACTOR ? 'submitted' as const : 'not_required' as const,
-                officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
                 verifiedBuildPassportUrl,
                 subcontractorInvoiceUrl,
                 ...(workflowState.userRole === UserRole.SUBCONTRACTOR ? { labourCost: subInvoiceTotal } : {}),
@@ -1131,7 +1130,6 @@ const App: React.FC = () => {
             signoffStatus: 'signed' as const,
             finalSubmissionStatus: 'submitted' as const,
             invoiceSupportStatus: workflowState.userRole === UserRole.SUBCONTRACTOR ? 'submitted' as const : 'not_required' as const,
-            officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
             verifiedBuildPassportUrl,
             subcontractorInvoiceUrl,
             ...(workflowState.userRole === UserRole.SUBCONTRACTOR ? { labourCost: subInvoiceTotal } : {}),
@@ -1193,7 +1191,6 @@ const App: React.FC = () => {
           signoffStatus: 'signed' as const,
           finalSubmissionStatus: 'submitted' as const,
           invoiceSupportStatus: workflowState.userRole === UserRole.SUBCONTRACTOR ? 'submitted' as const : 'not_required' as const,
-          officeReviewStatus: OfficeReviewStatus.READY_FOR_REVIEW,
           verifiedBuildPassportUrl: verifiedBuildPassportUrl || undefined,
           subcontractorInvoiceUrl: subcontractorInvoiceUrl || undefined,
           fieldProgress: stripPhotoDataUris(updatedPages), // checklist + cloudinary URLs only
@@ -1272,27 +1269,53 @@ const App: React.FC = () => {
     const mailLink = document.createElement('a'); mailLink.href = `mailto:${OFFICE_EMAIL}?subject=${subject}&body=${encodeURIComponent(body)}`; mailLink.click();
   }, [workflowState.userRole, workflowState.jobInfo.jobName]);
 
-  const handleUpdateOfficeReviewStatus = useCallback((jobId: string, status: OfficeReviewStatus) => {
+  // handleUpdateOfficeReviewStatus (closeout review) removed — the closeout
+  // review pill is gone. Nothing writes to office_review_status now.
+  //
+  // handleConfirmFieldForecast — clears forecastReviewStatus back to
+  // UP_TO_DATE after the office has reviewed a field-submitted schedule
+  // change. Called from the dashboard "Schedule Change" surface and from the
+  // job detail "Acknowledge" button. Does NOT touch the official schedule
+  // dates — use "Apply to Official Schedule" for that.
+  const handleConfirmFieldForecast = useCallback((jobId: string) => {
     setJobs(prevJobs => prevJobs.map(job =>
-      job.id === jobId ? { ...job, officeReviewStatus: status, updatedAt: new Date().toISOString() } : job
+      job.id === jobId ? {
+        ...job,
+        forecastReviewStatus: ForecastReviewStatus.UP_TO_DATE,
+        updatedAt: new Date().toISOString()
+      } : job
     ));
     setSelectedJob(prev => {
       if (prev && prev.id === jobId) {
-        return { ...prev, officeReviewStatus: status, updatedAt: new Date().toISOString() };
+        return {
+          ...prev,
+          forecastReviewStatus: ForecastReviewStatus.UP_TO_DATE,
+          updatedAt: new Date().toISOString()
+        };
       }
       return prev;
     });
-    dataService.updateJob(jobId, { officeReviewStatus: status }).catch(err =>
-      console.error('[handleUpdateOfficeReviewStatus] Supabase write failed:', err)
+    dataService.updateJob(jobId, {
+      forecastReviewStatus: ForecastReviewStatus.UP_TO_DATE
+    }).catch(err =>
+      console.error('[handleConfirmFieldForecast] Supabase write failed:', err)
     );
   }, []);
 
   const handleUpdateSchedule = useCallback((jobId: string, updates: Partial<Job>) => {
+    // If the office is clearing the field forecast (i.e. clicking
+    // "Apply to Official Schedule"), that IS the confirmation — also flip
+    // forecastReviewStatus back to UP_TO_DATE so the dashboard chip clears.
+    const clearingForecast = 'fieldForecast' in updates && !updates.fieldForecast;
+    const enriched: Partial<Job> = clearingForecast
+      ? { ...updates, forecastReviewStatus: ForecastReviewStatus.UP_TO_DATE }
+      : updates;
+
     setJobs(prevJobs => prevJobs.map(job => {
       if (job.id === jobId) {
-        const updatedJob = { ...job, ...updates };
-        const startOrDurationChanged = 'plannedStartDate' in updates || 'plannedDurationDays' in updates;
-        const finishNotExplicitlySet = !('plannedFinishDate' in updates);
+        const updatedJob = { ...job, ...enriched };
+        const startOrDurationChanged = 'plannedStartDate' in enriched || 'plannedDurationDays' in enriched;
+        const finishNotExplicitlySet = !('plannedFinishDate' in enriched);
 
         if (startOrDurationChanged && finishNotExplicitlySet && updatedJob.plannedStartDate && updatedJob.plannedDurationDays) {
           const start = new Date(updatedJob.plannedStartDate);
@@ -1304,12 +1327,12 @@ const App: React.FC = () => {
       }
       return job;
     }));
-    
+
     setSelectedJob(prev => {
       if (prev && prev.id === jobId) {
-        const updatedJob = { ...prev, ...updates };
-        const startOrDurationChanged = 'plannedStartDate' in updates || 'plannedDurationDays' in updates;
-        const finishNotExplicitlySet = !('plannedFinishDate' in updates);
+        const updatedJob = { ...prev, ...enriched };
+        const startOrDurationChanged = 'plannedStartDate' in enriched || 'plannedDurationDays' in enriched;
+        const finishNotExplicitlySet = !('plannedFinishDate' in enriched);
 
         if (startOrDurationChanged && finishNotExplicitlySet && updatedJob.plannedStartDate && updatedJob.plannedDurationDays) {
           const start = new Date(updatedJob.plannedStartDate);
@@ -1323,7 +1346,7 @@ const App: React.FC = () => {
     });
 
     // Persist to Supabase
-    dataService.updateJob(jobId, updates).catch(err =>
+    dataService.updateJob(jobId, enriched).catch(err =>
       console.error('[handleUpdateSchedule] Supabase write failed:', err)
     );
   }, []);
@@ -1390,38 +1413,35 @@ const App: React.FC = () => {
   }, []);
 
   const handleUpdateFieldForecast = useCallback((jobId: string, forecast: any) => {
-    setJobs(prevJobs => prevJobs.map(job => 
-      job.id === jobId ? { 
-        ...job, 
-        fieldForecast: {
-          ...forecast,
-          updatedAt: new Date().toISOString(),
-          updatedBy: currentUser?.name || 'Unknown'
-        },
+    // When a field tech / subcontractor submits a schedule update, flag the
+    // job as REVIEW_NEEDED so the office sees a "Schedule Change — Confirm
+    // Updated Dates" surface on the dashboard, calendar, and pipeline card.
+    // Office clears the flag by either applying the change to the official
+    // schedule, or clicking "Acknowledge" on the job file.
+    const forecastPayload = {
+      ...forecast,
+      updatedAt: new Date().toISOString(),
+      updatedBy: currentUser?.name || 'Unknown'
+    };
+    setJobs(prevJobs => prevJobs.map(job =>
+      job.id === jobId ? {
+        ...job,
+        fieldForecast: forecastPayload,
         forecastReviewStatus: ForecastReviewStatus.REVIEW_NEEDED,
-        updatedAt: new Date().toISOString() 
+        updatedAt: new Date().toISOString()
       } : job
     ));
     setSelectedJob(prev => {
       if (prev && prev.id === jobId) {
         return {
           ...prev,
-          fieldForecast: {
-            ...forecast,
-            updatedAt: new Date().toISOString(),
-            updatedBy: currentUser?.name || 'Unknown'
-          },
+          fieldForecast: forecastPayload,
           forecastReviewStatus: ForecastReviewStatus.REVIEW_NEEDED,
           updatedAt: new Date().toISOString()
         };
       }
       return prev;
     });
-    const forecastPayload = {
-      ...forecast,
-      updatedAt: new Date().toISOString(),
-      updatedBy: currentUser?.name || 'Unknown'
-    };
     dataService.updateJob(jobId, {
       fieldForecast: forecastPayload,
       forecastReviewStatus: ForecastReviewStatus.REVIEW_NEEDED
@@ -1805,7 +1825,7 @@ const App: React.FC = () => {
       handleOpenWorkflow={handleOpenWorkflow}
       handleUpdateOfficeChecklist={handleUpdateOfficeChecklist}
       handleUpdateSchedule={handleUpdateSchedule}
-      handleUpdateOfficeReviewStatus={handleUpdateOfficeReviewStatus}
+      handleConfirmFieldForecast={handleConfirmFieldForecast}
       handleUpdateFieldForecast={handleUpdateFieldForecast}
       handleUpdateEstimatorIntake={handleUpdateEstimatorIntake}
       handleOpenNewEstimate={handleOpenNewEstimate}

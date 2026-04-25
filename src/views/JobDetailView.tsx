@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Job, User, Role, OfficeReviewStatus, ScheduleStatus, FieldScheduleForecast } from '../types';
+import { Job, User, Role, ScheduleStatus, FieldScheduleForecast } from '../types';
 import { APP_USERS } from '../constants';
 import ProjectLocationMap from '../components/ProjectLocationMap';
 import TimeClockControls from '../components/TimeClockControls';
@@ -20,7 +20,6 @@ import {
   ClipboardCheck,
   ShieldCheck,
   Camera,
-  Settings,
   History,
   TrendingUp,
   TrendingDown,
@@ -39,21 +38,24 @@ interface JobDetailViewProps {
   user: User;
   onBack: () => void;
   onOpenWorkflow: (job: Job) => void;
-  onUpdateOfficeReviewStatus?: (jobId: string, status: OfficeReviewStatus) => void;
   onUpdateSchedule?: (jobId: string, updates: Partial<Job>) => void;
   onUpdateFieldForecast?: (jobId: string, forecast: Partial<FieldScheduleForecast>) => void;
+  /** Clears forecastReviewStatus back to UP_TO_DATE without changing dates.
+   *  Used when the office reviews a field schedule update and decides not
+   *  to push it to the official schedule. */
+  onConfirmFieldForecast?: (jobId: string) => void;
   onSendMessage?: (sessionId: string, text: string) => void;
   allJobs?: Job[];
 }
 
-const JobDetailView: React.FC<JobDetailViewProps> = ({ 
-  job, 
-  user, 
-  onBack, 
+const JobDetailView: React.FC<JobDetailViewProps> = ({
+  job,
+  user,
+  onBack,
   onOpenWorkflow,
-  onUpdateOfficeReviewStatus,
   onUpdateSchedule,
   onUpdateFieldForecast,
+  onConfirmFieldForecast,
   onSendMessage,
   allJobs = []
 }) => {
@@ -219,49 +221,9 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
           </section>
         )}
           
-          {/* Office Control Panel (Admin/Manager only) */}
-          {isAdminOrManager && (
-            <section 
-              
-              
-              
-              className="bg-white/[0.03] rounded-[2rem] shadow-2xl border border-white/5 overflow-hidden p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 backdrop-blur-md"
-            >
-              <div className="flex items-center gap-5">
-                <div className="h-14 w-14 rounded-2xl bg-[var(--brand-gold)]/10 flex items-center justify-center border border-[var(--brand-gold)]/20 shadow-[0_0_20px_rgba(196,164,50,0.1)]">
-                  <Settings className="h-7 w-7 text-[var(--brand-gold)]" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.3em] mb-1">Office Control</p>
-                  <h2 className="text-xl font-black text-white tracking-tight italic uppercase">Review Management</h2>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <span className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Status:</span>
-                <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 shadow-inner">
-                  {[
-                    { id: OfficeReviewStatus.NOT_READY, label: 'Pending' },
-                    { id: OfficeReviewStatus.READY_FOR_REVIEW, label: 'Ready' },
-                    { id: OfficeReviewStatus.UNDER_REVIEW, label: 'Reviewing' },
-                    { id: OfficeReviewStatus.REVIEW_COMPLETE, label: 'Done' },
-                  ].map((status) => (
-                    <button
-                      key={status.id}
-                      onClick={() => onUpdateOfficeReviewStatus?.(job.id, status.id)}
-                      className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                        job.officeReviewStatus === status.id 
-                          ? 'bg-[var(--brand-gold)] text-black shadow-[0_0_15px_rgba(196,164,50,0.3)]' 
-                          : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-                      }`}
-                    >
-                      {status.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
+          {/* Office Review Management panel removed — Jack confirmed there's
+              no actual office review step in the workflow. Pipeline stages +
+              checklists drive completion now. */}
 
           <section 
             
@@ -664,29 +626,38 @@ const JobDetailView: React.FC<JobDetailViewProps> = ({
                     {job.fieldForecast.note && (
                       <p className="text-sm text-amber-200/70 italic leading-relaxed mb-8 bg-amber-500/5 p-4 rounded-xl border border-amber-500/10">"{job.fieldForecast.note}"</p>
                     )}
-                    <button 
-                      onClick={() => {
-                        const newFinish = new Date();
-                        newFinish.setDate(newFinish.getDate() + job.fieldForecast!.estimatedDaysRemaining);
-                        const finishStr = newFinish.toISOString().split('T')[0];
-                        
-                        let newDuration = job.plannedDurationDays;
-                        if (job.plannedStartDate) {
-                          const start = new Date(job.plannedStartDate);
-                          newDuration = Math.ceil((newFinish.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                        }
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        onClick={() => {
+                          const newFinish = new Date();
+                          newFinish.setDate(newFinish.getDate() + job.fieldForecast!.estimatedDaysRemaining);
+                          const finishStr = newFinish.toISOString().split('T')[0];
 
-                        onUpdateSchedule?.(job.id, {
-                          officialScheduleStatus: job.fieldForecast!.status,
-                          plannedFinishDate: finishStr,
-                          plannedDurationDays: newDuration,
-                          fieldForecast: undefined
-                        });
-                      }}
-                      className="w-full py-5 bg-amber-600 text-black rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-amber-500 transition-all active:scale-95 shadow-[0_15px_40px_rgba(217,119,6,0.3)]"
-                    >
-                      Apply to Official Schedule
-                    </button>
+                          let newDuration = job.plannedDurationDays;
+                          if (job.plannedStartDate) {
+                            const start = new Date(job.plannedStartDate);
+                            newDuration = Math.ceil((newFinish.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                          }
+
+                          onUpdateSchedule?.(job.id, {
+                            officialScheduleStatus: job.fieldForecast!.status,
+                            plannedFinishDate: finishStr,
+                            plannedDurationDays: newDuration,
+                            fieldForecast: undefined
+                          });
+                        }}
+                        className="w-full py-5 bg-amber-600 text-black rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-amber-500 transition-all active:scale-95 shadow-[0_15px_40px_rgba(217,119,6,0.3)]"
+                      >
+                        Apply to Official Schedule
+                      </button>
+                      <button
+                        onClick={() => onConfirmFieldForecast?.(job.id)}
+                        className="w-full py-5 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--card-border)] rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:border-[var(--brand-gold)]/40 transition-all active:scale-95"
+                        title="Mark this schedule change as reviewed without changing the official dates"
+                      >
+                        Acknowledge — Keep Dates
+                      </button>
+                    </div>
                   </div>
                 )}
 
