@@ -329,10 +329,54 @@ interface Step2Props {
 const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
   const summary = job.acceptedBuildSummary;
 
+  // ----- Source layering (most authoritative → fallback) ---------------
+  // 1) accepted-option specific selections/dimensions (calculatorOptions)
+  // 2) flat calculatorSelections / calculatorDimensions (active option at save)
+  // 3) buildDetails (post-acceptance prefill ran)
+  // 4) measureSheet (raw site measurements from estimator visit)
+  // 5) estimateData option keyFeatures + features (the option the customer accepted)
+  // 6) acceptedBuildSummary.scopeSummary (free-text scope)
 
-  const sel = job.calculatorSelections as Record<string, string> | undefined;
-  const dim = job.calculatorDimensions as Record<string, number> | undefined;
+  const acceptedOpt =
+    (job.calculatorOptions || []).find((o) => o.id === job.acceptedOptionId) ||
+    (job.calculatorOptions || [])[0];
+  const optSel = (acceptedOpt?.selections || {}) as Record<string, { name?: string } | undefined>;
+  const optDim = (acceptedOpt?.dimensions || {}) as Record<string, number | string | undefined>;
+
+  const sel = (job.calculatorSelections || {}) as Record<string, { name?: string } | undefined>;
+  const dim = (job.calculatorDimensions || {}) as Record<string, number | undefined>;
   const bd  = job.buildDetails;
+  const ms  = job.estimatorIntake?.measureSheet;
+
+  const estimateOpt = (job.estimateData?.options || []).find((o) => o.id === job.acceptedOptionId);
+  const kf = estimateOpt?.keyFeatures;
+  const scope = (summary?.scopeSummary || '').toLowerCase();
+
+  // Pick first non-empty primitive value across sources
+  const firstStr = (...vals: Array<string | number | undefined | null>): string => {
+    for (const v of vals) {
+      if (v === undefined || v === null) continue;
+      const s = typeof v === 'number' ? (v > 0 ? String(v) : '') : String(v).trim();
+      if (s) return s;
+    }
+    return '';
+  };
+  const firstBool = (...vals: Array<boolean | undefined | null>): boolean => {
+    for (const v of vals) if (v === true) return true;
+    return false;
+  };
+
+  // Joist spacing — accepted option may store "16", "12", or "16\" OC"
+  const normalizeSpacing = (s: string): string => {
+    if (!s) return '';
+    const cleaned = s.replace(/[^0-9]/g, '');
+    if (cleaned === '12') return '12" OC';
+    if (cleaned === '16') return '16" OC';
+    return s.includes('OC') ? s : s ? `${s}" OC` : '';
+  };
+
+  // Scope-summary keyword extraction (last-resort)
+  const scopeHas = (kw: string) => scope.includes(kw.toLowerCase());
 
   const [form, setForm] = useState<FormState>({
     // A — Client & Site
@@ -343,46 +387,46 @@ const Step2JobDetailsForm: React.FC<Step2Props> = ({ job, onSave, onBack }) => {
     siteAccessNotes: (job.estimatorIntake as unknown as Record<string, string> | undefined)?.siteAccessNotes ?? '',
     parkingNotes: '',
     // B — Project Scope (core)
-    packageTier: job.acceptedOptionName || summary?.optionName || '',
+    packageTier: firstStr(job.acceptedOptionName, summary?.optionName, estimateOpt?.title, estimateOpt?.name),
     totalPrice: summary?.totalPrice ?? job.totalAmount ?? 0,
-    deckSqFt: dim?.sqft?.toString() ?? dim?.deckSqft?.toString() ?? '',
+    deckSqFt: firstStr(optDim.sqft as number, optDim.deckSqft as number, dim.sqft, dim.deckSqft, ms?.deckSqft),
     addOns: summary?.addOns?.map((a) => a.name) ?? [],
     scopeNotes: '',
     // B1 — Site & Footings
-    deckType: bd?.footings?.attachedToHouse ? 'Attached' : bd?.footings?.floating ? 'Floating' : '',
-    footingType: sel?.foundation?.name ?? bd?.footings?.type ?? '',
-    footingsCount: dim?.footingsCount?.toString() ?? '',
-    deckHeight: '',
+    deckType: bd?.footings?.attachedToHouse ? 'Attached' : bd?.footings?.floating ? 'Floating' : (scopeHas('floating') ? 'Floating' : scopeHas('attached') ? 'Attached' : ''),
+    footingType: firstStr(optSel.foundation?.name, sel.foundation?.name, bd?.footings?.type, kf?.foundation, ms?.footingType),
+    footingsCount: firstStr(optDim.footingsCount as number, dim.footingsCount, ms?.footingCount),
+    deckHeight: firstStr(optDim.deckHeight as string, optDim.height as string, dim.deckHeight, dim.height, ms?.elevationNote),
     // B2 — Framing
-    framingMaterial: bd?.framing?.type ?? 'Pressure Treated',
-    joistSize: bd?.framing?.joistSize ?? '2x8',
-    joistSpacing: bd?.framing?.joistSpacing ?? '16" OC',
-    joistProtection: bd?.framing?.joistProtection ?? false,
+    framingMaterial: firstStr(optSel.framing?.name, sel.framing?.name, bd?.framing?.type, kf?.framing) || 'Pressure Treated',
+    joistSize: firstStr(optSel.joistSize?.name, sel.joistSize?.name, bd?.framing?.joistSize) || '2x8',
+    joistSpacing: normalizeSpacing(firstStr(optSel.joistSpacing?.name, sel.joistSpacing?.name, bd?.framing?.joistSpacing)) || '16" OC',
+    joistProtection: firstBool(bd?.framing?.joistProtection, ms?.joistProtection),
     // B3 — Decking
-    deckingMaterial: sel?.decking?.name ?? bd?.decking?.type ?? '',
-    deckingBrand: bd?.decking?.brand ?? '',
-    deckingColor: bd?.decking?.color ?? '',
-    pictureFrame: !!(dim?.borderLF > 0),
-    pictureFrameColor: bd?.decking?.accentNote ?? '',
+    deckingMaterial: firstStr(optSel.decking?.name, sel.decking?.name, bd?.decking?.type, kf?.decking),
+    deckingBrand: firstStr(optSel.deckingBrand?.name, sel.deckingBrand?.name, bd?.decking?.brand),
+    deckingColor: firstStr(optSel.deckingColor?.name, sel.deckingColor?.name, bd?.decking?.color),
+    pictureFrame: firstBool((dim.borderLF || 0) > 0, (ms?.pictureFrameLf || 0) > 0),
+    pictureFrameColor: firstStr(bd?.decking?.accentNote, optSel.pictureFrameColor?.name),
     // B4 — Railing
-    railingIncluded: bd?.railing?.included ?? !!(sel?.railing),
-    railingType: sel?.railing?.name ?? bd?.railing?.type ?? '',
-    railingBrand: '',
-    railingLF: dim?.railingLF?.toString() ?? '',
+    railingIncluded: firstBool(bd?.railing?.included, !!sel.railing, !!optSel.railing, !!kf?.railing),
+    railingType: firstStr(optSel.railing?.name, sel.railing?.name, bd?.railing?.type, kf?.railing),
+    railingBrand: firstStr(optSel.railingBrand?.name, sel.railingBrand?.name, bd?.railing?.brand as string),
+    railingLF: firstStr(optDim.railingLF as number, dim.railingLF, (ms?.aluminumPostCount || 0) > 0 ? undefined : ms?.woodRailingLf),
     // B5 — Stairs & Skirting
-    stairsIncluded: bd?.stairs?.included ?? !!(dim?.steps > 0),
-    stairCount: dim?.steps?.toString() ?? '',
-    skirtingIncluded: bd?.skirting?.included ?? !!(dim?.skirtingSqFt > 0),
-    skirtingType: bd?.skirting?.type ?? '',
-    skirtingGate: false,
+    stairsIncluded: firstBool(bd?.stairs?.included, (dim.steps || 0) > 0, (optDim.steps as number || 0) > 0, (ms?.stairLf || 0) > 0),
+    stairCount: firstStr(optDim.steps as number, dim.steps),
+    skirtingIncluded: firstBool(bd?.skirting?.included, (dim.skirtingSqFt || 0) > 0, (optDim.skirtingSqFt as number || 0) > 0, (ms?.skirtingSqft || 0) > 0),
+    skirtingType: firstStr(optSel.skirting?.name, sel.skirting?.name, bd?.skirting?.type),
+    skirtingGate: firstBool(bd?.skirting && (bd.skirting as { gate?: boolean }).gate, scopeHas('skirting gate') || scopeHas('access gate')),
     // B6 — Electrical
-    lightingIncluded: bd?.electrical?.lightingIncluded ?? !!(dim?.lightsCount > 0),
-    lightingType: bd?.electrical?.lightingType ?? '',
+    lightingIncluded: firstBool(bd?.electrical?.lightingIncluded, (dim.lightsCount || 0) > 0, (optDim.lightsCount as number || 0) > 0, (ms?.lightingFixtures || 0) > 0),
+    lightingType: firstStr(optSel.lighting?.name, sel.lighting?.name, bd?.electrical?.lightingType),
     // C — Schedule & Assignment
     estimatedStartDate: '',
     estimatedDuration: 5,
     assignedTo: '',
-    permitRequired: bd?.sitePrep?.permitsRequired ?? false,
+    permitRequired: firstBool(bd?.sitePrep?.permitsRequired, ms?.permitRequired),
     permitNumber: '',
   });
 
