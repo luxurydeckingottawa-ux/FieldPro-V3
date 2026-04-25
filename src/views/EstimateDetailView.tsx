@@ -42,6 +42,9 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
   const [sendingTouchId, setSendingTouchId] = useState<string | null>(null);
   const [expandedTouchId, setExpandedTouchId] = useState<string | null>(null);
   const [touchSentFeedback, setTouchSentFeedback] = useState<string | null>(null);
+  // Tracks which channel (sms vs email) is being previewed inside the expanded
+  // touch row, so the user can toggle when a touch sends both.
+  const [activePreviewChannel, setActivePreviewChannel] = useState<Record<string, 'sms' | 'email'>>({});
 
   // ── Multi-option switcher ─────────────────────────────────────────────────
   // When the estimate has multiple options (A, B, C…) the user can switch
@@ -606,52 +609,9 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               jobId={job.id}
             />
 
-            {/* ── OPTIONS SUMMARY (multi-option estimates only) ─────────────── */}
-            {hasMultipleOptions && (
-              <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
-                <div className="px-5 py-3 border-b border-[var(--border-color)]">
-                  <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
-                    <BarChart3 className="w-3.5 h-3.5 text-[var(--brand-gold)]" /> Estimate Options
-                    <span className="ml-auto text-[9px] font-normal normal-case tracking-normal text-[var(--text-secondary)]">
-                      {estimateOptions.length} options prepared
-                    </span>
-                  </h2>
-                </div>
-                <div className="divide-y divide-[var(--border-color)]">
-                  {estimateOptions.map((opt, idx) => (
-                    <button
-                      key={opt.id}
-                      onClick={() => setSelectedOptionIdx(idx)}
-                      className={`w-full flex items-center justify-between px-5 py-3.5 transition-all text-left ${
-                        selectedOptionIdx === idx
-                          ? 'bg-[var(--brand-gold)]/8'
-                          : 'hover:bg-[var(--bg-secondary)]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black border-2 ${
-                          selectedOptionIdx === idx
-                            ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-black'
-                            : 'bg-[var(--bg-secondary)] border-[var(--border-color)] text-[var(--text-secondary)]'
-                        }`}>
-                          {String.fromCharCode(65 + idx)}
-                        </span>
-                        <div>
-                          <p className="text-sm font-semibold text-[var(--text-primary)]">{opt.name}</p>
-                          {opt.title && opt.title !== opt.name && (
-                            <p className="text-[10px] text-[var(--text-secondary)]">{opt.title}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-[var(--text-primary)]">${opt.price.toLocaleString()}</p>
-                        <p className="text-[10px] text-[var(--text-secondary)]">inc. tax</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* (Removed standalone Options Summary card — duplicated info that
+                already appears as the option-switcher tabs inside the Itemized
+                Estimate block below. Per Jack: too many repeated views.) */}
 
             {/* ── LIVE ITEMIZED ESTIMATE ────────────────────────────────────── */}
             {(job.liveEstimate || estimateOptions.length > 0 || (job.acceptedBuildSummary?.addOns && job.acceptedBuildSummary.addOns.length > 0)) && (
@@ -1007,49 +967,10 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
               </div>
             )}
 
-            {/* Estimate Data / Proposal Options */}
-            {job.estimateData && (
-              <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-color)]">
-                  <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5" /> Estimate Proposal
-                  </h2>
-                  {job.portalEngagement && (
-                    <div className="flex items-center gap-3 text-[10px] font-bold text-[var(--text-secondary)]">
-                      <span>Opens: <span className="text-blue-500">{job.portalEngagement.totalOpens}</span></span>
-                      <span>Last: <span className="text-blue-500">{job.portalEngagement.lastOpenedAt?.split('T')[0] || 'N/A'}</span></span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-5">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {job.estimateData.options.map((option: EstimateOption) => (
-                      <div key={option.id} className={`p-4 rounded-lg border transition-all ${
-                        job.acceptedOptionId === option.id 
-                          ? 'bg-[var(--brand-gold)]/10 border-[var(--brand-gold)]/30' 
-                          : 'bg-[var(--bg-secondary)] border-[var(--border-color)] hover:border-[var(--text-secondary)]'
-                      }`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">{option.name}</p>
-                          {job.acceptedOptionId === option.id && (
-                            <span className="px-2 py-0.5 bg-[var(--brand-gold)] text-white text-[8px] font-bold uppercase rounded">Accepted</span>
-                          )}
-                        </div>
-                        <p className="text-sm font-bold text-[var(--text-primary)] mb-1">{option.title}</p>
-                        <p className="text-lg font-bold text-[var(--text-primary)]">${option.price.toLocaleString()}</p>
-                        {option.features && (
-                          <div className="mt-3 flex flex-wrap gap-1">
-                            {option.features.slice(0, 3).map((f: string, i: number) => (
-                              <span key={i} className="text-[8px] font-bold text-[var(--text-secondary)] bg-[var(--bg-primary)] px-1.5 py-0.5 rounded uppercase tracking-wider">{f}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* (Removed Estimate Proposal A/B/C card — duplicated info already
+                shown in the Live Itemized Estimate (with full pricing) and the
+                portal engagement metrics already live in the engagement tile
+                at the top of this column. Per Jack: same info three times.) */}
 
             {/* Accepted Build Summary */}
             {job.acceptedBuildSummary && !job.estimateData && (
@@ -1391,6 +1312,27 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                     'est-fu5-day30': 30,
                   };
 
+                  // Compute summary stamps: most-recent sent touch + next-scheduled touch.
+                  // Drives the "Last sent" / "Next scheduled" header strip so Jack can
+                  // see the cadence at a glance without expanding individual touches.
+                  const sentMessages = job.dripCampaign.sentMessages || [];
+                  const lastSent = sentMessages.length
+                    ? [...sentMessages].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime())[0]
+                    : null;
+                  const nextTouch = campaignTouches.find((t) => {
+                    const prefix = t.id.split('-').slice(0, 3).join('-');
+                    return !(completedIds.has(t.id) || [...completedIds].some((id) => id.startsWith(prefix)));
+                  });
+                  const nextTouchDay = nextTouch ? (touchDayMap[nextTouch.id] ?? nextTouch.delayDays) : null;
+                  const nextTouchDate = nextTouch && nextTouchDay !== null
+                    ? new Date(sentDate.getTime() + nextTouchDay * 24 * 60 * 60 * 1000)
+                    : null;
+                  const fmtDateTime = (d: Date) => d.toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+                  const fmtDate = (d: Date) => d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+                  const daysUntilNext = nextTouchDate
+                    ? Math.ceil((nextTouchDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                    : null;
+
                   return (
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
@@ -1400,6 +1342,52 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                           <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${tierStyles[tier]}`}>
                             {tier}
                           </span>
+                        </div>
+                      </div>
+
+                      {/* Cadence summary — shows the last touch that fired and the next
+                          one scheduled, so the rep can see the rhythm at a glance without
+                          expanding individual touches. */}
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <div className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)]/30 p-2">
+                          <p className="text-[8px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1 flex items-center gap-1">
+                            <CheckCircle2 className="w-2.5 h-2.5" /> Last Sent
+                          </p>
+                          {lastSent ? (
+                            <>
+                              <p className="text-[10px] font-bold text-[var(--text-primary)] leading-tight">
+                                {fmtDateTime(new Date(lastSent.sentAt))}
+                              </p>
+                              <p className="text-[9px] text-[var(--text-secondary)] mt-0.5 uppercase tracking-wider">
+                                {lastSent.channel === 'sms' ? 'SMS' : 'Email'}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-[10px] text-[var(--text-secondary)] italic">None yet</p>
+                          )}
+                        </div>
+                        <div className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)]/30 p-2">
+                          <p className="text-[8px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1 flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5" /> Next Scheduled
+                          </p>
+                          {nextTouchDate && nextTouch ? (
+                            <>
+                              <p className="text-[10px] font-bold text-[var(--text-primary)] leading-tight">
+                                {fmtDate(nextTouchDate)}
+                              </p>
+                              <p className="text-[9px] text-[var(--text-secondary)] mt-0.5 uppercase tracking-wider">
+                                {daysUntilNext !== null && daysUntilNext <= 0
+                                  ? 'Due now'
+                                  : daysUntilNext === 1
+                                    ? 'In 1 day'
+                                    : `In ${daysUntilNext} days`}
+                                {' · '}
+                                {nextTouch.channel === 'sms+email' ? 'SMS + Email' : nextTouch.channel === 'sms' ? 'SMS' : 'Email'}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-[10px] text-[var(--text-secondary)] italic">Campaign complete</p>
+                          )}
                         </div>
                       </div>
 
@@ -1449,18 +1437,66 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                                 </div>
                               </button>
 
-                              {isExpanded && (
+                              {isExpanded && (() => {
+                                // When a touch ships both channels, show a small toggle and let
+                                // the user view either the SMS or the email body in full. Default
+                                // to email if present (more content to scan), else SMS.
+                                const hasEmail = !!touch.emailTemplate;
+                                const hasSms = !!touch.smsTemplate;
+                                const hasBoth = hasEmail && hasSms;
+                                const activeChannel = activePreviewChannel[touch.id]
+                                  ?? (hasEmail ? 'email' : 'sms');
+                                return (
                                 <div className="px-2.5 pb-2.5 space-y-2 border-t border-[var(--border-color)]">
-                                  {touch.emailTemplate && (
-                                    <div className="mt-2">
-                                      {touch.subject && <p className="text-[9px] font-bold text-[var(--text-secondary)] mb-1">Subject: {touch.subject}</p>}
-                                      <p className="text-[10px] text-[var(--text-primary)] leading-relaxed line-clamp-3 whitespace-pre-line">{touch.emailTemplate.substring(0, 200)}{touch.emailTemplate.length > 200 ? '…' : ''}</p>
+                                  {hasBoth && (
+                                    <div className="mt-2 inline-flex items-center gap-1 p-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                                      <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); setActivePreviewChannel((prev) => ({ ...prev, [touch.id]: 'sms' })); }}
+                                        className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-md flex items-center gap-1 transition-colors ${
+                                          activeChannel === 'sms'
+                                            ? 'bg-[var(--brand-gold)] text-black'
+                                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                        }`}
+                                      >
+                                        <MessageSquare className="w-2.5 h-2.5" /> SMS
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); setActivePreviewChannel((prev) => ({ ...prev, [touch.id]: 'email' })); }}
+                                        className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-md flex items-center gap-1 transition-colors ${
+                                          activeChannel === 'email'
+                                            ? 'bg-[var(--brand-gold)] text-black'
+                                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                        }`}
+                                      >
+                                        <Mail className="w-2.5 h-2.5" /> Email
+                                      </button>
                                     </div>
                                   )}
-                                  {touch.smsTemplate && (
-                                    <div className="p-2 bg-[var(--bg-secondary)] rounded-lg">
-                                      <p className="text-[9px] font-bold text-[var(--text-secondary)] mb-0.5 flex items-center gap-1"><MessageSquare className="w-2.5 h-2.5" /> SMS</p>
-                                      <p className="text-[10px] text-[var(--text-primary)] leading-relaxed">{touch.smsTemplate.substring(0, 140)}{touch.smsTemplate.length > 140 ? '…' : ''}</p>
+                                  {hasEmail && (!hasBoth || activeChannel === 'email') && (
+                                    <div className="mt-2 p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+                                      <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                        <Mail className="w-2.5 h-2.5" /> Email
+                                      </p>
+                                      {touch.subject && (
+                                        <p className="text-[10px] font-bold text-[var(--text-primary)] mb-1.5 leading-snug">
+                                          Subject: {touch.subject}
+                                        </p>
+                                      )}
+                                      <p className="text-[10px] text-[var(--text-primary)] leading-relaxed whitespace-pre-line">
+                                        {touch.emailTemplate}
+                                      </p>
+                                    </div>
+                                  )}
+                                  {hasSms && (!hasBoth || activeChannel === 'sms') && (
+                                    <div className="p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+                                      <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                        <MessageSquare className="w-2.5 h-2.5" /> SMS
+                                      </p>
+                                      <p className="text-[10px] text-[var(--text-primary)] leading-relaxed whitespace-pre-line">
+                                        {touch.smsTemplate}
+                                      </p>
                                     </div>
                                   )}
                                   {!isDone && (
@@ -1483,7 +1519,8 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                                     </button>
                                   )}
                                 </div>
-                              )}
+                                );
+                              })()}
                             </div>
                           );
                         })}
