@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { AppState, PageState, UserRole, ScheduleStatus } from '../types';
 import { PAGE_TITLES, getActivePageIndices } from '../constants';
 import ProgressBar from '../components/ProgressBar';
@@ -36,27 +36,10 @@ const WorkflowContainer: React.FC<WorkflowContainerProps> = ({
   clientPhone,
   onScheduleUpdate,
 }) => {
-  // Daily schedule gate — force the tech back to JobInfoView (page 0) every
-  // calendar day so they MUST mark Ahead/On Schedule/Behind before resuming
-  // work. Without this, reopening on day 3 jumps straight to whatever step
-  // they were on and the office never gets a fresh status update.
-  useEffect(() => {
-    const lastUpdate = state.fieldForecast?.updatedAt;
-    const sameDay = lastUpdate
-      ? new Date(lastUpdate).toDateString() === new Date().toDateString()
-      : false;
-    if (!sameDay && state.currentPage !== 0) {
-      setState(prev => ({
-        ...prev,
-        currentPage: 0,
-        // Clear forecast so the gate banner re-engages and they can't just
-        // tap Next without re-confirming today's status.
-        fieldForecast: undefined,
-      }));
-    }
-    // Run once on mount — we don't want this re-firing mid-session.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Daily schedule gate moved to JobDetailView (customer file). The Resume
+  // Workflow button there is disabled until today's check-in is submitted,
+  // so by the time we reach this container the gate has already passed.
+  // Resumed jobs no longer need a forced bounce to page 0.
 
   // Active page list — filters out checklist pages that don't apply to this
   // job type (e.g. Stairs & Railings QC is skipped on Deck-only jobs).
