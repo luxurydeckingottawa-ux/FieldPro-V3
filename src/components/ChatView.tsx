@@ -100,20 +100,20 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                 <MessageSquare className="w-5 h-5 text-[var(--brand-gold)]" />
               </div>
               <div>
-                <h1 className="text-xl font-black text-white uppercase tracking-tight italic">Chat Portal</h1>
+                <h1 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">Chat Portal</h1>
                 <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Customer SMS History</p>
               </div>
             </div>
-            <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
+            <div className="flex items-center gap-1 bg-[var(--bg-secondary)] p-1 rounded-lg border border-[var(--border-color)]">
               <button 
                 onClick={() => setFilter('all')}
-                className={`px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${filter === 'all' ? 'bg-[var(--brand-gold)] text-black' : 'text-[var(--text-tertiary)] hover:text-white'}`}
+                className={`px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${filter === 'all' ? 'bg-[var(--brand-gold)] text-black' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
               >
                 All
               </button>
               <button 
                 onClick={() => setFilter('unread')}
-                className={`px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${filter === 'unread' ? 'bg-[var(--brand-gold)] text-black' : 'text-[var(--text-tertiary)] hover:text-white'}`}
+                className={`px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-md transition-all ${filter === 'unread' ? 'bg-[var(--brand-gold)] text-black' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
               >
                 Unread
               </button>
@@ -125,7 +125,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
             <input 
               type="text"
               placeholder="Search conversations..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all text-white"
+              className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all text-[var(--text-primary)]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -137,12 +137,12 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
             <button
               key={session.id}
               onClick={() => setSelectedSessionId(session.id)}
-              className={`w-full p-4 flex gap-4 transition-all border-b border-white/[0.02] hover:bg-white/[0.02] relative ${
-                selectedSessionId === session.id ? 'bg-white/[0.05] border-l-4 border-l-[var(--brand-gold)]' : ''
+              className={`w-full p-4 flex gap-4 transition-all border-b border-[var(--border-color)]/40 hover:bg-[var(--bg-secondary)]/40 relative ${
+                selectedSessionId === session.id ? 'bg-[var(--bg-secondary)] border-l-4 border-l-[var(--brand-gold)]' : ''
               }`}
             >
               <div className="relative shrink-0">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white font-black text-lg shadow-lg">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-[var(--text-primary)] font-black text-lg shadow-lg">
                   {session.clientName.charAt(0)}
                 </div>
                 {session.unreadCount > 0 && (
@@ -153,7 +153,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
               </div>
               <div className="flex-1 text-left min-w-0">
                 <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-black text-sm text-white truncate uppercase tracking-tight">{session.clientName}</h3>
+                  <h3 className="font-black text-sm text-[var(--text-primary)] truncate uppercase tracking-tight">{session.clientName}</h3>
                   <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase">
                     {session.lastMessageTimestamp ? format(new Date(session.lastMessageTimestamp), 'h:mm a') : ''}
                   </span>
@@ -163,7 +163,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                     {session.lastMessage || 'No messages yet'}
                   </p>
                   {jobs.find(j => j.id === session.jobId) && (
-                    <span className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded-md text-[7px] font-black text-[var(--text-tertiary)] uppercase tracking-widest shrink-0">
+                    <span className="px-1.5 py-0.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-md text-[7px] font-black text-[var(--text-tertiary)] uppercase tracking-widest shrink-0">
                       Stage {jobs.find(j => j.id === session.jobId)!.currentStage + 1}
                     </span>
                   )}
@@ -185,7 +185,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                   {selectedSession.clientName.charAt(0)}
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white uppercase tracking-tight italic">{selectedSession.clientName}</h2>
+                  <h2 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-tight italic">{selectedSession.clientName}</h2>
                   <div className="flex items-center gap-3 mt-0.5">
                     {isOfficeUser && selectedSession.clientPhone && (
                       <span className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest flex items-center gap-1">
@@ -202,10 +202,10 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
               <div className="flex items-center gap-3">
                 {isOfficeUser && (
                   <>
-                    <button className="p-2 hover:bg-white/5 rounded-xl text-[var(--text-tertiary)] transition-all">
+                    <button className="p-2 hover:bg-[var(--bg-secondary)] rounded-xl text-[var(--text-tertiary)] transition-all">
                       <Phone size={20} />
                     </button>
-                    <button className="p-2 hover:bg-white/5 rounded-xl text-[var(--text-tertiary)] transition-all">
+                    <button className="p-2 hover:bg-[var(--bg-secondary)] rounded-xl text-[var(--text-tertiary)] transition-all">
                       <Mail size={20} />
                     </button>
                   </>
@@ -218,7 +218,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                   {isAiLoading ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
                   AI Summary
                 </button>
-                <button className="p-2 hover:bg-white/5 rounded-xl text-[var(--text-tertiary)] transition-all">
+                <button className="p-2 hover:bg-[var(--bg-secondary)] rounded-xl text-[var(--text-tertiary)] transition-all">
                   <MoreVertical size={20} />
                 </button>
               </div>
@@ -240,7 +240,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.2em]">AI Conversation Summary</h4>
-                        <button onClick={() => setSummary(null)} className="text-[var(--text-tertiary)] hover:text-white transition-all">
+                        <button onClick={() => setSummary(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all">
                           <X size={14} />
                         </button>
                       </div>
@@ -266,7 +266,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                       <div className={`max-w-[70%] flex flex-col ${msg.isFromClient ? 'items-start' : 'items-end'}`}>
                         <div className={`px-5 py-3 rounded-[1.5rem] text-sm font-medium shadow-lg ${
                           msg.isFromClient 
-                            ? 'bg-white/5 border border-white/10 text-white rounded-bl-none' 
+                            ? 'bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-bl-none' 
                             : 'bg-[var(--brand-gold)] text-black font-bold rounded-br-none'
                         }`}>
                           {msg.text}
@@ -304,7 +304,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                     <button
                       key={t}
                       onClick={() => setNewMessage(prev => prev + (prev ? ' ' : '') + t + ': ')}
-                      className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest hover:bg-[var(--brand-gold)]/10 hover:text-[var(--brand-gold)] hover:border-[var(--brand-gold)]/30 transition-all shrink-0"
+                      className="px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest hover:bg-[var(--brand-gold)]/10 hover:text-[var(--brand-gold)] hover:border-[var(--brand-gold)]/30 transition-all shrink-0"
                     >
                       {t}
                     </button>
@@ -318,14 +318,14 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                       
                       
                       
-                      className="p-4 bg-white/5 border border-white/10 rounded-2xl relative group"
+                      className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl relative group"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Sparkles size={12} className="text-[var(--brand-gold)]" />
                           <span className="text-[9px] font-black text-[var(--brand-gold)] uppercase tracking-widest">AI Suggested Reply</span>
                         </div>
-                        <button onClick={() => setSuggestedReply(null)} className="text-[var(--text-tertiary)] hover:text-white transition-all">
+                        <button onClick={() => setSuggestedReply(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all">
                           <X size={14} />
                         </button>
                       </div>
@@ -348,7 +348,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                     <input 
                       type="text"
                       placeholder={`Message ${selectedSession.clientName}...`}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all text-white pr-12 shadow-inner"
+                      className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl py-4 px-6 text-sm focus:outline-none focus:border-[var(--brand-gold)]/50 transition-all text-[var(--text-primary)] pr-12 shadow-inner"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -370,10 +370,10 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="w-20 h-20 bg-white/5 rounded-[2rem] flex items-center justify-center text-[var(--text-tertiary)] mb-6 border border-white/5">
+            <div className="w-20 h-20 bg-[var(--bg-secondary)] rounded-[2rem] flex items-center justify-center text-[var(--text-tertiary)] mb-6 border border-[var(--border-color)]">
               <MessageSquare size={40} />
             </div>
-            <h2 className="text-xl font-black text-white uppercase tracking-tight italic">Select a Conversation</h2>
+            <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">Select a Conversation</h2>
             <p className="text-sm text-[var(--text-tertiary)] max-w-xs mt-2 font-medium">
               Choose a customer from the list to view their SMS history and send messages.
             </p>
@@ -387,14 +387,14 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
           <div className="space-y-8">
             <div>
               <h3 className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] mb-4">Job Context</h3>
-              <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4">
+              <div className="bg-[var(--bg-secondary)]/60 border border-[var(--border-color)] rounded-2xl p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-[var(--brand-gold)]/10 rounded-xl flex items-center justify-center">
                     <Activity className="w-5 h-5 text-[var(--brand-gold)]" />
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest leading-none mb-1">Current Stage</p>
-                    <p className="text-sm font-black text-white uppercase tracking-tight italic">Stage {selectedJob.currentStage + 1}</p>
+                    <p className="text-sm font-black text-[var(--text-primary)] uppercase tracking-tight italic">Stage {selectedJob.currentStage + 1}</p>
                   </div>
                 </div>
                 <div className="space-y-3">
@@ -411,7 +411,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                     <span className="text-xs font-medium truncate">{selectedJob.assignedCrewOrSubcontractor}</span>
                   </div>
                 </div>
-                <button className="w-full mt-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black text-white uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                <button className="w-full mt-4 py-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                   View Full Job <ChevronRight size={12} />
                 </button>
               </div>
@@ -421,13 +421,13 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
               <div>
                 <h3 className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.2em] mb-4">Client Details</h3>
                 <div className="space-y-3">
-                  <div className="flex flex-col gap-1 p-3 bg-white/[0.02] rounded-xl border border-white/[0.05]">
+                  <div className="flex flex-col gap-1 p-3 bg-[var(--bg-secondary)]/40 rounded-xl border border-[var(--border-color)]">
                     <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Phone</span>
-                    <span className="text-sm font-bold text-white">{selectedJob.clientPhone || 'Not provided'}</span>
+                    <span className="text-sm font-bold text-[var(--text-primary)]">{selectedJob.clientPhone || 'Not provided'}</span>
                   </div>
-                  <div className="flex flex-col gap-1 p-3 bg-white/[0.02] rounded-xl border border-white/[0.05]">
+                  <div className="flex flex-col gap-1 p-3 bg-[var(--bg-secondary)]/40 rounded-xl border border-[var(--border-color)]">
                     <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Email</span>
-                    <span className="text-sm font-bold text-white truncate">{selectedJob.clientEmail || 'Not provided'}</span>
+                    <span className="text-sm font-bold text-[var(--text-primary)] truncate">{selectedJob.clientEmail || 'Not provided'}</span>
                   </div>
                 </div>
               </div>
@@ -439,7 +439,7 @@ const ChatView: React.FC<ChatViewProps> = ({ sessions, currentUser, jobs, onSend
                 <div className="flex gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)] mt-1.5 shrink-0" />
                   <div>
-                    <p className="text-xs font-bold text-white leading-snug">Message sent to client</p>
+                    <p className="text-xs font-bold text-[var(--text-primary)] leading-snug">Message sent to client</p>
                     <p className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mt-0.5">Today at 10:30 AM</p>
                   </div>
                 </div>
