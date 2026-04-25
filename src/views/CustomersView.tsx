@@ -3,12 +3,105 @@ import {
   Search, Users, TrendingUp, UserCheck, Clock, ChevronDown, ChevronUp,
   Phone, Mail, MapPin, Tag, Calendar, Download, X, Building2
 } from 'lucide-react';
-import type { Customer, CustomerStatus } from '../types';
+import type { Customer, CustomerStatus, Job } from '../types';
+import { JobStatus } from '../types';
 
 interface CustomersViewProps {
   customers: Customer[];
+  jobs: Job[];
   onUpdateCustomer: (customerId: string, updates: Partial<Customer>) => void;
   onBack: () => void;
+}
+
+// Normalise a phone string to digits-only so "(613) 555-1234" matches "6135551234"
+const normPhone = (p?: string): string => (p || '').replace(/\D/g, '');
+const normEmail = (e?: string): string => (e || '').trim().toLowerCase();
+
+/**
+ * Build a synthetic Customer record from a Job. Used to populate the
+ * Customers Hub from the live jobs pipeline so leads + customers we've
+ * touched but never explicitly created in the customers table still show
+ * up. Persisted customer records take precedence over synthesised ones.
+ */
+function synthesizeCustomersFromJobs(jobs: Job[], persisted: Customer[]): Customer[] {
+  // Index persisted customers by phone + email so we can dedupe
+  const persistedKeys = new Set<string>();
+  for (const c of persisted) {
+    const p = normPhone(c.phone);
+    const e = normEmail(c.email);
+    if (p) persistedKeys.add(`p:${p}`);
+    if (e) persistedKeys.add(`e:${e}`);
+  }
+
+  // Group jobs by contact key (phone or email or name+address fallback)
+  const byKey = new Map<string, Job[]>();
+  for (const j of jobs) {
+    const p = normPhone(j.clientPhone);
+    const e = normEmail(j.clientEmail);
+    const key = p ? `p:${p}` : e ? `e:${e}` : `na:${(j.clientName || '').toLowerCase()}|${(j.projectAddress || '').toLowerCase()}`;
+    if (!byKey.has(key)) byKey.set(key, []);
+    byKey.get(key)!.push(j);
+  }
+
+  const synthesized: Customer[] = [];
+  for (const [key, group] of byKey) {
+    // Skip if a persisted customer already covers this contact
+    if (persistedKeys.has(key)) continue;
+    // Pick the most recent job for canonical contact info
+    const sorted = [...group].sort((a, b) => (b.scheduledDate || '').localeCompare(a.scheduledDate || ''));
+    const head = sorted[0];
+
+    // Aggregate
+    const completedJobs = group.filter((j) => j.status === JobStatus.COMPLETED);
+    const lifetimeValue = completedJobs.reduce((sum, j) => sum + (j.totalAmount || j.estimateAmount || 0), 0);
+    const lastServiceDate = completedJobs
+      .map((j) => j.scheduledDate)
+      .filter(Boolean)
+      .sort()
+      .reverse()[0];
+
+    // Status mapping: any completed job → active_client; otherwise infer from
+    // estimate status / pipeline stage; fallback cold_lead
+    let status: CustomerStatus = 'cold_lead';
+    if (completedJobs.length > 0) status = 'active_client';
+    else if (group.some((j) => j.status === JobStatus.SCHEDULED || j.status === JobStatus.IN_PROGRESS || j.status === JobStatus.QC_PENDING)) status = 'active_client';
+    else if (group.some((j) => j.estimateStatus === 'sent' || j.estimateStatus === 'revised' || j.estimateStatus === 'accepted')) status = 'quoted_not_converted';
+    else if (group.some((j) => j.estimateStatus === 'in_progress' || j.estimateStatus === 'pending')) status = 'prospect';
+
+    // Split name
+    const nameParts = (head.clientName || '').trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    synthesized.push({
+      id: `job-derived:${key}`,
+      firstName,
+      lastName,
+      displayName: head.clientName || 'Unknown',
+      phone: head.clientPhone || '',
+      email: head.clientEmail || '',
+      customerType: 'homeowner',
+      addresses: head.projectAddress
+        ? [{
+            streetLine1: head.projectAddress,
+            city: '',
+            province: 'ON',
+            postalCode: '',
+            isBilling: true,
+          }]
+        : [],
+      tags: [],
+      notes: `Derived from ${group.length} job${group.length === 1 ? '' : 's'} in pipeline`,
+      leadSource: head.leadSource,
+      lifetimeValue,
+      lastServiceDate,
+      createdAt: sorted[sorted.length - 1].scheduledDate || new Date().toISOString(),
+      status,
+      doNotService: false,
+    });
+  }
+
+  return synthesized;
 }
 
 type FilterTab = 'all' | 'active_client' | 'quoted_not_converted' | 'cold_lead';
@@ -188,14 +281,21 @@ const CustomerCard: React.FC<{
   );
 };
 
-const CustomersView: React.FC<CustomersViewProps> = ({ customers, onUpdateCustomer: _onUpdateCustomer, onBack: _onBack }) => {
+const CustomersView: React.FC<CustomersViewProps> = ({ customers, jobs, onUpdateCustomer: _onUpdateCustomer, onBack: _onBack }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterTab>('all');
   const [sort, setSort] = useState<SortKey>('name');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Merge persisted customers with customers synthesized from the live jobs
+  // pipeline. Persisted records win on duplicate phone/email.
+  const mergedCustomers = useMemo(
+    () => [...customers, ...synthesizeCustomersFromJobs(jobs, customers)],
+    [customers, jobs],
+  );
+
   const filtered = useMemo(() => {
-    let result = [...customers];
+    let result = [...mergedCustomers];
 
     // Search
     if (search.trim()) {
@@ -228,20 +328,20 @@ const CustomersView: React.FC<CustomersViewProps> = ({ customers, onUpdateCustom
     });
 
     return result;
-  }, [customers, search, filter, sort]);
+  }, [mergedCustomers, search, filter, sort]);
 
   const stats = useMemo(() => ({
-    total: customers.length,
-    active: customers.filter(c => c.status === 'active_client').length,
-    quoted: customers.filter(c => c.status === 'quoted_not_converted').length,
-    revenue: customers.reduce((sum, c) => sum + c.lifetimeValue, 0),
-  }), [customers]);
+    total: mergedCustomers.length,
+    active: mergedCustomers.filter(c => c.status === 'active_client').length,
+    quoted: mergedCustomers.filter(c => c.status === 'quoted_not_converted').length,
+    revenue: mergedCustomers.reduce((sum, c) => sum + c.lifetimeValue, 0),
+  }), [mergedCustomers]);
 
   const tabs: Array<{ key: FilterTab; label: string; count: number }> = [
-    { key: 'all', label: 'All', count: customers.length },
+    { key: 'all', label: 'All', count: mergedCustomers.length },
     { key: 'active_client', label: 'Active Clients', count: stats.active },
     { key: 'quoted_not_converted', label: 'Quoted', count: stats.quoted },
-    { key: 'cold_lead', label: 'Cold Leads', count: customers.filter(c => c.status === 'cold_lead').length },
+    { key: 'cold_lead', label: 'Cold Leads', count: mergedCustomers.filter(c => c.status === 'cold_lead').length },
   ];
 
   return (
@@ -250,7 +350,11 @@ const CustomersView: React.FC<CustomersViewProps> = ({ customers, onUpdateCustom
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-display text-[var(--text-primary)]">Customers</h1>
-          <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Imported from HousecallPro</p>
+          <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+            {customers.length > 0
+              ? `${customers.length} from CRM · ${mergedCustomers.length - customers.length} from active pipeline`
+              : `${mergedCustomers.length} from active pipeline`}
+          </p>
         </div>
         <button
           onClick={() => downloadCSV(filtered)}
@@ -333,7 +437,7 @@ const CustomersView: React.FC<CustomersViewProps> = ({ customers, onUpdateCustom
 
       {/* Results count */}
       <p className="text-xs text-[var(--text-tertiary)]">
-        Showing {filtered.length.toLocaleString()} of {customers.length.toLocaleString()} customers
+        Showing {filtered.length.toLocaleString()} of {mergedCustomers.length.toLocaleString()} customers
       </p>
 
       {/* Customer list */}

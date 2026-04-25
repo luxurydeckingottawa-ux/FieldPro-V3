@@ -455,6 +455,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
           {view === 'customers' && currentUser && (
             <CustomersView
               customers={customers}
+              jobs={jobs}
               onUpdateCustomer={handleUpdateCustomer}
               onBack={() => navigateTo('office-pipeline')}
             />
