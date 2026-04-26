@@ -1,1 +1,9 @@
+# InstaQuote lead capture endpoint — must be BEFORE the SPA catch-all.
+# /api/instaquote-lead → Netlify function. The 200! status forces the
+# proxy on ALL methods including POST (the netlify.toml [[redirects]]
+# version was failing for POST bodies). The exclamation mark = "force"
+# (overrides any other rule for this path).
+/api/instaquote-lead    /.netlify/functions/instaquote-lead    200!
+
+# SPA catch-all — every other request goes to the React shell.
 /*    /index.html   200
