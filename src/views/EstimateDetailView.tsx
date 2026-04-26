@@ -6,7 +6,7 @@ import {
   Copy, Check, Edit2, Save, X, ChevronRight,
   ClipboardList, Send, Clock, AlertCircle, CheckCircle2,
   Zap, Camera, Info, BarChart3, Users, PenTool, CalendarPlus, ChevronDown, ChevronUp,
-  Plus, Trash2, Calculator, Download, RefreshCw
+  Plus, Trash2, Calculator, Download, RefreshCw, Eye, MousePointerClick
 } from 'lucide-react';
 import AcceptanceModal from '../components/AcceptanceModal';
 import CustomerChatThread from '../components/CustomerChatThread';
@@ -605,159 +605,9 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                 they saw, and a download link to the actual PDF that was
                 emailed to them. Lets the office answer customer questions
                 with the same numbers the customer is looking at. */}
-            {job.leadSource === 'instaquote' && job.sourceMetadata && (() => {
-              const sm = job.sourceMetadata as {
-                config?: {
-                  width_ft?: number; length_ft?: number; sqft?: number;
-                  perimeter_lin_ft?: number; steps?: number;
-                  railing_material?: string; railing_sides?: number; railing_lin_ft?: number;
-                };
-                estimates?: {
-                  silver?: { low: number; high: number };
-                  gold?: { low: number; high: number };
-                  platinum?: { low: number; high: number };
-                };
-                meta?: { page_url?: string; user_agent?: string; submitted_at_utc?: string };
-                cross_pipeline_duplicate?: { existing_lead_id: string; existing_stage: string; existing_client_name?: string | null };
-              };
-              const cfg = sm.config || {};
-              const est = sm.estimates || {};
-              const meta = sm.meta || {};
-              const dup = sm.cross_pipeline_duplicate;
-              const fmt = (n?: number) => n != null ? '$' + Math.round(n).toLocaleString('en-CA') : '—';
-              const range = (t?: { low: number; high: number }) => t ? `${fmt(t.low)} – ${fmt(t.high)}` : '—';
-              const submittedAt = meta.submitted_at_utc
-                ? new Date(meta.submitted_at_utc).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })
-                : '—';
-              const railingLabel = (m?: string) =>
-                m === 'pressure_treated' ? 'Pressure-treated wood'
-                : m === 'aluminum' ? 'Aluminum'
-                : m === 'glass' ? 'Glass'
-                : m === 'none' ? 'No railings'
-                : m || '—';
-              return (
-                <div className="bg-[var(--card-bg)] border border-[var(--brand-gold)]/30 rounded-2xl overflow-hidden shadow-lg">
-                  {/* Header */}
-                  <div className="px-5 py-4 bg-[var(--brand-gold)]/10 border-b border-[var(--brand-gold)]/20 flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/30 flex items-center justify-center">
-                        <Calculator className="w-5 h-5 text-[var(--brand-gold)]" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em]">InstaQuote Submission</p>
-                        <p className="text-sm font-bold text-[var(--text-primary)]">What the customer saw on the website</p>
-                      </div>
-                    </div>
-                    {job.pdfUrl && (
-                      <a
-                        href={job.pdfUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)] text-black rounded-lg text-xs font-black uppercase tracking-wider hover:opacity-90 transition-all shadow-md"
-                        title="Open the branded PDF blueprint that was emailed to the customer"
-                      >
-                        <Download className="w-3.5 h-3.5" /> View Blueprint PDF
-                      </a>
-                    )}
-                  </div>
-
-                  {/* Returning-customer banner */}
-                  {dup && (
-                    <div className="px-5 py-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 text-amber-500 shrink-0" />
-                      <p className="text-xs text-amber-700 dark:text-amber-300">
-                        <span className="font-bold">Returning customer.</span>{' '}
-                        Already in your pipeline as{' '}
-                        <span className="font-bold">{dup.existing_client_name || 'unnamed lead'}</span>{' '}
-                        ({dup.existing_stage}). Multi-touch nurture suppressed to avoid double-touching — customer received the PDF as a transactional email.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Body */}
-                  <div className="p-5 space-y-5">
-                    {/* The 3 tier prices, exactly as the customer saw them */}
-                    <div>
-                      <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3">Pricing The Customer Was Quoted</p>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
-                          <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Silver</p>
-                          <p className="text-base font-bold text-[var(--text-primary)]">{range(est.silver)}</p>
-                        </div>
-                        <div className="p-4 bg-[var(--brand-gold)]/10 rounded-xl border border-[var(--brand-gold)]/30">
-                          <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                            Gold <span className="text-[8px] opacity-70">· Most chosen</span>
-                          </p>
-                          <p className="text-base font-bold text-[var(--brand-gold)]">{range(est.gold)}</p>
-                        </div>
-                        <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
-                          <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Platinum</p>
-                          <p className="text-base font-bold text-[var(--text-primary)]">{range(est.platinum)}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Configuration grid */}
-                    <div>
-                      <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3">Configuration</p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
-                          <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Footprint</p>
-                          <p className="text-sm font-bold text-[var(--text-primary)]">
-                            {cfg.width_ft != null && cfg.length_ft != null ? `${cfg.width_ft} × ${cfg.length_ft} ft` : '—'}
-                          </p>
-                          <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{cfg.sqft ? `${cfg.sqft} sq ft` : ''}</p>
-                        </div>
-                        <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
-                          <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Perimeter</p>
-                          <p className="text-sm font-bold text-[var(--text-primary)]">{cfg.perimeter_lin_ft ? `${cfg.perimeter_lin_ft} lin ft` : '—'}</p>
-                        </div>
-                        <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
-                          <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Steps</p>
-                          <p className="text-sm font-bold text-[var(--text-primary)]">{cfg.steps != null ? cfg.steps : '—'}</p>
-                        </div>
-                        <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
-                          <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Railing</p>
-                          <p className="text-sm font-bold text-[var(--text-primary)]">{railingLabel(cfg.railing_material)}</p>
-                          <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">
-                            {cfg.railing_sides != null ? `${cfg.railing_sides} side${cfg.railing_sides === 1 ? '' : 's'}` : ''}
-                            {cfg.railing_lin_ft ? ` · ${cfg.railing_lin_ft} lin ft` : ''}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Submission metadata */}
-                    <div className="flex items-center gap-4 flex-wrap pt-3 border-t border-[var(--border-color)]">
-                      <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-                        <Calendar className="w-3 h-3" /> Submitted: {submittedAt}
-                      </div>
-                      {meta.page_url && (
-                        <a
-                          href={meta.page_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1.5 text-xs text-[var(--brand-gold)] hover:underline"
-                        >
-                          <ExternalLink className="w-3 h-3" /> Source page
-                        </a>
-                      )}
-                      {job.pdfGeneratedAt && (
-                        <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-                          <FileText className="w-3 h-3" /> PDF generated: {new Date(job.pdfGeneratedAt).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}
-                        </div>
-                      )}
-                    </div>
-
-                    {!job.pdfUrl && (
-                      <p className="text-[10px] text-[var(--text-tertiary)] italic">
-                        PDF link not available on this lead (may have been created before PDF auto-attach went live, or the 30-day signed URL has expired).
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
+            {job.leadSource === 'instaquote' && job.sourceMetadata && (
+              <InstaQuoteBlueprintCard job={job} />
+            )}
 
             {/* ── CUSTOMER TEXT THREAD ──────────────────────────────────────
                 Unified SMS history: inbound + outbound combined. Visible at
@@ -1783,6 +1633,253 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
           if (onJobAccepted) onJobAccepted(jobId);
         }}
       />
+    </div>
+  );
+};
+
+// ─── InstaQuote Blueprint Card ──────────────────────────────────────────────
+// Renders on the lead detail page when the lead came from the InstaQuote
+// calculator. Shows: the 3 tier prices the customer was quoted, the
+// configuration they entered, the PDF download button, returning-customer
+// banner if applicable, and live SendGrid open/click stats fetched on mount.
+
+interface InstaQuoteEmailStats {
+  sent_count: number;
+  opens_count: number;
+  clicks_count: number;
+  last_event_time: string | null;
+  last_subject: string | null;
+}
+
+const InstaQuoteBlueprintCard: React.FC<{ job: Job }> = ({ job }) => {
+  const sm = (job.sourceMetadata || {}) as {
+    config?: {
+      width_ft?: number; length_ft?: number; sqft?: number;
+      perimeter_lin_ft?: number; steps?: number;
+      railing_material?: string; railing_sides?: number; railing_lin_ft?: number;
+    };
+    estimates?: {
+      silver?: { low: number; high: number };
+      gold?: { low: number; high: number };
+      platinum?: { low: number; high: number };
+    };
+    meta?: { page_url?: string; user_agent?: string; submitted_at_utc?: string };
+    cross_pipeline_duplicate?: { existing_lead_id: string; existing_stage: string; existing_client_name?: string | null };
+  };
+  const cfg = sm.config || {};
+  const est = sm.estimates || {};
+  const meta = sm.meta || {};
+  const dup = sm.cross_pipeline_duplicate;
+  const fmt = (n?: number) => n != null ? '$' + Math.round(n).toLocaleString('en-CA') : '—';
+  const range = (t?: { low: number; high: number }) => t ? `${fmt(t.low)} – ${fmt(t.high)}` : '—';
+  const submittedAt = meta.submitted_at_utc
+    ? new Date(meta.submitted_at_utc).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })
+    : '—';
+  const railingLabel = (m?: string) =>
+    m === 'pressure_treated' ? 'Pressure-treated wood'
+    : m === 'aluminum' ? 'Aluminum'
+    : m === 'glass' ? 'Glass'
+    : m === 'none' ? 'No railings'
+    : m || '—';
+
+  // Live email engagement stats from SendGrid Activity API.
+  // Open tracking is universal email-marketing practice (1x1 invisible
+  // pixel image). NOT considered spam by inbox providers. Apple Mail
+  // Privacy Protection (iOS 15+) preloads images on the user's behalf
+  // which slightly inflates open counts for Apple users — useful as a
+  // relative engagement signal, not exact opens.
+  const [stats, setStats] = useState<InstaQuoteEmailStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState(false);
+
+  const fetchStats = async () => {
+    if (!job.clientEmail) return;
+    setStatsLoading(true);
+    setStatsError(false);
+    try {
+      const res = await fetch(
+        `/api/instaquote-email-stats?email=${encodeURIComponent(job.clientEmail)}`
+      );
+      const body = await res.json();
+      if (res.ok && body.ok) {
+        setStats(body.stats);
+      } else {
+        setStatsError(true);
+      }
+    } catch {
+      setStatsError(true);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job.id, job.clientEmail]);
+
+  const lastOpenedAt = stats?.last_event_time
+    ? new Date(stats.last_event_time).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })
+    : null;
+
+  return (
+    <div className="bg-[var(--card-bg)] border border-[var(--brand-gold)]/30 rounded-2xl overflow-hidden shadow-lg">
+      {/* Header */}
+      <div className="px-5 py-4 bg-[var(--brand-gold)]/10 border-b border-[var(--brand-gold)]/20 flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/30 flex items-center justify-center">
+            <Calculator className="w-5 h-5 text-[var(--brand-gold)]" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em]">InstaQuote Submission</p>
+            <p className="text-sm font-bold text-[var(--text-primary)]">What the customer saw on the website</p>
+          </div>
+        </div>
+        {job.pdfUrl && (
+          <a
+            href={job.pdfUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)] text-black rounded-lg text-xs font-black uppercase tracking-wider hover:opacity-90 transition-all shadow-md"
+            title="Open the branded PDF blueprint that was emailed to the customer"
+          >
+            <Download className="w-3.5 h-3.5" /> View Blueprint PDF
+          </a>
+        )}
+      </div>
+
+      {/* Returning-customer banner */}
+      {dup && (
+        <div className="px-5 py-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 text-amber-500 shrink-0" />
+          <p className="text-xs text-amber-700 dark:text-amber-300">
+            <span className="font-bold">Returning customer.</span>{' '}
+            Already in your pipeline as{' '}
+            <span className="font-bold">{dup.existing_client_name || 'unnamed lead'}</span>{' '}
+            ({dup.existing_stage}). Multi-touch nurture suppressed to avoid double-touching — customer received the PDF as a transactional email.
+          </p>
+        </div>
+      )}
+
+      {/* Email engagement stats — opens + clicks from SendGrid */}
+      <div className="px-5 py-3 bg-[var(--bg-secondary)]/50 border-b border-[var(--border-color)] flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-5 flex-wrap">
+          <div className="flex items-center gap-2" title="How many times the customer opened the blueprint email. Apple Mail users may show inflated counts due to Apple's image preloading.">
+            <Eye className="w-4 h-4 text-[var(--brand-gold)]" />
+            <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Opens:</span>
+            <span className="text-sm font-bold text-[var(--text-primary)]">
+              {statsLoading ? '…' : statsError ? '—' : (stats?.opens_count ?? 0)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2" title="Times the customer clicked any link in the email (PDF download, pricing page, etc.).">
+            <MousePointerClick className="w-4 h-4 text-[var(--brand-gold)]" />
+            <span className="text-[9px] font-black text-[var(--text-tertiary)] uppercase tracking-widest">Clicks:</span>
+            <span className="text-sm font-bold text-[var(--text-primary)]">
+              {statsLoading ? '…' : statsError ? '—' : (stats?.clicks_count ?? 0)}
+            </span>
+          </div>
+          {lastOpenedAt && stats && stats.opens_count > 0 && (
+            <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+              <Clock className="w-3 h-3" /> Last opened: {lastOpenedAt}
+            </div>
+          )}
+          {stats && stats.sent_count > 1 && (
+            <span className="text-[10px] text-[var(--text-tertiary)]">
+              ({stats.sent_count} emails sent to this address)
+            </span>
+          )}
+        </div>
+        <button
+          onClick={fetchStats}
+          disabled={statsLoading}
+          className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-[var(--text-secondary)] hover:text-[var(--brand-gold)] disabled:opacity-50 transition-colors"
+          title="Refresh open/click counts from SendGrid"
+        >
+          <RefreshCw className={`w-3 h-3 ${statsLoading ? 'animate-spin' : ''}`} /> Refresh
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="p-5 space-y-5">
+        {/* The 3 tier prices, exactly as the customer saw them */}
+        <div>
+          <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3">Pricing The Customer Was Quoted</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
+              <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Silver</p>
+              <p className="text-base font-bold text-[var(--text-primary)]">{range(est.silver)}</p>
+            </div>
+            <div className="p-4 bg-[var(--brand-gold)]/10 rounded-xl border border-[var(--brand-gold)]/30">
+              <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                Gold <span className="text-[8px] opacity-70">· Most chosen</span>
+              </p>
+              <p className="text-base font-bold text-[var(--brand-gold)]">{range(est.gold)}</p>
+            </div>
+            <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
+              <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Platinum</p>
+              <p className="text-base font-bold text-[var(--text-primary)]">{range(est.platinum)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Configuration grid */}
+        <div>
+          <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3">Configuration</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+              <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Footprint</p>
+              <p className="text-sm font-bold text-[var(--text-primary)]">
+                {cfg.width_ft != null && cfg.length_ft != null ? `${cfg.width_ft} × ${cfg.length_ft} ft` : '—'}
+              </p>
+              <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{cfg.sqft ? `${cfg.sqft} sq ft` : ''}</p>
+            </div>
+            <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+              <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Perimeter</p>
+              <p className="text-sm font-bold text-[var(--text-primary)]">{cfg.perimeter_lin_ft ? `${cfg.perimeter_lin_ft} lin ft` : '—'}</p>
+            </div>
+            <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+              <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Steps</p>
+              <p className="text-sm font-bold text-[var(--text-primary)]">{cfg.steps != null ? cfg.steps : '—'}</p>
+            </div>
+            <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+              <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Railing</p>
+              <p className="text-sm font-bold text-[var(--text-primary)]">{railingLabel(cfg.railing_material)}</p>
+              <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">
+                {cfg.railing_sides != null ? `${cfg.railing_sides} side${cfg.railing_sides === 1 ? '' : 's'}` : ''}
+                {cfg.railing_lin_ft ? ` · ${cfg.railing_lin_ft} lin ft` : ''}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Submission metadata */}
+        <div className="flex items-center gap-4 flex-wrap pt-3 border-t border-[var(--border-color)]">
+          <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+            <Calendar className="w-3 h-3" /> Submitted: {submittedAt}
+          </div>
+          {meta.page_url && (
+            <a
+              href={meta.page_url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-xs text-[var(--brand-gold)] hover:underline"
+            >
+              <ExternalLink className="w-3 h-3" /> Source page
+            </a>
+          )}
+          {job.pdfGeneratedAt && (
+            <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+              <FileText className="w-3 h-3" /> PDF generated: {new Date(job.pdfGeneratedAt).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}
+            </div>
+          )}
+        </div>
+
+        {!job.pdfUrl && (
+          <p className="text-[10px] text-[var(--text-tertiary)] italic">
+            PDF link not available on this lead (may have been created before PDF auto-attach went live, or the 30-day signed URL has expired).
+          </p>
+        )}
+      </div>
     </div>
   );
 };

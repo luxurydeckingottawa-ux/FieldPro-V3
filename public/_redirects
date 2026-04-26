@@ -11,5 +11,9 @@
 # Internal-only test cohort harness for the InstaQuote nurture sequence.
 /api/instaquote-test-cohort    /.netlify/functions/instaquote-test-cohort    200!
 
+# Real-time SendGrid open/click stats per recipient email.
+# Used by the InstaQuote Blueprint card on the lead detail page.
+/api/instaquote-email-stats    /.netlify/functions/instaquote-email-stats    200!
+
 # SPA catch-all — every other request goes to the React shell.
 /*    /index.html   200
