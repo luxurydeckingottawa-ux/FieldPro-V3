@@ -7,7 +7,7 @@ import {
   Search, Plus, ChevronRight, AlertTriangle,
   MapPin, User, DollarSign, Calendar, FileText,
   CircleDot, Phone, Mail, LayoutGrid, List,
-  GripVertical, Users, Briefcase, TrendingUp, Zap
+  GripVertical, Users, Briefcase, TrendingUp, Zap, Calculator
 } from 'lucide-react';
 
 interface UnifiedPipelineViewProps {
@@ -20,12 +20,11 @@ interface UnifiedPipelineViewProps {
 }
 
 // Pipeline board definitions — lead stages aligned with drip campaign schedule.
-// InstaQuote sits at the front as its own intake bucket: leads from the
-// website calculator land here automatically via /api/instaquote-lead and
-// get their own warmer drip cadence (separate from cold leads who came in
-// via "request a quote" form).
+// InstaQuote leads (from the website calculator) get their OWN top-level
+// sub-board (see INSTAQUOTE_COLUMNS below) — they're treated differently
+// from generic "request a quote" leads (warmer drip, different intake
+// nurture). Don't put INSTAQUOTE_LEAD in this array.
 const LEAD_COLUMNS = [
-  { id: PipelineStage.INSTAQUOTE_LEAD, label: 'InstaQuote'        },
   { id: PipelineStage.LEAD_IN,         label: 'New Lead · D0'    },
   { id: PipelineStage.FIRST_CONTACT,   label: '1st Contact · D1' },
   { id: PipelineStage.SECOND_CONTACT,  label: '2nd Contact · D3' },
@@ -33,6 +32,14 @@ const LEAD_COLUMNS = [
   { id: PipelineStage.LEAD_ON_HOLD,    label: 'Re-Engage · D30'  },
   { id: PipelineStage.LEAD_WON,        label: 'Won'              },
   { id: PipelineStage.LEAD_LOST,       label: 'Lead Lost'        },
+];
+
+// InstaQuote board — placeholder single column for now. Once the dedicated
+// drip cadence + page sections are designed, this expands to its own
+// custom set of stages. New leads from POST /api/instaquote-lead always
+// land in PipelineStage.INSTAQUOTE_LEAD.
+const INSTAQUOTE_COLUMNS = [
+  { id: PipelineStage.INSTAQUOTE_LEAD, label: 'New · Awaiting Outreach' },
 ];
 
 const ESTIMATE_COLUMNS = [
@@ -48,13 +55,13 @@ const ESTIMATE_COLUMNS = [
 
 const JOB_COLUMNS = PIPELINE_STAGES;
 
-type BoardType = 'leads' | 'estimates' | 'jobs';
+type BoardType = 'instaquote' | 'leads' | 'estimates' | 'jobs';
 type ViewMode = 'board' | 'table';
 
 const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
   jobs, onSelectJob, onNewJob, onOpenEstimator, onUpdatePipelineStage, onAutomationSettings
 }) => {
-  const [activeBoard, setActiveBoard] = useState<BoardType>('leads');
+  const [activeBoard, setActiveBoard] = useState<BoardType>('instaquote');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('board');
   const [draggedJobId, setDraggedJobId] = useState<string | null>(null);
@@ -63,6 +70,7 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
   // Determine which columns to show based on active board
   const columns = useMemo(() => {
     switch (activeBoard) {
+      case 'instaquote': return INSTAQUOTE_COLUMNS;
       case 'leads': return LEAD_COLUMNS;
       case 'estimates': return ESTIMATE_COLUMNS;
       case 'jobs': return JOB_COLUMNS;
@@ -72,12 +80,15 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
 
   // Filter jobs for the active board
   const boardJobs = useMemo(() => {
+    const instaquoteStageIds = INSTAQUOTE_COLUMNS.map(c => c.id);
     const leadStageIds = LEAD_COLUMNS.map(c => c.id);
     const estimateStageIds = ESTIMATE_COLUMNS.map(c => c.id);
     const jobStageIds = PIPELINE_STAGES.map(s => s.id);
-    
+
     let filtered = jobs;
-    if (activeBoard === 'leads') {
+    if (activeBoard === 'instaquote') {
+      filtered = jobs.filter(j => instaquoteStageIds.includes(j.pipelineStage));
+    } else if (activeBoard === 'leads') {
       filtered = jobs.filter(j => leadStageIds.includes(j.pipelineStage));
     } else if (activeBoard === 'estimates') {
       filtered = jobs.filter(j => estimateStageIds.includes(j.pipelineStage));
@@ -148,21 +159,27 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
   };
 
   const sidebarItems: { id: BoardType; label: string; icon: React.ReactNode; count: number }[] = [
-    { 
-      id: 'leads', 
-      label: 'Leads', 
+    {
+      id: 'instaquote',
+      label: 'Leads · InstaQuote',
+      icon: <Calculator className="w-4 h-4" />,
+      count: jobs.filter(j => INSTAQUOTE_COLUMNS.some(c => c.id === j.pipelineStage)).length
+    },
+    {
+      id: 'leads',
+      label: 'Leads',
       icon: <TrendingUp className="w-4 h-4" />,
       count: jobs.filter(j => LEAD_COLUMNS.some(c => c.id === j.pipelineStage)).length
     },
-    { 
-      id: 'estimates', 
-      label: 'Estimates', 
+    {
+      id: 'estimates',
+      label: 'Estimates',
       icon: <FileText className="w-4 h-4" />,
       count: jobs.filter(j => ESTIMATE_COLUMNS.some(c => c.id === j.pipelineStage)).length
     },
-    { 
-      id: 'jobs', 
-      label: 'Jobs', 
+    {
+      id: 'jobs',
+      label: 'Jobs',
       icon: <Briefcase className="w-4 h-4" />,
       count: jobs.filter(j => PIPELINE_STAGES.some(s => s.id === j.pipelineStage)).length
     },
@@ -209,9 +226,17 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
         <div className="px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-primary)] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <div>
-              <div className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Pipeline &gt; {activeBoard.charAt(0).toUpperCase() + activeBoard.slice(1)}</div>
+              <div className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">
+                Pipeline &gt; {
+                  activeBoard === 'instaquote' ? 'Leads · InstaQuote'
+                  : activeBoard.charAt(0).toUpperCase() + activeBoard.slice(1)
+                }
+              </div>
               <h1 className="text-lg font-black text-[var(--text-primary)]">
-                {activeBoard === 'leads' ? 'Leads' : activeBoard === 'estimates' ? 'Estimates' : 'Jobs'}
+                {activeBoard === 'instaquote' ? 'Leads · InstaQuote'
+                  : activeBoard === 'leads' ? 'Leads'
+                  : activeBoard === 'estimates' ? 'Estimates'
+                  : 'Jobs'}
               </h1>
             </div>
           </div>
@@ -228,6 +253,7 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
             <button
               onClick={() => {
                 const stageMap: Record<BoardType, PipelineStage> = {
+                  instaquote: PipelineStage.INSTAQUOTE_LEAD,
                   leads: PipelineStage.LEAD_IN,
                   estimates: PipelineStage.EST_UNSCHEDULED,
                   jobs: PipelineStage.JOB_SOLD
@@ -237,13 +263,21 @@ const UnifiedPipelineView: React.FC<UnifiedPipelineViewProps> = ({
               className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)] text-black rounded-lg text-xs font-black uppercase tracking-wider hover:opacity-90 transition-all active:scale-[0.97] shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
-              {activeBoard === 'leads' ? 'New Lead' : activeBoard === 'estimates' ? 'New Estimate' : 'New Job'}
+              {activeBoard === 'instaquote' ? 'New InstaQuote'
+                : activeBoard === 'leads' ? 'New Lead'
+                : activeBoard === 'estimates' ? 'New Estimate'
+                : 'New Job'}
             </button>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" />
               <input
                 type="text"
-                placeholder={`Search by ${activeBoard === 'jobs' ? 'Job' : activeBoard === 'leads' ? 'Lead' : 'Estimate'} #`}
+                placeholder={`Search by ${
+                  activeBoard === 'jobs' ? 'Job'
+                  : activeBoard === 'leads' ? 'Lead'
+                  : activeBoard === 'instaquote' ? 'InstaQuote'
+                  : 'Estimate'
+                } #`}
                 className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-[var(--brand-gold)]/50 w-64 transition-all text-[var(--text-primary)]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
