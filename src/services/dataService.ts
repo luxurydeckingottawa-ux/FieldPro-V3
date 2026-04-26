@@ -369,11 +369,56 @@ export const dataService = {
 
   async loadJobs(): Promise<Job[]> {
     if (isSupabaseConfigured()) {
+      // Exclude `field_progress` from the dashboard list query.
+      //
+      // field_progress can balloon to 30+ MB per row when photo data URIs
+      // are stored inline (Cloudinary upload failures fall back to base64).
+      // PostgREST then 500s trying to serialise the response and the entire
+      // dashboard goes blank. field_progress is only needed inside the
+      // workflow checklist view (loaded per-job, not in this list query),
+      // so explicitly listing the columns we DO need keeps the dashboard
+      // bullet-proof against any future blob bloat in heavy JSONB cols.
+      const SAFE_COLUMNS = `
+        id, org_id, job_number, client_name, client_phone, client_email,
+        project_address, latitude, longitude, project_type, assigned_users,
+        assigned_crew, scheduled_date, material_delivery_date, scope_summary,
+        current_stage, status, pipeline_stage, signoff_status,
+        invoice_support_status, final_submission_status, field_status,
+        completion_package_status, photo_completion_status,
+        completion_readiness_status, office_review_status, planned_start_date,
+        planned_duration_days, planned_finish_date, official_schedule_status,
+        material_cost, labour_cost, total_amount, paid_amount, estimate_amount,
+        lifecycle_stage, lead_source, assigned_salesperson, last_contact_date,
+        next_follow_up_date, follow_up_status, follow_up_reason, lost_reason,
+        portal_status, engagement_heat, estimate_status, estimate_sent_date,
+        estimate_version, projected_sale_date, accepted_option_id,
+        accepted_option_name, accepted_date, deposit_status,
+        sold_workflow_status, deposit_amount, deposit_requested_date,
+        deposit_received_date, contract_signed_date, nurture_sequence,
+        nurture_step, nurture_status, post_project_status,
+        verified_build_passport_url, subcontractor_invoice_url,
+        customer_portal_token, office_checklists, build_details,
+        field_forecast, forecast_review_status, time_entries,
+        geofence_reminders, estimate_data, accepted_build_summary,
+        portal_engagement, ai_insights, next_action, activities,
+        selected_add_on_ids, flagged_issues, previous_jobs, stage_updated_at,
+        last_schedule_update_at, last_schedule_updated_by, created_at,
+        updated_at, drip_campaign, digital_work_order, needs_job_setup,
+        live_estimate, calculator_selections, calculator_dimensions,
+        customer_signature, customer_signature_cloudinary_url,
+        contract_pdf_url, job_files_json, notes, site_notes, office_notes,
+        accepted_package_tier, accepted_monthly_payment, declined_reason,
+        invoices, description, calculator_options, customer_requested_swaps,
+        angela_conversations, customer_actions_required,
+        permit_notice_active, source_metadata, submission_id, pdf_url,
+        pdf_generated_at, ip_hash
+      `.replace(/\s+/g, ' ').trim();
+
       const { data, error } = await supabase!
         .from('jobs')
-        .select('*')
+        .select(SAFE_COLUMNS)
         .order('updated_at', { ascending: false });
-      
+
       if (error) {
         console.error('Failed to load jobs from Supabase:', error);
         return [];
