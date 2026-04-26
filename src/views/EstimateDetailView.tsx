@@ -6,7 +6,7 @@ import {
   Copy, Check, Edit2, Save, X, ChevronRight,
   ClipboardList, Send, Clock, AlertCircle, CheckCircle2,
   Zap, Camera, Info, BarChart3, Users, PenTool, CalendarPlus, ChevronDown, ChevronUp,
-  Plus, Trash2
+  Plus, Trash2, Calculator, Download, RefreshCw
 } from 'lucide-react';
 import AcceptanceModal from '../components/AcceptanceModal';
 import CustomerChatThread from '../components/CustomerChatThread';
@@ -598,6 +598,166 @@ const EstimateDetailView: React.FC<EstimateDetailViewProps> = ({
                 )}
               </div>
             </div>
+
+            {/* ── INSTAQUOTE BLUEPRINT (only for InstaQuote-source leads) ──
+                Shows the office exactly what the customer was quoted on the
+                website calculator: their dimensions, the three tier prices
+                they saw, and a download link to the actual PDF that was
+                emailed to them. Lets the office answer customer questions
+                with the same numbers the customer is looking at. */}
+            {job.leadSource === 'instaquote' && job.sourceMetadata && (() => {
+              const sm = job.sourceMetadata as {
+                config?: {
+                  width_ft?: number; length_ft?: number; sqft?: number;
+                  perimeter_lin_ft?: number; steps?: number;
+                  railing_material?: string; railing_sides?: number; railing_lin_ft?: number;
+                };
+                estimates?: {
+                  silver?: { low: number; high: number };
+                  gold?: { low: number; high: number };
+                  platinum?: { low: number; high: number };
+                };
+                meta?: { page_url?: string; user_agent?: string; submitted_at_utc?: string };
+                cross_pipeline_duplicate?: { existing_lead_id: string; existing_stage: string; existing_client_name?: string | null };
+              };
+              const cfg = sm.config || {};
+              const est = sm.estimates || {};
+              const meta = sm.meta || {};
+              const dup = sm.cross_pipeline_duplicate;
+              const fmt = (n?: number) => n != null ? '$' + Math.round(n).toLocaleString('en-CA') : '—';
+              const range = (t?: { low: number; high: number }) => t ? `${fmt(t.low)} – ${fmt(t.high)}` : '—';
+              const submittedAt = meta.submitted_at_utc
+                ? new Date(meta.submitted_at_utc).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })
+                : '—';
+              const railingLabel = (m?: string) =>
+                m === 'pressure_treated' ? 'Pressure-treated wood'
+                : m === 'aluminum' ? 'Aluminum'
+                : m === 'glass' ? 'Glass'
+                : m === 'none' ? 'No railings'
+                : m || '—';
+              return (
+                <div className="bg-[var(--card-bg)] border border-[var(--brand-gold)]/30 rounded-2xl overflow-hidden shadow-lg">
+                  {/* Header */}
+                  <div className="px-5 py-4 bg-[var(--brand-gold)]/10 border-b border-[var(--brand-gold)]/20 flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[var(--brand-gold)]/20 border border-[var(--brand-gold)]/30 flex items-center justify-center">
+                        <Calculator className="w-5 h-5 text-[var(--brand-gold)]" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-[0.25em]">InstaQuote Submission</p>
+                        <p className="text-sm font-bold text-[var(--text-primary)]">What the customer saw on the website</p>
+                      </div>
+                    </div>
+                    {job.pdfUrl && (
+                      <a
+                        href={job.pdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-gold)] text-black rounded-lg text-xs font-black uppercase tracking-wider hover:opacity-90 transition-all shadow-md"
+                        title="Open the branded PDF blueprint that was emailed to the customer"
+                      >
+                        <Download className="w-3.5 h-3.5" /> View Blueprint PDF
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Returning-customer banner */}
+                  {dup && (
+                    <div className="px-5 py-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 text-amber-500 shrink-0" />
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        <span className="font-bold">Returning customer.</span>{' '}
+                        Already in your pipeline as{' '}
+                        <span className="font-bold">{dup.existing_client_name || 'unnamed lead'}</span>{' '}
+                        ({dup.existing_stage}). Multi-touch nurture suppressed to avoid double-touching — customer received the PDF as a transactional email.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Body */}
+                  <div className="p-5 space-y-5">
+                    {/* The 3 tier prices, exactly as the customer saw them */}
+                    <div>
+                      <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3">Pricing The Customer Was Quoted</p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
+                          <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Silver</p>
+                          <p className="text-base font-bold text-[var(--text-primary)]">{range(est.silver)}</p>
+                        </div>
+                        <div className="p-4 bg-[var(--brand-gold)]/10 rounded-xl border border-[var(--brand-gold)]/30">
+                          <p className="text-[10px] font-black text-[var(--brand-gold)] uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                            Gold <span className="text-[8px] opacity-70">· Most chosen</span>
+                          </p>
+                          <p className="text-base font-bold text-[var(--brand-gold)]">{range(est.gold)}</p>
+                        </div>
+                        <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
+                          <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-1">Platinum</p>
+                          <p className="text-base font-bold text-[var(--text-primary)]">{range(est.platinum)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Configuration grid */}
+                    <div>
+                      <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-3">Configuration</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                          <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Footprint</p>
+                          <p className="text-sm font-bold text-[var(--text-primary)]">
+                            {cfg.width_ft != null && cfg.length_ft != null ? `${cfg.width_ft} × ${cfg.length_ft} ft` : '—'}
+                          </p>
+                          <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{cfg.sqft ? `${cfg.sqft} sq ft` : ''}</p>
+                        </div>
+                        <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                          <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Perimeter</p>
+                          <p className="text-sm font-bold text-[var(--text-primary)]">{cfg.perimeter_lin_ft ? `${cfg.perimeter_lin_ft} lin ft` : '—'}</p>
+                        </div>
+                        <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                          <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Steps</p>
+                          <p className="text-sm font-bold text-[var(--text-primary)]">{cfg.steps != null ? cfg.steps : '—'}</p>
+                        </div>
+                        <div className="p-3 bg-[var(--bg-secondary)] rounded-lg">
+                          <p className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase">Railing</p>
+                          <p className="text-sm font-bold text-[var(--text-primary)]">{railingLabel(cfg.railing_material)}</p>
+                          <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">
+                            {cfg.railing_sides != null ? `${cfg.railing_sides} side${cfg.railing_sides === 1 ? '' : 's'}` : ''}
+                            {cfg.railing_lin_ft ? ` · ${cfg.railing_lin_ft} lin ft` : ''}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Submission metadata */}
+                    <div className="flex items-center gap-4 flex-wrap pt-3 border-t border-[var(--border-color)]">
+                      <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                        <Calendar className="w-3 h-3" /> Submitted: {submittedAt}
+                      </div>
+                      {meta.page_url && (
+                        <a
+                          href={meta.page_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-[var(--brand-gold)] hover:underline"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Source page
+                        </a>
+                      )}
+                      {job.pdfGeneratedAt && (
+                        <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                          <FileText className="w-3 h-3" /> PDF generated: {new Date(job.pdfGeneratedAt).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}
+                        </div>
+                      )}
+                    </div>
+
+                    {!job.pdfUrl && (
+                      <p className="text-[10px] text-[var(--text-tertiary)] italic">
+                        PDF link not available on this lead (may have been created before PDF auto-attach went live, or the 30-day signed URL has expired).
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* ── CUSTOMER TEXT THREAD ──────────────────────────────────────
                 Unified SMS history: inbound + outbound combined. Visible at
