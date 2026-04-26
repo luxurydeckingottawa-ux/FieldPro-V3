@@ -23,6 +23,19 @@
 [functions."incoming-sms"]
   timeout = 10
 
+# InstaQuote lead capture endpoint — does PDF gen + Storage upload + SendGrid
+# inline in a single request, so it needs the longer timeout.
+[functions."instaquote-lead"]
+  timeout = 30
+  included_files = ["netlify/functions/_pdf/**"]
+
+# Public-facing alias matching the contract in the Cowork brief.
+[[redirects]]
+  from = "/api/instaquote-lead"
+  to   = "/.netlify/functions/instaquote-lead"
+  status = 200
+  force  = true
+
 [[headers]]
   for = "/*"
   [headers.values]

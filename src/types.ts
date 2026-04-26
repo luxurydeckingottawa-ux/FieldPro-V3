@@ -82,6 +82,9 @@ export interface FieldScheduleForecast {
 }
 
 export enum PipelineStage {
+  // Position-zero — captured by the InstaQuote widget on luxurydecking.ca,
+  // before any human follow-up. Office reviews and promotes to LEAD_IN.
+  INSTAQUOTE_LEAD = 'INSTAQUOTE_LEAD',
   // Lead stages
   LEAD_IN = 'LEAD_IN',
   FIRST_CONTACT = 'FIRST_CONTACT',

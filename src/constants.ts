@@ -3,6 +3,7 @@ import { COMPANY } from './config/company';
 
 // Pre-sale pipeline stages — jobs in these stages route to estimate-detail view
 export const ESTIMATE_STAGES: PipelineStage[] = [
+  PipelineStage.INSTAQUOTE_LEAD,
   PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT,
   PipelineStage.THIRD_CONTACT, PipelineStage.LEAD_ON_HOLD, PipelineStage.LEAD_WON, PipelineStage.LEAD_LOST,
   PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED, PipelineStage.EST_IN_PROGRESS,
