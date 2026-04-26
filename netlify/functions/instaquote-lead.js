@@ -69,7 +69,12 @@ function corsHeaders(originHeader) {
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    // X-Client is the widget's identifier header (per Cowork's
+    // implementation). Without listing it here, the browser CORS
+    // preflight rejects the POST and the request never reaches us.
+    // X-Requested-With is included for legacy/jQuery widgets and
+    // generally safe to allow on a public POST endpoint.
+    'Access-Control-Allow-Headers': 'Content-Type, X-Client, X-Requested-With',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
   };
