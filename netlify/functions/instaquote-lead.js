@@ -75,7 +75,10 @@ function corsHeaders(originHeader) {
     // X-Requested-With is included for legacy/jQuery widgets and
     // generally safe to allow on a public POST endpoint.
     'Access-Control-Allow-Headers': 'Content-Type, X-Client, X-Requested-With',
-    'Access-Control-Max-Age': '86400',
+    // Keep preflight cache short during the rollout window so any future
+    // CORS adjustment propagates within minutes, not 24 hours. Doubles as
+    // an escape hatch if a customer's browser caches a bad preflight.
+    'Access-Control-Max-Age': '600',
     'Vary': 'Origin',
   };
 }
