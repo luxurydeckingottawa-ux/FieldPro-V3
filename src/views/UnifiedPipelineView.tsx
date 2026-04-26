@@ -19,8 +19,13 @@ interface UnifiedPipelineViewProps {
   onAutomationSettings?: () => void;
 }
 
-// Pipeline board definitions — lead stages aligned with drip campaign schedule
+// Pipeline board definitions — lead stages aligned with drip campaign schedule.
+// InstaQuote sits at the front as its own intake bucket: leads from the
+// website calculator land here automatically via /api/instaquote-lead and
+// get their own warmer drip cadence (separate from cold leads who came in
+// via "request a quote" form).
 const LEAD_COLUMNS = [
+  { id: PipelineStage.INSTAQUOTE_LEAD, label: 'InstaQuote'        },
   { id: PipelineStage.LEAD_IN,         label: 'New Lead · D0'    },
   { id: PipelineStage.FIRST_CONTACT,   label: '1st Contact · D1' },
   { id: PipelineStage.SECOND_CONTACT,  label: '2nd Contact · D3' },
