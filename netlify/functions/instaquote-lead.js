@@ -401,8 +401,49 @@ export const handler = async function (event) {
           existing_stage: existing.pipeline_stage,
         },
       }).then(() => {}, () => {});
-      // 200 success: their existing record stands. The widget shouldn't see
-      // any visible difference. The office sees the merge note in bot_log.
+
+      // The customer asked for their PDF blueprint — that's a transactional
+      // response we must honour even if their email is already in another
+      // pipeline. Per spec, suppress only the NURTURE sequence (Touches
+      // 1-7), NOT the Day 0 PDF email. Generate the PDF and send it now,
+      // then return the existing lead_id without starting nurture.
+      try {
+        const pdfBuf = generateInstaQuotePdf({
+          email: body.email,
+          config: body.config,
+          estimates: body.estimates,
+        });
+        const pdfFileName = `instaquote-blueprint-${(body.email).replace(/[^a-z0-9]/gi, '_')}-${Date.now()}.pdf`;
+        const { error: upErr } = await supabase.storage
+          .from(STORAGE_BUCKET)
+          .upload(pdfFileName, pdfBuf, {
+            contentType: 'application/pdf',
+            upsert: true,
+          });
+        let signedUrl = '';
+        if (!upErr) {
+          const { data: signed } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .createSignedUrl(pdfFileName, SIGNED_URL_TTL_SECONDS);
+          signedUrl = signed?.signedUrl || '';
+        }
+        await sendBlueprintEmail({
+          apiKey: SENDGRID_API_KEY,
+          from: { email: FROM_EMAIL, name: FROM_NAME },
+          to: body.email,
+          pdfBuffer: pdfBuf,
+          signedUrl,
+          config: body.config,
+          estimates: body.estimates,
+          storefront: STOREFRONT,
+        });
+      } catch (mergeMailErr) {
+        // Non-fatal: lead exists in the other pipeline regardless. Log + continue.
+        console.error('instaquote-lead merge-path PDF/email error (non-fatal):', mergeMailErr);
+      }
+
+      // 200 success: their existing record stands. The customer got their PDF.
+      // The office sees the merge note in bot_log.
       return jsonResponse(200, {
         ok: true,
         merged: true,
