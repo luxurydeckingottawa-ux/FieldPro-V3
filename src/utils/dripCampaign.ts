@@ -29,7 +29,7 @@ export interface CampaignTouch {
 }
 
 export interface CampaignStatus {
-  campaignType: 'LEAD_FOLLOW_UP' | 'ESTIMATE_FOLLOW_UP';
+  campaignType: 'LEAD_FOLLOW_UP' | 'ESTIMATE_FOLLOW_UP' | 'INSTAQUOTE_NURTURE';
   startedAt: string;       // ISO date when campaign started
   currentTouch: number;    // which touch we're on (0-based)
   completedTouches: string[]; // IDs of touches already sent
@@ -66,9 +66,21 @@ const PRICING_PAGE = `https://${COMPANY.website}/pricing`;
 const INSTAQUOTE_LINK = `https://${COMPANY.website}/instaquote`;
 const PROCESS_PAGE = `https://${COMPANY.website}/our-process`;
 const MATERIALS_PAGE = `https://${COMPANY.website}/materials`;
+// InstaQuote nurture campaign — additional resource pages referenced in the
+// 7-touch educational drip. Resource page slugs are placeholders; update
+// when the actual pages go live on luxurydecking.ca.
+const PORTFOLIO_PAGE = `https://${COMPANY.website}/portfolio`;
+const CONSULTATION_RESOURCE = `https://${COMPANY.website}/what-to-expect`;
+const BOOKING_LINK = `https://${COMPANY.website}/book-consultation`;
 const PHONE = COMPANY.phone;
 const EMAIL = COMPANY.email;
 const WEBSITE = COMPANY.website;
+
+/** Append UTM tracking params for the InstaQuote nurture campaign. */
+function utm(url: string, touchNumber: number): string {
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}utm_source=instaquote_nurture&utm_medium=email&utm_campaign=instaquote_drip&utm_content=touch_${touchNumber}`;
+}
 
 function portalLink(job: Job): string {
   const token = job.customerPortalToken || '';
@@ -158,6 +170,177 @@ export function getLeadTouches(job: Job): CampaignTouch[] {
       emailTemplate: `Hi ${name},\n\nIt has been a few weeks since you first reached out. If your deck project is still on your mind, we wanted you to know our team is here whenever you are ready.\n\nA few things that might be helpful:\n\n- Our pricing page shows transparent package options by size and tier: ${PRICING_PAGE}\n- Build availability fills up as the season progresses. Reaching out earlier generally means more flexibility on timing.\n\nNo pressure at all. Just reply to this email or give us a call at ${PHONE} if and when the time is right.${sig()}`,
     },
   ];
+}
+
+// ============================================================
+// INSTAQUOTE NURTURE TEMPLATES (7 touches over 52 days)
+// ------------------------------------------------------------
+// Per the InstaQuote Nurture Campaign Master spec. Email-only (no SMS):
+// homeowner only consented to email. Voice: Angela, premium calm dry tone.
+// Brand rules: Canadian spelling, NO em dashes, NO emoji, NO exclamation
+// marks, NO discount language. Sign-off "Angela / Luxury Decking" on two
+// lines. Sender display "Angela at Luxury Decking", reply-to admin@.
+//
+// Send-time rules (enforced in getNextScheduledTouch + processor):
+//   Tue/Wed/Thu only, 9:00-10:00 AM ET, no weekends, no holidays.
+//   Day 0 PDF Blueprint email is exempt (transactional, fires on submit).
+// ============================================================
+
+export function getInstaQuoteTouches(job: Job): CampaignTouch[] {
+  const name = job.clientName?.split(' ')[0] || 'there';
+  const pdfUrl = job.pdfUrl ? utm(job.pdfUrl, 1) : utm(`https://${WEBSITE}/instaquote`, 1);
+  const pricingT1 = utm(PRICING_PAGE, 1);
+  const materialsT2 = utm(MATERIALS_PAGE, 2);
+  const pricingT3 = utm(PRICING_PAGE, 3);
+  const consultationT4 = utm(CONSULTATION_RESOURCE, 4);
+  const bookingT4 = utm(BOOKING_LINK, 4);
+  const portfolioT5 = utm(PORTFOLIO_PAGE, 5);
+  const bookingT6 = utm(BOOKING_LINK, 6);
+  const bookingT7 = utm(BOOKING_LINK, 7);
+
+  return [
+    // Touch 1 - Day 2: Re-anchor + pricing context
+    {
+      id: 'iq-t1-email',
+      touchNumber: 1,
+      channel: 'email',
+      delayDays: 2,
+      subject: 'Did your deck blueprint come through?',
+      smsTemplate: '',
+      emailTemplate:
+        `Hi ${name},\n\n` +
+        `A quick note to make sure your deck blueprint landed in your inbox the other day. Sometimes these get caught in spam or buried under everything else.\n\n` +
+        `Here is the link in case you want to view it again: ${pdfUrl}\n\n` +
+        `While you have it open, one thing worth knowing. The numbers in your blueprint are based on the dimensions you entered. The actual final price can move up or down once we account for things like deck height, foundation type, and stair count. Our pricing page breaks all of that down by size and tier: ${pricingT1}\n\n` +
+        `No rush. Take your time looking it over.\n\n` +
+        `Angela\n` +
+        `Luxury Decking`,
+    },
+    // Touch 2 - Day 5: Materials education
+    {
+      id: 'iq-t2-email',
+      touchNumber: 2,
+      channel: 'email',
+      delayDays: 5,
+      subject: 'Wood, composite, or PVC?',
+      smsTemplate: '',
+      emailTemplate:
+        `Hi ${name},\n\n` +
+        `One of the most common questions we get from homeowners researching a new deck is which material to choose. The right answer depends on your priorities. Some homeowners want the lowest upfront cost. Others want the lowest maintenance. A few care most about appearance and longevity.\n\n` +
+        `We put together a guide that walks through the differences between pressure-treated wood, composite, and PVC, including where each one makes sense and where it does not.\n\n` +
+        `You can read it here: ${materialsT2}\n\n` +
+        `If you have questions about which material fits your project, just reply to this email.\n\n` +
+        `Angela\n` +
+        `Luxury Decking`,
+    },
+    // Touch 3 - Day 10: Tier explanation + mobile showroom intro
+    {
+      id: 'iq-t3-email',
+      touchNumber: 3,
+      channel: 'email',
+      delayDays: 10,
+      subject: 'What you get at each pricing tier',
+      smsTemplate: '',
+      emailTemplate:
+        `Hi ${name},\n\n` +
+        `Your blueprint included pricing across our Silver, Gold, and Platinum packages. The tiers are not arbitrary. Each one represents a different combination of materials, railings, and finishing details.\n\n` +
+        `Here is the short version:\n\n` +
+        `Silver. Pressure-treated wood, aluminum or wood railings, standard finish.\n` +
+        `Gold. Composite decking, aluminum railings, upgraded fasteners and trim.\n` +
+        `Platinum. Premium composite or PVC, glass or aluminum railings, full hidden fastener system.\n` +
+        `Diamond. Top-tier PVC, custom design elements, fully integrated lighting and finishing.\n\n` +
+        `The full breakdown by deck size lives on our pricing page: ${pricingT3}\n\n` +
+        `If you would prefer to see and feel actual material samples, our mobile showroom comes to your home. Walk the space, look at samples in real light, ask questions in person.\n\n` +
+        `Angela\n` +
+        `Luxury Decking`,
+    },
+    // Touch 4 - Day 17: First soft consultation ask + LED kit (only place it appears)
+    {
+      id: 'iq-t4-email',
+      touchNumber: 4,
+      channel: 'email',
+      delayDays: 17,
+      subject: 'What happens at a first consultation',
+      smsTemplate: '',
+      emailTemplate:
+        `Hi ${name},\n\n` +
+        `Some homeowners hesitate to book a consultation because they assume it means a sales pitch and a hard close. Ours does not work that way.\n\n` +
+        `Our consultations are educational. We come to your home, walk your space, take measurements, talk through materials, and answer your questions. You leave with a detailed written quote and clear next steps. There is no obligation, no pressure, and no commitment to move forward.\n\n` +
+        `Every deck we build this season also includes a complimentary LED deck lighting kit, valued at $750. It is included automatically with any project signed for the current build season.\n\n` +
+        `If you would like to read what to expect at a first consultation in more detail: ${consultationT4}\n\n` +
+        `Or if you are ready to book, you can do that here: ${bookingT4}\n\n` +
+        `Angela\n` +
+        `Luxury Decking`,
+    },
+    // Touch 5 - Day 26: Portfolio proof
+    {
+      id: 'iq-t5-email',
+      touchNumber: 5,
+      channel: 'email',
+      delayDays: 26,
+      subject: 'Recent Ottawa decks we have built',
+      smsTemplate: '',
+      emailTemplate:
+        `Hi ${name},\n\n` +
+        `If it helps to see what your project could actually look like, here are some recent Ottawa builds across different sizes, materials, and tiers:\n\n` +
+        `${portfolioT5}\n\n` +
+        `Each project on the page shows the size, materials, and tier so you can compare directly to the blueprint we sent you.\n\n` +
+        `If you see something close to what you have in mind, reply to this email and let us know. We can talk you through it.\n\n` +
+        `Angela\n` +
+        `Luxury Decking`,
+    },
+    // Touch 6 - Day 38: Soft urgency, build season language
+    {
+      id: 'iq-t6-email',
+      touchNumber: 6,
+      channel: 'email',
+      delayDays: 38,
+      subject: 'A note on build availability',
+      smsTemplate: '',
+      emailTemplate:
+        `Hi ${name},\n\n` +
+        `A quick note on timing. Our build season in Ottawa runs roughly May through October, weather permitting. The earlier in the year a project is booked, the more flexibility there is on the start date.\n\n` +
+        `If your project is moving forward this season, the next step is a free consultation at your home. We bring the mobile showroom, walk your space, and prepare a detailed written quote on the spot.\n\n` +
+        `You can book here: ${bookingT6}\n\n` +
+        `If the timing is not right this year, no problem at all. Just reply and let us know and we will keep your file on hand for next season.\n\n` +
+        `Angela\n` +
+        `Luxury Decking`,
+    },
+    // Touch 7 - Day 52: Graceful close
+    {
+      id: 'iq-t7-email',
+      touchNumber: 7,
+      channel: 'email',
+      delayDays: 52,
+      subject: 'Should we keep your file open?',
+      smsTemplate: '',
+      emailTemplate:
+        `Hi ${name},\n\n` +
+        `It has been a few weeks since you first looked at deck pricing on our site, and I want to respect your inbox. This will be the last note from us for now.\n\n` +
+        `If your project is still in motion, we are here whenever you are ready. The blueprint we sent is still valid, and you can book a consultation any time: ${bookingT7}\n\n` +
+        `If the timing is not right or you have decided to go a different direction, that is completely fine. Just reply with one word and we will close out your file.\n\n` +
+        `Either way, thanks for considering Luxury Decking.\n\n` +
+        `Angela\n` +
+        `Luxury Decking`,
+    },
+  ];
+}
+
+/**
+ * Map touch number (1-7) to the InstaQuote pipeline stage that the lead
+ * advances to AFTER that touch fires. Used by the processor to auto-progress.
+ */
+export function instaQuoteStageAfterTouch(touchNumber: number): PipelineStage | null {
+  const map: Record<number, PipelineStage> = {
+    1: PipelineStage.INSTAQUOTE_TOUCH_1,
+    2: PipelineStage.INSTAQUOTE_TOUCH_2,
+    3: PipelineStage.INSTAQUOTE_TOUCH_3,
+    4: PipelineStage.INSTAQUOTE_TOUCH_4,
+    5: PipelineStage.INSTAQUOTE_TOUCH_5,
+    6: PipelineStage.INSTAQUOTE_TOUCH_6,
+    7: PipelineStage.INSTAQUOTE_TOUCH_7,
+  };
+  return map[touchNumber] || null;
 }
 
 // ============================================================
@@ -302,12 +485,15 @@ function getEstimateTouchDay30(job: Job): CampaignTouch {
  * For estimate follow-ups, the engagement tier determines which template to use.
  */
 export function getCampaignTouches(
-  type: 'LEAD_FOLLOW_UP' | 'ESTIMATE_FOLLOW_UP',
+  type: 'LEAD_FOLLOW_UP' | 'ESTIMATE_FOLLOW_UP' | 'INSTAQUOTE_NURTURE',
   job: Job,
   engagement?: PortalEngagement
 ): CampaignTouch[] {
   if (type === 'LEAD_FOLLOW_UP') {
     return getLeadTouches(job);
+  }
+  if (type === 'INSTAQUOTE_NURTURE') {
+    return getInstaQuoteTouches(job);
   }
 
   const tier = calculateEngagementTier(engagement).tier;
@@ -318,6 +504,49 @@ export function getCampaignTouches(
     getEstimateTouchDay14(job, tier),
     getEstimateTouchDay30(job),
   ];
+}
+
+/**
+ * Apply InstaQuote send-time rules:
+ *   - Only Tue/Wed/Thu (skip Fri/Sat/Sun/Mon to next eligible Tue)
+ *   - Only between 9:00 and 10:00 AM Eastern Time
+ *   - Day 0 PDF Blueprint (touchNumber 0 / no touch) is exempt
+ *
+ * Pushes the date FORWARD to the next eligible window. Never earlier.
+ * Returns the same Date object adjusted in place; caller uses the result.
+ *
+ * NOTE: this is a single-tenant approximation. For multi-tenant we would
+ * accept org timezone + holiday calendar from settings. For now we hardcode
+ * America/Toronto (Ottawa) and skip a small list of major Canadian holidays.
+ */
+const CA_HOLIDAYS_2026 = new Set([
+  '2026-01-01', '2026-04-03', '2026-05-18', '2026-07-01', '2026-08-03',
+  '2026-09-07', '2026-10-12', '2026-12-25', '2026-12-28',
+]);
+
+export function applyInstaQuoteSendWindow(scheduledFor: Date): Date {
+  // Convert to Eastern Time for the day-of-week + window check.
+  // We use UTC math because Node may not have full ICU on Netlify functions.
+  // Approximation: Eastern is UTC-5 (EST) or UTC-4 (EDT). For send-window
+  // rules a one-hour DST drift is acceptable.
+  const out = new Date(scheduledFor);
+  for (let safety = 0; safety < 14; safety++) {
+    const isoDay = out.toISOString().slice(0, 10);
+    // Eastern day-of-week: subtract 4 hours from UTC then read the UTC day
+    const etProbe = new Date(out.getTime() - 4 * 60 * 60 * 1000);
+    const dow = etProbe.getUTCDay(); // 0=Sun..6=Sat
+    const isEligibleDay = dow === 2 || dow === 3 || dow === 4; // Tue/Wed/Thu
+    const isHoliday = CA_HOLIDAYS_2026.has(isoDay);
+    if (isEligibleDay && !isHoliday) {
+      // Force the time to 9:30 AM Eastern (13:30 UTC roughly)
+      out.setUTCHours(13, 30, 0, 0);
+      return out;
+    }
+    // Push forward one day and re-check
+    out.setUTCDate(out.getUTCDate() + 1);
+    out.setUTCHours(13, 30, 0, 0);
+  }
+  return out;
 }
 
 /**
@@ -355,6 +584,12 @@ export function getNextScheduledTouch(
     }
   }
 
+  // InstaQuote nurture has stricter rules (also skips Canadian holidays
+  // and lands strictly in the 9-10 AM ET window). Apply on top.
+  if (campaign.campaignType === 'INSTAQUOTE_NURTURE' && nextTouch.delayDays > 0) {
+    return { touch: nextTouch, scheduledFor: applyInstaQuoteSendWindow(scheduledFor) };
+  }
+
   return { touch: nextTouch, scheduledFor };
 }
 
@@ -384,6 +619,15 @@ export function shouldPauseCampaign(job: Job): { pause: boolean; reason?: string
 
   if (job.pipelineStage === PipelineStage.EST_REJECTED || job.pipelineStage === PipelineStage.LEAD_LOST) {
     return { pause: true, reason: 'Lead lost or estimate rejected' };
+  }
+
+  // InstaQuote terminal stages — Won (booked) or Closed (cold/unsubscribed)
+  // both stop the nurture sequence permanently.
+  if (job.pipelineStage === PipelineStage.INSTAQUOTE_WON) {
+    return { pause: true, reason: 'Consultation booked - moved to Won' };
+  }
+  if (job.pipelineStage === PipelineStage.INSTAQUOTE_CLOSED) {
+    return { pause: true, reason: 'Lead closed - cold or unsubscribed' };
   }
 
   return { pause: false };

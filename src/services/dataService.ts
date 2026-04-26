@@ -230,6 +230,11 @@ export function rowToJob(row: Record<string, unknown>): Job {
     customerSignature: (row.customer_signature as string) || undefined,
     customerSignatureCloudinaryUrl: (row.customer_signature_cloudinary_url as string) || undefined,
     contractPdfUrl: (row.contract_pdf_url as string) || undefined,
+    pdfUrl: (row.pdf_url as string) || undefined,
+    pdfGeneratedAt: (row.pdf_generated_at as string) || undefined,
+    submissionId: (row.submission_id as string) || undefined,
+    ipHash: (row.ip_hash as string) || undefined,
+    sourceMetadata: (row.source_metadata as Record<string, unknown>) || undefined,
     contractSignedDate: (row.contract_signed_date as string) || undefined,
     depositRequestedDate: (row.deposit_requested_date as string) || undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

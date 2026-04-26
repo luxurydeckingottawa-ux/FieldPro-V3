@@ -7,7 +7,8 @@
  */
 
 import { Job } from '../types';
-import { getCampaignTouches, CampaignTouch } from './dripCampaign';
+import { getCampaignTouches, CampaignTouch, instaQuoteStageAfterTouch } from './dripCampaign';
+import { PipelineStage } from '../types';
 import { calculateEngagementTier } from './engagementScoring';
 import { COMPANY } from '../config/company';
 
@@ -135,15 +136,50 @@ export async function processAllCampaigns(
     }
 
     if (fired) {
+      // For InstaQuote nurture, advance the pipeline stage based on the
+      // last touch fired. Each touch (1..7) maps to its corresponding
+      // INSTAQUOTE_TOUCH_N stage. This is what makes the kanban board
+      // reflect campaign progress automatically — no manual dragging.
+      const updates: Partial<Job> = {
+        dripCampaign: {
+          ...campaign,
+          completedTouches: completed,
+          sentMessages: sent,
+        },
+      };
+
+      if (campaign.campaignType === 'INSTAQUOTE_NURTURE') {
+        // Find the highest touchNumber among completed InstaQuote touches.
+        const completedTouchNums = completed
+          .filter(id => id.startsWith('iq-t'))
+          .map(id => parseInt(id.replace(/^iq-t(\d+).*$/, '$1'), 10))
+          .filter(n => !isNaN(n));
+        const highest = completedTouchNums.length
+          ? Math.max(...completedTouchNums)
+          : 0;
+        const newStage = highest > 0 ? instaQuoteStageAfterTouch(highest) : null;
+        if (newStage && job.pipelineStage !== newStage) {
+          updates.pipelineStage = newStage;
+        }
+        // After Touch 7, the campaign is complete.
+        if (highest >= 7) {
+          updates.dripCampaign = {
+            ...updates.dripCampaign!,
+            status: 'completed',
+          };
+          // Move to Long-Term Nurture if there was any engagement, else
+          // Closed - Cold. Without engagement signals wired yet, default
+          // to Long-Term so leads aren't prematurely closed.
+          if (job.pipelineStage !== PipelineStage.INSTAQUOTE_LONG_TERM &&
+              job.pipelineStage !== PipelineStage.INSTAQUOTE_CLOSED) {
+            updates.pipelineStage = PipelineStage.INSTAQUOTE_LONG_TERM;
+          }
+        }
+      }
+
       results.push({
         jobId: job.id,
-        updates: {
-          dripCampaign: {
-            ...campaign,
-            completedTouches: completed,
-            sentMessages: sent,
-          },
-        },
+        updates,
       });
     }
   }

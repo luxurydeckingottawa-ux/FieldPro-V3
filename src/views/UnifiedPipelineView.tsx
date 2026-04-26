@@ -34,12 +34,22 @@ const LEAD_COLUMNS = [
   { id: PipelineStage.LEAD_LOST,       label: 'Lead Lost'        },
 ];
 
-// InstaQuote board — placeholder single column for now. Once the dedicated
-// drip cadence + page sections are designed, this expands to its own
-// custom set of stages. New leads from POST /api/instaquote-lead always
-// land in PipelineStage.INSTAQUOTE_LEAD.
+// InstaQuote Nurture board — 11 stages mirror the 7-touch educational drip
+// described in the InstaQuote Nurture Campaign Master doc. Leads enter
+// at INSTAQUOTE_LEAD via /api/instaquote-lead and auto-progress as each
+// scheduled touch fires. Won/Closed are terminal exit stages.
 const INSTAQUOTE_COLUMNS = [
-  { id: PipelineStage.INSTAQUOTE_LEAD, label: 'New · Awaiting Outreach' },
+  { id: PipelineStage.INSTAQUOTE_LEAD,     label: 'New · PDF Sent'        },
+  { id: PipelineStage.INSTAQUOTE_TOUCH_1,  label: 'Touch 1 · Day 2'       },
+  { id: PipelineStage.INSTAQUOTE_TOUCH_2,  label: 'Touch 2 · Day 5'       },
+  { id: PipelineStage.INSTAQUOTE_TOUCH_3,  label: 'Touch 3 · Day 10'      },
+  { id: PipelineStage.INSTAQUOTE_TOUCH_4,  label: 'Touch 4 · Day 17'      },
+  { id: PipelineStage.INSTAQUOTE_TOUCH_5,  label: 'Touch 5 · Day 26'      },
+  { id: PipelineStage.INSTAQUOTE_TOUCH_6,  label: 'Touch 6 · Day 38'      },
+  { id: PipelineStage.INSTAQUOTE_TOUCH_7,  label: 'Touch 7 · Day 52'      },
+  { id: PipelineStage.INSTAQUOTE_LONG_TERM,label: 'Long-Term Nurture'     },
+  { id: PipelineStage.INSTAQUOTE_WON,      label: 'Won · Booked'          },
+  { id: PipelineStage.INSTAQUOTE_CLOSED,   label: 'Closed · Cold'         },
 ];
 
 const ESTIMATE_COLUMNS = [

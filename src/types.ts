@@ -82,9 +82,22 @@ export interface FieldScheduleForecast {
 }
 
 export enum PipelineStage {
-  // Position-zero — captured by the InstaQuote widget on luxurydecking.ca,
-  // before any human follow-up. Office reviews and promotes to LEAD_IN.
-  INSTAQUOTE_LEAD = 'INSTAQUOTE_LEAD',
+  // ── InstaQuote Nurture pipeline (separate from Leads) ────────────────────
+  // Lead-source: homeowner finished the calculator on luxurydecking.ca and
+  // submitted email to receive the PDF Blueprint. They have NOT requested
+  // a consultation. The 11 stages mirror the 7-touch educational drip plus
+  // long-term nurture and the two terminal exit stages.
+  INSTAQUOTE_LEAD = 'INSTAQUOTE_LEAD',                 // Stage 1: New Lead - PDF Sent
+  INSTAQUOTE_TOUCH_1 = 'INSTAQUOTE_TOUCH_1',           // Stage 2: Touch 1 Sent - Day 2
+  INSTAQUOTE_TOUCH_2 = 'INSTAQUOTE_TOUCH_2',           // Stage 3: Touch 2 Sent - Day 5
+  INSTAQUOTE_TOUCH_3 = 'INSTAQUOTE_TOUCH_3',           // Stage 4: Touch 3 Sent - Day 10
+  INSTAQUOTE_TOUCH_4 = 'INSTAQUOTE_TOUCH_4',           // Stage 5: Touch 4 Sent - Day 17
+  INSTAQUOTE_TOUCH_5 = 'INSTAQUOTE_TOUCH_5',           // Stage 6: Touch 5 Sent - Day 26
+  INSTAQUOTE_TOUCH_6 = 'INSTAQUOTE_TOUCH_6',           // Stage 7: Touch 6 Sent - Day 38
+  INSTAQUOTE_TOUCH_7 = 'INSTAQUOTE_TOUCH_7',           // Stage 8: Touch 7 Sent - Day 52
+  INSTAQUOTE_LONG_TERM = 'INSTAQUOTE_LONG_TERM',       // Stage 9: Long-Term Nurture
+  INSTAQUOTE_WON = 'INSTAQUOTE_WON',                   // Stage 10: Won - Consultation Booked
+  INSTAQUOTE_CLOSED = 'INSTAQUOTE_CLOSED',             // Stage 11: Closed File - Cold
   // Lead stages
   LEAD_IN = 'LEAD_IN',
   FIRST_CONTACT = 'FIRST_CONTACT',
@@ -408,6 +421,14 @@ export interface Job {
   contractSignedDate?: string;
   customerSignature?: string;
   contractPdfUrl?: string;
+  // InstaQuote-specific: signed Supabase Storage URL of the branded
+  // PDF blueprint generated when the lead submitted the calculator.
+  // 30-day signed URL — regenerate via Storage if needed beyond that.
+  pdfUrl?: string;
+  pdfGeneratedAt?: string;
+  submissionId?: string;
+  ipHash?: string;
+  sourceMetadata?: Record<string, unknown>;
   acceptedBuildSummary?: {
     optionName: string;
     basePrice: number;

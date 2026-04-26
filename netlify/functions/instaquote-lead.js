@@ -360,6 +360,17 @@ export const handler = async function (event) {
     estimate_amount: body.estimates?.gold?.low || null, // best mid-tier number to seed the pipeline
     next_follow_up_date: new Date().toISOString().slice(0, 10),
     follow_up_status: 'NEW',
+    // Auto-enrol the lead in the InstaQuote nurture campaign. The drip
+    // processor (supabase/functions/process-drip-campaigns or client-side
+    // scheduler) reads this and dispatches Touch 1 on Day 2 per the
+    // send-time rules (Tue/Wed/Thu 9-10 AM ET, no holidays).
+    drip_campaign: {
+      campaignType: 'INSTAQUOTE_NURTURE',
+      startedAt: new Date().toISOString(),
+      currentTouch: 0,
+      completedTouches: [],
+      status: 'active',
+    },
   };
 
   const { data: insertedRow, error: insertErr } = await supabase
