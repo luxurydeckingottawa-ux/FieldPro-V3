@@ -33,6 +33,7 @@ const VIEW_TO_PATH: Record<string, string> = {
   'automation-settings': '/settings/automations',
   'business-info': '/settings/business',
   'price-book': '/settings/price-book',
+  'instaquote-reporting': '/reports/instaquote',
   'detail': '/field/jobs', // field job detail view
   'jobs': '/field/jobs',
   'workflow': '/field/workflow', // needs /:id appended
@@ -59,6 +60,7 @@ const PATH_TO_VIEW: Record<string, string> = {
   '/settings/automations': 'automation-settings',
   '/settings/business': 'business-info',
   '/settings/price-book': 'price-book',
+  '/reports/instaquote': 'instaquote-reporting',
   '/field/jobs': 'jobs',
 };
 

@@ -38,7 +38,7 @@ import {
   EstimatorDashboardView, EstimatorWorkflowView, BookingSettingsView,
   AutomationSettingsView, BusinessInfoView, PriceBookView, CustomersView,
   InvoicesView, FieldResourcesView, UserManagementView, UnifiedPipelineView,
-  SchedulingCalendarView,
+  SchedulingCalendarView, InstaQuoteReportingView,
 } from '../LazyViews';
 
 // ── Error Boundary (co-located -- only used by AppRouter) ──────────────────
@@ -695,6 +695,11 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
           {view === 'price-book' && currentUser?.role === Role.ADMIN && (
             <PriceBookView
               onBack={() => navigateTo('booking-settings')}
+            />
+          )}
+          {view === 'instaquote-reporting' && currentUser?.role === Role.ADMIN && (
+            <InstaQuoteReportingView
+              onBack={() => navigateTo('office-dashboard')}
             />
           )}
         </ErrorBoundary>

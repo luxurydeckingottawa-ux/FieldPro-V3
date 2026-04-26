@@ -5,5 +5,11 @@
 # (overrides any other rule for this path).
 /api/instaquote-lead    /.netlify/functions/instaquote-lead    200!
 
+# SendGrid Event Webhook ingest. Same force-200 pattern so POST bodies pass.
+/api/sendgrid-events    /.netlify/functions/sendgrid-events    200!
+
+# Internal-only test cohort harness for the InstaQuote nurture sequence.
+/api/instaquote-test-cohort    /.netlify/functions/instaquote-test-cohort    200!
+
 # SPA catch-all — every other request goes to the React shell.
 /*    /index.html   200

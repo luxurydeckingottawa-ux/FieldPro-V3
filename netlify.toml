@@ -28,6 +28,16 @@
 [functions."instaquote-lead"]
   timeout = 30
 
+# SendGrid event webhook ingest — small inserts but a busy webhook may batch
+# many events. 15s gives headroom without abusing the free tier.
+[functions."sendgrid-events"]
+  timeout = 15
+
+# Test cohort harness — backdates 5 fake leads so the 52-day sequence runs in
+# a compressed window. Quick.
+[functions."instaquote-test-cohort"]
+  timeout = 10
+
 # Public-facing alias matching the contract in the Cowork brief.
 [[redirects]]
   from = "/api/instaquote-lead"

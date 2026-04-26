@@ -326,6 +326,62 @@ export function getInstaQuoteTouches(job: Job): CampaignTouch[] {
   ];
 }
 
+// ============================================================
+// INSTAQUOTE LONG-TERM NURTURE (Stage 9)
+// ------------------------------------------------------------
+// Two emails. Day 90 + next-season. Same brand rules and send-time window.
+// Returned in place of the 7-touch sequence once a lead has been moved to
+// PipelineStage.INSTAQUOTE_LONG_TERM by the processor (or manually).
+// delayDays counts from the campaign startedAt (which the processor resets
+// when transitioning into Long-Term Nurture, so 0 = day of transition).
+// ============================================================
+
+export function getInstaQuoteLongTermTouches(job: Job): CampaignTouch[] {
+  const name = job.clientName?.split(' ')[0] || 'there';
+  const bookingD90 = utm(BOOKING_LINK, 8);
+  const bookingSeasonal = utm(BOOKING_LINK, 9);
+  const pricingSeasonal = utm(PRICING_PAGE, 9);
+
+  return [
+    // Day 90 — copy lifted verbatim from the master spec section 5
+    {
+      id: 'iq-lt-d90-email',
+      touchNumber: 8,
+      channel: 'email',
+      delayDays: 90,
+      subject: 'Still thinking about that deck?',
+      smsTemplate: '',
+      emailTemplate:
+        `Hi ${name},\n\n` +
+        `A check-in to see whether your deck project is still on your mind. Pricing on our site has been updated for the current season, so the numbers in your original blueprint may have shifted slightly.\n\n` +
+        `If you would like a refreshed quote or a free consultation, you can book here: ${bookingD90}\n\n` +
+        `Or just reply to this email and we will sort it out.\n\n` +
+        `Angela\n` +
+        `Luxury Decking`,
+    },
+    // Next-season — ~120 words, brand-compliant, mentions refreshed seasonal
+    // pricing. delayDays: 270 is a reasonable proxy for "Feb 15 next year"
+    // when triggered after a typical mid-season blueprint. The processor will
+    // skew to the actual seasonal date later.
+    {
+      id: 'iq-lt-season-email',
+      touchNumber: 9,
+      channel: 'email',
+      delayDays: 270,
+      subject: 'A note as our Ottawa build season starts up',
+      smsTemplate: '',
+      emailTemplate:
+        `Hi ${name},\n\n` +
+        `A quick note as we move into the new build season here in Ottawa. Now is the part of the year when we start filling our calendar, and the homeowners who reach out earliest tend to have the most flexibility on start dates.\n\n` +
+        `We refreshed our pricing for the new season, so if you still have your original blueprint, the numbers may have shifted a touch. The current packages and pricing live on our pricing page: ${pricingSeasonal}\n\n` +
+        `If your project is back on the table this year, we would be glad to put together a free in-home consultation. You can book here when the timing works: ${bookingSeasonal}\n\n` +
+        `Or just reply and let us know where you are at.\n\n` +
+        `Angela\n` +
+        `Luxury Decking`,
+    },
+  ];
+}
+
 /**
  * Map touch number (1-7) to the InstaQuote pipeline stage that the lead
  * advances to AFTER that touch fires. Used by the processor to auto-progress.
@@ -493,6 +549,16 @@ export function getCampaignTouches(
     return getLeadTouches(job);
   }
   if (type === 'INSTAQUOTE_NURTURE') {
+    // Once a lead has graduated into Long-Term Nurture, swap the 7-touch
+    // sequence for the two-email seasonal sequence. delayDays in the
+    // long-term touches counts from campaign.startedAt (not original lead
+    // creation) so the processor should reset startedAt when transitioning
+    // a lead into INSTAQUOTE_LONG_TERM. If it has not yet been reset, the
+    // delays simply count from the original submit -- which is fine, just
+    // slightly later than ideal.
+    if (job.pipelineStage === PipelineStage.INSTAQUOTE_LONG_TERM) {
+      return getInstaQuoteLongTermTouches(job);
+    }
     return getInstaQuoteTouches(job);
   }
 

@@ -24,7 +24,7 @@ interface NavBarProps {
 const PIPELINE_VIEWS = ['office-pipeline', 'office-job-detail', 'estimate-detail'];
 const CALENDAR_VIEWS = ['scheduling'];
 const ESTIMATOR_VIEWS = ['estimator-calculator'];
-const HUB_VIEWS = ['office-dashboard', 'stats', 'customers', 'invoices', 'chat'];
+const HUB_VIEWS = ['office-dashboard', 'stats', 'customers', 'invoices', 'chat', 'instaquote-reporting'];
 const SETTINGS_VIEWS = ['booking-settings', 'automation-settings', 'business-info', 'price-book', 'user-management'];
 
 // Hub submenu items
@@ -34,6 +34,7 @@ const HUB_ITEMS = [
   { view: 'customers', label: 'Customers', icon: Users },
   { view: 'invoices', label: 'Invoices', icon: FileText },
   { view: 'chat', label: 'Chat', icon: MessageSquare },
+  { view: 'instaquote-reporting', label: 'InstaQuote Reports', icon: Calculator },
 ] as const;
 
 // Settings submenu items

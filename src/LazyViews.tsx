@@ -149,6 +149,10 @@ const LazyEstimatorDashboardView = React.lazy(
   () => import('./views/EstimatorDashboardView')
 );
 
+const LazyInstaQuoteReportingView = React.lazy(
+  () => import('./views/InstaQuoteReportingView')
+);
+
 // ---------------------------------------------------------------------------
 // Suspense-wrapped exports -- drop-in replacements for the original imports
 // ---------------------------------------------------------------------------
@@ -356,6 +360,14 @@ export const EstimatorDashboardView: React.FC<EstimatorDashboardViewProps> = (pr
   </Suspense>
 );
 EstimatorDashboardView.displayName = 'EstimatorDashboardView';
+
+type InstaQuoteReportingViewProps = ComponentProps<typeof LazyInstaQuoteReportingView>;
+export const InstaQuoteReportingView: React.FC<InstaQuoteReportingViewProps> = (props) => (
+  <Suspense fallback={<LoadingFallback />}>
+    <LazyInstaQuoteReportingView {...props} />
+  </Suspense>
+);
+InstaQuoteReportingView.displayName = 'InstaQuoteReportingView';
 
 // Re-export the named types from EstimatorCalculatorView that App.tsx uses
 export type { CalculatorDimensions, CalculatorClientInfo } from './estimator/EstimatorCalculatorView';
