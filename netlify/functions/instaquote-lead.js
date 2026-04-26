@@ -408,7 +408,7 @@ export const handler = async function (event) {
       // 1-7), NOT the Day 0 PDF email. Generate the PDF and send it now,
       // then return the existing lead_id without starting nurture.
       try {
-        const pdfBuf = generateInstaQuotePdf({
+        const pdfBuf = await generateInstaQuotePdf({
           email: body.email,
           config: body.config,
           estimates: body.estimates,
@@ -550,7 +550,7 @@ export const handler = async function (event) {
   // 12. Generate PDF
   let pdfBuffer;
   try {
-    pdfBuffer = generateInstaQuotePdf({
+    pdfBuffer = await generateInstaQuotePdf({
       email: body.email,
       config: body.config,
       estimates: body.estimates,
@@ -622,9 +622,14 @@ export const handler = async function (event) {
 
 // ─── Email templating + send ────────────────────────────────────────────────
 async function sendBlueprintEmail({ apiKey, from, to, pdfBuffer, signedUrl, config, estimates, storefront }) {
-  const subject = 'Your Luxury Decking Blueprint';
+  const subject = 'Your deck blueprint is ready';
   const fmt = (n) => '$' + Math.round(n).toLocaleString('en-CA');
   const range = (t) => `${fmt(t.low)} – ${fmt(t.high)}`;
+
+  // Brand logo, served from the public Netlify asset path. Email clients
+  // require absolute URLs — Cloudinary or our own CDN both work, prod
+  // FieldPro path is the lowest-friction option (always available).
+  const LOGO_URL = 'https://fieldprov3.netlify.app/assets/logo-white.png';
 
   const linkBlock = signedUrl
     ? `<p style="margin:16px 0;"><a href="${escapeHtml(signedUrl)}" style="display:inline-block;background:#C5A059;color:#000;padding:12px 20px;text-decoration:none;font-weight:bold;border-radius:4px;">Download your blueprint (PDF)</a></p>`
@@ -637,10 +642,11 @@ async function sendBlueprintEmail({ apiKey, from, to, pdfBuffer, signedUrl, conf
     <tr><td align="center" style="padding:24px;">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#111;border-top:4px solid #C5A059;border-bottom:4px solid #C5A059;">
         <tr><td style="padding:28px 32px;">
-          <h1 style="color:#C5A059;font-size:22px;margin:0 0 4px;letter-spacing:1px;">LUXURY DECKING</h1>
-          <p style="color:#888;font-size:11px;margin:0 0 24px;">Premium Outdoor Living • Ottawa, ON</p>
+          <div style="text-align:center;margin:0 0 24px;">
+            <img src="${LOGO_URL}" alt="Luxury Decking" width="180" style="display:inline-block;max-width:60%;height:auto;border:0;outline:none;text-decoration:none;" />
+          </div>
 
-          <h2 style="color:#fff;font-size:24px;margin:0 0 8px;">Your custom deck blueprint is ready</h2>
+          <h2 style="color:#fff;font-size:24px;margin:0 0 8px;text-align:center;">Your deck blueprint is ready</h2>
           <p style="color:#bbb;font-size:14px;line-height:1.5;margin:0 0 16px;">
             Thanks for using our InstaQuote calculator. Your full branded blueprint is attached as a PDF and shows pricing for all three of our build tiers based on your specs:
           </p>
@@ -674,7 +680,7 @@ async function sendBlueprintEmail({ apiKey, from, to, pdfBuffer, signedUrl, conf
   `.trim();
 
   const textBody =
-`Your Luxury Decking Blueprint
+`Your deck blueprint is ready
 ==============================
 
 Footprint: ${config.width_ft} ft x ${config.length_ft} ft (${config.sqft} sq ft)

@@ -91,6 +91,28 @@ function fmtRange(low, high) {
   return `${fmtMoney(low)} – ${fmtMoney(high)}`;
 }
 
+// ─── Logo cache ─────────────────────────────────────────────────────────────
+// Fetch the white logo PNG once per cold start and cache. jsPDF needs a
+// base64 data URI to embed images. Falls back gracefully to the text
+// wordmark if the fetch ever fails.
+const LOGO_URL = 'https://fieldprov3.netlify.app/assets/logo-white.png';
+let _logoCache = null;
+
+async function getLogoDataUri() {
+  if (_logoCache !== null) return _logoCache;
+  try {
+    const res = await fetch(LOGO_URL);
+    if (!res.ok) throw new Error(`logo fetch ${res.status}`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    _logoCache = `data:image/png;base64,${buf.toString('base64')}`;
+    return _logoCache;
+  } catch (e) {
+    console.warn('Logo fetch failed, falling back to text wordmark:', e.message);
+    _logoCache = '';  // sentinel: tried, failed — don't keep retrying every PDF
+    return '';
+  }
+}
+
 // ─── Main entry ─────────────────────────────────────────────────────────────
 /**
  * @param {object} input
@@ -99,9 +121,9 @@ function fmtRange(low, high) {
  *                                      railing_material, railing_sides, railing_lin_ft }
  * @param {object} input.estimates    { silver: {low,high}, gold: {...}, platinum: {...} }
  * @param {object} input.company      { name, phone, email, website } (optional, defaults inline)
- * @returns {Buffer} PDF binary
+ * @returns {Promise<Buffer>} PDF binary
  */
-function generateInstaQuotePdf({ email, config, estimates, company }) {
+async function generateInstaQuotePdf({ email, config, estimates, company }) {
   const COMPANY = company || {
     name: 'Luxury Decking',
     phone: '(613) 707-3060',
@@ -118,34 +140,53 @@ function generateInstaQuotePdf({ email, config, estimates, company }) {
   fc(doc, BLACK);
   doc.rect(0, 0, W, H, 'F');
 
-  // ── Gold top bar + brand wordmark ────────────────────────────────────────
+  // ── Gold top bar + brand logo ────────────────────────────────────────────
   fc(doc, GOLD);
   doc.rect(0, 0, W, 6, 'F');
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
-  tc(doc, GOLD);
-  doc.text(COMPANY.name.toUpperCase(), M, 50);
+  // Try to embed the actual logo image. Falls back to the text wordmark
+  // if the fetch fails (cold-start network glitch, asset unavailable, etc).
+  const logoDataUri = await getLogoDataUri();
+  if (logoDataUri) {
+    // Logo: 140pt wide × ~36pt tall (aspect-preserved). Top-left at
+    // (M, 22) so it sits cleanly under the gold bar.
+    try {
+      doc.addImage(logoDataUri, 'PNG', M, 22, 140, 36);
+    } catch (imgErr) {
+      // Per-PDF guard: if jsPDF rejects the image (rare format mismatch),
+      // fall through to the wordmark instead of breaking the entire render.
+      console.warn('addImage failed, using wordmark fallback:', imgErr.message);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      tc(doc, GOLD);
+      doc.text(COMPANY.name.toUpperCase(), M, 50);
+    }
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    tc(doc, GOLD);
+    doc.text(COMPANY.name.toUpperCase(), M, 50);
+  }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   tc(doc, MUTED);
-  doc.text('Premium Outdoor Living  •  Ottawa, ON', M, 65);
+  doc.text('Premium Outdoor Living  •  Ottawa, ON', M, 70);
 
   // Right-side contact block
   doc.setFontSize(9);
   tc(doc, MUTED);
   const right = (s, y) => doc.text(s, W - M, y, { align: 'right' });
-  right(COMPANY.phone, 50);
-  right(COMPANY.email, 62);
-  right(COMPANY.website, 74);
+  right(COMPANY.phone, 32);
+  right(COMPANY.email, 44);
+  right(COMPANY.website, 56);
 
   // ── Title ────────────────────────────────────────────────────────────────
   let y = 110;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(28);
   tc(doc, WHITE);
-  doc.text('Your Custom Deck Blueprint', M, y);
+  doc.text('Your Deck Blueprint', M, y);
 
   y += 22;
   doc.setFont('helvetica', 'normal');
