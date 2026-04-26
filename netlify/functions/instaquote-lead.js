@@ -348,7 +348,10 @@ export const handler = async function (event) {
     client_email: body.email,
     project_address: '',
     pipeline_stage: 'INSTAQUOTE_LEAD',
-    status: 'LEAD',
+    // chk_job_status check constraint requires one of:
+    // SCHEDULED|IN_PROGRESS|COMPLETED|CANCELLED|ON_HOLD|ACTIVE
+    // Use ACTIVE for new leads — pipeline_stage carries the lifecycle.
+    status: 'ACTIVE',
     lifecycle_stage: 'lead',
     lead_source: 'instaquote',
     source_metadata: sourceMetadata,
