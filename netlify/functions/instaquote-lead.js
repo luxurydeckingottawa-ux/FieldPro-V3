@@ -621,15 +621,39 @@ export const handler = async function (event) {
 };
 
 // ─── Email templating + send ────────────────────────────────────────────────
+// Module-level logo cache for inline email attachment.
+// Real PNG with RGBA (gold version, looks great on dark email background).
+// White version is misnamed — it's actually a JPEG, hence prior render
+// failures in jsPDF + email blocking.
+const EMAIL_LOGO_URL = 'https://fieldprov3.netlify.app/assets/logo-luxury-gold.png';
+let _emailLogoCache = null;
+async function getEmailLogoBase64() {
+  if (_emailLogoCache !== null) return _emailLogoCache;
+  try {
+    const res = await fetch(EMAIL_LOGO_URL);
+    if (!res.ok) throw new Error(`logo fetch ${res.status}`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    _emailLogoCache = buf.toString('base64');
+    return _emailLogoCache;
+  } catch (e) {
+    console.warn('Email logo fetch failed:', e.message);
+    _emailLogoCache = '';
+    return '';
+  }
+}
+
 async function sendBlueprintEmail({ apiKey, from, to, pdfBuffer, signedUrl, config, estimates, storefront }) {
   const subject = 'Your deck blueprint is ready';
   const fmt = (n) => '$' + Math.round(n).toLocaleString('en-CA');
   const range = (t) => `${fmt(t.low)} – ${fmt(t.high)}`;
 
-  // Brand logo, served from the public Netlify asset path. Email clients
-  // require absolute URLs — Cloudinary or our own CDN both work, prod
-  // FieldPro path is the lowest-friction option (always available).
-  const LOGO_URL = 'https://fieldprov3.netlify.app/assets/logo-white.png';
+  // Inline the logo via SendGrid CID attachment so Gmail/Outlook show it
+  // automatically (no "Display images below" prompt). Falls back to no-logo
+  // if the fetch fails — header text still reads cleanly without the image.
+  const logoBase64 = await getEmailLogoBase64();
+  const logoBlock = logoBase64
+    ? `<div style="text-align:center;margin:0 0 24px;"><img src="cid:luxury-logo" alt="Luxury Decking" width="220" style="display:block;max-width:75%;height:auto;border:0;outline:none;text-decoration:none;margin:0 auto;" /></div>`
+    : `<div style="text-align:center;margin:0 0 24px;"><h1 style="color:#C5A059;font-size:24px;margin:0;letter-spacing:2px;">LUXURY DECKING</h1><p style="color:#888;font-size:11px;margin:6px 0 0;">Premium Outdoor Living • Ottawa, ON</p></div>`;
 
   const linkBlock = signedUrl
     ? `<p style="margin:16px 0;"><a href="${escapeHtml(signedUrl)}" style="display:inline-block;background:#C5A059;color:#000;padding:12px 20px;text-decoration:none;font-weight:bold;border-radius:4px;">Download your blueprint (PDF)</a></p>`
@@ -642,13 +666,11 @@ async function sendBlueprintEmail({ apiKey, from, to, pdfBuffer, signedUrl, conf
     <tr><td align="center" style="padding:24px;">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#111;border-top:4px solid #C5A059;border-bottom:4px solid #C5A059;">
         <tr><td style="padding:28px 32px;">
-          <div style="text-align:center;margin:0 0 24px;">
-            <img src="${LOGO_URL}" alt="Luxury Decking" width="180" style="display:inline-block;max-width:60%;height:auto;border:0;outline:none;text-decoration:none;" />
-          </div>
+          ${logoBlock}
 
           <h2 style="color:#fff;font-size:24px;margin:0 0 8px;text-align:center;">Your deck blueprint is ready</h2>
           <p style="color:#bbb;font-size:14px;line-height:1.5;margin:0 0 16px;">
-            Thanks for using our InstaQuote calculator. Your full branded blueprint is attached as a PDF and shows pricing for all three of our build tiers based on your specs:
+            Your blueprint is attached here as a PDF and shows pricing for all three of our build tiers based on your specs:
           </p>
 
           <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
@@ -697,6 +719,27 @@ Reply to this email or visit ${storefront} to book a free in-person quote.
 — Luxury Decking
   Premium Outdoor Living, Ottawa ON`;
 
+  const attachments = [
+    {
+      content: pdfBuffer.toString('base64'),
+      filename: 'luxury-decking-blueprint.pdf',
+      type: 'application/pdf',
+      disposition: 'attachment',
+    },
+  ];
+  // Inline logo as a CID attachment when we have it. SendGrid emits it
+  // as a related part so Gmail/Outlook render it automatically without
+  // the "Display images below" gate that blocks external <img src>.
+  if (logoBase64) {
+    attachments.push({
+      content: logoBase64,
+      filename: 'luxury-logo.png',
+      type: 'image/png',
+      disposition: 'inline',
+      content_id: 'luxury-logo',
+    });
+  }
+
   const sgPayload = {
     personalizations: [{ to: [{ email: to }] }],
     from: { email: from.email, name: from.name },
@@ -706,14 +749,7 @@ Reply to this email or visit ${storefront} to book a free in-person quote.
       { type: 'text/plain', value: textBody },
       { type: 'text/html',  value: htmlBody  },
     ],
-    attachments: [
-      {
-        content: pdfBuffer.toString('base64'),
-        filename: 'luxury-decking-blueprint.pdf',
-        type: 'application/pdf',
-        disposition: 'attachment',
-      },
-    ],
+    attachments,
   };
 
   const res = await fetch('https://api.sendgrid.com/v3/mail/send', {

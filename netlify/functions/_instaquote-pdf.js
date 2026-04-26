@@ -92,10 +92,12 @@ function fmtRange(low, high) {
 }
 
 // ─── Logo cache ─────────────────────────────────────────────────────────────
-// Fetch the white logo PNG once per cold start and cache. jsPDF needs a
+// Fetch the GOLD logo PNG once per cold start and cache. jsPDF needs a
 // base64 data URI to embed images. Falls back gracefully to the text
-// wordmark if the fetch ever fails.
-const LOGO_URL = 'https://fieldprov3.netlify.app/assets/logo-white.png';
+// wordmark if the fetch ever fails. (Note: the file at /assets/logo-white.png
+// is misnamed -- it's actually a JPEG. The gold version is a real RGBA PNG
+// that jsPDF accepts cleanly and looks great on the black PDF background.)
+const LOGO_URL = 'https://fieldprov3.netlify.app/assets/logo-luxury-gold.png';
 let _logoCache = null;
 
 async function getLogoDataUri() {
