@@ -27,7 +27,6 @@
 # inline in a single request, so it needs the longer timeout.
 [functions."instaquote-lead"]
   timeout = 30
-  included_files = ["netlify/functions/_pdf/**"]
 
 # Public-facing alias matching the contract in the Cowork brief.
 [[redirects]]

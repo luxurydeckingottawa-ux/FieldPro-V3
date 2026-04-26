@@ -29,7 +29,7 @@
 
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
-const { generateInstaQuotePdf } = require('./_pdf/instaquote-pdf.js');
+const { generateInstaQuotePdf } = require('./_instaquote-pdf.js');
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 const LUXURY_DECKING_ORG_ID = '00000000-0000-0000-0000-000000000001';
