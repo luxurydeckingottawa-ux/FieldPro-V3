@@ -371,10 +371,13 @@ export const handler = async function (event) {
     }
   }
 
-  // 10c. Cross-pipeline merge — if the same email already has an active
-  // record in any non-InstaQuote stage (i.e. they already raised their hand
-  // through the regular Leads or Estimates pipeline), do NOT start a parallel
-  // nurture sequence. Return the existing lead_id so the widget can move on.
+  // 10c. Cross-pipeline duplicate detection — every InstaQuote submission
+  // ALWAYS lands in the InstaQuote pipeline (Jack's explicit ask: he wants
+  // to see every re-engagement signal in one place). If the same email
+  // exists in another pipeline (regular Leads, Estimates, etc.), we
+  // suppress only the multi-touch nurture sequence (per spec) but the
+  // lead row IS still created in INSTAQUOTE_LEAD so the office sees it.
+  let crossPipelineDuplicate = null;
   {
     const emailLc = String(body.email).toLowerCase();
     const INSTAQUOTE_STAGES = [
@@ -384,79 +387,29 @@ export const handler = async function (event) {
       'INSTAQUOTE_WON', 'INSTAQUOTE_CLOSED',
     ];
     const stageList = `(${INSTAQUOTE_STAGES.map(s => `"${s}"`).join(',')})`;
-    const { data: dupes, error: dupErr } = await supabase
+    const { data: dupes } = await supabase
       .from('jobs')
-      .select('id,pipeline_stage')
+      .select('id,pipeline_stage,client_name')
       .ilike('client_email', emailLc)
       .not('pipeline_stage', 'in', stageList)
       .order('created_at', { ascending: false })
       .limit(1);
-
-    if (dupErr) {
-      console.error('instaquote-lead dup-pipeline query error:', dupErr);
-      // Fail open — proceed to insert as a normal InstaQuote lead.
-    } else if (dupes && dupes.length > 0) {
-      const existing = dupes[0];
+    if (dupes && dupes.length > 0) {
+      crossPipelineDuplicate = dupes[0];
+      // Log it so the office can review the re-engagement in bot_log too.
       await supabase.from('instaquote_bot_log').insert({
         org_id: LUXURY_DECKING_ORG_ID,
-        reason: 'cross_pipeline_merge',
+        reason: 'cross_pipeline_duplicate_logged',
         ip_hash,
         user_agent: (body?.meta?.user_agent || '').slice(0, 500),
         origin: origin || refererOrigin || null,
         payload_excerpt: {
           email: emailLc,
-          existing_lead_id: existing.id,
-          existing_stage: existing.pipeline_stage,
+          existing_lead_id: crossPipelineDuplicate.id,
+          existing_stage: crossPipelineDuplicate.pipeline_stage,
+          action: 'still_creating_instaquote_lead_with_returning_tag',
         },
       }).then(() => {}, () => {});
-
-      // The customer asked for their PDF blueprint — that's a transactional
-      // response we must honour even if their email is already in another
-      // pipeline. Per spec, suppress only the NURTURE sequence (Touches
-      // 1-7), NOT the Day 0 PDF email. Generate the PDF and send it now,
-      // then return the existing lead_id without starting nurture.
-      try {
-        const pdfBuf = await generateInstaQuotePdf({
-          email: body.email,
-          config: body.config,
-          estimates: body.estimates,
-        });
-        const pdfFileName = `instaquote-blueprint-${(body.email).replace(/[^a-z0-9]/gi, '_')}-${Date.now()}.pdf`;
-        const { error: upErr } = await supabase.storage
-          .from(STORAGE_BUCKET)
-          .upload(pdfFileName, pdfBuf, {
-            contentType: 'application/pdf',
-            upsert: true,
-          });
-        let signedUrl = '';
-        if (!upErr) {
-          const { data: signed } = await supabase.storage
-            .from(STORAGE_BUCKET)
-            .createSignedUrl(pdfFileName, SIGNED_URL_TTL_SECONDS);
-          signedUrl = signed?.signedUrl || '';
-        }
-        await sendBlueprintEmail({
-          apiKey: SENDGRID_API_KEY,
-          from: { email: FROM_EMAIL, name: FROM_NAME },
-          to: body.email,
-          pdfBuffer: pdfBuf,
-          signedUrl,
-          config: body.config,
-          estimates: body.estimates,
-          storefront: STOREFRONT,
-        });
-      } catch (mergeMailErr) {
-        // Non-fatal: lead exists in the other pipeline regardless. Log + continue.
-        console.error('instaquote-lead merge-path PDF/email error (non-fatal):', mergeMailErr);
-      }
-
-      // 200 success: their existing record stands. The customer got their PDF.
-      // The office sees the merge note in bot_log.
-      return jsonResponse(200, {
-        ok: true,
-        merged: true,
-        lead_id: existing.id,
-      }, origin);
     }
   }
 
@@ -467,10 +420,26 @@ export const handler = async function (event) {
     meta: body.meta,
   };
 
+  // Carry the cross-pipeline duplicate signal into the source_metadata so
+  // the office can see it on the lead detail page. If this is a returning
+  // customer (already in another pipeline), we still create the InstaQuote
+  // lead but suppress the multi-touch nurture campaign per spec — the
+  // existing pipeline already has its own follow-up cadence.
+  const isReturningCustomer = !!crossPipelineDuplicate;
+  if (isReturningCustomer) {
+    sourceMetadata.cross_pipeline_duplicate = {
+      existing_lead_id: crossPipelineDuplicate.id,
+      existing_stage: crossPipelineDuplicate.pipeline_stage,
+      existing_client_name: crossPipelineDuplicate.client_name || null,
+    };
+  }
+
   const insertPayload = {
     org_id: LUXURY_DECKING_ORG_ID,
     job_number: nextJobNumber(),
-    client_name: '',
+    // Pre-fill name from existing pipeline record if we know it (better
+    // visibility for the office than a blank "Unnamed" lead).
+    client_name: isReturningCustomer ? (crossPipelineDuplicate.client_name || '') : '',
     client_email: body.email,
     project_address: '',
     pipeline_stage: 'INSTAQUOTE_LEAD',
@@ -486,17 +455,26 @@ export const handler = async function (event) {
     estimate_amount: body.estimates?.gold?.low || null, // best mid-tier number to seed the pipeline
     next_follow_up_date: new Date().toISOString().slice(0, 10),
     follow_up_status: 'NEW',
-    // Auto-enrol the lead in the InstaQuote nurture campaign. The drip
-    // processor (supabase/functions/process-drip-campaigns or client-side
-    // scheduler) reads this and dispatches Touch 1 on Day 2 per the
-    // send-time rules (Tue/Wed/Thu 9-10 AM ET, no holidays).
-    drip_campaign: {
-      campaignType: 'INSTAQUOTE_NURTURE',
-      startedAt: new Date().toISOString(),
-      currentTouch: 0,
-      completedTouches: [],
-      status: 'active',
-    },
+    // Auto-enrol in the InstaQuote nurture campaign — UNLESS this is a
+    // returning customer who's already getting touches from another
+    // pipeline. Suppress only the nurture sequence; the lead row + PDF
+    // still go through.
+    drip_campaign: isReturningCustomer
+      ? {
+          campaignType: 'INSTAQUOTE_NURTURE',
+          startedAt: new Date().toISOString(),
+          currentTouch: 0,
+          completedTouches: [],
+          status: 'paused',
+          pauseReason: 'returning_customer_in_other_pipeline',
+        }
+      : {
+          campaignType: 'INSTAQUOTE_NURTURE',
+          startedAt: new Date().toISOString(),
+          currentTouch: 0,
+          completedTouches: [],
+          status: 'active',
+        },
   };
 
   const { data: insertedRow, error: insertErr } = await supabase
@@ -531,19 +509,28 @@ export const handler = async function (event) {
   // 'cold_lead' and gets bumped automatically as the lead progresses.
   try {
     const customerId = `customer:email:${body.email.toLowerCase()}`;
+    // Tag returning customers so office can filter for re-engagement
+    // signals (someone they're already pursuing who came back to use
+    // the calculator again).
+    const customerTags = isReturningCustomer
+      ? ['instaquote-lead', 'returning-customer']
+      : ['instaquote-lead'];
+    const customerNotes = isReturningCustomer
+      ? `Auto-created from InstaQuote calculator submission. RETURNING CUSTOMER — already exists in pipeline as ${crossPipelineDuplicate.client_name || 'unnamed lead'} (${crossPipelineDuplicate.pipeline_stage}). Their submission was logged in the InstaQuote pipeline for visibility but the multi-touch nurture sequence was suppressed to avoid double-touching.`
+      : 'Auto-created from InstaQuote calculator submission. Office can fill in name + phone after first contact.';
     await supabase.from('customers').upsert({
       id: customerId,
       org_id: LUXURY_DECKING_ORG_ID,
       first_name: '',
       last_name: '',
-      display_name: body.email,           // until office fills it in
+      display_name: isReturningCustomer ? (crossPipelineDuplicate.client_name || body.email) : body.email,
       email: body.email.toLowerCase(),
       phone: '',
       customer_type: 'homeowner',
       status: 'cold_lead',
       addresses: [],
-      tags: ['instaquote-lead'],
-      notes: 'Auto-created from InstaQuote calculator submission. Office can fill in name + phone after first contact.',
+      tags: customerTags,
+      notes: customerNotes,
       lead_source: 'instaquote',
       lifetime_value: 0,
       total_jobs: 0,
@@ -678,9 +665,31 @@ async function sendBlueprintEmail({ apiKey, from, to, pdfBuffer, signedUrl, conf
   // nicely with Gmail/Outlook default rendering. Black logo on transparent
   // works on any light background. Gold accents preserve premium feel
   // without fighting the email client over background colours.
+  //
+  // The <meta> tags + color-scheme + supported-color-schemes locks Gmail's
+  // dark-mode auto-invert so the email always renders on the cream
+  // background regardless of the recipient's system theme. Without these,
+  // Gmail will invert backgrounds (#f5f1ea -> dark grey) and ruin the
+  // brand presentation for any user who has dark mode enabled.
   const htmlBody = `
 <!doctype html>
-<html><body style="margin:0;padding:0;background:#f5f1ea;font-family:Helvetica,Arial,sans-serif;color:#1a1a1a;">
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
+  <style>
+    :root { color-scheme: light only; supported-color-schemes: light only; }
+    /* Force light theme on Gmail iOS / Apple Mail */
+    [data-ogsc] body { background: #f5f1ea !important; color: #1a1a1a !important; }
+    [data-ogsb] body { background: #f5f1ea !important; color: #1a1a1a !important; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #f5f1ea !important; color: #1a1a1a !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f5f1ea;font-family:Helvetica,Arial,sans-serif;color:#1a1a1a;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f1ea;">
     <tr><td align="center" style="padding:24px;">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-top:4px solid #C5A059;border-bottom:4px solid #C5A059;">
