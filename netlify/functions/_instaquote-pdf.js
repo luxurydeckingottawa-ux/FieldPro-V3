@@ -146,61 +146,70 @@ async function generateInstaQuotePdf({ email, config, estimates, company }) {
   fc(doc, GOLD);
   doc.rect(0, 0, W, 6, 'F');
 
-  // Try to embed the actual logo image. Falls back to the text wordmark
-  // if the fetch fails (cold-start network glitch, asset unavailable, etc).
+  // Render the gold logo CENTRED at the top of the page using its
+  // NATURAL aspect ratio (2053×932 PNG = ~2.20:1). At width 200pt, height
+  // is 200/2.20 ≈ 91pt — gives it room to breathe instead of being
+  // squished. Falls back to a centred text wordmark if fetch/embed fails.
+  const LOGO_W = 200;
+  const LOGO_H = 91;            // natural aspect ratio of logo-luxury-gold.png
+  const LOGO_X = (W - LOGO_W) / 2;
+  const LOGO_Y = 28;            // 22pt clearance below the gold bar
+  const HEADER_BOTTOM = LOGO_Y + LOGO_H;   // ~119pt
+
   const logoDataUri = await getLogoDataUri();
   if (logoDataUri) {
-    // Logo: 140pt wide × ~36pt tall (aspect-preserved). Top-left at
-    // (M, 22) so it sits cleanly under the gold bar.
     try {
-      doc.addImage(logoDataUri, 'PNG', M, 22, 140, 36);
+      doc.addImage(logoDataUri, 'PNG', LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
     } catch (imgErr) {
-      // Per-PDF guard: if jsPDF rejects the image (rare format mismatch),
-      // fall through to the wordmark instead of breaking the entire render.
       console.warn('addImage failed, using wordmark fallback:', imgErr.message);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(22);
+      doc.setFontSize(28);
       tc(doc, GOLD);
-      doc.text(COMPANY.name.toUpperCase(), M, 50);
+      doc.text(COMPANY.name.toUpperCase(), W / 2, 70, { align: 'center' });
     }
   } else {
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
+    doc.setFontSize(28);
     tc(doc, GOLD);
-    doc.text(COMPANY.name.toUpperCase(), M, 50);
+    doc.text(COMPANY.name.toUpperCase(), W / 2, 70, { align: 'center' });
   }
 
+  // Tagline immediately under the logo, centred
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   tc(doc, MUTED);
-  doc.text('Premium Outdoor Living  •  Ottawa, ON', M, 70);
+  doc.text('PREMIUM OUTDOOR LIVING  ·  OTTAWA, ON', W / 2, HEADER_BOTTOM + 14, { align: 'center' });
 
-  // Right-side contact block
+  // Contact strip — centred under the tagline (more visually balanced
+  // than the previous right-side stack which fought the centred logo).
   doc.setFontSize(9);
   tc(doc, MUTED);
-  const right = (s, y) => doc.text(s, W - M, y, { align: 'right' });
-  right(COMPANY.phone, 32);
-  right(COMPANY.email, 44);
-  right(COMPANY.website, 56);
+  doc.text(
+    `${COMPANY.phone}   ·   ${COMPANY.email}   ·   ${COMPANY.website}`,
+    W / 2,
+    HEADER_BOTTOM + 28,
+    { align: 'center' }
+  );
 
-  // ── Title ────────────────────────────────────────────────────────────────
-  let y = 110;
+  // ── Title ─ pushed down to give the header proper breathing room
+  let y = HEADER_BOTTOM + 70;   // ~190pt — well clear of the contact strip
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(28);
+  doc.setFontSize(30);
   tc(doc, WHITE);
-  doc.text('Your Deck Blueprint', M, y);
+  doc.text('Your Deck Blueprint', W / 2, y, { align: 'center' });
 
-  y += 22;
+  y += 20;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   tc(doc, MUTED);
   doc.text(
     'A personalized estimate built from the dimensions you provided on luxurydecking.ca.',
-    M, y,
+    W / 2, y,
+    { align: 'center' },
   );
 
   // ── Project summary card ────────────────────────────────────────────────
-  y += 22;
+  y += 28;
   fc(doc, NEAR);
   doc.roundedRect(M, y, W - 2 * M, 92, 6, 6, 'F');
 

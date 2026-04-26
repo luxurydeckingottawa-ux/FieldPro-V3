@@ -622,10 +622,17 @@ export const handler = async function (event) {
 
 // ─── Email templating + send ────────────────────────────────────────────────
 // Module-level logo cache for inline email attachment.
-// Real PNG with RGBA (gold version, looks great on dark email background).
-// White version is misnamed — it's actually a JPEG, hence prior render
-// failures in jsPDF + email blocking.
-const EMAIL_LOGO_URL = 'https://fieldprov3.netlify.app/assets/logo-luxury-gold.png';
+//
+// We use the BLACK logo with transparent background for emails. Email
+// clients (especially Gmail) often render emails on a beige/cream/white
+// background regardless of the HTML's background-color directive — Gmail
+// even forces light backgrounds in some preview panes. Black-on-clear
+// works on every background, and Gmail's dark-mode auto-invert handles
+// the dark-mode case automatically.
+//
+// (The PDF uses the gold version because the PDF background is locked
+// to black — see _instaquote-pdf.js.)
+const EMAIL_LOGO_URL = 'https://fieldprov3.netlify.app/assets/logo-luxury-black.png';
 let _emailLogoCache = null;
 async function getEmailLogoBase64() {
   if (_emailLogoCache !== null) return _emailLogoCache;
@@ -653,45 +660,49 @@ async function sendBlueprintEmail({ apiKey, from, to, pdfBuffer, signedUrl, conf
   const logoBase64 = await getEmailLogoBase64();
   const logoBlock = logoBase64
     ? `<div style="text-align:center;margin:0 0 24px;"><img src="cid:luxury-logo" alt="Luxury Decking" width="220" style="display:block;max-width:75%;height:auto;border:0;outline:none;text-decoration:none;margin:0 auto;" /></div>`
-    : `<div style="text-align:center;margin:0 0 24px;"><h1 style="color:#C5A059;font-size:24px;margin:0;letter-spacing:2px;">LUXURY DECKING</h1><p style="color:#888;font-size:11px;margin:6px 0 0;">Premium Outdoor Living • Ottawa, ON</p></div>`;
+    : `<div style="text-align:center;margin:0 0 24px;"><h1 style="color:#1a1a1a;font-size:26px;margin:0;letter-spacing:3px;font-weight:bold;">LUXURY DECKING</h1><p style="color:#888;font-size:11px;margin:8px 0 0;letter-spacing:1px;">PREMIUM OUTDOOR LIVING · OTTAWA, ON</p></div>`;
 
   const linkBlock = signedUrl
     ? `<p style="margin:16px 0;"><a href="${escapeHtml(signedUrl)}" style="display:inline-block;background:#C5A059;color:#000;padding:12px 20px;text-decoration:none;font-weight:bold;border-radius:4px;">Download your blueprint (PDF)</a></p>`
     : '';
 
+  // Light cream/beige theme to match the Luxury Decking brand and play
+  // nicely with Gmail/Outlook default rendering. Black logo on transparent
+  // works on any light background. Gold accents preserve premium feel
+  // without fighting the email client over background colours.
   const htmlBody = `
 <!doctype html>
-<html><body style="margin:0;padding:0;background:#0a0a0a;font-family:Helvetica,Arial,sans-serif;color:#eee;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;">
+<html><body style="margin:0;padding:0;background:#f5f1ea;font-family:Helvetica,Arial,sans-serif;color:#1a1a1a;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f1ea;">
     <tr><td align="center" style="padding:24px;">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#111;border-top:4px solid #C5A059;border-bottom:4px solid #C5A059;">
-        <tr><td style="padding:28px 32px;">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-top:4px solid #C5A059;border-bottom:4px solid #C5A059;">
+        <tr><td style="padding:32px 36px;">
           ${logoBlock}
 
-          <h2 style="color:#fff;font-size:24px;margin:0 0 8px;text-align:center;">Your deck blueprint is ready</h2>
-          <p style="color:#bbb;font-size:14px;line-height:1.5;margin:0 0 16px;">
+          <h2 style="color:#1a1a1a;font-size:24px;margin:0 0 12px;text-align:center;font-weight:bold;">Your deck blueprint is ready</h2>
+          <p style="color:#444;font-size:14px;line-height:1.6;margin:0 0 20px;">
             Your blueprint is attached here as a PDF and shows pricing for all three of our build tiers based on your specs:
           </p>
 
           <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
-            <tr><td style="color:#888;font-size:12px;padding:2px 12px 2px 0;">Footprint</td>
-                <td style="color:#fff;font-size:13px;font-weight:bold;">${config.width_ft} ft × ${config.length_ft} ft (${config.sqft} sq ft)</td></tr>
-            <tr><td style="color:#888;font-size:12px;padding:2px 12px 2px 0;">Silver</td>
-                <td style="color:#fff;font-size:13px;">${escapeHtml(range(estimates.silver))}</td></tr>
-            <tr><td style="color:#888;font-size:12px;padding:2px 12px 2px 0;">Gold</td>
+            <tr><td style="color:#888;font-size:12px;padding:3px 14px 3px 0;">Footprint</td>
+                <td style="color:#1a1a1a;font-size:13px;font-weight:bold;">${config.width_ft} ft × ${config.length_ft} ft (${config.sqft} sq ft)</td></tr>
+            <tr><td style="color:#888;font-size:12px;padding:3px 14px 3px 0;">Silver</td>
+                <td style="color:#1a1a1a;font-size:13px;">${escapeHtml(range(estimates.silver))}</td></tr>
+            <tr><td style="color:#888;font-size:12px;padding:3px 14px 3px 0;">Gold</td>
                 <td style="color:#C5A059;font-size:13px;font-weight:bold;">${escapeHtml(range(estimates.gold))} &nbsp; <span style="color:#888;font-weight:normal;">(most chosen)</span></td></tr>
-            <tr><td style="color:#888;font-size:12px;padding:2px 12px 2px 0;">Platinum</td>
-                <td style="color:#fff;font-size:13px;">${escapeHtml(range(estimates.platinum))}</td></tr>
+            <tr><td style="color:#888;font-size:12px;padding:3px 14px 3px 0;">Platinum</td>
+                <td style="color:#1a1a1a;font-size:13px;">${escapeHtml(range(estimates.platinum))}</td></tr>
           </table>
 
           ${linkBlock}
 
-          <p style="color:#bbb;font-size:14px;line-height:1.5;margin:24px 0 8px;"><strong style="color:#C5A059;">What happens next?</strong></p>
-          <p style="color:#bbb;font-size:14px;line-height:1.5;margin:0 0 16px;">
-            Reply to this email or visit <a href="${escapeHtml(storefront)}" style="color:#C5A059;">luxurydecking.ca</a> to book a free in-person quote. We'll measure, sketch, and confirm your scope, then lock in a fixed package price.
+          <p style="color:#444;font-size:14px;line-height:1.6;margin:24px 0 8px;"><strong style="color:#1a1a1a;">What happens next?</strong></p>
+          <p style="color:#444;font-size:14px;line-height:1.6;margin:0 0 16px;">
+            Reply to this email or visit <a href="${escapeHtml(storefront)}" style="color:#C5A059;font-weight:bold;">luxurydecking.ca</a> to book a free in-person quote. We'll measure, sketch, and confirm your scope, then lock in a fixed package price.
           </p>
 
-          <p style="color:#666;font-size:11px;line-height:1.5;margin:24px 0 0;border-top:1px solid #222;padding-top:16px;">
+          <p style="color:#888;font-size:11px;line-height:1.5;margin:24px 0 0;border-top:1px solid #e5dfd2;padding-top:16px;">
             Estimate ranges are based on the dimensions you supplied and our tier feature sets. Final pricing is confirmed after an in-person site visit and may vary based on site conditions, permit requirements, and material selections.
           </p>
         </td></tr>
