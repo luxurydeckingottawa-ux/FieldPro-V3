@@ -334,6 +334,83 @@ export const handler = async function (event) {
     }
   }
 
+  // 10b. Suppression list — never email an unsubscribed / hard-bounced address.
+  // Service-role read; RLS on email_suppression denies SELECT to anon by design.
+  {
+    const emailLc = String(body.email).toLowerCase();
+    const { data: suppressed, error: supErr } = await supabase
+      .from('email_suppression')
+      .select('email,reason')
+      .eq('email', emailLc)
+      .maybeSingle();
+    if (supErr) {
+      console.error('instaquote-lead suppression query error:', supErr);
+      // Fail open: better to let the lead through than silently drop everything
+      // if the table is somehow misconfigured. Logged for review.
+    } else if (suppressed) {
+      await supabase.from('instaquote_bot_log').insert({
+        org_id: LUXURY_DECKING_ORG_ID,
+        reason: 'suppressed_email',
+        ip_hash,
+        user_agent: (body?.meta?.user_agent || '').slice(0, 500),
+        origin: origin || refererOrigin || null,
+        payload_excerpt: { email: emailLc, suppression_reason: suppressed.reason },
+      }).then(() => {}, () => {});
+      // 202 with success-shape so the widget shows the user "thank you" and
+      // doesn't trigger retries. We deliberately do NOT generate a PDF or
+      // send mail to a suppressed address.
+      return jsonResponse(202, { ok: true, suppressed: true }, origin);
+    }
+  }
+
+  // 10c. Cross-pipeline merge — if the same email already has an active
+  // record in any non-InstaQuote stage (i.e. they already raised their hand
+  // through the regular Leads or Estimates pipeline), do NOT start a parallel
+  // nurture sequence. Return the existing lead_id so the widget can move on.
+  {
+    const emailLc = String(body.email).toLowerCase();
+    const INSTAQUOTE_STAGES = [
+      'INSTAQUOTE_LEAD', 'INSTAQUOTE_TOUCH_1', 'INSTAQUOTE_TOUCH_2',
+      'INSTAQUOTE_TOUCH_3', 'INSTAQUOTE_TOUCH_4', 'INSTAQUOTE_TOUCH_5',
+      'INSTAQUOTE_TOUCH_6', 'INSTAQUOTE_TOUCH_7', 'INSTAQUOTE_LONG_TERM',
+      'INSTAQUOTE_WON', 'INSTAQUOTE_CLOSED',
+    ];
+    const stageList = `(${INSTAQUOTE_STAGES.map(s => `"${s}"`).join(',')})`;
+    const { data: dupes, error: dupErr } = await supabase
+      .from('jobs')
+      .select('id,pipeline_stage')
+      .ilike('client_email', emailLc)
+      .not('pipeline_stage', 'in', stageList)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (dupErr) {
+      console.error('instaquote-lead dup-pipeline query error:', dupErr);
+      // Fail open — proceed to insert as a normal InstaQuote lead.
+    } else if (dupes && dupes.length > 0) {
+      const existing = dupes[0];
+      await supabase.from('instaquote_bot_log').insert({
+        org_id: LUXURY_DECKING_ORG_ID,
+        reason: 'cross_pipeline_merge',
+        ip_hash,
+        user_agent: (body?.meta?.user_agent || '').slice(0, 500),
+        origin: origin || refererOrigin || null,
+        payload_excerpt: {
+          email: emailLc,
+          existing_lead_id: existing.id,
+          existing_stage: existing.pipeline_stage,
+        },
+      }).then(() => {}, () => {});
+      // 200 success: their existing record stands. The widget shouldn't see
+      // any visible difference. The office sees the merge note in bot_log.
+      return jsonResponse(200, {
+        ok: true,
+        merged: true,
+        lead_id: existing.id,
+      }, origin);
+    }
+  }
+
   // 11. Insert lead row
   const sourceMetadata = {
     config: body.config,
@@ -397,6 +474,37 @@ export const handler = async function (event) {
   }
 
   const leadId = insertedRow.id;
+
+  // 11.5 Upsert into customers table.
+  // Every InstaQuote lead becomes a customer record. Dedupe by lowercase
+  // email (Supabase upsert with onConflict). Tag with 'instaquote-lead'
+  // so office can filter the Customer Hub by source. Status starts as
+  // 'cold_lead' and gets bumped automatically as the lead progresses.
+  try {
+    const customerId = `customer:email:${body.email.toLowerCase()}`;
+    await supabase.from('customers').upsert({
+      id: customerId,
+      org_id: LUXURY_DECKING_ORG_ID,
+      first_name: '',
+      last_name: '',
+      display_name: body.email,           // until office fills it in
+      email: body.email.toLowerCase(),
+      phone: '',
+      customer_type: 'homeowner',
+      status: 'cold_lead',
+      addresses: [],
+      tags: ['instaquote-lead'],
+      notes: 'Auto-created from InstaQuote calculator submission. Office can fill in name + phone after first contact.',
+      lead_source: 'instaquote',
+      lifetime_value: 0,
+      total_jobs: 0,
+      do_not_service: false,
+      source: 'instaquote_widget',
+    }, { onConflict: 'id', ignoreDuplicates: false });
+  } catch (custErr) {
+    // Non-fatal — lead is already created. Log and continue.
+    console.warn('instaquote-lead customer upsert non-fatal error:', custErr);
+  }
 
   // 12. Generate PDF
   let pdfBuffer;

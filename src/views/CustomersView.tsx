@@ -151,8 +151,16 @@ const CustomerCard: React.FC<{
   isExpanded: boolean;
   onToggle: () => void;
 }> = ({ customer, isExpanded, onToggle }) => {
+  // Defensive normalisation — Supabase rows can hydrate with missing/null
+  // fields if the row was inserted via a path that didn't fill every
+  // column. Guard EVERY field access this card touches so a single bad
+  // row can never blank-screen the entire Customer Hub.
   const status = STATUS_CONFIG[customer.status] ?? STATUS_CONFIG.cold_lead;
-  const primaryAddress = customer.addresses[0];
+  const addresses = Array.isArray(customer.addresses) ? customer.addresses : [];
+  const tags = Array.isArray(customer.tags) ? customer.tags : [];
+  const firstName = customer.firstName || '';
+  const displayName = customer.displayName || customer.email || customer.phone || 'Unknown';
+  const avatarChar = (firstName[0] || displayName[0] || '?').toUpperCase();
 
   return (
     <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-2xl overflow-hidden transition-all">
@@ -163,14 +171,14 @@ const CustomerCard: React.FC<{
         {/* Avatar */}
         <div className="w-10 h-10 rounded-xl bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 flex items-center justify-center shrink-0">
           <span className="text-sm font-black text-[var(--brand-gold)]">
-            {(customer.firstName[0] ?? customer.displayName[0] ?? '?').toUpperCase()}
+            {avatarChar}
           </span>
         </div>
 
         {/* Main info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-bold text-[var(--text-primary)]">{customer.displayName}</span>
+            <span className="text-sm font-bold text-[var(--text-primary)]">{displayName}</span>
             {customer.company && (
               <span className="text-xs text-[var(--text-tertiary)] flex items-center gap-1">
                 <Building2 size={10} /> {customer.company}
@@ -224,13 +232,13 @@ const CustomerCard: React.FC<{
       {isExpanded && (
         <div className="border-t border-[var(--border-color)] px-5 py-4 space-y-4 bg-[var(--bg-secondary)]/30">
           {/* Addresses */}
-          {customer.addresses.length > 0 && (
+          {addresses.length > 0 && (
             <div>
               <p className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)] mb-2 flex items-center gap-1.5">
                 <MapPin size={9} /> Addresses
               </p>
               <div className="space-y-1.5">
-                {customer.addresses.map((addr, i) => (
+                {addresses.map((addr, i) => (
                   <div key={i} className="text-xs text-[var(--text-secondary)]">
                     {addr.streetLine1}
                     {addr.streetLine2 ? `, ${addr.streetLine2}` : ''}
@@ -244,13 +252,13 @@ const CustomerCard: React.FC<{
           )}
 
           {/* Tags */}
-          {customer.tags.length > 0 && (
+          {tags.length > 0 && (
             <div>
               <p className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)] mb-2 flex items-center gap-1.5">
                 <Tag size={9} /> Tags
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {customer.tags.map((tag, i) => (
+                {tags.map((tag, i) => (
                   <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
                     {tag}
                   </span>
@@ -286,6 +294,11 @@ const CustomersView: React.FC<CustomersViewProps> = ({ customers, jobs, onUpdate
   const [filter, setFilter] = useState<FilterTab>('all');
   const [sort, setSort] = useState<SortKey>('name');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Tag filter — null = all tags. Click a tag chip to drill in. Click again
+  // to clear. Lets the office filter the hub by lifecycle (instaquote-lead,
+  // cold-lead, estimate-sent, job-in-progress, job-completed) without
+  // having to switch off the existing status tabs.
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
 
   // Merge persisted customers with customers synthesized from the live jobs
   // pipeline. Persisted records win on duplicate phone/email.
@@ -294,31 +307,49 @@ const CustomersView: React.FC<CustomersViewProps> = ({ customers, jobs, onUpdate
     [customers, jobs],
   );
 
+  // Compute tag counts across ALL customers (not just filtered) so the
+  // chip counts stay stable as the user filters.
+  const tagCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const c of mergedCustomers) {
+      const tags = Array.isArray(c.tags) ? c.tags : [];
+      for (const t of tags) counts.set(t, (counts.get(t) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1]);  // most-used first
+  }, [mergedCustomers]);
+
   const filtered = useMemo(() => {
     let result = [...mergedCustomers];
 
-    // Search
+    // Search — defensive: every field falls back to '' so a row with
+    // missing display_name / phone / email never crashes the filter.
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(c =>
-        c.displayName.toLowerCase().includes(q) ||
-        c.firstName.toLowerCase().includes(q) ||
-        c.lastName.toLowerCase().includes(q) ||
-        c.phone.includes(q) ||
-        c.email.toLowerCase().includes(q) ||
-        (c.company ?? '').toLowerCase().includes(q)
+        (c.displayName || '').toLowerCase().includes(q) ||
+        (c.firstName || '').toLowerCase().includes(q) ||
+        (c.lastName || '').toLowerCase().includes(q) ||
+        (c.phone || '').includes(q) ||
+        (c.email || '').toLowerCase().includes(q) ||
+        (c.company || '').toLowerCase().includes(q)
       );
     }
 
-    // Filter tab
+    // Status filter tab
     if (filter !== 'all') {
       result = result.filter(c => c.status === filter);
     }
 
-    // Sort
+    // Tag filter chip
+    if (tagFilter) {
+      result = result.filter(c => Array.isArray(c.tags) && c.tags.includes(tagFilter));
+    }
+
+    // Sort — defensive on null fields
     result.sort((a, b) => {
-      if (sort === 'name') return a.displayName.localeCompare(b.displayName);
-      if (sort === 'lifetimeValue') return b.lifetimeValue - a.lifetimeValue;
+      if (sort === 'name') return (a.displayName || '').localeCompare(b.displayName || '');
+      if (sort === 'lifetimeValue') return (b.lifetimeValue || 0) - (a.lifetimeValue || 0);
       if (sort === 'lastServiceDate') {
         if (!a.lastServiceDate) return 1;
         if (!b.lastServiceDate) return -1;
@@ -328,7 +359,7 @@ const CustomersView: React.FC<CustomersViewProps> = ({ customers, jobs, onUpdate
     });
 
     return result;
-  }, [mergedCustomers, search, filter, sort]);
+  }, [mergedCustomers, search, filter, sort, tagFilter]);
 
   const stats = useMemo(() => ({
     total: mergedCustomers.length,
@@ -413,7 +444,7 @@ const CustomersView: React.FC<CustomersViewProps> = ({ customers, jobs, onUpdate
         </select>
       </div>
 
-      {/* Filter tabs */}
+      {/* Filter tabs (status) */}
       <div className="flex gap-1.5 overflow-x-auto pb-1">
         {tabs.map(({ key, label, count }) => (
           <button
@@ -435,9 +466,49 @@ const CustomersView: React.FC<CustomersViewProps> = ({ customers, jobs, onUpdate
         ))}
       </div>
 
+      {/* Tag chips — drill down further by lifecycle tag (instaquote-lead,
+          cold-lead, estimate-sent, job-in-progress, job-completed, etc.).
+          Click a chip to filter, click again to clear. Stacks with the
+          status tabs above (AND filter). */}
+      {tagCounts.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap pb-1">
+          <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)] flex items-center gap-1">
+            <Tag size={9} /> Tags:
+          </span>
+          {tagCounts.map(([tag, count]) => {
+            const active = tagFilter === tag;
+            return (
+              <button
+                key={tag}
+                onClick={() => setTagFilter(active ? null : tag)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
+                  active
+                    ? 'bg-[var(--brand-gold)] text-black border border-[var(--brand-gold)]'
+                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-color)] hover:text-[var(--text-primary)] hover:border-[var(--brand-gold)]/40'
+                }`}
+              >
+                {tag}
+                <span className={`text-[8px] font-black px-1 rounded ${
+                  active ? 'bg-black/20' : 'bg-[var(--bg-primary)] text-[var(--text-tertiary)]'
+                }`}>{count}</span>
+              </button>
+            );
+          })}
+          {tagFilter && (
+            <button
+              onClick={() => setTagFilter(null)}
+              className="text-[10px] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] underline ml-1"
+            >
+              clear
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Results count */}
       <p className="text-xs text-[var(--text-tertiary)]">
         Showing {filtered.length.toLocaleString()} of {mergedCustomers.length.toLocaleString()} customers
+        {tagFilter && <span className="ml-2 text-[var(--brand-gold)]">· tag: {tagFilter}</span>}
       </p>
 
       {/* Customer list */}

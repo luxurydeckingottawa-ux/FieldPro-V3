@@ -846,6 +846,52 @@ const App: React.FC = () => {
     setJobs(prev => [jobWithCampaign, ...prev]);
     dataService.createJob(jobWithCampaign).catch(err => console.error('Failed to persist new job:', err));
 
+    // Auto-create / upsert a Customer record for every new job/lead.
+    // Dedupe by lowercase email (preferred) or normalised phone digits.
+    // The customer's tag and status are derived from the pipeline stage so
+    // the office can filter the Customer Hub by lifecycle (cold-lead /
+    // estimate-sent / job-in-progress / job-completed / instaquote-lead).
+    const emailKey = (newJob.clientEmail || '').toLowerCase().trim();
+    const phoneDigits = (newJob.clientPhone || '').replace(/\D/g, '');
+    const customerId = emailKey
+      ? `customer:email:${emailKey}`
+      : phoneDigits
+        ? `customer:phone:${phoneDigits}`
+        : `customer:job:${newJob.id}`;
+    const stage = newJob.pipelineStage;
+    const tag =
+      stage?.startsWith('INSTAQUOTE_') ? 'instaquote-lead' :
+      stage === PipelineStage.JOB_SOLD || stage === PipelineStage.ADMIN_SETUP ||
+      stage === PipelineStage.PRE_PRODUCTION || stage === PipelineStage.READY_TO_START ||
+      stage === PipelineStage.IN_FIELD || stage === PipelineStage.COMPLETION ? 'job-in-progress' :
+      stage === PipelineStage.PAID_CLOSED ? 'job-completed' :
+      stage === PipelineStage.EST_SENT || stage === PipelineStage.EST_APPROVED ? 'estimate-sent' :
+      'cold-lead';
+    const status =
+      tag === 'job-completed' || tag === 'job-in-progress' ? 'active_client' :
+      tag === 'estimate-sent' ? 'quoted_not_converted' :
+      'cold_lead';
+    const nameParts = (newJob.clientName || '').trim().split(/\s+/);
+    dataService.upsertCustomer({
+      id: customerId,
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      displayName: newJob.clientName || newJob.clientEmail || 'Unknown',
+      email: emailKey,
+      phone: newJob.clientPhone || '',
+      customerType: 'homeowner',
+      addresses: newJob.projectAddress ? [{
+        streetLine1: newJob.projectAddress, city: '', province: 'ON', postalCode: '', isBilling: true,
+      }] : [],
+      tags: [tag],
+      notes: '',
+      leadSource: newJob.leadSource,
+      lifetimeValue: 0,
+      status,
+      doNotService: false,
+      createdAt: now,
+    }).catch(err => console.warn('Customer auto-upsert failed (non-fatal):', err));
+
     // Auto-fire Touch 1: instant SMS acknowledgement for new leads.
     //
     // The campaign was created above with T1 pre-marked as completed. This

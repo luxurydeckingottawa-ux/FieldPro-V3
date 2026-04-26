@@ -1215,6 +1215,52 @@ export const dataService = {
     return customer;
   },
 
+  /**
+   * Insert-or-merge a customer record by stable id (e.g. `customer:email:foo@bar`).
+   * Used by every job/lead creation path so the Customer Hub stays in sync
+   * automatically. On conflict, merges tags (union, no dups) and bumps
+   * total_jobs by 1, preserves other existing fields.
+   */
+  async upsertCustomer(customer: Partial<Customer> & { id: string }): Promise<void> {
+    if (!isSupabaseConfigured()) {
+      // localStorage fallback — same as create
+      const existing = await this.loadCustomers();
+      const idx = existing.findIndex(c => c.id === customer.id);
+      if (idx >= 0) {
+        const merged = {
+          ...existing[idx],
+          ...customer,
+          tags: Array.from(new Set([...(existing[idx].tags || []), ...(customer.tags || [])])),
+        };
+        existing[idx] = merged as Customer;
+      } else {
+        existing.unshift(customer as Customer);
+      }
+      safeSetItem('fieldpro_customers_v1', JSON.stringify(existing));
+      return;
+    }
+
+    // Supabase path: SELECT existing → merge tags → upsert
+    const { data: existing } = await supabase!
+      .from('customers')
+      .select('tags, total_jobs, lifetime_value')
+      .eq('id', customer.id)
+      .maybeSingle();
+
+    const mergedTags = Array.from(new Set([
+      ...((existing?.tags as string[]) || []),
+      ...(customer.tags || []),
+    ]));
+    const totalJobs = ((existing?.total_jobs as number) || 0) + 1;
+
+    const row = customerToRow({ ...customer, tags: mergedTags } as Customer);
+    row.total_jobs = totalJobs;
+    if (!existing) row.created_at = customer.createdAt || new Date().toISOString();
+
+    const { error } = await supabase!.from('customers').upsert(row, { onConflict: 'id' });
+    if (error) console.error('upsertCustomer failed:', error);
+  },
+
   async updateCustomer(customerId: string, updates: Partial<Customer>): Promise<void> {
     if (isSupabaseConfigured()) {
       const row: Record<string, unknown> = {};
