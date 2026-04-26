@@ -27,9 +27,13 @@
  *   STOREFRONT_BASE_URL         — defaults to 'https://luxurydecking.ca'
  */
 
-const crypto = require('crypto');
-const { createClient } = require('@supabase/supabase-js');
-const { generateInstaQuotePdf } = require('./_instaquote-pdf.js');
+// Project package.json sets `"type": "module"` so this file loads as ESM.
+// Must use `import` + `export` — CommonJS `require`/`exports.handler`
+// is silently ignored under ESM and Netlify reports "handler is
+// undefined or not exported" at runtime.
+import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
+import { generateInstaQuotePdf } from './_instaquote-pdf.js';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 const LUXURY_DECKING_ORG_ID = '00000000-0000-0000-0000-000000000001';
@@ -194,7 +198,7 @@ function nextJobNumber() {
 }
 
 // ─── Main handler ───────────────────────────────────────────────────────────
-exports.handler = async function (event) {
+export const handler = async function (event) {
   const origin = event.headers.origin || event.headers.Origin || '';
 
   // 1. Preflight

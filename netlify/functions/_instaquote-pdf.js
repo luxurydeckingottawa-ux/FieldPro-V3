@@ -17,11 +17,12 @@
  * lists as the on-page calculator so the email matches the website exactly.
  */
 
-// jsPDF default entry references DOM globals (window/document) and crashes
-// the Netlify Node runtime at module load time — symptom is the parent
-// function's exports.handler appearing "undefined". Use the Node-specific
-// build that ships in the same package — same API, no DOM deps.
-const { jsPDF } = require('jspdf/dist/jspdf.node.min.js');
+// Project package.json sets `"type": "module"` so this file loads as ESM.
+// jsPDF's Node entry is CommonJS — use default-import + destructure for
+// interop. The Node build avoids the DOM globals (window/document) that
+// the browser entry references at load time.
+import jspdfPkg from 'jspdf/dist/jspdf.node.min.js';
+const { jsPDF } = jspdfPkg;
 
 // ─── Brand palette (RGB tuples for jsPDF) ───────────────────────────────────
 const GOLD   = [197, 160,  89];  // #C5A059
@@ -309,4 +310,4 @@ function labelRailing(mat) {
   }
 }
 
-module.exports = { generateInstaQuotePdf };
+export { generateInstaQuotePdf };
