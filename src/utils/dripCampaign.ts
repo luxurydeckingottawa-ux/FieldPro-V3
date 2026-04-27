@@ -82,6 +82,22 @@ function utm(url: string, touchNumber: number): string {
   return `${url}${sep}utm_source=instaquote_nurture&utm_medium=email&utm_campaign=instaquote_drip&utm_content=touch_${touchNumber}`;
 }
 
+/**
+ * Render a clean inline hyperlink for email body templates.
+ * The visible text ("View your blueprint") replaces the long signed
+ * Storage URL or the UTM-laden tracking URL — keeps emails looking
+ * professional and avoids broadcasting "you're in our nurture campaign"
+ * to the recipient via visible utm_source params.
+ *
+ * Brand: gold accent, bold, underlined (per Touch 1 brand check). No
+ * button styling — the master spec is explicit: "No buttons. No banner
+ * images. Plain-text feel with selective hyperlinks keeps the email
+ * premium and avoids the promo-tab filter."
+ */
+function emailLink(url: string, label: string): string {
+  return `<a href="${url}" style="color:#C5A059;text-decoration:underline;font-weight:bold">${label}</a>`;
+}
+
 function portalLink(job: Job): string {
   const token = job.customerPortalToken || '';
   return `${window.location.origin}?portal=${token}`;
@@ -210,8 +226,8 @@ export function getInstaQuoteTouches(job: Job): CampaignTouch[] {
       emailTemplate:
         `Hi ${name},\n\n` +
         `A quick note to make sure your deck blueprint landed in your inbox the other day. Sometimes these get caught in spam or buried under everything else.\n\n` +
-        `Here is the link in case you want to view it again: ${pdfUrl}\n\n` +
-        `While you have it open, one thing worth knowing. The numbers in your blueprint are based on the dimensions you entered. The actual final price can move up or down once we account for things like deck height, foundation type, and stair count. Our pricing page breaks all of that down by size and tier: ${pricingT1}\n\n` +
+        `${emailLink(pdfUrl, 'View your blueprint')} again any time.\n\n` +
+        `While you have it open, one thing worth knowing. The numbers in your blueprint are based on the dimensions you entered. The actual final price can move up or down once we account for things like deck height, foundation type, and stair count. ${emailLink(pricingT1, 'See our pricing page')} for a full breakdown by size and tier.\n\n` +
         `No rush. Take your time looking it over.\n\n` +
         `Angela\n` +
         `Luxury Decking`,
@@ -228,7 +244,7 @@ export function getInstaQuoteTouches(job: Job): CampaignTouch[] {
         `Hi ${name},\n\n` +
         `One of the most common questions we get from homeowners researching a new deck is which material to choose. The right answer depends on your priorities. Some homeowners want the lowest upfront cost. Others want the lowest maintenance. A few care most about appearance and longevity.\n\n` +
         `We put together a guide that walks through the differences between pressure-treated wood, composite, and PVC, including where each one makes sense and where it does not.\n\n` +
-        `You can read it here: ${materialsT2}\n\n` +
+        `${emailLink(materialsT2, 'Read the materials guide')}.\n\n` +
         `If you have questions about which material fits your project, just reply to this email.\n\n` +
         `Angela\n` +
         `Luxury Decking`,
@@ -249,7 +265,7 @@ export function getInstaQuoteTouches(job: Job): CampaignTouch[] {
         `Gold. Composite decking, aluminum railings, upgraded fasteners and trim.\n` +
         `Platinum. Premium composite or PVC, glass or aluminum railings, full hidden fastener system.\n` +
         `Diamond. Top-tier PVC, custom design elements, fully integrated lighting and finishing.\n\n` +
-        `The full breakdown by deck size lives on our pricing page: ${pricingT3}\n\n` +
+        `${emailLink(pricingT3, 'See the full breakdown by deck size')}.\n\n` +
         `If you would prefer to see and feel actual material samples, our mobile showroom comes to your home. Walk the space, look at samples in real light, ask questions in person.\n\n` +
         `Angela\n` +
         `Luxury Decking`,
@@ -267,8 +283,8 @@ export function getInstaQuoteTouches(job: Job): CampaignTouch[] {
         `Some homeowners hesitate to book a consultation because they assume it means a sales pitch and a hard close. Ours does not work that way.\n\n` +
         `Our consultations are educational. We come to your home, walk your space, take measurements, talk through materials, and answer your questions. You leave with a detailed written quote and clear next steps. There is no obligation, no pressure, and no commitment to move forward.\n\n` +
         `Every deck we build this season also includes a complimentary LED deck lighting kit, valued at $750. It is included automatically with any project signed for the current build season.\n\n` +
-        `If you would like to read what to expect at a first consultation in more detail: ${consultationT4}\n\n` +
-        `Or if you are ready to book, you can do that here: ${bookingT4}\n\n` +
+        `${emailLink(consultationT4, 'Read what to expect at a first consultation')}.\n\n` +
+        `Or if you are ready, ${emailLink(bookingT4, 'book your free consultation here')}.\n\n` +
         `Angela\n` +
         `Luxury Decking`,
     },
@@ -282,8 +298,8 @@ export function getInstaQuoteTouches(job: Job): CampaignTouch[] {
       smsTemplate: '',
       emailTemplate:
         `Hi ${name},\n\n` +
-        `If it helps to see what your project could actually look like, here are some recent Ottawa builds across different sizes, materials, and tiers:\n\n` +
-        `${portfolioT5}\n\n` +
+        `If it helps to see what your project could actually look like, here are some recent Ottawa builds across different sizes, materials, and tiers.\n\n` +
+        `${emailLink(portfolioT5, 'Browse our recent Ottawa builds')}.\n\n` +
         `Each project on the page shows the size, materials, and tier so you can compare directly to the blueprint we sent you.\n\n` +
         `If you see something close to what you have in mind, reply to this email and let us know. We can talk you through it.\n\n` +
         `Angela\n` +
@@ -301,7 +317,7 @@ export function getInstaQuoteTouches(job: Job): CampaignTouch[] {
         `Hi ${name},\n\n` +
         `A quick note on timing. Our build season in Ottawa runs roughly May through October, weather permitting. The earlier in the year a project is booked, the more flexibility there is on the start date.\n\n` +
         `If your project is moving forward this season, the next step is a free consultation at your home. We bring the mobile showroom, walk your space, and prepare a detailed written quote on the spot.\n\n` +
-        `You can book here: ${bookingT6}\n\n` +
+        `${emailLink(bookingT6, 'Book your consultation here')}.\n\n` +
         `If the timing is not right this year, no problem at all. Just reply and let us know and we will keep your file on hand for next season.\n\n` +
         `Angela\n` +
         `Luxury Decking`,
@@ -317,7 +333,7 @@ export function getInstaQuoteTouches(job: Job): CampaignTouch[] {
       emailTemplate:
         `Hi ${name},\n\n` +
         `It has been a few weeks since you first looked at deck pricing on our site, and I want to respect your inbox. This will be the last note from us for now.\n\n` +
-        `If your project is still in motion, we are here whenever you are ready. The blueprint we sent is still valid, and you can book a consultation any time: ${bookingT7}\n\n` +
+        `If your project is still in motion, we are here whenever you are ready. The blueprint we sent is still valid, and you can ${emailLink(bookingT7, 'book a consultation any time')}.\n\n` +
         `If the timing is not right or you have decided to go a different direction, that is completely fine. Just reply with one word and we will close out your file.\n\n` +
         `Either way, thanks for considering Luxury Decking.\n\n` +
         `Angela\n` +
@@ -354,7 +370,7 @@ export function getInstaQuoteLongTermTouches(job: Job): CampaignTouch[] {
       emailTemplate:
         `Hi ${name},\n\n` +
         `A check-in to see whether your deck project is still on your mind. Pricing on our site has been updated for the current season, so the numbers in your original blueprint may have shifted slightly.\n\n` +
-        `If you would like a refreshed quote or a free consultation, you can book here: ${bookingD90}\n\n` +
+        `If you would like a refreshed quote, ${emailLink(bookingD90, 'book a free consultation here')}.\n\n` +
         `Or just reply to this email and we will sort it out.\n\n` +
         `Angela\n` +
         `Luxury Decking`,
@@ -373,8 +389,8 @@ export function getInstaQuoteLongTermTouches(job: Job): CampaignTouch[] {
       emailTemplate:
         `Hi ${name},\n\n` +
         `A quick note as we move into the new build season here in Ottawa. Now is the part of the year when we start filling our calendar, and the homeowners who reach out earliest tend to have the most flexibility on start dates.\n\n` +
-        `We refreshed our pricing for the new season, so if you still have your original blueprint, the numbers may have shifted a touch. The current packages and pricing live on our pricing page: ${pricingSeasonal}\n\n` +
-        `If your project is back on the table this year, we would be glad to put together a free in-home consultation. You can book here when the timing works: ${bookingSeasonal}\n\n` +
+        `We refreshed our pricing for the new season, so if you still have your original blueprint, the numbers may have shifted a touch. ${emailLink(pricingSeasonal, 'See the current packages and pricing')}.\n\n` +
+        `If your project is back on the table this year, we would be glad to put together a free in-home consultation. ${emailLink(bookingSeasonal, 'Book a time that works for you')}.\n\n` +
         `Or just reply and let us know where you are at.\n\n` +
         `Angela\n` +
         `Luxury Decking`,
