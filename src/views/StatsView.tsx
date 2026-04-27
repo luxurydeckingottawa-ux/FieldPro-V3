@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 import { Job, PipelineStage } from '../types';
 import { calculateEngagementTier, EngagementTier } from '../utils/engagementScoring';
-import { 
+import {
   BarChart3, TrendingUp, Users, Target, DollarSign,
-  ArrowLeft, Megaphone, Globe, UserCheck, Share2, 
-  MapPin, Phone, Mail, Repeat, Award, Calendar
+  ArrowLeft, Megaphone, Globe, UserCheck, Share2,
+  MapPin, Phone, Mail, Repeat, Award, Calendar,
+  UserPlus, ThumbsUp, FileText, Briefcase,
 } from 'lucide-react';
 
 interface StatsViewProps {
@@ -20,18 +21,63 @@ const StatsView: React.FC<StatsViewProps> = ({ jobs, onBack }) => {
     
     // Pipeline stage groups
     const leadStages = [PipelineStage.LEAD_IN, PipelineStage.FIRST_CONTACT, PipelineStage.SECOND_CONTACT, PipelineStage.THIRD_CONTACT, PipelineStage.LEAD_ON_HOLD];
+    const instaQuoteStages = [
+      PipelineStage.INSTAQUOTE_LEAD, PipelineStage.INSTAQUOTE_TOUCH_1, PipelineStage.INSTAQUOTE_TOUCH_2,
+      PipelineStage.INSTAQUOTE_TOUCH_3, PipelineStage.INSTAQUOTE_TOUCH_4, PipelineStage.INSTAQUOTE_TOUCH_5,
+      PipelineStage.INSTAQUOTE_TOUCH_6, PipelineStage.INSTAQUOTE_TOUCH_7, PipelineStage.INSTAQUOTE_LONG_TERM,
+    ];
     const estimateStages = [PipelineStage.EST_UNSCHEDULED, PipelineStage.EST_SCHEDULED, PipelineStage.EST_IN_PROGRESS, PipelineStage.EST_COMPLETED, PipelineStage.EST_SENT, PipelineStage.EST_ON_HOLD, PipelineStage.EST_APPROVED];
     const jobStages = [PipelineStage.JOB_SOLD, PipelineStage.ADMIN_SETUP, PipelineStage.PRE_PRODUCTION, PipelineStage.READY_TO_START, PipelineStage.IN_FIELD, PipelineStage.COMPLETION, PipelineStage.PAID_CLOSED];
-    
-    const activeLeads = jobs.filter(j => leadStages.includes(j.pipelineStage));
+
+    const activeLeads = jobs.filter(j => leadStages.includes(j.pipelineStage) || instaQuoteStages.includes(j.pipelineStage));
     const activeEstimates = jobs.filter(j => estimateStages.includes(j.pipelineStage));
     const activeJobs = jobs.filter(j => jobStages.includes(j.pipelineStage));
+
+    // ── Pipeline FUNNEL counts ──────────────────────────────────────────────
+    // Lifetime totals (not just currently-active) so the office can see the
+    // full inflow + conversion ratios. A lead that's now in JOB_SOLD still
+    // counts as 1 lead-in, 1 qualified, 1 estimate-done, AND 1 job-booked.
+
+    // LEADS IN: every job in the system (each job started life as a lead,
+    // regardless of which source it came from — InstaQuote, Facebook lead,
+    // email lead, walk-in, etc.).
+    const leadsIn = jobs.length;
+
+    // QUALIFIED LEADS: leads that progressed past the initial contact stage
+    // (someone showed enough interest to be worth pursuing). Anyone past
+    // INSTAQUOTE_LEAD / LEAD_IN / first-contact, AND not lost/closed.
+    const unqualifiedStages = new Set<string>([
+      PipelineStage.LEAD_IN,
+      PipelineStage.INSTAQUOTE_LEAD,
+      PipelineStage.LEAD_LOST,
+      PipelineStage.INSTAQUOTE_CLOSED,
+    ]);
+    const qualifiedLeads = jobs.filter(j => !unqualifiedStages.has(j.pipelineStage)).length;
+
+    // ESTIMATES DONE: customer received an actual quote. Counts anyone who
+    // reached EST_SENT (or any post-sent stage including job stages, since
+    // they wouldn't have signed without seeing an estimate first).
+    const estimateDoneStages = new Set<string>([
+      PipelineStage.EST_SENT, PipelineStage.EST_APPROVED, PipelineStage.EST_REJECTED,
+      PipelineStage.EST_ON_HOLD, PipelineStage.ESTIMATE_SENT, PipelineStage.FOLLOW_UP,
+      ...jobStages,
+    ]);
+    const estimatesDone = jobs.filter(j => estimateDoneStages.has(j.pipelineStage)).length;
+
+    // JOBS BOOKED: estimates that converted into signed contracts. Anyone
+    // in JOB_SOLD or any post-sale stage.
+    const jobsBooked = jobs.filter(j => jobStages.includes(j.pipelineStage)).length;
+
+    // Won / lost (kept for the legacy Pipeline Snapshot below — separate
+    // concept from the funnel counts above).
     const wonJobs = jobs.filter(j => j.pipelineStage === PipelineStage.LEAD_WON || jobStages.includes(j.pipelineStage));
-    const lostJobs = jobs.filter(j => j.pipelineStage === PipelineStage.LEAD_LOST || j.pipelineStage === PipelineStage.EST_REJECTED);
-    
-    // Closing rate
-    const totalDecided = wonJobs.length + lostJobs.length;
-    const closingRate = totalDecided > 0 ? Math.round((wonJobs.length / totalDecided) * 100) : 0;
+    const lostJobs = jobs.filter(j => j.pipelineStage === PipelineStage.LEAD_LOST || j.pipelineStage === PipelineStage.EST_REJECTED || j.pipelineStage === PipelineStage.INSTAQUOTE_CLOSED);
+
+    // Closing rate = estimates done → jobs booked ratio. This is the truer
+    // sales-team metric (of all the people who got an actual quote, what
+    // percentage signed?). Previously this was won/(won+lost) which was
+    // noisier because it counted leads who were never quoted.
+    const closingRate = estimatesDone > 0 ? Math.round((jobsBooked / estimatesDone) * 100) : 0;
     
     // Revenue
     const totalRevenue = activeJobs.reduce((sum, j) => sum + (j.totalAmount || 0), 0);
@@ -79,6 +125,11 @@ const StatsView: React.FC<StatsViewProps> = ({ jobs, onBack }) => {
       leadSources,
       wonJobs: wonJobs.length,
       lostJobs: lostJobs.length,
+      // Pipeline funnel — lifetime totals across all sources
+      leadsIn,
+      qualifiedLeads,
+      estimatesDone,
+      jobsBooked,
     };
   }, [jobs]);
 
@@ -119,7 +170,7 @@ const StatsView: React.FC<StatsViewProps> = ({ jobs, onBack }) => {
             <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Closing Rate</p>
           </div>
           <p className="text-3xl font-black text-[var(--text-primary)]">{stats.closingRate}%</p>
-          <p className="text-[10px] text-[var(--text-secondary)] mt-1">{stats.wonJobs} won / {stats.lostJobs} lost</p>
+          <p className="text-[10px] text-[var(--text-secondary)] mt-1">{stats.jobsBooked} booked / {stats.estimatesDone} quoted</p>
         </div>
         <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
@@ -150,6 +201,61 @@ const StatsView: React.FC<StatsViewProps> = ({ jobs, onBack }) => {
           </div>
           <p className="text-3xl font-black text-[var(--text-primary)]">${stats.outstandingRevenue.toLocaleString()}</p>
           <p className="text-[10px] text-[var(--text-secondary)] mt-1">To be collected</p>
+        </div>
+      </div>
+
+      {/* Pipeline Funnel KPIs — lifetime totals across all sources.
+          Reads left-to-right as the funnel: every lead that came in
+          (any source: InstaQuote, Facebook, email, walk-in, etc.) →
+          who got qualified → who got an actual quote → who signed.
+          The closing rate above (jobs / quoted) is the conversion
+          ratio between Estimates Done and Jobs Booked. */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
+              <UserPlus className="w-4 h-4 text-sky-500" />
+            </div>
+            <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Leads In</p>
+          </div>
+          <p className="text-3xl font-black text-[var(--text-primary)]">{stats.leadsIn.toLocaleString()}</p>
+          <p className="text-[10px] text-[var(--text-secondary)] mt-1">All sources, all time</p>
+        </div>
+        <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <ThumbsUp className="w-4 h-4 text-emerald-500" />
+            </div>
+            <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Qualified Leads</p>
+          </div>
+          <p className="text-3xl font-black text-[var(--text-primary)]">{stats.qualifiedLeads.toLocaleString()}</p>
+          <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+            {stats.leadsIn > 0 ? `${Math.round((stats.qualifiedLeads / stats.leadsIn) * 100)}% of leads` : '—'}
+          </p>
+        </div>
+        <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+              <FileText className="w-4 h-4 text-indigo-500" />
+            </div>
+            <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Estimates Done</p>
+          </div>
+          <p className="text-3xl font-black text-[var(--text-primary)]">{stats.estimatesDone.toLocaleString()}</p>
+          <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+            {stats.qualifiedLeads > 0 ? `${Math.round((stats.estimatesDone / stats.qualifiedLeads) * 100)}% of qualified` : '—'}
+          </p>
+        </div>
+        <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-[var(--brand-gold)]/15 flex items-center justify-center">
+              <Briefcase className="w-4 h-4 text-[var(--brand-gold)]" />
+            </div>
+            <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Jobs Booked</p>
+          </div>
+          <p className="text-3xl font-black text-[var(--text-primary)]">{stats.jobsBooked.toLocaleString()}</p>
+          <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+            {stats.estimatesDone > 0 ? `${stats.closingRate}% close rate` : '—'}
+          </p>
         </div>
       </div>
 
