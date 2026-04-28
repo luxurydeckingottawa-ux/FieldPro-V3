@@ -219,6 +219,28 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
         return cl;
       });
 
+      // Build a fresh acceptedBuildSummary reflecting the option the
+      // customer JUST picked. Without this, downstream views
+      // (JobAcceptanceModal Step 1, Customer Portal payment schedule,
+      // invoicing) read a stale summary from a prior interaction and
+      // show the wrong option's price. Specifically, when the customer
+      // changes their mind from Option A to Option B, the contract gets
+      // the right total but the Job Setup Wizard would show Option A's
+      // price unless we also rewrite acceptedBuildSummary here.
+      const freshAcceptedBuildSummary = selectedOption
+        ? {
+            optionName: selectedOption.name,
+            basePrice: selectedOption.price,
+            addOns: selectedAddOnObjs.map((a) => ({ name: a.name, price: a.price })),
+            totalPrice: amount,
+            scopeSummary:
+              selectedOption.title ||
+              job.acceptedBuildSummary?.scopeSummary ||
+              job.scopeSummary ||
+              '',
+          }
+        : job.acceptedBuildSummary;
+
       // Call the parent accept handler
       try {
         onAccept(job.id, {
@@ -234,6 +256,11 @@ const AcceptanceModal: React.FC<AcceptanceModalProps> = ({ job, isOpen, onClose,
           ...(selectedOption ? {
             acceptedOptionId: selectedOption.id,
             acceptedOptionName: selectedOption.name,
+            // Rewrite the summary so Job Setup Wizard, customer portal,
+            // and invoicing all see the chosen option's totals (not the
+            // option that happened to be active when the estimate was
+            // last saved).
+            acceptedBuildSummary: freshAcceptedBuildSummary,
           } : {}),
           selectedAddOnIds,
           soldWorkflowStatus: SoldWorkflowStatus.AWAITING_DEPOSIT,
